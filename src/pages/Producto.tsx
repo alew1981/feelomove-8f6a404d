@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,59 +8,83 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Ticket, Hotel, ExternalLink, ShoppingCart, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import electronicImg from "@/assets/festival-electronic.jpg";
 
-// Mock data - en producción vendría de la API
-const festivalData = {
-  id: 1,
-  title: "Summer Electronic Festival",
-  location: "Barcelona, España",
-  date: "15-17 Julio 2024",
-  image: electronicImg,
-  description: "El festival de música electrónica más grande de Europa. Tres días de música ininterrumpida con los mejores DJs del mundo.",
-  tickets: [
-    { id: 1, name: "Entrada General", code: "GEN-001", price: 149, features: ["Acceso 3 días", "Acceso a zona general"] },
-    { id: 2, name: "VIP", code: "VIP-001", price: 299, features: ["Acceso 3 días", "Zona VIP", "Bebidas incluidas"] },
-    { id: 3, name: "Premium", code: "PREM-001", price: 499, features: ["Acceso 3 días", "Zona Premium", "Bebidas premium", "Meet & Greet"] },
-  ],
-  hotels: [
-    { id: 1, name: "Hotel Barceló Raval", distance: 1.5, stars: 4, pricePerNight: 120, image: electronicImg, partnerUrl: "https://booking.com", description: "Moderno hotel en el corazón del Raval con terraza panorámica y piscina en la azotea." },
-    { id: 2, name: "W Barcelona", distance: 2, stars: 5, pricePerNight: 250, image: electronicImg, partnerUrl: "https://booking.com", description: "Icónico hotel de lujo frente al mar con diseño vanguardista y servicios exclusivos." },
-    { id: 3, name: "Hotel Arts Barcelona", distance: 1.8, stars: 5, pricePerNight: 280, image: electronicImg, partnerUrl: "https://booking.com", description: "Elegante hotel de 5 estrellas con vistas al Mediterráneo y gastronomía de primer nivel." },
-    { id: 4, name: "NH Collection Barcelona", distance: 3, stars: 4, pricePerNight: 150, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel céntrico con habitaciones espaciosas y servicios de calidad para tu estancia." },
-    { id: 5, name: "Hotel Pullman Barcelona", distance: 2.5, stars: 4, pricePerNight: 140, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel contemporáneo cerca del puerto con spa, gimnasio y restaurante mediterráneo." },
-    { id: 6, name: "Melia Barcelona Sky", distance: 2.2, stars: 4, pricePerNight: 165, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel moderno con impresionantes vistas de la ciudad desde sus plantas superiores." },
-    { id: 7, name: "Grand Hotel Central", distance: 1.3, stars: 5, pricePerNight: 220, image: electronicImg, partnerUrl: "https://booking.com", description: "Boutique hotel de lujo en el Barrio Gótico con piscina infinity en la azotea." },
-    { id: 8, name: "Hotel Ohla Barcelona", distance: 1.6, stars: 5, pricePerNight: 240, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel boutique de diseño en Vía Laietana con gastronomía galardonada con estrella Michelin." },
-    { id: 9, name: "Room Mate Emma", distance: 2.8, stars: 3, pricePerNight: 95, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel boutique con diseño único y ubicación perfecta para explorar la ciudad." },
-    { id: 10, name: "Hotel Praktik Bakery", distance: 2.3, stars: 3, pricePerNight: 110, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel con concepto único que incluye panadería artesanal propia en el lobby." },
-    { id: 11, name: "Cotton House Hotel", distance: 1.9, stars: 5, pricePerNight: 290, image: electronicImg, partnerUrl: "https://booking.com", description: "Lujoso hotel en edificio histórico neoclásico con spa y restaurante de alta cocina." },
-    { id: 12, name: "Hotel 1898", distance: 1.7, stars: 4, pricePerNight: 175, image: electronicImg, partnerUrl: "https://booking.com", description: "Elegante hotel en La Rambla en edificio colonial con piscina en azotea." },
-    { id: 13, name: "Almanac Barcelona", distance: 2.1, stars: 5, pricePerNight: 270, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel de lujo con rooftop bar, spa exclusivo y habitaciones con vistas espectaculares." },
-    { id: 14, name: "Hotel Casa Fuster", distance: 3.2, stars: 5, pricePerNight: 310, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel cinco estrellas Gran Lujo en edificio modernista con jazz bar y terraza." },
-    { id: 15, name: "Hotel El Palace", distance: 2.6, stars: 5, pricePerNight: 320, image: electronicImg, partnerUrl: "https://booking.com", description: "Histórico hotel de lujo con más de 100 años de elegancia y servicio excepcional." },
-    { id: 16, name: "Hotel Soho House", distance: 1.4, stars: 4, pricePerNight: 195, image: electronicImg, partnerUrl: "https://booking.com", description: "Exclusivo hotel club con diseño contemporáneo y ambiente cosmopolita único." },
-  ],
-};
+// Event ID para testing - en producción vendría del parámetro de la URL
+const TEST_EVENT_ID = "1073965188";
+
+// Mock data para hoteles - en producción vendría de la API
+const mockHotels = [
+  { id: 1, name: "Hotel Barceló Raval", distance: 1.5, stars: 4, pricePerNight: 120, image: electronicImg, partnerUrl: "https://booking.com", description: "Moderno hotel en el corazón del Raval con terraza panorámica y piscina en la azotea." },
+  { id: 2, name: "W Barcelona", distance: 2, stars: 5, pricePerNight: 250, image: electronicImg, partnerUrl: "https://booking.com", description: "Icónico hotel de lujo frente al mar con diseño vanguardista y servicios exclusivos." },
+  { id: 3, name: "Hotel Arts Barcelona", distance: 1.8, stars: 5, pricePerNight: 280, image: electronicImg, partnerUrl: "https://booking.com", description: "Elegante hotel de 5 estrellas con vistas al Mediterráneo y gastronomía de primer nivel." },
+  { id: 4, name: "NH Collection Barcelona", distance: 3, stars: 4, pricePerNight: 150, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel céntrico con habitaciones espaciosas y servicios de calidad para tu estancia." },
+  { id: 5, name: "Hotel Pullman Barcelona", distance: 2.5, stars: 4, pricePerNight: 140, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel contemporáneo cerca del puerto con spa, gimnasio y restaurante mediterráneo." },
+  { id: 6, name: "Melia Barcelona Sky", distance: 2.2, stars: 4, pricePerNight: 165, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel moderno con impresionantes vistas de la ciudad desde sus plantas superiores." },
+  { id: 7, name: "Grand Hotel Central", distance: 1.3, stars: 5, pricePerNight: 220, image: electronicImg, partnerUrl: "https://booking.com", description: "Boutique hotel de lujo en el Barrio Gótico con piscina infinity en la azotea." },
+  { id: 8, name: "Hotel Ohla Barcelona", distance: 1.6, stars: 5, pricePerNight: 240, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel boutique de diseño en Vía Laietana con gastronomía galardonada con estrella Michelin." },
+  { id: 9, name: "Room Mate Emma", distance: 2.8, stars: 3, pricePerNight: 95, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel boutique con diseño único y ubicación perfecta para explorar la ciudad." },
+  { id: 10, name: "Hotel Praktik Bakery", distance: 2.3, stars: 3, pricePerNight: 110, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel con concepto único que incluye panadería artesanal propia en el lobby." },
+  { id: 11, name: "Cotton House Hotel", distance: 1.9, stars: 5, pricePerNight: 290, image: electronicImg, partnerUrl: "https://booking.com", description: "Lujoso hotel en edificio histórico neoclásico con spa y restaurante de alta cocina." },
+  { id: 12, name: "Hotel 1898", distance: 1.7, stars: 4, pricePerNight: 175, image: electronicImg, partnerUrl: "https://booking.com", description: "Elegante hotel en La Rambla en edificio colonial con piscina en azotea." },
+  { id: 13, name: "Almanac Barcelona", distance: 2.1, stars: 5, pricePerNight: 270, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel de lujo con rooftop bar, spa exclusivo y habitaciones con vistas espectaculares." },
+  { id: 14, name: "Hotel Casa Fuster", distance: 3.2, stars: 5, pricePerNight: 310, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel cinco estrellas Gran Lujo en edificio modernista con jazz bar y terraza." },
+  { id: 15, name: "Hotel El Palace", distance: 2.6, stars: 5, pricePerNight: 320, image: electronicImg, partnerUrl: "https://booking.com", description: "Histórico hotel de lujo con más de 100 años de elegancia y servicio excepcional." },
+  { id: 16, name: "Hotel Soho House", distance: 1.4, stars: 4, pricePerNight: 195, image: electronicImg, partnerUrl: "https://booking.com", description: "Exclusivo hotel club con diseño contemporáneo y ambiente cosmopolita único." },
+];
 
 const Producto = () => {
   const { id } = useParams();
-  const [ticketAttendees, setTicketAttendees] = useState<{ [key: number]: number }>({});
+  const [ticketAttendees, setTicketAttendees] = useState<{ [key: string]: number }>({});
   const [selectedHotel, setSelectedHotel] = useState<number | null>(null);
   const [hotelNights, setHotelNights] = useState(3);
   const [sortBy, setSortBy] = useState("distance");
   const [expandedHotels, setExpandedHotels] = useState<{ [key: number]: boolean }>({});
 
-  const festival = festivalData;
+  // Obtener detalles del evento
+  const { data: eventDetails, isLoading: isLoadingEvent } = useQuery({
+    queryKey: ["event", TEST_EVENT_ID],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ticketmaster_event_details")
+        .select("event_id, event_name, venue_name, venue_city, event_date, venue_address, event_url")
+        .eq("event_id", TEST_EVENT_ID)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Obtener precios de tickets
+  const { data: ticketPrices, isLoading: isLoadingTickets } = useQuery({
+    queryKey: ["tickets", TEST_EVENT_ID],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ticketmaster_event_prices")
+        .select("*")
+        .eq("event_id", TEST_EVENT_ID)
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const festival = {
+    hotels: mockHotels,
+  };
   
   const getTotalAttendees = () => {
     return Object.values(ticketAttendees).reduce((sum, count) => sum + count, 0);
   };
 
   const getTicketsTotal = () => {
-    return Object.entries(ticketAttendees).reduce((total, [ticketId, count]) => {
-      const ticket = festival.tickets.find(t => t.id === Number(ticketId));
-      return total + (ticket?.price || 0) * count;
+    if (!ticketPrices) return 0;
+    return Object.entries(ticketAttendees).reduce((total, [priceId, count]) => {
+      const ticket = ticketPrices.find(t => t.id.toString() === priceId);
+      return total + (ticket?.total_price || 0) * count;
     }, 0);
   };
 
@@ -68,10 +93,10 @@ const Producto = () => {
   const totalAttendees = getTotalAttendees();
   const totalPerPerson = totalAttendees > 0 ? totalPackage / totalAttendees : 0;
 
-  const updateTicketAttendees = (ticketId: number, count: number) => {
+  const updateTicketAttendees = (priceId: string, count: number) => {
     setTicketAttendees(prev => ({
       ...prev,
-      [ticketId]: Math.max(0, count)
+      [priceId]: Math.max(0, count)
     }));
   };
 
@@ -91,6 +116,39 @@ const Producto = () => {
     return text.length > limit ? text.substring(0, limit) + "..." : text;
   };
 
+  if (isLoadingEvent || isLoadingTickets) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8 mt-20">
+          <div className="text-center">Cargando...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!eventDetails || !ticketPrices) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8 mt-20">
+          <div className="text-center">No se encontró el evento</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const eventDate = new Date(eventDetails.event_date);
+  const formattedDate = eventDate.toLocaleDateString('es-ES', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -102,21 +160,21 @@ const Producto = () => {
             {/* Festival Info */}
             <div className="relative h-96 rounded-lg overflow-hidden">
               <img
-                src={festival.image}
-                alt={festival.title}
+                src={electronicImg}
+                alt={eventDetails.event_name}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
                 <div className="p-8 w-full">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{festival.title}</h1>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{eventDetails.event_name}</h1>
                   <div className="flex flex-wrap gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-primary" />
-                      <span>{festival.location}</span>
+                      <span>{eventDetails.venue_name}, {eventDetails.venue_city}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5 text-secondary" />
-                      <span>{festival.date}</span>
+                      <span>{formattedDate}</span>
                     </div>
                   </div>
                 </div>
@@ -128,7 +186,13 @@ const Producto = () => {
                 <CardTitle className="text-2xl">Descripción</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{festival.description}</p>
+                <p className="text-muted-foreground">
+                  Disfruta de {eventDetails.event_name} en {eventDetails.venue_name}. 
+                  Una experiencia única que no te puedes perder.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  📍 {eventDetails.venue_address}
+                </p>
               </CardContent>
             </Card>
 
@@ -142,7 +206,7 @@ const Producto = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {festival.tickets.map((ticket) => (
+                  {ticketPrices.map((ticket) => (
                     <div
                       key={ticket.id}
                       className="p-3 rounded-lg border-2 border-border hover:border-primary/50 transition-all"
@@ -150,9 +214,12 @@ const Producto = () => {
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-baseline gap-2 mb-1">
-                            <h3 className="font-semibold text-base">{ticket.name}</h3>
-                            <span className="text-xs text-muted-foreground">{ticket.code}</span>
+                            <h3 className="font-semibold text-base">{ticket.price_type_name}</h3>
+                            <span className="text-xs text-muted-foreground">{ticket.price_type_code}</span>
                           </div>
+                          {ticket.price_type_description && (
+                            <p className="text-xs text-muted-foreground mb-2">{ticket.price_type_description}</p>
+                          )}
                           <div className="flex items-center gap-3 mt-2">
                             <span className="text-xs text-muted-foreground">Asistentes:</span>
                             <div className="flex items-center gap-2">
@@ -160,26 +227,31 @@ const Producto = () => {
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7"
-                                onClick={() => updateTicketAttendees(ticket.id, (ticketAttendees[ticket.id] || 0) - 1)}
+                                onClick={() => updateTicketAttendees(ticket.id.toString(), (ticketAttendees[ticket.id.toString()] || 0) - 1)}
+                                disabled={ticket.availability === 'none'}
                               >
                                 -
                               </Button>
                               <span className="text-sm font-semibold w-8 text-center">
-                                {ticketAttendees[ticket.id] || 0}
+                                {ticketAttendees[ticket.id.toString()] || 0}
                               </span>
                               <Button
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7"
-                                onClick={() => updateTicketAttendees(ticket.id, (ticketAttendees[ticket.id] || 0) + 1)}
+                                onClick={() => updateTicketAttendees(ticket.id.toString(), (ticketAttendees[ticket.id.toString()] || 0) + 1)}
+                                disabled={ticket.availability === 'none'}
                               >
                                 +
                               </Button>
                             </div>
+                            {ticket.availability === 'none' && (
+                              <Badge variant="destructive" className="text-xs">Agotado</Badge>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold text-primary">€{ticket.price}</p>
+                          <p className="text-xl font-bold text-primary">€{Number(ticket.total_price).toFixed(2)}</p>
                           <p className="text-xs text-muted-foreground">por persona</p>
                         </div>
                       </div>
@@ -308,80 +380,90 @@ const Producto = () => {
                 <CardContent className="space-y-4">
                   {getTotalAttendees() > 0 ? (
                     <div className="space-y-2">
-                      {Object.entries(ticketAttendees).map(([ticketId, count]) => {
+                      {Object.entries(ticketAttendees).map(([priceId, count]) => {
                         if (count === 0) return null;
-                        const ticket = festival.tickets.find(t => t.id === Number(ticketId));
+                        const ticket = ticketPrices?.find(t => t.id.toString() === priceId);
                         if (!ticket) return null;
                         return (
-                          <div key={ticketId} className="p-3 bg-muted/30 rounded-lg">
+                          <div key={priceId} className="p-3 bg-muted/30 rounded-lg">
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <p className="font-medium text-sm">{ticket.name}</p>
-                                <p className="text-xs text-muted-foreground">{ticket.code}</p>
+                                <p className="font-medium text-sm">{ticket.price_type_name}</p>
+                                <p className="text-xs text-muted-foreground">{ticket.price_type_code}</p>
                               </div>
                               <Badge variant="secondary">{count}x</Badge>
                             </div>
-                            <p className="text-right font-bold">€{ticket.price * count}</p>
+                            <p className="text-right font-bold">€{(Number(ticket.total_price) * count).toFixed(2)}</p>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
                               className="w-full mt-2"
-                              onClick={() => window.open("https://ticketmaster.com", "_blank")}
+                              onClick={() => updateTicketAttendees(priceId, 0)}
                             >
-                              Comprar entradas
-                              <ExternalLink className="h-3 w-3 ml-2" />
+                              Eliminar
                             </Button>
                           </div>
                         );
                       })}
                     </div>
                   ) : (
-                    <div className="p-3 bg-muted/30 rounded-lg text-center text-sm text-muted-foreground">
-                      Selecciona entradas y asistentes
-                    </div>
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Selecciona tus entradas
+                    </p>
                   )}
 
-                  {selectedHotel ? (
-                    <div className="p-3 bg-muted/30 rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
+                  {selectedHotel && (
+                    <div className="pt-4 border-t">
+                      <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium text-sm">Hotel</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-medium text-sm">
                             {festival.hotels.find(h => h.id === selectedHotel)?.name}
                           </p>
+                          <p className="text-xs text-muted-foreground">{hotelNights} noches</p>
                         </div>
-                        <Badge variant="secondary">{hotelNights} noches</Badge>
+                        <p className="font-bold">€{hotelPrice.toFixed(2)}</p>
                       </div>
-                      <p className="text-right font-bold">€{hotelPrice}</p>
                       <Button
-                        variant="outline"
                         size="sm"
+                        variant="ghost"
                         className="w-full mt-2"
-                        onClick={() => window.open(festival.hotels.find(h => h.id === selectedHotel)?.partnerUrl, "_blank")}
+                        onClick={() => setSelectedHotel(null)}
                       >
-                        Reservar hotel
-                        <ExternalLink className="h-3 w-3 ml-2" />
+                        Eliminar
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-muted/30 rounded-lg text-center text-sm text-muted-foreground">
-                      Selecciona un hotel
                     </div>
                   )}
 
-                  <div className="pt-4 border-t space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Total paquete:</span>
-                      <span className="text-2xl font-bold text-primary">€{totalPackage}</span>
-                    </div>
-                    {totalAttendees > 1 && (
-                      <div className="flex justify-between items-center text-muted-foreground">
-                        <span className="text-xs">Por persona:</span>
-                        <span className="text-lg font-semibold">€{totalPerPerson.toFixed(2)}</span>
+                  {(getTotalAttendees() > 0 || selectedHotel) && (
+                    <div className="pt-4 space-y-2 border-t">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total</span>
+                        <span className="text-primary">€{totalPackage.toFixed(2)}</span>
                       </div>
-                    )}
-                  </div>
+                      {totalAttendees > 0 && (
+                        <p className="text-xs text-muted-foreground text-right">
+                          €{totalPerPerson.toFixed(2)} por persona ({totalAttendees} asistentes)
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled={getTotalAttendees() === 0}
+                    asChild={getTotalAttendees() > 0}
+                  >
+                    {getTotalAttendees() > 0 ? (
+                      <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
+                        Reservar en Ticketmaster
+                      </a>
+                    ) : (
+                      <span>Selecciona entradas</span>
+                    )}
+                  </Button>
+                </CardFooter>
               </Card>
             </div>
           </div>
