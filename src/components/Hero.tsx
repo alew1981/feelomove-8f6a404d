@@ -18,13 +18,13 @@ const Hero = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 z-10 text-center pt-24 pb-16">
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-foreground animate-in fade-in slide-in-from-bottom-4 duration-700">
           Vive la Música
           <br />
-          Duerme con Estilo
+          <span className="text-muted-foreground">Duerme con Estilo</span>
         </h1>
-        <p className="text-lg md:text-xl text-foreground/80 mb-10 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-700 delay-150">
-          Descubre conciertos y festivales increíbles con alojamiento perfecto incluido
+        <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-700 delay-150">
+          Descubre conciertos y festivales con alojamiento perfecto incluido
         </p>
 
         {/* Search Box */}

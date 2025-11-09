@@ -17,6 +17,7 @@ interface CartTicket {
   priceId: string;
   name: string;
   code: string;
+  description?: string;
   price: number;
   quantity: number;
   image?: string;
@@ -96,6 +97,7 @@ const Producto = () => {
           priceId: firstAvailableTicket.id.toString(),
           name: firstAvailableTicket.price_type_name,
           code: firstAvailableTicket.price_type_code,
+          description: firstAvailableTicket.price_type_description,
           price: Number(firstAvailableTicket.total_price),
           quantity: 2,
           image: eventDetails?.image_standard_url || electronicImg,
@@ -122,6 +124,7 @@ const Producto = () => {
           priceId,
           name: ticket.price_type_name,
           code: ticket.price_type_code,
+          description: ticket.price_type_description,
           price: Number(ticket.total_price),
           quantity,
           image: eventDetails?.image_standard_url || electronicImg,
@@ -189,6 +192,13 @@ const Producto = () => {
   const truncateText = (text: string, limit: number) => {
     if (!text) return "";
     return text.length > limit ? text.substring(0, limit) + "..." : text;
+  };
+
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
   };
 
   const handleToggleFavorite = () => {
@@ -415,12 +425,11 @@ const Producto = () => {
                       return (
                         <div
                           key={hotel.hotel_id}
-                          className={`rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${
+                          className={`rounded-lg border-2 overflow-hidden transition-all ${
                             isSelected
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50"
                           }`}
-                          onClick={() => addHotelToCart(hotel)}
                         >
                           {(hotel.thumbnail || hotel.main_photo) && (
                             <div className="h-32 overflow-hidden">
@@ -450,9 +459,9 @@ const Producto = () => {
                             {hotel.hotel_description && (
                               <p className="text-xs text-muted-foreground mb-2">
                                 {expandedHotels[hotel.hotel_id] 
-                                  ? hotel.hotel_description 
-                                  : truncateText(hotel.hotel_description, 50)}
-                                {hotel.hotel_description.length > 50 && (
+                                  ? stripHtml(hotel.hotel_description)
+                                  : truncateText(stripHtml(hotel.hotel_description), 50)}
+                                {stripHtml(hotel.hotel_description).length > 50 && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -465,9 +474,19 @@ const Producto = () => {
                                 )}
                               </p>
                             )}
-                            <p className="text-lg font-bold text-primary">
-                              €{price.toFixed(2)}/noche
-                            </p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-lg font-bold text-primary">
+                                €{price.toFixed(2)}/noche
+                              </p>
+                              <Button
+                                size="sm"
+                                variant={isSelected ? "default" : "outline"}
+                                onClick={() => addHotelToCart(hotel)}
+                                disabled={isSelected}
+                              >
+                                {isSelected ? "Añadido" : "Añadir"}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -503,13 +522,14 @@ const Producto = () => {
                               />
                             )}
                             <div className="flex-1">
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <p className="font-medium text-sm">{ticket.name}</p>
-                                  <p className="text-xs text-muted-foreground">{ticket.code}</p>
-                                </div>
+                              <div className="mb-2">
+                                <p className="font-medium text-sm">{ticket.name}</p>
+                                <p className="text-xs text-muted-foreground">Código: {ticket.code}</p>
+                                {ticket.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">{ticket.description}</p>
+                                )}
                               </div>
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <Button
                                     variant="outline"
@@ -536,12 +556,12 @@ const Producto = () => {
                               <Button
                                 variant="default"
                                 size="sm"
-                                className="w-full mt-2"
+                                className="w-full"
                                 asChild
                               >
                                 <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
                                   <ExternalLink className="h-3 w-3 mr-1" />
-                                  Reservar en Ticketmaster
+                                  Reservar Entradas
                                 </a>
                               </Button>
                             </div>
