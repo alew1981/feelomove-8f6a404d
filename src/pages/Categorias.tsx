@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,39 +8,32 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Calendar, MapPin, Search, Music } from "lucide-react";
+import { Calendar, MapPin, Search, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const Generos = () => {
-  const [searchParams] = useSearchParams();
-  const artistFromUrl = searchParams.get("artist");
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(artistFromUrl);
+const Categorias = () => {
+  const { categoryId } = useParams();
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    if (artistFromUrl) {
-      setSelectedArtist(artistFromUrl);
-    }
-  }, [artistFromUrl]);
-
-  const { data: artists, isLoading: isLoadingArtists } = useQuery({
-    queryKey: ["artists"],
+  const { data: categories, isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("event_list_page_view")
-        .select("main_attraction_id, main_attraction_name, attraction_image_standard_url, event_date")
-        .not("main_attraction_id", "is", null)
-        .not("main_attraction_name", "is", null)
+        .select("category_id, category_name")
+        .not("category_id", "is", null)
+        .not("category_name", "is", null)
         .gt("event_date", new Date().toISOString());
       
       if (error) throw error;
       
-      // Count events per artist
-      const artistEventCounts = data.reduce((acc: any, item) => {
-        const id = item.main_attraction_id;
+      // Count events per category
+      const categoryCounts = data.reduce((acc: any, item) => {
+        const id = item.category_id;
         if (!acc[id]) {
           acc[id] = {
-            ...item,
+            category_id: item.category_id,
+            category_name: item.category_name,
             event_count: 0
           };
         }
@@ -48,39 +41,40 @@ const Generos = () => {
         return acc;
       }, {});
       
-      const uniqueArtists = Object.values(artistEventCounts);
+      const uniqueCategories = Object.values(categoryCounts);
       
-      return uniqueArtists.sort((a: any, b: any) => 
+      return uniqueCategories.sort((a: any, b: any) => 
         b.event_count - a.event_count
       );
     },
   });
 
-  const { data: artistEvents, isLoading: isLoadingEvents } = useQuery({
-    queryKey: ["artistEvents", selectedArtist],
+  const { data: categoryEvents, isLoading: isLoadingEvents } = useQuery({
+    queryKey: ["categoryEvents", categoryId],
     queryFn: async () => {
-      if (!selectedArtist) return null;
+      if (!categoryId) return null;
       
       const { data, error } = await supabase
         .from("event_list_page_view")
-        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price")
-        .eq("main_attraction_id", selectedArtist)
+        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name")
+        .eq("category_id", categoryId)
         .gt("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
+        .order("event_date", { ascending: true })
+        .limit(50);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedArtist,
+    enabled: !!categoryId,
   });
 
-  const filteredArtists = artists?.filter((artist: any) =>
-    artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCategories = categories?.filter((cat: any) =>
+    cat.category_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedArtistData = artists?.find((a: any) => a.main_attraction_id === selectedArtist);
+  const selectedCategoryData = categories?.find((c: any) => c.category_id === categoryId);
 
-  if (selectedArtist && selectedArtistData) {
+  if (categoryId && selectedCategoryData) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -90,35 +84,24 @@ const Generos = () => {
           
           <Button
             variant="ghost"
-            onClick={() => setSelectedArtist(null)}
+            onClick={() => window.history.back()}
             className="mb-6"
           >
-            ← Volver a Artistas
+            ← Volver a Géneros
           </Button>
 
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              {(selectedArtistData as any).attraction_image_standard_url && (
-                <img
-                  src={(selectedArtistData as any).attraction_image_standard_url}
-                  alt={(selectedArtistData as any).main_attraction_name}
-                  className="w-24 h-24 rounded-lg object-cover"
-                />
-              )}
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold">{(selectedArtistData as any).main_attraction_name}</h1>
-                <p className="text-muted-foreground text-lg mt-2">
-                  {artistEvents?.length || 0} eventos próximos
-                </p>
-              </div>
-            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-2">{(selectedCategoryData as any).category_name}</h1>
+            <p className="text-muted-foreground text-lg">
+              {categoryEvents?.length || 0} eventos próximos
+            </p>
           </div>
 
           {isLoadingEvents ? (
             <div className="text-center py-12">Cargando eventos...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {artistEvents?.map((event) => {
+              {categoryEvents?.map((event) => {
                 const eventDate = new Date(event.event_date);
                 const formattedDate = eventDate.toLocaleDateString('es-ES', { 
                   day: 'numeric', 
@@ -128,15 +111,20 @@ const Generos = () => {
 
                 return (
                   <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="h-48 overflow-hidden">
+                    <div className="h-48 overflow-hidden relative">
                       <img
                         src={event.image_standard_url || "/placeholder.svg"}
                         alt={event.event_name}
                         className="w-full h-full object-cover"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
+                        <h3 className="font-bold text-lg p-4 line-clamp-2 text-foreground">{event.event_name}</h3>
+                      </div>
                     </div>
                     <CardContent className="p-4">
-                      <h3 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h3>
+                      {event.main_attraction_name && (
+                        <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
+                      )}
                       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-primary" />
@@ -146,6 +134,12 @@ const Generos = () => {
                           <MapPin className="h-4 w-4 text-secondary" />
                           <span>{event.venue_city}</span>
                         </div>
+                        {event.venue_name && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs">{event.venue_name}</span>
+                          </div>
+                        )}
                       </div>
                       {event.min_price && (
                         <div className="mt-3">
@@ -178,9 +172,9 @@ const Generos = () => {
         <Breadcrumbs />
         
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Artistas</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Géneros</h1>
           <p className="text-muted-foreground text-lg">
-            Descubre tus artistas favoritos y sus próximos eventos
+            Explora eventos por género musical
           </p>
         </div>
 
@@ -189,7 +183,7 @@ const Generos = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar artistas..."
+              placeholder="Buscar géneros..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -197,40 +191,29 @@ const Generos = () => {
           </div>
         </div>
 
-        {isLoadingArtists ? (
-          <div className="text-center py-12">Cargando artistas...</div>
+        {isLoadingCategories ? (
+          <div className="text-center py-12">Cargando géneros...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArtists?.map((artist: any) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredCategories?.slice(0, 12).map((category: any) => (
               <Card
-                key={artist.main_attraction_id}
+                key={category.category_id}
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => setSelectedArtist(artist.main_attraction_id)}
+                onClick={() => window.location.href = `/categorias/${category.category_id}`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-bold text-xl mb-1">{artist.main_attraction_name}</h3>
-                      <p className="text-sm text-muted-foreground">Artista</p>
+                      <h3 className="font-bold text-xl mb-1">{category.category_name}</h3>
+                      <p className="text-sm text-muted-foreground">Género</p>
                     </div>
-                    <Music className="h-6 w-6 text-primary" />
+                    <Music2 className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">
-                      {artist.event_count} eventos próximos
+                      {category.event_count} eventos
                     </Badge>
                   </div>
-                  {artist.event_date && (
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="text-xs text-muted-foreground mb-1">Próximo evento:</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(artist.event_date).toLocaleDateString('es-ES', { 
-                          day: 'numeric', 
-                          month: 'short'
-                        })}
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
                 <CardFooter className="p-6 pt-0">
                   <Button className="w-full">
@@ -248,4 +231,4 @@ const Generos = () => {
   );
 };
 
-export default Generos;
+export default Categorias;

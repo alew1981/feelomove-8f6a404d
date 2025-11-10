@@ -7,7 +7,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Ticket, Hotel, ExternalLink, ShoppingCart, Star, Heart } from "lucide-react";
+import { Calendar, MapPin, Ticket, Hotel, ExternalLink, ShoppingCart, Star, Heart, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -265,31 +265,46 @@ const Producto = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
                 <div className="p-8 w-full">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h1 className="text-4xl md:text-5xl font-bold mb-4">{eventDetails.event_name}</h1>
-                      <div className="flex flex-wrap gap-4 text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-5 w-5 text-primary" />
-                          <span>{eventDetails.venue_name}, {eventDetails.venue_city}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-5 w-5 text-secondary" />
-                          <span>{formattedDate}</span>
-                        </div>
-                      </div>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{eventDetails.event_name}</h1>
+                  {eventDetails.main_attraction_name && (
+                    <p className="text-xl text-muted-foreground mb-2">{eventDetails.main_attraction_name}</p>
+                  )}
+                  <div className="flex flex-wrap gap-4 text-foreground">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      <span>{eventDate.toLocaleDateString('es-ES', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric'
+                      })}</span>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="bg-background/80 backdrop-blur-sm"
-                      onClick={handleToggleFavorite}
-                    >
-                      <Heart className={`h-5 w-5 ${isFavorite(eventDetails.event_id) ? 'fill-primary text-primary' : ''}`} />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      <span>
+                        {eventDate.toLocaleTimeString('es-ES', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: false
+                        })} h
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
+              {eventDetails.seats_available && (
+                <div className="absolute top-4 left-4">
+                  <Badge className="bg-green-600 text-white">Entradas Disponibles</Badge>
+                </div>
+              )}
+              <button
+                onClick={handleToggleFavorite}
+                className="absolute top-4 right-4 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
+                aria-label={isFavorite(eventDetails.event_id) ? "Quitar de favoritos" : "Añadir a favoritos"}
+              >
+                <Heart 
+                  className={`h-6 w-6 ${isFavorite(eventDetails.event_id) ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
+                />
+              </button>
             </div>
 
             <Card>
@@ -297,13 +312,49 @@ const Producto = () => {
                 <CardTitle className="text-2xl">Descripción</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Disfruta de {eventDetails.event_name} en {eventDetails.venue_name}. 
-                  Una experiencia única que no te puedes perder.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  📍 {eventDetails.venue_address}
-                </p>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Fecha y Hora</h3>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-5 w-5" />
+                      <span>{eventDate.toLocaleDateString('es-ES', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric'
+                      })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                      <Clock className="h-5 w-5" />
+                      <span>
+                        {eventDate.toLocaleTimeString('es-ES', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: false
+                        })} h
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Ubicación</h3>
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <MapPin className="h-5 w-5 mt-0.5" />
+                      <div>
+                        <p className="font-medium">{eventDetails.venue_name}</p>
+                        <p>{eventDetails.venue_city}, {eventDetails.venue_country}</p>
+                        {eventDetails.venue_address && <p className="text-sm">{eventDetails.venue_address}</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Sobre el Evento</h3>
+                    <p className="text-muted-foreground">
+                      Disfruta de {eventDetails.event_name} en {eventDetails.venue_name}. 
+                      Una experiencia única que no te puedes perder.
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

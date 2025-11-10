@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, ArrowUpDown } from "lucide-react";
+import { Calendar, MapPin, ArrowUpDown, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Eventos = () => {
@@ -18,7 +18,7 @@ const Eventos = () => {
   const [page, setPage] = useState(1);
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const observerTarget = useRef(null);
-  const EVENTS_PER_PAGE = 12;
+  const EVENTS_PER_PAGE = 50;
 
   const { data: events, isLoading, isFetching } = useQuery({
     queryKey: ["events", page],
@@ -168,6 +168,12 @@ const Eventos = () => {
                         <MapPin className="h-4 w-4 text-secondary" />
                         <span>{event.venue_city}</span>
                       </div>
+                      {event.venue_name && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs">{event.venue_name}</span>
+                        </div>
+                      )}
                     </div>
                     {event.min_price && (
                       <div className="mt-3">
@@ -184,8 +190,13 @@ const Eventos = () => {
               );
             })}
           </div>
-          <div ref={observerTarget} className="h-10 flex items-center justify-center">
-            {isFetching && <span className="text-muted-foreground">Cargando más eventos...</span>}
+          <div ref={observerTarget} className="h-20 flex items-center justify-center">
+            {isFetching && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Cargando más eventos...</span>
+              </div>
+            )}
           </div>
         </>
         )}

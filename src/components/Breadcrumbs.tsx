@@ -8,14 +8,14 @@ const Breadcrumbs = () => {
   const params = useParams();
   const pathnames = location.pathname.split("/").filter((x) => x);
 
-  // Obtener nombre del evento si estamos en página de producto
+  // Obtener nombre del evento y artista si estamos en página de producto
   const { data: eventDetails } = useQuery({
     queryKey: ["event-breadcrumb", params.id],
     queryFn: async () => {
       if (!params.id) return null;
       const { data, error } = await supabase
         .from("event_list_page_view")
-        .select("event_name")
+        .select("event_name, main_attraction_name, main_attraction_id")
         .eq("event_id", params.id)
         .single();
       
@@ -29,6 +29,7 @@ const Breadcrumbs = () => {
     about: "Nosotros",
     destinos: "Destinos",
     generos: "Artistas",
+    categorias: "Géneros",
     eventos: "Eventos",
     producto: eventDetails?.event_name || "Evento",
   };
@@ -42,32 +43,58 @@ const Breadcrumbs = () => {
         <Home className="h-4 w-4" />
         <span>Inicio</span>
       </Link>
-      {pathnames.map((name, index) => {
-        const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
-        const isLast = index === pathnames.length - 1;
-        
-        // Si es la página de producto, usar el nombre del evento
-        let displayName = breadcrumbNames[name] || decodeURIComponent(name);
-        if (name === "producto" && eventDetails?.event_name) {
-          displayName = eventDetails.event_name;
-        }
-
-        return (
-          <div key={`${name}-${index}`} className="flex items-center gap-2">
+      {/* Para la página de producto, mostrar: Inicio > Eventos > Artista > Evento */}
+      {pathnames[0] === "producto" && eventDetails ? (
+        <>
+          <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            {isLast ? (
-              <span className="text-foreground font-medium">{displayName}</span>
-            ) : (
+            <Link
+              to="/eventos"
+              className="hover:text-foreground transition-colors"
+            >
+              Eventos
+            </Link>
+          </div>
+          {eventDetails.main_attraction_name && eventDetails.main_attraction_id && (
+            <div className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" />
               <Link
-                to={routeTo}
+                to={`/generos?artist=${eventDetails.main_attraction_id}`}
                 className="hover:text-foreground transition-colors"
               >
-                {displayName}
+                {eventDetails.main_attraction_name}
               </Link>
-            )}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
           </div>
-        );
-      })}
+        </>
+      ) : (
+        pathnames.map((name, index) => {
+          const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
+          const isLast = index === pathnames.length - 1;
+          
+          let displayName = breadcrumbNames[name] || decodeURIComponent(name);
+
+          return (
+            <div key={`${name}-${index}`} className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" />
+              {isLast ? (
+                <span className="text-foreground font-medium">{displayName}</span>
+              ) : (
+                <Link
+                  to={routeTo}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {displayName}
+                </Link>
+              )}
+            </div>
+          );
+        })
+      )}
     </nav>
   );
 };
