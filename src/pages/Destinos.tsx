@@ -80,7 +80,7 @@ const Destinos = () => {
           {isLoadingEvents ? (
             <div className="text-center py-12">Cargando eventos...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {cityEvents?.map((event) => {
                 const eventDate = new Date(event.event_date);
                 const formattedDate = eventDate.toLocaleDateString('es-ES', { 
@@ -166,7 +166,7 @@ const Destinos = () => {
         {isLoadingCities ? (
           <div className="text-center py-12">Cargando destinos...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredCities?.map((city) => (
               <Card
                 key={city.city_slug}

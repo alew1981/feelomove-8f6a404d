@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import Map from "@/components/Map";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -126,15 +125,12 @@ const Eventos = () => {
           </Select>
         </div>
 
-        <div className="mb-8">
-          <Map events={filteredEvents?.filter(e => e.venue_latitude && e.venue_longitude) || []} />
-        </div>
 
         {isLoading && page === 1 ? (
           <div className="text-center py-12">Cargando eventos...</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {sortedEvents?.map((event) => {
               const eventDate = new Date(event.event_date);
               const formattedDate = eventDate.toLocaleDateString('es-ES', { 
@@ -142,6 +138,12 @@ const Eventos = () => {
                 month: 'short',
                 year: 'numeric'
               });
+              
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const eventDay = new Date(event.event_date);
+              eventDay.setHours(0, 0, 0, 0);
+              const daysRemaining = Math.ceil((eventDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                 return (
                   <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -151,6 +153,11 @@ const Eventos = () => {
                         alt={event.event_name}
                         className="w-full h-full object-cover"
                       />
+                      {daysRemaining > 0 && (
+                        <Badge className="absolute top-3 left-3 bg-primary/90 text-primary-foreground">
+                          {daysRemaining === 1 ? '¡Mañana!' : `En ${daysRemaining} días`}
+                        </Badge>
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
                         <h3 className="font-bold text-lg p-4 line-clamp-2 text-foreground">{event.event_name}</h3>
                       </div>

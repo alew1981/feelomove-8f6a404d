@@ -117,7 +117,7 @@ const Generos = () => {
           {isLoadingEvents ? (
             <div className="text-center py-12">Cargando eventos...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {artistEvents?.map((event) => {
                 const eventDate = new Date(event.event_date);
                 const formattedDate = eventDate.toLocaleDateString('es-ES', { 
@@ -200,7 +200,7 @@ const Generos = () => {
         {isLoadingArtists ? (
           <div className="text-center py-12">Cargando artistas...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredArtists?.map((artist: any) => (
               <Card
                 key={artist.main_attraction_id}

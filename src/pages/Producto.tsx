@@ -269,33 +269,40 @@ const Producto = () => {
                   {eventDetails.main_attraction_name && (
                     <p className="text-xl text-muted-foreground mb-2">{eventDetails.main_attraction_name}</p>
                   )}
-                  <div className="flex flex-wrap gap-4 text-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      <span>{eventDate.toLocaleDateString('es-ES', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric'
-                      })}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      <span>
-                        {eventDate.toLocaleTimeString('es-ES', { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: false
-                        })} h
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
-              {eventDetails.seats_available && (
-                <div className="absolute top-4 left-4">
-                  <Badge className="bg-green-600 text-white">Entradas Disponibles</Badge>
-                </div>
-              )}
+              <div className="absolute top-4 left-4 flex flex-col gap-2">
+                <Badge className="bg-background/90 text-foreground backdrop-blur-sm">
+                  <Calendar className="mr-1 h-3 w-3" />
+                  {eventDate.toLocaleDateString('es-ES', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric'
+                  })}
+                </Badge>
+                <Badge className="bg-background/90 text-foreground backdrop-blur-sm">
+                  <Clock className="mr-1 h-3 w-3" />
+                  {eventDate.toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false
+                  })} h
+                </Badge>
+                <Badge className="bg-background/90 text-foreground backdrop-blur-sm text-left max-w-sm text-xs">
+                  <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
+                  <span>
+                    Ubicación: {eventDetails.venue_name}, {eventDetails.venue_city}, {eventDetails.venue_country}
+                    {eventDetails.venue_address && (
+                      <span className="block mt-1">{eventDetails.venue_address}</span>
+                    )}
+                  </span>
+                </Badge>
+                {eventDetails.seats_available && (
+                  <Badge className="bg-green-500/90 text-white backdrop-blur-sm">
+                    Entradas Disponibles
+                  </Badge>
+                )}
+              </div>
               <button
                 onClick={handleToggleFavorite}
                 className="absolute top-4 right-4 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
@@ -311,49 +318,12 @@ const Producto = () => {
               <CardHeader>
                 <CardTitle className="text-2xl">Descripción</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">Fecha y Hora</h3>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-5 w-5" />
-                      <span>{eventDate.toLocaleDateString('es-ES', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric'
-                      })}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground mt-2">
-                      <Clock className="h-5 w-5" />
-                      <span>
-                        {eventDate.toLocaleTimeString('es-ES', { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: false
-                        })} h
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">Ubicación</h3>
-                    <div className="flex items-start gap-2 text-muted-foreground">
-                      <MapPin className="h-5 w-5 mt-0.5" />
-                      <div>
-                        <p className="font-medium">{eventDetails.venue_name}</p>
-                        <p>{eventDetails.venue_city}, {eventDetails.venue_country}</p>
-                        {eventDetails.venue_address && <p className="text-sm">{eventDetails.venue_address}</p>}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">Sobre el Evento</h3>
-                    <p className="text-muted-foreground">
-                      Disfruta de {eventDetails.event_name} en {eventDetails.venue_name}. 
-                      Una experiencia única que no te puedes perder.
-                    </p>
-                  </div>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Sobre el evento</h3>
+                  <p className="text-muted-foreground">
+                    {eventDetails?.attraction_description || `Disfruta de ${eventDetails.event_name} en ${eventDetails.venue_name}. Una experiencia única que no te puedes perder.`}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -618,7 +588,7 @@ const Producto = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5" />
-                    Tu Paquete
+                    Reserva tu experiencia para {eventDetails.event_name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -667,17 +637,17 @@ const Producto = () => {
                                 </div>
                                 <p className="font-bold text-sm">€{(ticket.price * ticket.quantity).toFixed(2)}</p>
                               </div>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="w-full"
-                                asChild
-                              >
-                                <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="h-3 w-3 mr-1" />
-                                  Reservar Entradas
-                                </a>
-                              </Button>
+                              <div className="flex justify-center">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
+                                    Reservar entradas
+                                  </a>
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -730,17 +700,17 @@ const Producto = () => {
                             <p className="font-bold text-sm text-right mb-2">
                               €{Math.round(cartHotel.pricePerNight * cartHotel.nights)}
                             </p>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="w-full"
-                              asChild
-                            >
-                              <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Reservar Hotel
-                              </a>
-                            </Button>
+                            <div className="flex justify-center">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                asChild
+                              >
+                                <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
+                                  Reservar hoteles
+                                </a>
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
