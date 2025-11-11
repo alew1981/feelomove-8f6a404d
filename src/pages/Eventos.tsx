@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 const Eventos = () => {
   const [sortBy, setSortBy] = useState("date");
   const [filterCity, setFilterCity] = useState("all");
+  const [filterArtist, setFilterArtist] = useState("all");
+  const [filterMonth, setFilterMonth] = useState("all");
   const [page, setPage] = useState(1);
   const [allEvents, setAllEvents] = useState<any[]>([]);
   const observerTarget = useRef(null);
@@ -65,10 +67,34 @@ const Eventos = () => {
   }, [isFetching, events]);
 
   const cities = [...new Set(allEvents?.map(e => e.venue_city).filter(Boolean))];
+  const artists = [...new Set(allEvents?.map(e => e.main_attraction_name).filter(Boolean))];
+  
+  const months = useMemo(() => {
+    const monthSet = new Set<string>();
+    allEvents?.forEach(event => {
+      const date = new Date(event.event_date);
+      const monthYear = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      monthSet.add(monthYear);
+    });
+    return Array.from(monthSet).sort((a, b) => {
+      const [monthA, yearA] = a.split(' - ');
+      const [monthB, yearB] = b.split(' - ');
+      const dateA = new Date(`${monthA} 1, ${yearA}`);
+      const dateB = new Date(`${monthB} 1, ${yearB}`);
+      return dateA.getTime() - dateB.getTime();
+    });
+  }, [allEvents]);
 
-  const filteredEvents = allEvents?.filter(event => 
-    filterCity === "all" || event.venue_city === filterCity
-  );
+  const filteredEvents = allEvents?.filter(event => {
+    if (filterCity !== "all" && event.venue_city !== filterCity) return false;
+    if (filterArtist !== "all" && event.main_attraction_name !== filterArtist) return false;
+    if (filterMonth !== "all") {
+      const eventDate = new Date(event.event_date);
+      const eventMonthYear = eventDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      if (eventMonthYear !== filterMonth) return false;
+    }
+    return true;
+  });
 
   const sortedEvents = filteredEvents?.sort((a, b) => {
     if (sortBy === "date") {
@@ -123,6 +149,30 @@ const Eventos = () => {
               ))}
             </SelectContent>
           </Select>
+
+          <Select value={filterArtist} onValueChange={setFilterArtist}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrar por artista" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los artistas</SelectItem>
+              {artists.map(artist => (
+                <SelectItem key={artist} value={artist!}>{artist}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterMonth} onValueChange={setFilterMonth}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrar por mes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los meses</SelectItem>
+              {months.map(month => (
+                <SelectItem key={month} value={month}>{month}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
 
@@ -158,9 +208,6 @@ const Eventos = () => {
                           {daysRemaining === 1 ? '¡Mañana!' : `En ${daysRemaining} días`}
                         </Badge>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
-                        <h3 className="font-bold text-lg p-4 line-clamp-2 text-foreground">{event.event_name}</h3>
-                      </div>
                     </div>
                     <CardContent className="p-4">
                     {event.main_attraction_name && (

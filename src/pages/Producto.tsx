@@ -7,7 +7,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Ticket, Hotel, ExternalLink, ShoppingCart, Star, Heart, Clock } from "lucide-react";
+import { Calendar, MapPin, Ticket, Hotel, ExternalLink, ShoppingCart, Star, Heart, Clock, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -263,45 +263,64 @@ const Producto = () => {
                 alt={eventDetails.event_name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
-                <div className="p-8 w-full">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{eventDetails.event_name}</h1>
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent flex items-end">
+                <div className="p-8 w-full space-y-4">
+                  <h1 className="text-4xl md:text-5xl font-bold">{eventDetails.event_name}</h1>
                   {eventDetails.main_attraction_name && (
-                    <p className="text-xl text-muted-foreground mb-2">{eventDetails.main_attraction_name}</p>
+                    <p className="text-xl text-muted-foreground">{eventDetails.main_attraction_name}</p>
+                  )}
+                  
+                  {/* Event details in structured grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                    <div className="flex items-start gap-3 p-3 bg-background/60 backdrop-blur-md rounded-lg border border-border/50">
+                      <Calendar className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fecha</p>
+                        <p className="text-sm font-semibold">
+                          {eventDate.toLocaleDateString('es-ES', { 
+                            day: 'numeric', 
+                            month: 'long', 
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3 p-3 bg-background/60 backdrop-blur-md rounded-lg border border-border/50">
+                      <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hora</p>
+                        <p className="text-sm font-semibold">
+                          {eventDate.toLocaleTimeString('es-ES', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: false
+                          })} h
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3 p-3 bg-background/60 backdrop-blur-md rounded-lg border border-border/50 md:col-span-2">
+                      <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ubicación</p>
+                        <p className="text-sm font-semibold">{eventDetails.venue_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {eventDetails.venue_city}, {eventDetails.venue_country}
+                        </p>
+                        {eventDetails.venue_address && (
+                          <p className="text-xs text-muted-foreground mt-1">{eventDetails.venue_address}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {eventDetails.seats_available && (
+                    <Badge className="bg-green-500 text-white">
+                      Entradas Disponibles
+                    </Badge>
                   )}
                 </div>
-              </div>
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                <Badge className="bg-background/90 text-foreground backdrop-blur-sm">
-                  <Calendar className="mr-1 h-3 w-3" />
-                  {eventDate.toLocaleDateString('es-ES', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric'
-                  })}
-                </Badge>
-                <Badge className="bg-background/90 text-foreground backdrop-blur-sm">
-                  <Clock className="mr-1 h-3 w-3" />
-                  {eventDate.toLocaleTimeString('es-ES', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false
-                  })} h
-                </Badge>
-                <Badge className="bg-background/90 text-foreground backdrop-blur-sm text-left max-w-sm text-xs">
-                  <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
-                  <span>
-                    Ubicación: {eventDetails.venue_name}, {eventDetails.venue_city}, {eventDetails.venue_country}
-                    {eventDetails.venue_address && (
-                      <span className="block mt-1">{eventDetails.venue_address}</span>
-                    )}
-                  </span>
-                </Badge>
-                {eventDetails.seats_available && (
-                  <Badge className="bg-green-500/90 text-white backdrop-blur-sm">
-                    Entradas Disponibles
-                  </Badge>
-                )}
               </div>
               <button
                 onClick={handleToggleFavorite}
@@ -586,9 +605,8 @@ const Producto = () => {
             <div className="sticky top-24">
               <Card className="border-2">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingCart className="h-5 w-5" />
-                    Reserva tu experiencia para {eventDetails.event_name}
+                  <CardTitle className="text-xl text-center">
+                    {eventDetails.event_name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -602,56 +620,43 @@ const Producto = () => {
                               <img 
                                 src={ticket.image} 
                                 alt={ticket.name}
-                                className="w-12 h-12 object-cover rounded"
+                                className="w-16 h-16 object-cover rounded"
                               />
                             )}
                             <div className="flex-1">
-                              <div className="mb-2">
-                                <p className="font-medium text-sm">{ticket.name}</p>
-                                <p className="text-xs text-muted-foreground">Código: {ticket.code}</p>
-                                {ticket.description && (
-                                  <p className="text-xs text-muted-foreground mt-1">{ticket.description}</p>
-                                )}
-                              </div>
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => updateTicketInCart(ticket.priceId, ticket.quantity - 1)}
-                                  >
-                                    -
-                                  </Button>
-                                  <span className="text-sm font-semibold w-6 text-center">
-                                    {ticket.quantity}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => updateTicketInCart(ticket.priceId, ticket.quantity + 1)}
-                                  >
-                                    +
-                                  </Button>
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <p className="font-medium text-sm">{ticket.name}</p>
+                                  <p className="text-xs text-muted-foreground">Código: {ticket.code}</p>
+                                  {ticket.description && (
+                                    <p className="text-xs text-muted-foreground mt-1">{ticket.description}</p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground mt-1">{ticket.quantity} x €{ticket.price.toFixed(2)}</p>
                                 </div>
-                                <p className="font-bold text-sm">€{(ticket.price * ticket.quantity).toFixed(2)}</p>
-                              </div>
-                              <div className="flex justify-center">
                                 <Button
-                                  variant="default"
-                                  size="sm"
-                                  asChild
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setCartTickets([])}
                                 >
-                                  <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
-                                    Reservar entradas
-                                  </a>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
+                              <p className="font-bold text-sm">Total: €{(ticket.price * ticket.quantity).toFixed(2)}</p>
                             </div>
                           </div>
                         </div>
                       ))}
+                      <Button
+                        variant="default"
+                        size="lg"
+                        className="w-full"
+                        asChild
+                      >
+                        <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
+                          Reservar entradas
+                        </a>
+                      </Button>
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
@@ -661,59 +666,47 @@ const Producto = () => {
 
                   {/* Hotel en la cesta */}
                   {cartHotel && (
-                    <div className="pt-4 border-t">
+                    <div className="pt-4 border-t space-y-3">
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex gap-3">
                           {cartHotel.image && (
                             <img 
                               src={cartHotel.image} 
                               alt={cartHotel.name}
-                              className="w-12 h-12 object-cover rounded"
+                              className="w-16 h-16 object-cover rounded"
                             />
                           )}
                           <div className="flex-1">
-                            <p className="font-medium text-sm mb-2">{cartHotel.name}</p>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-muted-foreground">Noches:</span>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => updateHotelNights(cartHotel.nights - 1)}
-                                >
-                                  -
-                                </Button>
-                                <span className="text-sm font-semibold w-6 text-center">
-                                  {cartHotel.nights}
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => updateHotelNights(cartHotel.nights + 1)}
-                                >
-                                  +
-                                </Button>
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <p className="font-medium text-sm">{cartHotel.name}</p>
+                                <p className="text-xs text-muted-foreground">{cartHotel.nights} {cartHotel.nights === 1 ? 'noche' : 'noches'} x €{Math.round(cartHotel.pricePerNight)}</p>
                               </div>
-                            </div>
-                            <p className="font-bold text-sm text-right mb-2">
-                              €{Math.round(cartHotel.pricePerNight * cartHotel.nights)}
-                            </p>
-                            <div className="flex justify-center">
                               <Button
-                                variant="default"
-                                size="sm"
-                                asChild
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setCartHotel(null)}
                               >
-                                <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
-                                  Reservar hoteles
-                                </a>
+                                <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
+                            <p className="font-bold text-sm">
+                              Total: €{Math.round(cartHotel.pricePerNight * cartHotel.nights)}
+                            </p>
                           </div>
                         </div>
                       </div>
+                      <Button
+                        variant="default"
+                        size="lg"
+                        className="w-full"
+                        asChild
+                      >
+                        <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
+                          Reservar hoteles
+                        </a>
+                      </Button>
                     </div>
                   )}
 

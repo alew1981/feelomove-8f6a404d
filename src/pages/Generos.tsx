@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Calendar, MapPin, Search, Music } from "lucide-react";
+import { Calendar, MapPin, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Generos = () => {
@@ -204,24 +204,30 @@ const Generos = () => {
             {filteredArtists?.map((artist: any) => (
               <Card
                 key={artist.main_attraction_id}
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer relative"
                 onClick={() => setSelectedArtist(artist.main_attraction_id)}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-bold text-xl mb-1">{artist.main_attraction_name}</h3>
-                      <p className="text-sm text-muted-foreground">Artista</p>
-                    </div>
-                    <Music className="h-6 w-6 text-primary" />
+                <div className="relative h-32">
+                  {artist.attraction_image_standard_url && (
+                    <img
+                      src={artist.attraction_image_standard_url}
+                      alt={artist.main_attraction_name}
+                      className="w-full h-full object-cover opacity-30"
+                    />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h3 className="font-bold text-2xl text-center px-4 z-10">{artist.main_attraction_name}</h3>
                   </div>
-                  <div className="flex items-center gap-2">
+                </div>
+                <CardContent className="p-6">
+                  <p className="text-sm text-muted-foreground mb-3">Artista</p>
+                  <div className="flex items-center gap-2 mb-3">
                     <Badge variant="secondary">
                       {artist.event_count} eventos próximos
                     </Badge>
                   </div>
                   {artist.event_date && (
-                    <div className="mt-4 pt-4 border-t">
+                    <div className="pt-3 border-t">
                       <p className="text-xs text-muted-foreground mb-1">Próximo evento:</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(artist.event_date).toLocaleDateString('es-ES', { 
