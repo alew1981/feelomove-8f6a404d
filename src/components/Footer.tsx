@@ -1,20 +1,17 @@
-import { Music } from "lucide-react";
 import { NavLink } from "./NavLink";
 
 const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border py-12">
+    <footer className="bg-card border-t-2 border-border py-16">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-xl font-bold">
-              <Music className="h-6 w-6 text-primary" />
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Feelomove
-              </span>
+            <div className="text-2xl font-bold">
+              <span className="text-foreground">feelomove</span>
+              <span className="text-accent">+</span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Tu destino para experiencias musicales inolvidables con el mejor alojamiento.
             </p>
           </div>
@@ -86,8 +83,8 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Feelomove. Todos los derechos reservados.</p>
+        <div className="border-t-2 border-border pt-8 text-center text-sm text-muted-foreground">
+          <p>&copy; 2024 <span className="font-semibold text-foreground">feelomove<span className="text-accent">+</span></span>. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

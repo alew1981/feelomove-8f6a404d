@@ -96,13 +96,13 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {closestEvents?.map((event) => (
-              <Link key={event.event_id} to={`/producto/${event.event_id}?domain=${event.domain_id}`}>
-                <Card className="overflow-hidden border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
+              <Link key={event.event_id} to={`/producto/${event.event_id}?domain=${event.domain_id}`} className="group">
+                <Card className="overflow-hidden h-full group-hover:-translate-y-1">
                   <div className="relative h-48 overflow-hidden">
                     <img
                       src={event.image_standard_url || "/placeholder.svg"}
                       alt={event.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
                     <h3 className="absolute bottom-3 left-3 right-3 text-lg font-bold text-foreground line-clamp-2">
@@ -111,15 +111,15 @@ const FeaturedEvents = () => {
                   </div>
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="h-4 w-4 text-accent" />
                       <span className="truncate">{event.venue_city}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="h-4 w-4 text-accent" />
                       <span>{new Date(event.event_date).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}</span>
                     </div>
                     {event.min_price && (
-                      <div className="text-lg font-bold text-foreground">
+                      <div className="text-lg font-bold text-accent">
                         Desde {Number(event.min_price).toFixed(2)}€
                       </div>
                     )}
@@ -138,20 +138,20 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {artists?.map((artist) => (
-              <Link key={artist.attraction_id} to={`/generos?artist=${artist.attraction_id}`}>
-                <Card className="overflow-hidden border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
+              <Link key={artist.attraction_id} to={`/generos?artist=${artist.attraction_id}`} className="group">
+                <Card className="overflow-hidden h-full group-hover:-translate-y-1">
                   <div className="relative h-48 overflow-hidden">
                     <img
                       src={artist.image_standard_url || "/placeholder.svg"}
                       alt={artist.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3">
                       <h3 className="text-lg font-bold text-foreground line-clamp-2 mb-1">
                         {artist.name}
                       </h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1 text-sm text-accent">
                         <Music className="h-3 w-3" />
                         <span>{artist.event_count} eventos</span>
                       </div>
@@ -171,11 +171,11 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {genres?.map((genre) => (
-              <Link key={genre.id} to={`/categorias/${genre.id}`}>
-                <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 p-8 text-center">
+              <Link key={genre.id} to={`/categorias/${genre.id}`} className="group">
+                <Card className="p-8 text-center group-hover:-translate-y-1">
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                      <Music className="h-8 w-8 text-foreground" />
+                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                      <Music className="h-8 w-8 text-accent" />
                     </div>
                     <h3 className="text-xl font-bold">{genre.name}</h3>
                   </div>
@@ -193,14 +193,14 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {destinations?.map((city: any) => (
-              <Link key={city.city_slug} to={`/destinos`}>
-                <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 p-8 text-center">
+              <Link key={city.city_slug} to={`/destinos`} className="group">
+                <Card className="p-8 text-center group-hover:-translate-y-1">
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                      <Globe className="h-8 w-8 text-foreground" />
+                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                      <Globe className="h-8 w-8 text-accent" />
                     </div>
                     <h3 className="text-xl font-bold">{city.city_name}</h3>
-                    <p className="text-sm text-muted-foreground">{city.upcoming_events} eventos</p>
+                    <p className="text-sm text-accent">{city.upcoming_events} eventos</p>
                   </div>
                 </Card>
               </Link>
@@ -215,7 +215,7 @@ const FeaturedEvents = () => {
             Explora todos nuestros eventos y encuentra el plan perfecto para ti
           </p>
           <Link to="/eventos">
-            <Button size="lg" variant="default">
+            <Button size="lg" variant="accent">
               Ver Todos los Eventos
             </Button>
           </Link>

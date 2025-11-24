@@ -196,51 +196,48 @@ const Eventos = () => {
               const daysRemaining = Math.ceil((eventDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                 return (
-                  <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="h-48 overflow-hidden relative">
-                      <img
-                        src={event.image_standard_url || "/placeholder.svg"}
-                        alt={event.event_name}
-                        className="w-full h-full object-cover"
-                      />
-                      {daysRemaining > 0 && (
-                        <Badge className="absolute top-3 left-3 bg-primary/90 text-primary-foreground">
-                          {daysRemaining === 1 ? '¡Mañana!' : `En ${daysRemaining} días`}
-                        </Badge>
+                  <Link key={event.event_id} to={`/producto/${event.event_id}?domain=${event.domain_id}`} className="group">
+                    <Card className="overflow-hidden h-full group-hover:-translate-y-1">
+                      <div className="h-48 overflow-hidden relative">
+                        <img
+                          src={event.image_standard_url || "/placeholder.svg"}
+                          alt={event.event_name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {daysRemaining > 0 && (
+                          <Badge className="absolute top-3 left-3 bg-accent/90 text-accent-foreground">
+                            {daysRemaining === 1 ? '¡Mañana!' : `En ${daysRemaining} días`}
+                          </Badge>
+                        )}
+                      </div>
+                      <CardContent className="p-4">
+                      {event.main_attraction_name && (
+                        <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
                       )}
-                    </div>
-                    <CardContent className="p-4">
-                    {event.main_attraction_name && (
-                      <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
-                    )}
-                    <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span>{formattedDate}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-secondary" />
-                        <span>{event.venue_city}</span>
-                      </div>
-                      {event.venue_name && (
+                      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-xs">{event.venue_name}</span>
+                          <Calendar className="h-4 w-4 text-accent" />
+                          <span>{formattedDate}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-accent" />
+                          <span>{event.venue_city}</span>
+                        </div>
+                        {event.venue_name && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs">{event.venue_name}</span>
+                          </div>
+                        )}
+                      </div>
+                      {event.min_price && (
+                        <div className="mt-3">
+                          <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">Desde €{Number(event.min_price).toFixed(2)}</Badge>
                         </div>
                       )}
-                    </div>
-                    {event.min_price && (
-                      <div className="mt-3">
-                        <Badge variant="secondary">Desde €{Number(event.min_price).toFixed(2)}</Badge>
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="p-4 pt-0">
-                    <Button asChild className="w-full">
-                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
           </div>
