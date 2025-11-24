@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -47,6 +47,7 @@ const Musica = () => {
   const [selectedArtist, setSelectedArtist] = useState<string | null>(artistFromUrl);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGenre, setFilterGenre] = useState(genreFromUrl || "all");
+  const artistsSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (artistFromUrl) {
@@ -57,8 +58,20 @@ const Musica = () => {
   useEffect(() => {
     if (genreFromUrl) {
       setFilterGenre(genreFromUrl);
+      // Scroll to artists section when genre is set from URL
+      setTimeout(() => {
+        artistsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   }, [genreFromUrl]);
+
+  const handleGenreClick = (genreName: string) => {
+    setFilterGenre(genreName);
+    // Scroll to artists section
+    setTimeout(() => {
+      artistsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   const { data: musicGenres, isLoading: isLoadingGenres } = useQuery({
     queryKey: ["musicGenres"],
@@ -257,7 +270,7 @@ const Musica = () => {
                 <Card
                   key={genre.name}
                   className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                  onClick={() => setFilterGenre(genre.name)}
+                  onClick={() => handleGenreClick(genre.name)}
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img
@@ -293,11 +306,24 @@ const Musica = () => {
         </div>
 
         {/* Artists Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Artistas</h2>
+        <div ref={artistsSectionRef} className="mb-8 scroll-mt-20">
+          <h2 className="text-2xl font-bold mb-4">
+            {filterGenre !== "all" ? `Artistas de ${filterGenre}` : "Artistas"}
+          </h2>
           <p className="text-muted-foreground">
-            Descubre tus artistas favoritos y sus próximos eventos
+            {filterGenre !== "all" 
+              ? `${filteredArtists?.length || 0} artistas encontrados` 
+              : "Descubre tus artistas favoritos y sus próximos eventos"}
           </p>
+          {filterGenre !== "all" && (
+            <Button
+              variant="ghost"
+              onClick={() => setFilterGenre("all")}
+              className="mt-2"
+            >
+              ← Ver todos los géneros
+            </Button>
+          )}
         </div>
 
         <div className="mb-6 flex flex-col md:flex-row gap-4">
