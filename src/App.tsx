@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Destinos from "./pages/Destinos";
 import Musica from "./pages/Musica";
 import GeneroDetalle from "./pages/GeneroDetalle";
+import Artistas from "./pages/Artistas";
 import Eventos from "./pages/Eventos";
 import Producto from "./pages/Producto";
 import Favoritos from "./pages/Favoritos";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/destinos" element={<Destinos />} />
           <Route path="/musica" element={<Musica />} />
           <Route path="/musica/:genero" element={<GeneroDetalle />} />
+          <Route path="/artistas" element={<Artistas />} />
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/producto/:id" element={<Producto />} />
