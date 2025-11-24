@@ -9,76 +9,83 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --foreground: 152 100% 7%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 152 100% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 152 100% 7%;
 
-    --primary: 0 0% 10%;
+    --primary: 152 100% 7%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 30%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 152 100% 7%;
 
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 46%;
 
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 152 100% 50%;
+    --accent-foreground: 152 100% 7%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 0 0% 10%;
+    --ring: 152 100% 50%;
 
     --radius: 0.75rem;
 
+    /* Feelomove+ Brand Colors */
+    --brand-green: 152 100% 50%;
+    --brand-black: 152 100% 7%;
+    --brand-light-gray: 0 0% 95%;
+
     /* Custom design tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 10%) 0%, hsl(0 0% 40%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(152 100% 7%) 0%, hsl(152 100% 16%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
-    --shadow-card: 0 4px 20px -2px hsl(0 0% 10% / 0.08);
-    --shadow-hover: 0 8px 30px -4px hsl(0 0% 10% / 0.12);
+    --gradient-brand: linear-gradient(135deg, hsl(152 100% 50%) 0%, hsl(152 100% 40%) 100%);
+    --shadow-card: 0 4px 20px -2px hsl(152 100% 7% / 0.08);
+    --shadow-hover: 0 8px 30px -4px hsl(152 100% 50% / 0.2);
+    --shadow-brand: 0 0 40px hsl(152 100% 50% / 0.3);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 0 0% 10%;
+    --background: 152 100% 7%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 14%;
+    --card: 152 100% 11%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 14%;
+    --popover: 152 100% 11%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 10%;
+    --primary-foreground: 152 100% 7%;
 
-    --secondary: 0 0% 70%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 98%;
 
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 80%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 152 100% 50%;
+    --accent-foreground: 152 100% 7%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --ring: 152 100% 50%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 90%) 0%, hsl(0 0% 60%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 14%) 0%, hsl(0 0% 16%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 90%) 0%, hsl(152 100% 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(152 100% 11%) 0%, hsl(152 100% 13%) 100%);
     --shadow-card: 0 4px 20px -2px hsl(0 0% 0% / 0.3);
-    --shadow-hover: 0 8px 30px -4px hsl(0 0% 0% / 0.4);
+    --shadow-hover: 0 8px 30px -4px hsl(152 100% 50% / 0.4);
   }
 }
 
@@ -89,5 +96,6 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
