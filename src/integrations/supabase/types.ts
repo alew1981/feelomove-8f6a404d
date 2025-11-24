@@ -914,7 +914,6 @@ export type Database = {
     Views: {
       lovable_view_packages: {
         Row: {
-          category_name: string | null
           domain_id: string | null
           event_date: string | null
           event_id: string | null
@@ -922,6 +921,7 @@ export type Database = {
           hotel_summary: Json | null
           image_standard_url: string | null
           main_attraction_name: string | null
+          subcategory_name: string | null
           ticket_prices: Json | null
           venue_city: string | null
           venue_name: string | null

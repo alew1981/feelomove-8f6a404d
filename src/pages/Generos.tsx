@@ -30,7 +30,7 @@ const Generos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_attractions")
-        .select("attraction_id, name, image_standard_url, event_count, genre, subgenre")
+        .select("attraction_id, name, image_standard_url, event_count, subcategory_name")
         .gt("event_count", 0)
         .order("event_count", { ascending: false });
       
@@ -40,14 +40,13 @@ const Generos = () => {
         main_attraction_name: a.name,
         attraction_image_standard_url: a.image_standard_url,
         event_count: a.event_count,
-        genre: a.genre,
-        subgenre: a.subgenre
+        subcategory_name: a.subcategory_name
       }));
     },
   });
 
-  // Get unique genres for filter
-  const genres = Array.from(new Set(artists?.map((a: any) => a.genre).filter(Boolean)));
+  // Get unique subcategories for filter
+  const subcategories = Array.from(new Set(artists?.map((a: any) => a.subcategory_name).filter(Boolean)));
 
   const { data: artistEvents, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["artistEvents", selectedArtist],
@@ -69,7 +68,7 @@ const Generos = () => {
 
   const filteredArtists = artists?.filter((artist: any) => {
     const matchesSearch = artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesGenre = filterGenre === "all" || artist.genre === filterGenre;
+    const matchesGenre = filterGenre === "all" || artist.subcategory_name === filterGenre;
     return matchesSearch && matchesGenre;
   });
 
@@ -192,12 +191,12 @@ const Generos = () => {
           </div>
           <Select value={filterGenre} onValueChange={setFilterGenre}>
             <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Filtrar por género" />
+              <SelectValue placeholder="Filtrar por tipo de música" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los géneros</SelectItem>
-              {genres?.map(genre => (
-                <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              {subcategories?.map(subcategory => (
+                <SelectItem key={subcategory} value={subcategory}>{subcategory}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -227,12 +226,12 @@ const Generos = () => {
                 <CardContent className="p-6">
                   <h3 className="font-bold text-xl mb-3">{artist.main_attraction_name}</h3>
                   <div className="space-y-2">
-                    <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+                    <Badge variant="secondary" className="bg-accent/10 text-foreground border-accent/20">
                       {artist.event_count} eventos próximos
                     </Badge>
-                    {artist.genre && (
+                    {artist.subcategory_name && (
                       <p className="text-sm text-muted-foreground">
-                        {artist.genre}
+                        {artist.subcategory_name}
                       </p>
                     )}
                   </div>
