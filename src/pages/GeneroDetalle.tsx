@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,91 +8,25 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Search } from "lucide-react";
+import { Search, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
-// Helper function to get a representative image for each genre
-const getGenreImage = (genreName: string): string => {
-  const genreImages: Record<string, string> = {
-    "Rock": "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=800&q=80",
-    "Pop": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80",
-    "Electronic": "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=800&q=80",
-    "Hip-Hop/Rap": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
-    "Jazz": "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&q=80",
-    "Classical": "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=800&q=80",
-    "Country": "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=800&q=80",
-    "R&B": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80",
-    "Metal": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80",
-    "Indie": "https://images.unsplash.com/photo-1524650359799-842906ca1c06?w=800&q=80",
-    "Reggae": "https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?w=800&q=80",
-    "Blues": "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&q=80",
-    "Folk": "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800&q=80",
-    "Latino": "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
-    "Alternative": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
-  };
-  
-  // Find a matching genre or return a default image
-  const matchingKey = Object.keys(genreImages).find(key => 
-    genreName.toLowerCase().includes(key.toLowerCase())
-  );
-  
-  return matchingKey ? genreImages[matchingKey] : "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80";
-};
-
-const Musica = () => {
-  const [searchParams] = useSearchParams();
-  const artistFromUrl = searchParams.get("artist");
-  const genreFromUrl = searchParams.get("genre");
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(artistFromUrl);
+const GeneroDetalle = () => {
+  const { genero } = useParams<{ genero: string }>();
+  const navigate = useNavigate();
+  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const artistsSectionRef = useRef<HTMLDivElement>(null);
+  const genreNameDecoded = genero ? decodeURIComponent(genero) : "";
 
-  useEffect(() => {
-    if (artistFromUrl) {
-      setSelectedArtist(artistFromUrl);
-    }
-  }, [artistFromUrl]);
-
-  const { data: musicGenres, isLoading: isLoadingGenres } = useQuery({
-    queryKey: ["musicGenres"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tm_tbl_attractions")
-        .select("subcategory_name, event_count")
-        .gt("event_count", 0);
-      
-      if (error) throw error;
-      
-      // Group by subcategory and sum event counts
-      const genreMap = new Map();
-      data?.forEach(item => {
-        if (item.subcategory_name) {
-          const current = genreMap.get(item.subcategory_name) || { count: 0, artists: 0 };
-          genreMap.set(item.subcategory_name, {
-            count: current.count + (item.event_count || 0),
-            artists: current.artists + 1
-          });
-        }
-      });
-      
-      return Array.from(genreMap.entries())
-        .map(([name, stats]) => ({
-          name,
-          event_count: stats.count,
-          artist_count: stats.artists,
-          image_url: getGenreImage(name)
-        }))
-        .sort((a, b) => b.event_count - a.event_count);
-    },
-  });
-
+  // Query for artists of this genre
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
-    queryKey: ["artists"],
+    queryKey: ["genreArtists", genreNameDecoded],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_attractions")
         .select("attraction_id, name, image_standard_url, event_count, subcategory_name")
+        .eq("subcategory_name", genreNameDecoded)
         .gt("event_count", 0)
         .order("event_count", { ascending: false });
       
@@ -105,8 +39,10 @@ const Musica = () => {
         subcategory_name: a.subcategory_name
       }));
     },
+    enabled: !!genreNameDecoded,
   });
 
+  // Query for artist events when an artist is selected
   const { data: artistEvents, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["artistEvents", selectedArtist],
     queryFn: async () => {
@@ -125,8 +61,13 @@ const Musica = () => {
     enabled: !!selectedArtist,
   });
 
+  const filteredArtists = artists?.filter((artist: any) => 
+    artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const selectedArtistData = artists?.find((a: any) => a.main_attraction_id === selectedArtist);
 
+  // View: Artist's Events
   if (selectedArtist && selectedArtistData) {
     return (
       <div className="min-h-screen bg-background">
@@ -140,7 +81,7 @@ const Musica = () => {
             onClick={() => setSelectedArtist(null)}
             className="mb-6"
           >
-            ← Volver a Música
+            ← Volver a Artistas de {genreNameDecoded}
           </Button>
 
           <div className="mb-8">
@@ -164,7 +105,7 @@ const Musica = () => {
           {isLoadingEvents ? (
             <div className="text-center py-12">Cargando eventos...</div>
           ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {artistEvents?.map((event) => {
                 const eventDate = new Date(event.event_date);
                 const formattedDate = eventDate.toLocaleDateString('es-ES', { 
@@ -201,9 +142,9 @@ const Musica = () => {
                       )}
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                    <Button asChild className="w-full">
-                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
-                    </Button>
+                      <Button asChild className="w-full">
+                        <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
+                      </Button>
                     </CardFooter>
                   </Card>
                 );
@@ -217,6 +158,7 @@ const Musica = () => {
     );
   }
 
+  // View: Genre's Artists
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -224,66 +166,18 @@ const Musica = () => {
       <main className="container mx-auto px-4 py-8 mt-20">
         <Breadcrumbs />
         
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/musica')}
+          className="mb-6"
+        >
+          ← Volver a Géneros Musicales
+        </Button>
+
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Música</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Artistas de {genreNameDecoded}</h1>
           <p className="text-muted-foreground text-lg">
-            Explora por género musical y descubre tus artistas favoritos
-          </p>
-        </div>
-
-        {/* Music Genre Cards Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Géneros Musicales</h2>
-          {isLoadingGenres ? (
-            <div className="text-center py-12">Cargando géneros...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {musicGenres?.map((genre: any) => (
-                <Link
-                  key={genre.name}
-                  to={`/musica/${encodeURIComponent(genre.name)}`}
-                  className="block"
-                >
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group h-full">
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={genre.image_url}
-                        alt={genre.name}
-                        className="w-full h-full object-cover brightness-50 group-hover:brightness-75 group-hover:scale-105 transition-all duration-300"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-3xl font-bold text-white px-4 text-center drop-shadow-lg">{genre.name}</h3>
-                      </div>
-                      <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                        <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
-                          {genre.artist_count} artistas
-                        </Badge>
-                      </div>
-                    </div>
-                    <CardContent className="p-6">
-                      <div className="space-y-2">
-                        <Badge variant="secondary" className="bg-accent/10 text-[#121212] border-accent/20">
-                          {genre.event_count} eventos próximos
-                        </Badge>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="p-6 pt-0">
-                      <Button variant="accent" className="w-full">
-                        Ver Artistas
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Artists Section - Simplified */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Todos los Artistas</h2>
-          <p className="text-muted-foreground">
-            Explora nuestra colección completa de artistas
+            {filteredArtists?.length || 0} artistas disponibles
           </p>
         </div>
 
@@ -304,9 +198,7 @@ const Musica = () => {
           <div className="text-center py-12">Cargando artistas...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {artists?.filter((artist: any) => 
-              artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase())
-            ).slice(0, 20).map((artist: any) => (
+            {filteredArtists?.map((artist: any) => (
               <Card
                 key={artist.main_attraction_id}
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
@@ -322,12 +214,7 @@ const Musica = () => {
                   ) : (
                     <div className="w-full h-full bg-muted" />
                   )}
-                  <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                    {artist.subcategory_name && (
-                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
-                        {artist.subcategory_name}
-                      </Badge>
-                    )}
+                  <div className="absolute top-2 right-2">
                     {artist.event_count > 0 && (
                       <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
                         Entradas disponibles
@@ -359,4 +246,4 @@ const Musica = () => {
   );
 };
 
-export default Musica;
+export default GeneroDetalle;
