@@ -1,6 +1,6 @@
 import { NavLink } from "./NavLink";
 import { Button } from "./ui/button";
-import { Music, Menu, X, Search, Heart } from "lucide-react";
+import { Menu, X, Search, Heart } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
@@ -18,11 +18,9 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <NavLink to="/" className="flex items-center gap-2 text-xl font-bold">
-            <Music className="h-6 w-6 text-primary" />
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Feelomove
-            </span>
+          <NavLink to="/" className="flex items-center text-2xl font-bold tracking-tight">
+            <span className="text-foreground">feelomove</span>
+            <span className="text-accent">+</span>
           </NavLink>
 
           {/* Desktop Navigation */}
