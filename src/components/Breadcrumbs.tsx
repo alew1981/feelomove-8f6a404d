@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,18 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 const Breadcrumbs = () => {
   const location = useLocation();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   // Obtener nombre del evento y artista si estamos en página de producto
   const { data: eventDetails } = useQuery({
-    queryKey: ["event-breadcrumb", params.id],
+    queryKey: ["event-breadcrumb", params.id, searchParams.get('domain')],
     queryFn: async () => {
       if (!params.id) return null;
-      const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("event_name, main_attraction_name, main_attraction_id")
-        .eq("event_id", params.id)
-        .single();
+      const domainId = searchParams.get('domain');
+      
+      let query = supabase
+        .from("tm_tbl_events")
+        .select("name, main_attraction_name, main_attraction_id")
+        .eq("event_id", params.id);
+      
+      if (domainId) {
+        query = query.eq("domain_id", domainId);
+      }
+      
+      const { data, error } = await query.maybeSingle();
       
       if (error) return null;
       return data;
@@ -31,7 +39,7 @@ const Breadcrumbs = () => {
     generos: "Artistas",
     categorias: "Géneros",
     eventos: "Eventos",
-    producto: eventDetails?.event_name || "Evento",
+    producto: eventDetails?.name || "Evento",
   };
 
   return (
@@ -68,7 +76,7 @@ const Breadcrumbs = () => {
           )}
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
+            <span className="text-foreground font-medium">{eventDetails.name}</span>
           </div>
         </>
       ) : (

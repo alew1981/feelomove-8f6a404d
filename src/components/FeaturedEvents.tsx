@@ -11,8 +11,8 @@ const FeaturedEvents = () => {
     queryKey: ["closest-events"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("*")
+        .from("tm_tbl_events")
+        .select("event_id, name, venue_city, event_date, image_standard_url, min_price, domain_id")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(4);
@@ -21,37 +21,18 @@ const FeaturedEvents = () => {
     },
   });
 
-  // Fetch top artists (by event count)
+  // Fetch top artists
   const { data: artists } = useQuery({
     queryKey: ["top-artists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("main_attraction_id, main_attraction_name, attraction_image_standard_url")
-        .gte("event_date", new Date().toISOString())
-        .not("main_attraction_name", "is", null)
-        .limit(100);
+        .from("tm_tbl_attractions")
+        .select("attraction_id, name, image_standard_url, event_count")
+        .gt("event_count", 0)
+        .order("event_count", { ascending: false })
+        .limit(4);
       if (error) throw error;
-      
-      // Group by artist and count events
-      const artistMap = new Map();
-      data?.forEach(event => {
-        const key = event.main_attraction_id;
-        if (artistMap.has(key)) {
-          artistMap.get(key).count++;
-        } else {
-          artistMap.set(key, {
-            id: event.main_attraction_id,
-            name: event.main_attraction_name,
-            image: event.attraction_image_standard_url,
-            count: 1
-          });
-        }
-      });
-      
-      return Array.from(artistMap.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 4);
+      return data || [];
     },
   });
 
@@ -60,31 +41,11 @@ const FeaturedEvents = () => {
     queryKey: ["top-genres"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("category_id, category_name")
-        .gte("event_date", new Date().toISOString())
-        .not("category_name", "is", null)
-        .limit(100);
+        .from("tm_tbl_categories")
+        .select("id, name")
+        .limit(4);
       if (error) throw error;
-      
-      // Group by genre and count
-      const genreMap = new Map();
-      data?.forEach(event => {
-        const key = event.category_id;
-        if (genreMap.has(key)) {
-          genreMap.get(key).count++;
-        } else {
-          genreMap.set(key, {
-            id: event.category_id,
-            name: event.category_name,
-            count: 1
-          });
-        }
-      });
-      
-      return Array.from(genreMap.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 4);
+      return data || [];
     },
   });
 
@@ -93,12 +54,34 @@ const FeaturedEvents = () => {
     queryKey: ["top-destinations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("city_summary")
-        .select("*")
-        .order("upcoming_events", { ascending: false })
-        .limit(4);
+        .from("tm_tbl_events")
+        .select("venue_city, venue_country, event_date, name")
+        .gte("event_date", new Date().toISOString())
+        .not("venue_city", "is", null)
+        .order("event_date", { ascending: true });
+      
       if (error) throw error;
-      return data || [];
+      
+      // Aggregate by city
+      const cityCounts = data.reduce((acc: any, item) => {
+        const city = item.venue_city;
+        if (!acc[city]) {
+          acc[city] = {
+            city_name: city,
+            country: item.venue_country,
+            upcoming_events: 0,
+            city_slug: city.toLowerCase().replace(/\s+/g, '-'),
+            next_event_name: item.name,
+            next_event_date: item.event_date
+          };
+        }
+        acc[city].upcoming_events++;
+        return acc;
+      }, {});
+      
+      return Object.values(cityCounts)
+        .sort((a: any, b: any) => b.upcoming_events - a.upcoming_events)
+        .slice(0, 4);
     },
   });
 
@@ -113,17 +96,17 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {closestEvents?.map((event) => (
-              <Link key={event.event_id} to={`/producto/${event.event_id}`}>
+              <Link key={event.event_id} to={`/producto/${event.event_id}?domain=${event.domain_id}`}>
                 <Card className="overflow-hidden border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
                   <div className="relative h-48 overflow-hidden">
                     <img
                       src={event.image_standard_url || "/placeholder.svg"}
-                      alt={event.event_name}
+                      alt={event.name}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
                     <h3 className="absolute bottom-3 left-3 right-3 text-lg font-bold text-foreground line-clamp-2">
-                      {event.event_name}
+                      {event.name}
                     </h3>
                   </div>
                   <CardContent className="p-4 space-y-2">
@@ -135,9 +118,9 @@ const FeaturedEvents = () => {
                       <Calendar className="h-4 w-4" />
                       <span>{new Date(event.event_date).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}</span>
                     </div>
-                    {event.display_price && (
+                    {event.min_price && (
                       <div className="text-lg font-bold text-foreground">
-                        Desde {event.display_price}€
+                        Desde {Number(event.min_price).toFixed(2)}€
                       </div>
                     )}
                   </CardContent>
@@ -155,11 +138,11 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {artists?.map((artist) => (
-              <Link key={artist.id} to={`/generos?artist=${artist.id}`}>
+              <Link key={artist.attraction_id} to={`/generos?artist=${artist.attraction_id}`}>
                 <Card className="overflow-hidden border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={artist.image || "/placeholder.svg"}
+                      src={artist.image_standard_url || "/placeholder.svg"}
                       alt={artist.name}
                       className="w-full h-full object-cover"
                     />
@@ -170,7 +153,7 @@ const FeaturedEvents = () => {
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Music className="h-3 w-3" />
-                        <span>{artist.count} eventos</span>
+                        <span>{artist.event_count} eventos</span>
                       </div>
                     </div>
                   </div>
@@ -188,14 +171,13 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {genres?.map((genre) => (
-              <Link key={genre.id} to={`/generos?category=${genre.id}`}>
+              <Link key={genre.id} to={`/categorias/${genre.id}`}>
                 <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 p-8 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
                       <Music className="h-8 w-8 text-foreground" />
                     </div>
                     <h3 className="text-xl font-bold">{genre.name}</h3>
-                    <p className="text-sm text-muted-foreground">{genre.count} eventos</p>
                   </div>
                 </Card>
               </Link>
@@ -210,8 +192,8 @@ const FeaturedEvents = () => {
             <p className="text-muted-foreground">Las mejores ciudades</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {destinations?.map((city) => (
-              <Link key={city.id} to={`/destinos/${city.city_slug}`}>
+            {destinations?.map((city: any) => (
+              <Link key={city.city_slug} to={`/destinos`}>
                 <Card className="border-2 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 p-8 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">

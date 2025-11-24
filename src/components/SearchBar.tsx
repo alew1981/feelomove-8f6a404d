@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, X, Calendar, MapPin } from "lucide-react";
@@ -20,16 +20,17 @@ interface SearchBarProps {
 const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return [];
       
-      const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("event_id, event_name, event_date, venue_city, venue_name, image_standard_url, main_attraction_name")
-        .or(`event_name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,main_attraction_name.ilike.%${searchTerm}%`)
+      const { data, error} = await supabase
+        .from("tm_tbl_events")
+        .select("event_id, name, event_date, venue_city, venue_name, image_standard_url, main_attraction_name, domain_id")
+        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,main_attraction_name.ilike.%${searchTerm}%`)
         .order("event_date", { ascending: true })
         .limit(10);
       
@@ -39,8 +40,8 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     enabled: searchTerm.length >= 2,
   });
 
-  const handleResultClick = (eventId: string) => {
-    navigate(`/producto/${eventId}`);
+  const handleResultClick = (eventId: string, domainId: string) => {
+    navigate(`/producto/${eventId}?domain=${domainId}`);
     onClose();
     setSearchTerm("");
   };
@@ -92,18 +93,18 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
           {searchResults?.map((result) => (
             <button
               key={result.event_id}
-              onClick={() => handleResultClick(result.event_id)}
+              onClick={() => handleResultClick(result.event_id, result.domain_id)}
               className="w-full p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 transition-all text-left flex gap-3"
             >
               {result.image_standard_url && (
                 <img
                   src={result.image_standard_url}
-                  alt={result.event_name}
+                  alt={result.name}
                   className="w-16 h-16 object-cover rounded"
                 />
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">{result.event_name}</h3>
+                <h3 className="font-semibold text-sm truncate">{result.name}</h3>
                 {result.main_attraction_name && (
                   <p className="text-xs text-muted-foreground truncate">{result.main_attraction_name}</p>
                 )}

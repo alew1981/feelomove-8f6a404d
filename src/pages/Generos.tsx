@@ -27,32 +27,18 @@ const Generos = () => {
     queryKey: ["artists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("main_attraction_id, main_attraction_name, attraction_image_standard_url, event_date")
-        .not("main_attraction_id", "is", null)
-        .not("main_attraction_name", "is", null)
-        .gt("event_date", new Date().toISOString());
+        .from("tm_tbl_attractions")
+        .select("attraction_id, name, image_standard_url, event_count")
+        .gt("event_count", 0)
+        .order("event_count", { ascending: false });
       
       if (error) throw error;
-      
-      // Count events per artist
-      const artistEventCounts = data.reduce((acc: any, item) => {
-        const id = item.main_attraction_id;
-        if (!acc[id]) {
-          acc[id] = {
-            ...item,
-            event_count: 0
-          };
-        }
-        acc[id].event_count++;
-        return acc;
-      }, {});
-      
-      const uniqueArtists = Object.values(artistEventCounts);
-      
-      return uniqueArtists.sort((a: any, b: any) => 
-        b.event_count - a.event_count
-      );
+      return data?.map(a => ({
+        main_attraction_id: a.attraction_id,
+        main_attraction_name: a.name,
+        attraction_image_standard_url: a.image_standard_url,
+        event_count: a.event_count
+      }));
     },
   });
 
@@ -62,14 +48,14 @@ const Generos = () => {
       if (!selectedArtist) return null;
       
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price")
+        .from("tm_tbl_events")
+        .select("event_id, name, venue_city, venue_name, event_date, image_standard_url, min_price, domain_id")
         .eq("main_attraction_id", selectedArtist)
         .gt("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
-      return data;
+      return data?.map(e => ({ ...e, event_name: e.name }));
     },
     enabled: !!selectedArtist,
   });
@@ -154,9 +140,9 @@ const Generos = () => {
                       )}
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <Button asChild className="w-full">
-                        <Link to={`/producto/${event.event_id}`}>Ver Detalles</Link>
-                      </Button>
+                    <Button asChild className="w-full">
+                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
+                    </Button>
                     </CardFooter>
                   </Card>
                 );

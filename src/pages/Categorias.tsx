@@ -19,33 +19,15 @@ const Categorias = () => {
     queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("category_id, category_name")
-        .not("category_id", "is", null)
-        .not("category_name", "is", null)
-        .gt("event_date", new Date().toISOString());
+        .from("tm_tbl_categories")
+        .select("id, name");
       
       if (error) throw error;
-      
-      // Count events per category
-      const categoryCounts = data.reduce((acc: any, item) => {
-        const id = item.category_id;
-        if (!acc[id]) {
-          acc[id] = {
-            category_id: item.category_id,
-            category_name: item.category_name,
-            event_count: 0
-          };
-        }
-        acc[id].event_count++;
-        return acc;
-      }, {});
-      
-      const uniqueCategories = Object.values(categoryCounts);
-      
-      return uniqueCategories.sort((a: any, b: any) => 
-        b.event_count - a.event_count
-      );
+      return data?.map(c => ({
+        category_id: c.id,
+        category_name: c.name,
+        event_count: 0
+      }));
     },
   });
 
@@ -55,15 +37,15 @@ const Categorias = () => {
       if (!categoryId) return null;
       
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name")
-        .eq("category_id", categoryId)
+        .from("tm_tbl_events")
+        .select("event_id, name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name, domain_id")
+        .eq("category_id", parseInt(categoryId))
         .gt("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(50);
       
       if (error) throw error;
-      return data;
+      return data?.map(e => ({ ...e, event_name: e.name }));
     },
     enabled: !!categoryId,
   });
@@ -148,9 +130,9 @@ const Categorias = () => {
                       )}
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <Button asChild className="w-full">
-                        <Link to={`/producto/${event.event_id}`}>Ver Detalles</Link>
-                      </Button>
+                    <Button asChild className="w-full">
+                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
+                    </Button>
                     </CardFooter>
                   </Card>
                 );

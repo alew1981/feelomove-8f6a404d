@@ -19,13 +19,33 @@ const Destinos = () => {
     queryKey: ["cities"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("city_summary")
-        .select("*")
-        .gt("upcoming_events", 0)
-        .order("upcoming_events", { ascending: false });
+        .from("tm_tbl_events")
+        .select("venue_city, venue_country, event_date, name")
+        .gte("event_date", new Date().toISOString())
+        .not("venue_city", "is", null)
+        .order("event_date", { ascending: true });
       
       if (error) throw error;
-      return data;
+      
+      // Aggregate by city
+      const cityCounts = data.reduce((acc: any, item) => {
+        const city = item.venue_city;
+        if (!acc[city]) {
+          acc[city] = {
+            city_name: city,
+            country: item.venue_country,
+            upcoming_events: 0,
+            city_slug: city.toLowerCase().replace(/\s+/g, '-'),
+            next_event_name: item.name,
+            next_event_date: item.event_date
+          };
+        }
+        acc[city].upcoming_events++;
+        return acc;
+      }, {});
+      
+      return Object.values(cityCounts)
+        .sort((a: any, b: any) => b.upcoming_events - a.upcoming_events);
     },
   });
 
@@ -35,24 +55,24 @@ const Destinos = () => {
       if (!selectedCity) return null;
       
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name")
+        .from("tm_tbl_events")
+        .select("event_id, name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name, domain_id")
         .eq("venue_city", selectedCity)
         .gt("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(50);
       
       if (error) throw error;
-      return data;
+      return data?.map(e => ({ ...e, event_name: e.name }));
     },
     enabled: !!selectedCity,
   });
 
-  const filteredCities = cities?.filter(city =>
+  const filteredCities = cities?.filter((city: any) =>
     city.city_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedCityData = cities?.find(c => c.city_name === selectedCity);
+  const selectedCityData: any = cities?.find((c: any) => c.city_name === selectedCity);
 
   if (selectedCity && selectedCityData) {
     return (
@@ -120,9 +140,9 @@ const Destinos = () => {
                       )}
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <Button asChild className="w-full">
-                        <Link to={`/producto/${event.event_id}`}>Ver Detalles</Link>
-                      </Button>
+                    <Button asChild className="w-full">
+                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
+                    </Button>
                     </CardFooter>
                   </Card>
                 );

@@ -25,14 +25,14 @@ const Eventos = () => {
     queryKey: ["events", page],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("event_list_page_view")
-        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, venue_country, main_attraction_name, venue_latitude, venue_longitude")
+        .from("tm_tbl_events")
+        .select("event_id, name, venue_city, venue_name, event_date, image_standard_url, min_price, venue_country, main_attraction_name, venue_latitude, venue_longitude, domain_id")
         .gt("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .range((page - 1) * EVENTS_PER_PAGE, page * EVENTS_PER_PAGE - 1);
       
       if (error) throw error;
-      return data;
+      return data?.map(e => ({ ...e, event_name: e.name }));
     },
   });
 
@@ -237,7 +237,7 @@ const Eventos = () => {
                   </CardContent>
                   <CardFooter className="p-4 pt-0">
                     <Button asChild className="w-full">
-                      <Link to={`/producto/${event.event_id}`}>Ver Detalles</Link>
+                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
                     </Button>
                   </CardFooter>
                 </Card>
