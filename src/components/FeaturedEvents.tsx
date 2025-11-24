@@ -36,13 +36,13 @@ const FeaturedEvents = () => {
     },
   });
 
-  // Fetch top genres (categories)
-  const { data: genres } = useQuery({
-    queryKey: ["top-genres"],
+  // Fetch top subgenres (subcategories)
+  const { data: subgenres } = useQuery({
+    queryKey: ["top-subgenres"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tm_tbl_categories")
-        .select("id, name")
+        .from("tm_tbl_subcategories")
+        .select("id, name, category_id, domain_id")
         .limit(4);
       if (error) throw error;
       return data || [];
@@ -163,21 +163,21 @@ const FeaturedEvents = () => {
           </div>
         </section>
 
-        {/* Genres */}
+        {/* Subgenres */}
         <section>
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Géneros Musicales</h2>
             <p className="text-muted-foreground">Explora por categoría</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {genres?.map((genre) => (
-              <Link key={genre.id} to={`/categorias/${genre.id}`} className="group">
+            {subgenres?.map((subgenre) => (
+              <Link key={subgenre.id} to={`/categorias/${subgenre.id}`} className="group">
                 <Card className="p-8 text-center group-hover:-translate-y-1">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
                       <Music className="h-8 w-8 text-accent" />
                     </div>
-                    <h3 className="text-xl font-bold">{genre.name}</h3>
+                    <h3 className="text-xl font-bold">{subgenre.name}</h3>
                   </div>
                 </Card>
               </Link>
