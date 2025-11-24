@@ -201,37 +201,37 @@ const GeneroDetalle = () => {
             {filteredArtists?.map((artist: any) => (
               <Card
                 key={artist.main_attraction_id}
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2"
                 onClick={() => setSelectedArtist(artist.main_attraction_id)}
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-64 overflow-hidden">
                   {artist.attraction_image_standard_url ? (
                     <img
                       src={artist.attraction_image_standard_url}
                       alt={artist.main_attraction_name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
                     <div className="w-full h-full bg-muted" />
                   )}
-                  <div className="absolute top-2 right-2">
-                    {artist.event_count > 0 && (
-                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
+                  {artist.event_count > 0 && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-4 py-1 text-sm rounded-full">
                         Entradas disponibles
                       </Badge>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-                <CardContent className="p-6">
-                  <h3 className="font-bold text-xl mb-3">{artist.main_attraction_name}</h3>
-                  <div className="space-y-2">
-                    <Badge variant="secondary" className="bg-accent/10 text-[#121212] border-accent/20">
-                      {artist.event_count} eventos próximos
-                    </Badge>
+                <CardContent className="p-5">
+                  <h3 className="font-bold text-xl mb-3 text-foreground">{artist.main_attraction_name}</h3>
+                  <div className="inline-block bg-[#00FF8F]/20 text-[#121212] px-4 py-2 rounded-lg font-medium text-sm">
+                    {artist.event_count} eventos próximos
                   </div>
                 </CardContent>
-                <CardFooter className="p-6 pt-0">
-                  <Button variant="accent" className="w-full">
+                <CardFooter className="p-5 pt-0">
+                  <Button 
+                    className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-bold py-6 text-base rounded-xl"
+                  >
                     Ver Eventos
                   </Button>
                 </CardFooter>
