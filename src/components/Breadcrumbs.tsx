@@ -9,42 +9,21 @@ const Breadcrumbs = () => {
   const [searchParams] = useSearchParams();
   const pathnames = location.pathname.split("/").filter((x) => x);
 
-  // Obtener nombre del artista si estamos en página de música con query param artist
+  // For now, disable artist breadcrumb since tm_tbl_attractions doesn't exist
   const artistId = searchParams.get('artist');
-  const { data: artistDetails } = useQuery({
-    queryKey: ["artist-breadcrumb", artistId],
-    queryFn: async () => {
-      if (!artistId) return null;
-      
-      const { data, error } = await supabase
-        .from("tm_tbl_attractions")
-        .select("name, subcategory_name")
-        .eq("attraction_id", artistId)
-        .maybeSingle();
-      
-      if (error) return null;
-      return data;
-    },
-    enabled: !!artistId,
-  });
+  const artistDetails = null;
 
-  // Obtener nombre del evento si estamos en página de producto
+  // Get event name for product page using correct column name
   const { data: eventDetails } = useQuery({
-    queryKey: ["event-breadcrumb", params.id, searchParams.get('domain')],
+    queryKey: ["event-breadcrumb", params.id],
     queryFn: async () => {
       if (!params.id) return null;
-      const domainId = searchParams.get('domain');
       
-      let query = supabase
+      const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("name, main_attraction_name, main_attraction_id, subcategory_name")
-        .eq("event_id", params.id);
-      
-      if (domainId) {
-        query = query.eq("domain_id", domainId);
-      }
-      
-      const { data, error } = await query.maybeSingle();
+        .select("name")
+        .eq("id", params.id)
+        .maybeSingle();
       
       if (error) return null;
       return data;
@@ -72,7 +51,7 @@ const Breadcrumbs = () => {
         <Home className="h-4 w-4" />
         <span>Inicio</span>
       </Link>
-      {/* Para la página de producto, mostrar: Inicio > Eventos > Género > Artista > Evento */}
+      {/* For product page, show: Inicio > Eventos > Event */}
       {pathnames[0] === "producto" && eventDetails ? (
         <>
           <div className="flex items-center gap-2">
@@ -84,32 +63,13 @@ const Breadcrumbs = () => {
               Eventos
             </Link>
           </div>
-          {eventDetails.subcategory_name && (
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
-              <Link
-                to={`/musica/${encodeURIComponent(eventDetails.subcategory_name)}`}
-                className="hover:text-foreground transition-colors"
-              >
-                {eventDetails.subcategory_name}
-              </Link>
-            </div>
-          )}
-          {eventDetails.main_attraction_name && eventDetails.main_attraction_id && (
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
-              <span className="text-foreground">
-                {eventDetails.main_attraction_name}
-              </span>
-            </div>
-          )}
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground font-medium">{eventDetails.name}</span>
           </div>
         </>
-      ) : pathnames[0] === "musica" && genreFromPath && artistId && artistDetails ? (
-        /* Para artistas en géneros: Inicio > Música > Género > Artista */
+      ) : pathnames[0] === "musica" && genreFromPath && artistId ? (
+        /* For artists in genres: Inicio > Música > Género */
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
@@ -128,10 +88,6 @@ const Breadcrumbs = () => {
             >
               {genreFromPath}
             </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{artistDetails.name}</span>
           </div>
         </>
       ) : pathnames[0] === "musica" && genreFromPath ? (

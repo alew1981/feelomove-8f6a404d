@@ -1,265 +1,179 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Search, MapPin, Ticket } from "lucide-react";
 import heroImage from "@/assets/hero-festival.jpg";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Hero = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [eventSearch, setEventSearch] = useState("");
+  const [citySearch, setCitySearch] = useState("");
   const navigate = useNavigate();
 
-  // Combined search across events, artists, genres, and cities
-  const { data: searchResults, isLoading } = useQuery({
-    queryKey: ["hero-search", searchQuery],
-    queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return { events: [], artists: [], subgenres: [], cities: [] };
-
-      const [eventsRes, attractionsRes, subgenresRes, citiesRes] = await Promise.all([
-        supabase
-          .from("tm_tbl_events")
-          .select("event_id, name, event_date, venue_city, image_standard_url, domain_id")
-          .ilike("name", `%${searchQuery}%`)
-          .gte("event_date", new Date().toISOString())
-          .order("event_date", { ascending: true })
-          .limit(3),
-        supabase
-          .from("tm_tbl_attractions")
-          .select("attraction_id, name, image_standard_url, event_count, domain_id")
-          .ilike("name", `%${searchQuery}%`)
-          .gt("event_count", 0)
-          .order("event_count", { ascending: false })
-          .limit(3),
-        supabase
-          .from("tm_tbl_subcategories")
-          .select("id, name, category_id, domain_id")
-          .ilike("name", `%${searchQuery}%`)
-          .limit(3),
-        supabase
-          .from("tm_tbl_events")
-          .select("venue_city, venue_country")
-          .ilike("venue_city", `%${searchQuery}%`)
-          .gte("event_date", new Date().toISOString())
-          .not("venue_city", "is", null)
-          .limit(3)
-      ]);
-
-      return {
-        events: eventsRes.data || [],
-        artists: attractionsRes.data || [],
-        subgenres: subgenresRes.data || [],
-        cities: Array.from(new Set(citiesRes.data?.map(e => e.venue_city))).slice(0, 3)
-      };
-    },
-    enabled: searchQuery.length >= 2,
-  });
-
-  const handleEventClick = (eventId: string, domainId: string) => {
-    navigate(`/producto/${eventId}?domain=${domainId}`);
-    setIsOpen(false);
-    setSearchQuery("");
-  };
-
-  const handleArtistClick = (artistId: string) => {
-    navigate(`/musica?artist=${artistId}`);
-    setIsOpen(false);
-    setSearchQuery("");
-  };
-
-  const handleSubgenreClick = (subgenreName: string) => {
-    navigate(`/musica?genre=${encodeURIComponent(subgenreName)}`);
-    setIsOpen(false);
-    setSearchQuery("");
-  };
-
-  const handleCityClick = (city: string) => {
-    navigate(`/destinos?city=${city}`);
-    setIsOpen(false);
-    setSearchQuery("");
+  const handleSearch = () => {
+    if (eventSearch) {
+      navigate(`/eventos?search=${encodeURIComponent(eventSearch)}&city=${encodeURIComponent(citySearch)}`);
+    }
   };
 
   return (
-    <section className="relative min-h-[700px] flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
+    <section className="relative min-h-[750px] flex items-center justify-center overflow-hidden">
+      {/* Background Image with Dark Overlay */}
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           alt="Festival atmosphere"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/85 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-background" />
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 z-10 text-center pt-32 pb-20">
         <div className="animate-fade-in">
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 text-foreground">
-            Vive la <span className="text-accent">Música</span>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 text-white tracking-tight">
+            TU ESPECTÁCULO,{" "}
+            <span className="text-accent">TU ESTANCIA</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto font-light">
-            Conciertos y festivales con alojamiento perfecto incluido
+          <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto">
+            Ahorra en grande y quédate cerca: reserva tu próxima aventura hoy con Feelomove+
           </p>
         </div>
 
-        {/* Unified Search Box */}
-        <div className="max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "150ms" }}>
-          <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
-              <div className="relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground group-focus-within:text-accent transition-colors z-10" />
-                <Input
-                  placeholder="Busca por evento, artista, género o ciudad..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setIsOpen(e.target.value.length >= 2);
-                  }}
-                  className="pl-16 pr-6 h-16 text-lg bg-card border-2 border-border hover:border-accent/50 focus:border-accent transition-all shadow-xl rounded-2xl"
-                />
-                {isLoading && (
-                  <Loader2 className="absolute right-6 top-1/2 -translate-y-1/2 h-5 w-5 text-accent animate-spin" />
-                )}
+        {/* Tabs for Entrada + Hotel / Solo Hotel */}
+        <div className="max-w-4xl mx-auto animate-fade-in" style={{ animationDelay: "150ms" }}>
+          <Tabs defaultValue="package" className="w-full">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 bg-black/40 border border-white/10">
+              <TabsTrigger 
+                value="package" 
+                className="data-[state=active]:bg-accent data-[state=active]:text-background text-white font-semibold"
+              >
+                <Ticket className="w-4 h-4 mr-2" />
+                Entrada + Hotel
+              </TabsTrigger>
+              <TabsTrigger 
+                value="hotel" 
+                className="data-[state=active]:bg-accent data-[state=active]:text-background text-white font-semibold"
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                Ofertas De Hotel
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="package" className="space-y-6">
+              {/* Two-field search bar */}
+              <div className="bg-white rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar recintos, eventos, artistas o equi..."
+                    value={eventSearch}
+                    onChange={(e) => setEventSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="pl-12 h-14 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  />
+                </div>
+                <div className="relative flex-1">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Todas las ciudades"
+                    value={citySearch}
+                    onChange={(e) => setCitySearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="pl-12 h-14 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  />
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  className="h-14 px-12 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-base rounded-xl"
+                >
+                  Buscar
+                </Button>
               </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-[600px] p-0" align="start">
-              <Command>
-                <CommandList className="max-h-[400px]">
-                  {searchResults && (
-                    <>
-                      {searchResults.events.length > 0 && (
-                        <CommandGroup heading="Eventos">
-                          {searchResults.events.map((event) => (
-                            <CommandItem
-                              key={event.event_id}
-                              onSelect={() => handleEventClick(event.event_id, event.domain_id)}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex items-center gap-3 w-full">
-                                {event.image_standard_url && (
-                                  <img
-                                    src={event.image_standard_url}
-                                    alt={event.name}
-                                    className="w-12 h-12 object-cover rounded"
-                                  />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium truncate">{event.name}</p>
-                                  <p className="text-xs text-muted-foreground">{event.venue_city}</p>
-                                </div>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
 
-                      {searchResults.artists.length > 0 && (
-                        <CommandGroup heading="Artistas">
-                          {searchResults.artists.map((artist) => (
-                            <CommandItem
-                              key={artist.attraction_id}
-                              onSelect={() => handleArtistClick(artist.attraction_id)}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex items-center gap-3 w-full">
-                                {artist.image_standard_url && (
-                                  <img
-                                    src={artist.image_standard_url}
-                                    alt={artist.name}
-                                    className="w-12 h-12 object-cover rounded"
-                                  />
-                                )}
-                                <div className="flex-1">
-                                  <p className="font-medium">{artist.name}</p>
-                                  <p className="text-xs text-muted-foreground">{artist.event_count} eventos</p>
-                                </div>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
+              {/* 3 Steps Section */}
+              <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-white/90 text-sm mt-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-background font-bold">
+                    1
+                  </div>
+                  <span className="font-medium">Busque su evento</span>
+                </div>
+                <div className="hidden md:block w-8 h-px bg-white/30" />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-background font-bold">
+                    2
+                  </div>
+                  <span className="font-medium">Seleccione sus entradas y su hotel</span>
+                </div>
+                <div className="hidden md:block w-8 h-px bg-white/30" />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-background font-bold">
+                    3
+                  </div>
+                  <span className="font-medium">¡Haga el pago y guarde!</span>
+                </div>
+              </div>
+            </TabsContent>
 
-                      {searchResults.subgenres.length > 0 && (
-                        <CommandGroup heading="Géneros Musicales">
-                          {searchResults.subgenres.map((subgenre) => (
-                            <CommandItem
-                              key={subgenre.id}
-                              onSelect={() => handleSubgenreClick(subgenre.name)}
-                              className="cursor-pointer"
-                            >
-                              <p className="font-medium">{subgenre.name}</p>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
+            <TabsContent value="hotel" className="space-y-6">
+              {/* Two-field search bar for hotels */}
+              <div className="bg-white rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar eventos o destinos..."
+                    value={eventSearch}
+                    onChange={(e) => setEventSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && navigate('/destinos')}
+                    className="pl-12 h-14 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  />
+                </div>
+                <div className="relative flex-1">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Todas las ciudades"
+                    value={citySearch}
+                    onChange={(e) => setCitySearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && navigate('/destinos')}
+                    className="pl-12 h-14 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  />
+                </div>
+                <Button
+                  onClick={() => navigate('/destinos')}
+                  className="h-14 px-12 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-base rounded-xl"
+                >
+                  Buscar
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
 
-                      {searchResults.cities.length > 0 && (
-                        <CommandGroup heading="Ciudades">
-                          {searchResults.cities.map((city) => (
-                            <CommandItem
-                              key={city}
-                              onSelect={() => handleCityClick(city)}
-                              className="cursor-pointer"
-                            >
-                              <p className="font-medium">{city}</p>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
-
-                      {!isLoading && searchQuery.length >= 2 && 
-                       searchResults.events.length === 0 && 
-                       searchResults.artists.length === 0 && 
-                       searchResults.subgenres.length === 0 && 
-                       searchResults.cities.length === 0 && (
-                        <CommandEmpty>No se encontraron resultados</CommandEmpty>
-                      )}
-                    </>
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-12 flex flex-wrap justify-center gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate("/eventos")}
-              className="border-accent/20 hover:border-accent hover:bg-accent/10"
+              className="border-white/20 hover:border-accent hover:bg-accent/10 text-white hover:text-accent"
             >
               Todos los eventos
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/destinos")}
-              className="border-accent/20 hover:border-accent hover:bg-accent/10"
+              onClick={() => navigate("/artistas")}
+              className="border-white/20 hover:border-accent hover:bg-accent/10 text-white hover:text-accent"
             >
-              Explorar destinos
+              Ver artistas
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/generos")}
-              className="border-accent/20 hover:border-accent hover:bg-accent/10"
+              onClick={() => navigate("/musica")}
+              className="border-white/20 hover:border-accent hover:bg-accent/10 text-white hover:text-accent"
             >
-              Ver géneros
+              Explorar géneros
             </Button>
           </div>
         </div>

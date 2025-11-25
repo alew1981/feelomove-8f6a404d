@@ -12,7 +12,7 @@ const FeaturedEvents = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("event_id, name, venue_city, event_date, image_standard_url, min_price, domain_id")
+        .select("id, name, venue_city, event_date, image_standard_url, price_min_excl_fees")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(4);
@@ -21,33 +21,9 @@ const FeaturedEvents = () => {
     },
   });
 
-  // Fetch top artists
-  const { data: artists } = useQuery({
-    queryKey: ["top-artists"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tm_tbl_attractions")
-        .select("attraction_id, name, image_standard_url, event_count")
-        .gt("event_count", 0)
-        .order("event_count", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Fetch top subgenres (subcategories)
-  const { data: subgenres } = useQuery({
-    queryKey: ["top-subgenres"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tm_tbl_subcategories")
-        .select("id, name, category_id, domain_id")
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Artists and subgenres temporarily disabled (tables don't exist)
+  const artists = [];
+  const subgenres = [];
 
   // Fetch top destinations (cities)
   const { data: destinations } = useQuery({
@@ -96,7 +72,7 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {closestEvents?.map((event) => (
-              <Link key={event.event_id} to={`/producto/${event.event_id}?domain=${event.domain_id}`} className="group">
+              <Link key={event.id} to={`/producto/${event.id}`} className="group">
                 <Card className="overflow-hidden h-full group-hover:-translate-y-1">
                   <div className="relative h-48 overflow-hidden">
                     <img
@@ -118,9 +94,9 @@ const FeaturedEvents = () => {
                       <Calendar className="h-4 w-4 text-accent" />
                       <span>{new Date(event.event_date).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}</span>
                     </div>
-                    {event.min_price && (
+                    {event.price_min_excl_fees && (
                       <div className="text-lg font-bold text-accent">
-                        Desde {Number(event.min_price).toFixed(2)}€
+                        Desde {Number(event.price_min_excl_fees).toFixed(2)}€
                       </div>
                     )}
                   </CardContent>
@@ -130,60 +106,6 @@ const FeaturedEvents = () => {
           </div>
         </section>
 
-        {/* Artists */}
-        <section>
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-2">Artistas Destacados</h2>
-            <p className="text-muted-foreground">Los más populares</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {artists?.map((artist) => (
-              <Link key={artist.attraction_id} to={`/generos?artist=${artist.attraction_id}`} className="group">
-                <Card className="overflow-hidden h-full group-hover:-translate-y-1">
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={artist.image_standard_url || "/placeholder.svg"}
-                      alt={artist.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <h3 className="text-lg font-bold text-foreground line-clamp-2 mb-1">
-                        {artist.name}
-                      </h3>
-                      <div className="flex items-center gap-1 text-sm text-accent">
-                        <Music className="h-3 w-3" />
-                        <span>{artist.event_count} eventos</span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Subgenres */}
-        <section>
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-2">Géneros Musicales</h2>
-            <p className="text-muted-foreground">Explora por categoría</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {subgenres?.map((subgenre) => (
-              <Link key={subgenre.id} to={`/musica?genre=${encodeURIComponent(subgenre.name)}`} className="group">
-                <Card className="p-8 text-center group-hover:-translate-y-1">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                      <Music className="h-8 w-8 text-accent" />
-                    </div>
-                    <h3 className="text-xl font-bold">{subgenre.name}</h3>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
 
         {/* Destinations */}
         <section>

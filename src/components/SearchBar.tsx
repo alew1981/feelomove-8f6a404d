@@ -29,8 +29,8 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       
       const { data, error} = await supabase
         .from("tm_tbl_events")
-        .select("event_id, name, event_date, venue_city, venue_name, image_standard_url, main_attraction_name, domain_id")
-        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,main_attraction_name.ilike.%${searchTerm}%`)
+        .select("id, name, event_date, venue_city, venue_name, image_standard_url")
+        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%`)
         .order("event_date", { ascending: true })
         .limit(10);
       
@@ -40,8 +40,8 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     enabled: searchTerm.length >= 2,
   });
 
-  const handleResultClick = (eventId: string, domainId: string) => {
-    navigate(`/producto/${eventId}?domain=${domainId}`);
+  const handleResultClick = (eventId: string) => {
+    navigate(`/producto/${eventId}`);
     onClose();
     setSearchTerm("");
   };
@@ -92,8 +92,8 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
           
           {searchResults?.map((result) => (
             <button
-              key={result.event_id}
-              onClick={() => handleResultClick(result.event_id, result.domain_id)}
+              key={result.id}
+              onClick={() => handleResultClick(result.id)}
               className="w-full p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 transition-all text-left flex gap-3"
             >
               {result.image_standard_url && (
@@ -105,9 +105,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
               )}
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-sm truncate">{result.name}</h3>
-                {result.main_attraction_name && (
-                  <p className="text-xs text-muted-foreground truncate">{result.main_attraction_name}</p>
-                )}
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
