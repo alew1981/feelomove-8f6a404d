@@ -155,7 +155,7 @@ const Hero = () => {
               variant="outline"
               size="sm"
               onClick={() => navigate("/eventos")}
-              className="border-white/20 hover:border-accent hover:bg-accent/10 text-white hover:text-accent"
+              className="bg-[#121212] border-accent text-accent hover:bg-accent hover:text-[#121212] transition-all font-semibold"
             >
               Todos los eventos
             </Button>
@@ -163,7 +163,7 @@ const Hero = () => {
               variant="outline"
               size="sm"
               onClick={() => navigate("/artistas")}
-              className="border-white/20 hover:border-accent hover:bg-accent/10 text-white hover:text-accent"
+              className="bg-[#121212] border-accent text-accent hover:bg-accent hover:text-[#121212] transition-all font-semibold"
             >
               Ver artistas
             </Button>
@@ -171,7 +171,7 @@ const Hero = () => {
               variant="outline"
               size="sm"
               onClick={() => navigate("/musica")}
-              className="border-white/20 hover:border-accent hover:bg-accent/10 text-white hover:text-accent"
+              className="bg-[#121212] border-accent text-accent hover:bg-accent hover:text-[#121212] transition-all font-semibold"
             >
               Explorar géneros
             </Button>
