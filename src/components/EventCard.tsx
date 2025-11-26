@@ -82,7 +82,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
   return (
     <Link to={`/producto/${event.event_id}`} className="group block">
       {viewMode === "grid" ? (
-        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border border-border/20 shadow-lg">
+        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
             <div className="relative h-56 overflow-hidden">
@@ -117,35 +117,35 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
               {/* Countdown Timer and Badge - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                 {showCountdown && (
-                  <div className="bg-black/90 backdrop-blur-md rounded-md px-2.5 py-1.5 shadow-xl border border-white/20">
-                    <div className="flex gap-1.5 text-accent font-mono text-center">
+                  <div className="bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border border-accent/30">
+                    <div className="flex gap-2 text-accent font-['Poppins'] text-center">
                       {isLessThan24Hours ? (
                         <>
                           <div className="flex flex-col items-center">
-                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
-                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">HRS</div>
+                            <div className="text-xl font-bold leading-none">{String(countdown.hours).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-semibold tracking-wide text-white/70 mt-0.5">HRS</div>
                           </div>
-                          <div className="text-xl font-black self-center leading-none pb-2">:</div>
+                          <div className="text-xl font-bold self-center leading-none pb-2 text-white/60">:</div>
                           <div className="flex flex-col items-center">
-                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.minutes).padStart(2, '0')}</div>
-                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">MIN</div>
+                            <div className="text-xl font-bold leading-none">{String(countdown.minutes).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-semibold tracking-wide text-white/70 mt-0.5">MIN</div>
                           </div>
-                          <div className="text-xl font-black self-center leading-none pb-2">:</div>
+                          <div className="text-xl font-bold self-center leading-none pb-2 text-white/60">:</div>
                           <div className="flex flex-col items-center">
-                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.seconds).padStart(2, '0')}</div>
-                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">SEG</div>
+                            <div className="text-xl font-bold leading-none">{String(countdown.seconds).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-semibold tracking-wide text-white/70 mt-0.5">SEG</div>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="flex flex-col items-center">
-                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.days).padStart(2, '0')}</div>
-                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">DÍAS</div>
+                            <div className="text-xl font-bold leading-none">{String(countdown.days).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-semibold tracking-wide text-white/70 mt-0.5">DÍAS</div>
                           </div>
-                          <div className="text-xl font-black self-center leading-none pb-2">:</div>
+                          <div className="text-xl font-bold self-center leading-none pb-2 text-white/60">:</div>
                           <div className="flex flex-col items-center">
-                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
-                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">HRS</div>
+                            <div className="text-xl font-bold leading-none">{String(countdown.hours).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-semibold tracking-wide text-white/70 mt-0.5">HRS</div>
                           </div>
                         </>
                       )}
@@ -162,7 +162,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
 
             {/* Event Name Below Image */}
             <div className="bg-background px-4 pt-4 pb-2">
-              <h3 className="text-foreground text-lg font-black truncate leading-tight tracking-tight" title={event.event_name}>
+              <h3 className="text-foreground text-lg font-bold truncate leading-tight tracking-tight font-['Poppins']" title={event.event_name}>
                 {event.event_name}
               </h3>
             </div>
@@ -179,7 +179,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
         </Card>
       ) : (
         // List View
-        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl border border-border/20 shadow-lg">
+        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-row h-40">
             {/* Image Section - Left */}
             <div className="relative w-64 flex-shrink-0 overflow-hidden">
@@ -203,7 +203,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-black text-foreground mb-1 line-clamp-1">
+                    <h3 className="text-xl font-bold text-foreground mb-1 line-clamp-1 font-['Poppins']">
                       {event.event_name}
                     </h3>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -223,7 +223,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                     </Badge>
                   )}
                   {showCountdown && (
-                    <div className="text-xs font-bold font-mono text-muted-foreground">
+                    <div className="text-xs font-semibold font-['Poppins'] text-muted-foreground">
                       {isLessThan24Hours 
                         ? `${String(countdown.hours).padStart(2, '0')}:${String(countdown.minutes).padStart(2, '0')}:${String(countdown.seconds).padStart(2, '0')}`
                         : `${countdown.days}d ${String(countdown.hours).padStart(2, '0')}h`
