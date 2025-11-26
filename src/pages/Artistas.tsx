@@ -220,17 +220,17 @@ const Artistas = () => {
 
         {/* Artist Cards */}
         {isLoadingArtists ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
               <ArtistCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredArtists && filteredArtists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredArtists.map((artist: any) => (
               <Card
                 key={artist.main_attraction_name}
-                className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2"
+                className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative"
                 onClick={() => setSelectedArtist(artist.main_attraction_name)}
               >
                 <div className="relative h-64 overflow-hidden">
@@ -238,30 +238,35 @@ const Artistas = () => {
                     <img
                       src={artist.attraction_image_standard_url}
                       alt={artist.main_attraction_name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full bg-muted" />
                   )}
                   {artist.event_count > 0 && (
                     <div className="absolute top-3 right-3">
-                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-4 py-1 text-sm rounded-full uppercase">
+                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
                         Disponible
                       </Badge>
                     </div>
                   )}
                 </div>
-                <CardContent className="p-5">
-                  <h3 className="font-bold text-xl mb-3 text-foreground">{artist.main_attraction_name}</h3>
-                  <div className="inline-block bg-[#00FF8F]/20 text-[#121212] px-4 py-2 rounded-lg font-medium text-sm">
-                    {artist.event_count} eventos próximos
+                <CardContent className="p-4 space-y-3">
+                  <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
+                    {artist.main_attraction_name}
+                  </h3>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground" style={{ fontFamily: 'Poppins' }}>
+                      {artist.event_count} eventos próximos
+                    </p>
                   </div>
                 </CardContent>
-                <CardFooter className="p-5 pt-0">
+                <CardFooter className="p-4 pt-0 flex justify-center">
                   <Button 
-                    className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-bold py-6 text-base rounded-xl"
+                    className="bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold px-6 py-2 rounded-lg text-sm"
+                    style={{ fontFamily: 'Poppins' }}
                   >
-                    Ver Eventos
+                    Ver Eventos →
                   </Button>
                 </CardFooter>
               </Card>
