@@ -166,7 +166,7 @@ const Producto = () => {
                           </div>
                           <p className="text-xs text-muted-foreground">+ tasas</p>
                           <Button variant="add" size="sm" className="mt-3">
-                            Añadir
+                            Añadir entradas 
                           </Button>
                         </div>
                       </div>
