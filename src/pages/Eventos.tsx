@@ -131,7 +131,7 @@ const Eventos = () => {
         <div className="mb-8 mt-6">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">Festivales y Conciertos</h1>
           <p className="text-muted-foreground text-lg">
-            {filteredAndSortedEvents.length} eventos disponibles {displayedEvents.length < filteredAndSortedEvents.length && `(mostrando ${displayedEvents.length})`}
+            Tus artistas favoritos
           </p>
         </div>
 
