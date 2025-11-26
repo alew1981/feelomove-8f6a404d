@@ -192,7 +192,7 @@ const Eventos = () => {
 
         {/* Events Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(8)].map((_, i) => (
               <EventCardSkeleton key={i} />
             ))}
@@ -203,7 +203,7 @@ const Eventos = () => {
             <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAndSortedEvents.map(event => (
               <EventCard key={event.event_id} event={event} />
             ))}

@@ -81,13 +81,13 @@ const FeaturedEvents = () => {
           </div>
           
           {isLoadingEvents ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-96 bg-muted animate-pulse rounded-lg" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredEvents?.slice(0, 4).map((event) => (
                 <EventCard key={event.event_id} event={event} />
               ))}
@@ -103,13 +103,13 @@ const FeaturedEvents = () => {
           </div>
           
           {isLoadingDestinations ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {destinations?.map((city: any) => (
                 <Link key={city.city_slug} to={`/destinos`} className="group">
                   <Card className="p-8 text-center transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-card-hover border-border">
@@ -136,7 +136,7 @@ const FeaturedEvents = () => {
               <h2 className="text-3xl md:text-4xl font-bold mb-2">Más Eventos</h2>
               <p className="text-muted-foreground">Descubre más opciones increíbles</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredEvents.slice(4, 8).map((event) => (
                 <EventCard key={event.event_id} event={event} />
               ))}

@@ -90,8 +90,8 @@ const EventCard = ({ event }: EventCardProps) => {
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-purple-800/70 to-black/90" />
+            {/* Gradient Overlay - Only at bottom for readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
             {/* Date Card - Absolute positioned on the left */}
             <div className="absolute -left-2 top-4 bg-white rounded-lg shadow-xl overflow-hidden z-10" style={{ width: '100px' }}>
