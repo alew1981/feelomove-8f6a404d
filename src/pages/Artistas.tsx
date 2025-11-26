@@ -106,6 +106,31 @@ const Artistas = () => {
     return uniqueGenres.sort();
   }, [artists]);
 
+  // Extract unique months from event dates
+  const availableMonths = useMemo(() => {
+    if (!artists) return [];
+    const monthsSet = new Set<string>();
+    
+    artists.forEach((artist: any) => {
+      artist.dates?.forEach((date: string) => {
+        const eventDate = new Date(date);
+        const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        monthsSet.add(monthKey);
+      });
+    });
+    
+    const months = Array.from(monthsSet).sort();
+    return months.map(monthKey => {
+      const [year, month] = monthKey.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      const monthName = date.toLocaleDateString('es-ES', { month: 'long' });
+      return {
+        key: monthKey,
+        label: `${monthName} ${year}`
+      };
+    });
+  }, [artists]);
+
   const filteredArtists = artists?.filter((artist: any) => {
     const matchesSearch = artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -118,24 +143,12 @@ const Artistas = () => {
     // Apply date filter
     let matchesDate = true;
     if (filterDate !== "all") {
-      const now = new Date();
       const dates = artist.dates || [];
-      
-      if (filterDate === "this-month") {
-        matchesDate = dates.some((d: string) => {
-          const eventDate = new Date(d);
-          return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear();
-        });
-      } else if (filterDate === "next-month") {
-        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1);
-        matchesDate = dates.some((d: string) => {
-          const eventDate = new Date(d);
-          return eventDate.getMonth() === nextMonth.getMonth() && eventDate.getFullYear() === nextMonth.getFullYear();
-        });
-      } else if (filterDate === "3-months") {
-        const threeMonthsLater = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-        matchesDate = dates.some((d: string) => new Date(d) <= threeMonthsLater);
-      }
+      matchesDate = dates.some((d: string) => {
+        const eventDate = new Date(d);
+        const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === filterDate;
+      });
     }
     
     return matchesSearch && matchesCity && matchesGenre && matchesDate;
@@ -265,13 +278,13 @@ const Artistas = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={filterDate} onValueChange={setFilterDate}>
               <SelectTrigger className="h-11 border-2">
-                <SelectValue placeholder="Todas las fechas" />
+                <SelectValue placeholder="Todos los meses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las fechas</SelectItem>
-                <SelectItem value="this-month">Este mes</SelectItem>
-                <SelectItem value="next-month">Próximo mes</SelectItem>
-                <SelectItem value="3-months">Próximos 3 meses</SelectItem>
+                <SelectItem value="all">Todos los meses</SelectItem>
+                {availableMonths.map(month => (
+                  <SelectItem key={month.key} value={month.key}>{month.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -345,16 +358,11 @@ const Artistas = () => {
                   ) : (
                     <div className="w-full h-full bg-muted" />
                   )}
-                  {artist.event_count > 0 && (
-                    <div className="absolute top-3 right-3 flex flex-col gap-2">
-                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                        Disponible
-                      </Badge>
-                      <Badge className="bg-background/90 text-foreground border-2 border-[#00FF8F]/20 font-medium px-3 py-1 text-xs">
-                        {artist.event_count} eventos
-                      </Badge>
-                    </div>
-                  )}
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                      {artist.event_count} eventos
+                    </Badge>
+                  </div>
                 </div>
                 <CardContent className="p-4 space-y-3">
                   <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
