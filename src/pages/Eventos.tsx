@@ -9,7 +9,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Grid3x3, List } from "lucide-react";
+import { Search } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 
 const Eventos = () => {
@@ -17,7 +17,6 @@ const Eventos = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
   const { ref: loadMoreRef, inView } = useInView({
@@ -157,8 +156,8 @@ const Eventos = () => {
             />
           </div>
 
-          {/* Filter Row with View Toggle */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Filter Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="h-11 border-2">
                 <SelectValue placeholder="Ordenar por" />
@@ -207,37 +206,14 @@ const Eventos = () => {
             >
               Limpiar filtros
             </button>
-
-            {/* View Toggle */}
-            <div className="flex gap-2 h-11">
-              <Button
-                variant={viewMode === "grid" ? "primary" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("grid")}
-                className="flex-1"
-              >
-                <Grid3x3 className="h-5 w-5" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "primary" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("list")}
-                className="flex-1"
-              >
-                <List className="h-5 w-5" />
-              </Button>
-            </div>
           </div>
         </div>
 
-        {/* Events Grid/List */}
+        {/* Events Grid */}
         {isLoading ? (
-          <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
-          }>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(8)].map((_, i) => (
-              <EventCardSkeleton key={i} viewMode={viewMode} />
+              <EventCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredAndSortedEvents.length === 0 ? (
@@ -247,17 +223,14 @@ const Eventos = () => {
           </div>
         ) : (
           <>
-            <div className={viewMode === "grid" 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
-            }>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedEvents.map((event, index) => (
                 <div 
                   key={event.event_id}
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <EventCard event={event} viewMode={viewMode} />
+                  <EventCard event={event} />
                 </div>
               ))}
             </div>
