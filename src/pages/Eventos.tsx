@@ -1,264 +1,214 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import Breadcrumbs from "@/components/Breadcrumbs";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, ArrowUpDown, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import Footer from "@/components/Footer";
+import EventCard from "@/components/EventCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const Eventos = () => {
-  const [sortBy, setSortBy] = useState("date");
-  const [filterCity, setFilterCity] = useState("all");
-  const [filterArtist, setFilterArtist] = useState("all");
-  const [filterMonth, setFilterMonth] = useState("all");
-  const [page, setPage] = useState(1);
-  const [allEvents, setAllEvents] = useState<any[]>([]);
-  const observerTarget = useRef(null);
-  const EVENTS_PER_PAGE = 50;
+  const [sortBy, setSortBy] = useState<string>("date-asc");
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterArtist, setFilterArtist] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const { data: events, isLoading, isFetching } = useQuery({
-    queryKey: ["events", page],
+  // Fetch events using vw_events_with_hotels
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["all-events"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("id, name, venue_city, venue_name, event_date, image_standard_url, price_min_excl_fees, venue_country, attraction_names, venue_latitude, venue_longitude")
+        .from("vw_events_with_hotels")
+        .select(`
+          event_id,
+          event_name,
+          event_date,
+          venue_city,
+          image_standard_url,
+          ticket_cheapest_price,
+          package_price_min,
+          has_hotel_offers,
+          sold_out,
+          seats_available,
+          hotels_count,
+          attraction_names
+        `)
         .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .range((page - 1) * EVENTS_PER_PAGE, page * EVENTS_PER_PAGE - 1);
+        .order("event_date", { ascending: true });
       
       if (error) throw error;
-      return data?.map(e => ({ 
-        ...e, 
-        event_id: e.id,
-        event_name: e.name,
-        min_price: e.price_min_excl_fees,
-        main_attraction_name: e.attraction_names?.[0] || null
-      }));
+      return data || [];
     },
   });
 
-  useEffect(() => {
-    if (events) {
-      setAllEvents(prev => {
-        const newEvents = events.filter(e => !prev.some(p => p.event_id === e.event_id));
-        return [...prev, ...newEvents];
-      });
-    }
+  // Extract unique cities and artists for filters
+  const cities = useMemo(() => {
+    if (!events) return [];
+    const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
+    return uniqueCities.sort();
   }, [events]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && !isFetching && events && events.length === EVENTS_PER_PAGE) {
-          setPage(prev => prev + 1);
-        }
-      },
-      { threshold: 1 }
-    );
+  const artists = useMemo(() => {
+    if (!events) return [];
+    const allArtists = events.flatMap(e => e.attraction_names || []);
+    const uniqueArtists = [...new Set(allArtists)];
+    return uniqueArtists.sort();
+  }, [events]);
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+  // Filter and sort events
+  const filteredAndSortedEvents = useMemo(() => {
+    if (!events) return [];
+
+    let filtered = [...events];
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(event => 
+        event.event_name.toLowerCase().includes(query) ||
+        event.venue_city?.toLowerCase().includes(query) ||
+        event.attraction_names?.some(artist => artist.toLowerCase().includes(query))
+      );
     }
 
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [isFetching, events]);
+    // Apply city filter
+    if (filterCity !== "all") {
+      filtered = filtered.filter(event => event.venue_city === filterCity);
+    }
 
-  const cities = [...new Set(allEvents?.map(e => e.venue_city).filter(Boolean))];
-  const artists = [...new Set(allEvents?.map(e => e.main_attraction_name).filter(Boolean))];
-  
-  const months = useMemo(() => {
-    const monthSet = new Set<string>();
-    allEvents?.forEach(event => {
-      const date = new Date(event.event_date);
-      const monthYear = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-      monthSet.add(monthYear);
-    });
-    return Array.from(monthSet).sort((a, b) => {
-      const [monthA, yearA] = a.split(' - ');
-      const [monthB, yearB] = b.split(' - ');
-      const dateA = new Date(`${monthA} 1, ${yearA}`);
-      const dateB = new Date(`${monthB} 1, ${yearB}`);
-      return dateA.getTime() - dateB.getTime();
-    });
-  }, [allEvents]);
+    // Apply artist filter
+    if (filterArtist !== "all") {
+      filtered = filtered.filter(event => 
+        event.attraction_names?.includes(filterArtist)
+      );
+    }
 
-  const filteredEvents = allEvents?.filter(event => {
-    if (filterCity !== "all" && event.venue_city !== filterCity) return false;
-    if (filterArtist !== "all" && event.main_attraction_name !== filterArtist) return false;
-    if (filterMonth !== "all") {
-      const eventDate = new Date(event.event_date);
-      const eventMonthYear = eventDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-      if (eventMonthYear !== filterMonth) return false;
+    // Apply sorting
+    switch (sortBy) {
+      case "date-asc":
+        filtered.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+        break;
+      case "date-desc":
+        filtered.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+        break;
+      case "price-asc":
+        filtered.sort((a, b) => (a.ticket_cheapest_price || 0) - (b.ticket_cheapest_price || 0));
+        break;
+      case "price-desc":
+        filtered.sort((a, b) => (b.ticket_cheapest_price || 0) - (a.ticket_cheapest_price || 0));
+        break;
+      case "packages":
+        filtered = filtered.filter(e => e.has_hotel_offers);
+        filtered.sort((a, b) => (a.package_price_min || 0) - (b.package_price_min || 0));
+        break;
     }
-    return true;
-  });
 
-  const sortedEvents = filteredEvents?.sort((a, b) => {
-    if (sortBy === "date") {
-      return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
-    }
-    if (sortBy === "price-asc" && a.min_price && b.min_price) {
-      return Number(a.min_price) - Number(b.min_price);
-    }
-    if (sortBy === "price-desc" && a.min_price && b.min_price) {
-      return Number(b.min_price) - Number(a.min_price);
-    }
-    return 0;
-  });
+    return filtered;
+  }, [events, searchQuery, filterCity, filterArtist, sortBy]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      <main className="container mx-auto px-4 py-8 mt-20">
+      <div className="container mx-auto px-4 py-8">
         <Breadcrumbs />
         
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Todos los Eventos</h1>
+        {/* Header */}
+        <div className="mb-8 mt-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-2">Todos los Eventos</h1>
           <p className="text-muted-foreground text-lg">
-            Descubre los mejores eventos y conciertos en España
+            {filteredAndSortedEvents.length} eventos disponibles
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8">
-          <div className="flex items-center gap-2">
-            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+        {/* Filters and Search */}
+        <div className="mb-8 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar eventos, ciudades o artistas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
+            />
+          </div>
+
+          {/* Filter Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="h-11 border-2">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date">Fecha</SelectItem>
-                <SelectItem value="price-asc">Precio: Menor a Mayor</SelectItem>
-                <SelectItem value="price-desc">Precio: Mayor a Menor</SelectItem>
+                <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
+                <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
+                <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
+                <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                <SelectItem value="packages">Con paquetes</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todas las ciudades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
+                {cities.map(city => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterArtist} onValueChange={setFilterArtist}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todos los artistas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los artistas</SelectItem>
+                {artists.map(artist => (
+                  <SelectItem key={artist} value={artist}>{artist}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <button
+              onClick={() => {
+                setSortBy("date-asc");
+                setFilterCity("all");
+                setFilterArtist("all");
+                setSearchQuery("");
+              }}
+              className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
+            >
+              Limpiar filtros
+            </button>
           </div>
-
-          <Select value={filterCity} onValueChange={setFilterCity}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por ciudad" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las ciudades</SelectItem>
-              {cities.map(city => (
-                <SelectItem key={city} value={city!}>{city}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterArtist} onValueChange={setFilterArtist}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por artista" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los artistas</SelectItem>
-              {artists.map(artist => (
-                <SelectItem key={artist} value={artist!}>{artist}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterMonth} onValueChange={setFilterMonth}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por mes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los meses</SelectItem>
-              {months.map(month => (
-                <SelectItem key={month} value={month}>{month}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
-
-        {isLoading && page === 1 ? (
-          <div className="text-center py-12">Cargando eventos...</div>
+        {/* Events Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-96 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        ) : filteredAndSortedEvents.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
+            <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+          </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {sortedEvents?.map((event) => {
-              const eventDate = new Date(event.event_date);
-              const formattedDate = eventDate.toLocaleDateString('es-ES', { 
-                day: 'numeric', 
-                month: 'short',
-                year: 'numeric'
-              });
-              
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const eventDay = new Date(event.event_date);
-              eventDay.setHours(0, 0, 0, 0);
-              const daysRemaining = Math.ceil((eventDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-                return (
-                  <Link key={event.event_id} to={`/producto/${event.event_id}`} className="group">
-                    <Card className="overflow-hidden h-full group-hover:-translate-y-1">
-                      <div className="h-48 overflow-hidden relative">
-                        <img
-                          src={event.image_standard_url || "/placeholder.svg"}
-                          alt={event.event_name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {daysRemaining > 0 && daysRemaining <= 7 && (
-                          <Badge className="absolute top-3 left-3 bg-[#00FF8F] text-[#121212] font-bold border-0 px-3 py-1">
-                            {daysRemaining === 1 ? '¡MAÑANA!' : `EN ${daysRemaining} DÍAS`}
-                          </Badge>
-                        )}
-                      </div>
-                      <CardContent className="p-4">
-                      {event.main_attraction_name && (
-                        <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
-                      )}
-                      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-accent" />
-                          <span>{formattedDate}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-accent" />
-                          <span>{event.venue_city}</span>
-                        </div>
-                        {event.venue_name && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-xs">{event.venue_name}</span>
-                          </div>
-                        )}
-                      </div>
-                      {event.min_price && (
-                        <div className="mt-3">
-                          <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">Desde €{Number(event.min_price).toFixed(2)}</Badge>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredAndSortedEvents.map(event => (
+              <EventCard key={event.event_id} event={event} />
+            ))}
           </div>
-          <div ref={observerTarget} className="h-20 flex items-center justify-center">
-            {isFetching && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Cargando más eventos...</span>
-              </div>
-            )}
-          </div>
-        </>
         )}
-      </main>
-
+      </div>
       <Footer />
     </div>
   );

@@ -125,6 +125,69 @@ export type Database = {
         }
         Relationships: []
       }
+      tbl_event_hotel_prices: {
+        Row: {
+          adults: number | null
+          api_response: Json | null
+          checkin_date: string
+          checkout_date: string
+          created_at: string | null
+          currency: string | null
+          event_date: string
+          event_id: string
+          event_name: string | null
+          guest_nationality: string | null
+          hotel_id: string
+          hotel_name: string | null
+          id: string
+          price: number
+          price_fetched_at: string | null
+          suggested_selling_price: number | null
+          updated_at: string | null
+          venue_city: string | null
+        }
+        Insert: {
+          adults?: number | null
+          api_response?: Json | null
+          checkin_date: string
+          checkout_date: string
+          created_at?: string | null
+          currency?: string | null
+          event_date: string
+          event_id: string
+          event_name?: string | null
+          guest_nationality?: string | null
+          hotel_id: string
+          hotel_name?: string | null
+          id?: string
+          price: number
+          price_fetched_at?: string | null
+          suggested_selling_price?: number | null
+          updated_at?: string | null
+          venue_city?: string | null
+        }
+        Update: {
+          adults?: number | null
+          api_response?: Json | null
+          checkin_date?: string
+          checkout_date?: string
+          created_at?: string | null
+          currency?: string | null
+          event_date?: string
+          event_id?: string
+          event_name?: string | null
+          guest_nationality?: string | null
+          hotel_id?: string
+          hotel_name?: string | null
+          id?: string
+          price?: number
+          price_fetched_at?: string | null
+          suggested_selling_price?: number | null
+          updated_at?: string | null
+          venue_city?: string | null
+        }
+        Relationships: []
+      }
       tm_tbl_events: {
         Row: {
           attraction_ids: string[] | null
@@ -298,7 +361,64 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_events_with_hotels: {
+        Row: {
+          attraction_ids: string[] | null
+          attraction_names: string[] | null
+          attractions: Json | null
+          avg_hotel_price: number | null
+          cancelled: boolean | null
+          categories: Json | null
+          day_of_week: string | null
+          estimated_package_savings: number | null
+          event_created_at: string | null
+          event_currency: string | null
+          event_date: string | null
+          event_id: string | null
+          event_name: string | null
+          event_updated_at: string | null
+          event_url: string | null
+          has_hotel_offers: boolean | null
+          hotels: Json | null
+          hotels_count: number | null
+          hotels_last_updated: string | null
+          image_large_height: number | null
+          image_large_url: string | null
+          image_large_width: number | null
+          image_standard_url: string | null
+          local_event_date: string | null
+          max_hotel_price: number | null
+          min_hotel_price: number | null
+          off_sale_date: string | null
+          on_sale_date: string | null
+          package_price_max: number | null
+          package_price_min: number | null
+          promoter_address: Json | null
+          promoter_code: string | null
+          promoter_name: string | null
+          rescheduled: boolean | null
+          schedule_status: string | null
+          seats_available: boolean | null
+          sold_out: boolean | null
+          ticket_cheapest_price: number | null
+          ticket_price_max: number | null
+          ticket_price_max_no_fees: number | null
+          ticket_price_min: number | null
+          ticket_price_min_no_fees: number | null
+          ticket_prices_detail: Json | null
+          timezone: string | null
+          venue_address: string | null
+          venue_city: string | null
+          venue_country: string | null
+          venue_id: string | null
+          venue_latitude: number | null
+          venue_longitude: number | null
+          venue_name: string | null
+          venue_postal_code: string | null
+          venue_url: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_old_hotel_prices: { Args: never; Returns: number }

@@ -38,19 +38,45 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* Feelomove+ Brand Colors */
-    --brand-green: 152 100% 50%;
-    --brand-black: 0 0% 7%;
-    --brand-light-gray: 0 0% 95%;
+    /* Feelomove+ Brandbook Colors */
+    --brand-green: 152 100% 50%; /* #00FF8F */
+    --brand-black: 0 0% 7%; /* #121212 */
+    --brand-white: 0 0% 100%; /* #FFFFFF */
+    --brand-light-gray: 0 0% 95%; /* #F2F2F2 */
+    --brand-dark-gray: 0 0% 33%; /* #555555 */
+    
+    /* Badge Colors */
+    --badge-hot: 0 100% 50%; /* #FF0000 */
+    --badge-vip: 45 100% 50%; /* Gold #FFD700 */
+    --badge-popular: 152 100% 50%; /* Green #00FF8F */
+    --badge-limited: 25 100% 50%; /* Orange #FF8000 */
+    --badge-sold-out: 0 0% 60%; /* Gray #999999 */
+    --badge-verified: 217 91% 60%; /* Blue #3B82F6 */
+    
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --error: 0 72% 51%;
 
-    /* Custom design tokens */
+    /* Shadows - Brandbook specific */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 2px 8px -2px hsl(0 0% 7% / 0.1);
+    --shadow-lg: 0 4px 16px -4px hsl(0 0% 7% / 0.15);
+    --shadow-xl: 0 8px 24px -6px hsl(0 0% 7% / 0.2);
+    --shadow-card: 0 2px 8px -2px hsl(0 0% 7% / 0.08);
+    --shadow-card-hover: 0 8px 24px -6px hsl(0 0% 7% / 0.12);
+    --shadow-accent: 0 4px 16px -2px hsl(152 100% 50% / 0.25);
+    
+    /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(0 0% 15%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(152 100% 50%) 0%, hsl(152 100% 60%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
-    --shadow-card: 0 4px 20px -2px hsl(0 0% 7% / 0.08);
-    --shadow-hover: 0 8px 30px -4px hsl(152 100% 50% / 0.2);
-    --shadow-accent: 0 0 40px hsl(152 100% 50% / 0.3);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, hsl(0 0% 0% / 0.7) 100%);
+    
+    /* Transitions */
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
