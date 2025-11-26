@@ -222,7 +222,7 @@ const Producto = () => {
                           <div className="flex items-center justify-between pt-4 border-t border-border">
                             <div>
                               <p className="text-xs text-muted-foreground uppercase tracking-wide">Precio por noche</p>
-                              <p className="text-2xl font-bold text-[#00FF8F]">
+                              <p className="text-2xl font-bold text-[#121212]">
                                 €{Number(hotel.price || 0).toFixed(0)}
                               </p>
                             </div>
