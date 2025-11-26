@@ -27,10 +27,9 @@ interface EventCardProps {
     attraction_names?: string[];
     categories?: Array<{ name: string }>;
   };
-  viewMode?: "grid" | "list";
 }
 
-const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
+const EventCard = ({ event }: EventCardProps) => {
   const eventDate = parseISO(event.event_date);
   const now = new Date();
   const daysUntil = differenceInDays(eventDate, now);
@@ -81,8 +80,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
 
   return (
     <Link to={`/producto/${event.event_id}`} className="group block">
-      {viewMode === "grid" ? (
-        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
+      <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
             <div className="relative h-56 overflow-hidden">
@@ -186,88 +184,6 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
             </div>
           </div>
         </Card>
-      ) : (
-        // List View
-        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
-          <div className="flex flex-row h-40">
-            {/* Image Section - Left */}
-            <div className="relative w-64 flex-shrink-0 overflow-hidden">
-              <img
-                src={event.image_large_url || event.image_standard_url || "/placeholder.svg"}
-                alt={event.event_name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              
-              {/* Minimal Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
-              {/* Badge "Disponible" - Top Left above Date Card */}
-              {badgeText && badgeVariant && (
-                <div className="absolute left-2 top-0.5 z-20">
-                  <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
-                    {badgeText}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Date Card - Absolute positioned on the left */}
-              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
-                <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
-                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
-                  <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
-                  <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
-                  {/* Time */}
-                  <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>
-                  {/* Location */}
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
-                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
-                    <span className="line-clamp-1 font-medium">
-                      {event.venue_city}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Section - Right */}
-            <div className="flex-1 flex items-center justify-between p-6">
-              <div className="flex-1 space-y-3">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-foreground mb-3 line-clamp-2 font-['Poppins']">
-                    {event.event_name}
-                  </h3>
-                  
-                  {/* Countdown */}
-                  {showCountdown && (
-                    <div className="inline-flex items-center gap-2 bg-accent/10 rounded-lg px-3 py-2">
-                      <span className="text-sm font-semibold text-accent font-['Poppins']">
-                        {isLessThan24Hours 
-                          ? `${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`
-                          : `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m`
-                        }
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Price Button */}
-              <div className="flex-shrink-0">
-                <Button variant="primary" size="lg" className="flex flex-col items-center justify-center py-4 h-auto min-w-[200px]">
-                  <div className="flex items-center gap-2">
-                    <span>Entradas</span>
-                    <span>→</span>
-                    <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
-                  </div>
-                  {event.has_hotel_offers && (
-                    <span className="text-xs font-semibold mt-1">+ hoteles disponibles</span>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
     </Link>
   );
 };
