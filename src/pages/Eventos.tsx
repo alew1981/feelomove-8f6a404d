@@ -8,6 +8,7 @@ import EventCard from "@/components/EventCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { EventCardSkeleton } from "@/components/ui/skeleton-loader";
 
 const Eventos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
@@ -193,7 +194,7 @@ const Eventos = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-96 bg-muted animate-pulse rounded-lg" />
+              <EventCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredAndSortedEvents.length === 0 ? (

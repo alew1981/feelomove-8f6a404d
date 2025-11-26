@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Helper function to get a representative image for each genre
 const getGenreImage = (genreName: string): string => {
@@ -99,7 +100,18 @@ const Musica = () => {
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">Géneros Musicales</h2>
           {isLoadingGenres ? (
-            <div className="text-center py-12">Cargando géneros...</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="h-48 w-full" />
+                  <CardContent className="p-6 space-y-3">
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-11 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {musicGenres?.map((genre: any) => (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
 
 const GeneroDetalle = () => {
   const { genero } = useParams<{ genero: string }>();
@@ -215,7 +215,11 @@ const GeneroDetalle = () => {
 
         {/* Artist Cards */}
         {isLoadingArtists ? (
-          <div className="text-center py-12">Cargando artistas...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <ArtistCardSkeleton key={i} />
+            ))}
+          </div>
         ) : filteredArtists && filteredArtists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredArtists.map((artist: any) => (

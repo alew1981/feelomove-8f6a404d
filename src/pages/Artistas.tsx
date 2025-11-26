@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
 
 const Artistas = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -219,7 +220,11 @@ const Artistas = () => {
 
         {/* Artist Cards */}
         {isLoadingArtists ? (
-          <div className="text-center py-12">Cargando artistas...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <ArtistCardSkeleton key={i} />
+            ))}
+          </div>
         ) : filteredArtists && filteredArtists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredArtists.map((artist: any) => (

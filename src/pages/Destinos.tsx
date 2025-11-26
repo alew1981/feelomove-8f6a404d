@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Calendar, MapPin, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DestinationCardSkeleton } from "@/components/ui/skeleton-loader";
 
 interface CityData {
   city_name: string;
@@ -198,7 +199,11 @@ const Destinos = () => {
         </div>
 
         {isLoadingCities ? (
-          <div className="text-center py-12">Cargando destinos...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <DestinationCardSkeleton key={i} />
+            ))}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredCities?.map((city) => (
