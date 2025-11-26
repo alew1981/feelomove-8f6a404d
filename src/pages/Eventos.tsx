@@ -11,25 +11,30 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { useInView } from "react-intersection-observer";
-
 const Eventos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
-  
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0,
+  const {
+    ref: loadMoreRef,
+    inView
+  } = useInView({
+    threshold: 0
   });
 
   // Fetch events using vw_events_with_hotels
-  const { data: events, isLoading } = useQuery({
+  const {
+    data: events,
+    isLoading
+  } = useQuery({
     queryKey: ["all-events"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from("vw_events_with_hotels").select(`
           event_id,
           event_name,
           event_date,
@@ -42,13 +47,12 @@ const Eventos = () => {
           seats_available,
           hotels_count,
           attraction_names
-        `)
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
-      
+        `).gte("event_date", new Date().toISOString()).order("event_date", {
+        ascending: true
+      });
       if (error) throw error;
       return data || [];
-    },
+    }
   });
 
   // Extract unique cities and artists for filters
@@ -57,7 +61,6 @@ const Eventos = () => {
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
     return uniqueCities.sort();
   }, [events]);
-
   const artists = useMemo(() => {
     if (!events) return [];
     const allArtists = events.flatMap(e => e.attraction_names || []);
@@ -68,17 +71,12 @@ const Eventos = () => {
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
     if (!events) return [];
-
     let filtered = [...events];
 
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(event => 
-        event.event_name.toLowerCase().includes(query) ||
-        event.venue_city?.toLowerCase().includes(query) ||
-        event.attraction_names?.some(artist => artist.toLowerCase().includes(query))
-      );
+      filtered = filtered.filter(event => event.event_name.toLowerCase().includes(query) || event.venue_city?.toLowerCase().includes(query) || event.attraction_names?.some(artist => artist.toLowerCase().includes(query)));
     }
 
     // Apply city filter
@@ -88,9 +86,7 @@ const Eventos = () => {
 
     // Apply artist filter
     if (filterArtist !== "all") {
-      filtered = filtered.filter(event => 
-        event.attraction_names?.includes(filterArtist)
-      );
+      filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
     }
 
     // Apply sorting
@@ -112,7 +108,6 @@ const Eventos = () => {
         filtered.sort((a, b) => (a.package_price_min || 0) - (b.package_price_min || 0));
         break;
     }
-
     return filtered;
   }, [events, searchQuery, filterCity, filterArtist, sortBy]);
 
@@ -127,16 +122,14 @@ const Eventos = () => {
       setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <Breadcrumbs />
         
         {/* Header */}
         <div className="mb-8 mt-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Todos los Eventos</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-2">Festivales y Conciertos</h1>
           <p className="text-muted-foreground text-lg">
             {filteredAndSortedEvents.length} eventos disponibles {displayedEvents.length < filteredAndSortedEvents.length && `(mostrando ${displayedEvents.length})`}
           </p>
@@ -147,13 +140,7 @@ const Eventos = () => {
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Buscar eventos, ciudades o artistas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
-            />
+            <Input type="text" placeholder="Buscar eventos, ciudades o artistas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors" />
           </div>
 
           {/* Filter Row */}
@@ -177,9 +164,7 @@ const Eventos = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las ciudades</SelectItem>
-                {cities.map(city => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
+                {cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
               </SelectContent>
             </Select>
 
@@ -189,67 +174,46 @@ const Eventos = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los artistas</SelectItem>
-                {artists.map(artist => (
-                  <SelectItem key={artist} value={artist}>{artist}</SelectItem>
-                ))}
+                {artists.map(artist => <SelectItem key={artist} value={artist}>{artist}</SelectItem>)}
               </SelectContent>
             </Select>
 
-            <button
-              onClick={() => {
-                setSortBy("date-asc");
-                setFilterCity("all");
-                setFilterArtist("all");
-                setSearchQuery("");
-              }}
-              className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
-            >
+            <button onClick={() => {
+            setSortBy("date-asc");
+            setFilterCity("all");
+            setFilterArtist("all");
+            setSearchQuery("");
+          }} className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold">
               Limpiar filtros
             </button>
           </div>
         </div>
 
         {/* Events Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <EventCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredAndSortedEvents.length === 0 ? (
-          <div className="text-center py-16">
+        {isLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(8)].map((_, i) => <EventCardSkeleton key={i} />)}
+          </div> : filteredAndSortedEvents.length === 0 ? <div className="text-center py-16">
             <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
             <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
-          </div>
-        ) : (
-          <>
+          </div> : <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedEvents.map((event, index) => (
-                <div 
-                  key={event.event_id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
+              {displayedEvents.map((event, index) => <div key={event.event_id} className="animate-fade-in" style={{
+            animationDelay: `${index * 0.05}s`
+          }}>
                   <EventCard event={event} />
-                </div>
-              ))}
+                </div>)}
             </div>
             
             {/* Infinite Scroll Loader */}
-            {displayedEvents.length < filteredAndSortedEvents.length && (
-              <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+            {displayedEvents.length < filteredAndSortedEvents.length && <div ref={loadMoreRef} className="flex justify-center items-center py-12">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
                   <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              </div>}
+          </>}
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Eventos;
