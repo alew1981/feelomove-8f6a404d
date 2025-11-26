@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Calendar, MapPin, Users } from "lucide-react";
-import { format, differenceInDays, parseISO } from "date-fns";
+import { Button } from "./ui/button";
+import { MapPin } from "lucide-react";
+import { format, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { useEffect, useState } from "react";
 
 interface EventCardProps {
   event: {
@@ -11,7 +13,11 @@ interface EventCardProps {
     event_name: string;
     event_date: string;
     venue_city: string;
+    venue_name?: string;
+    venue_address?: string;
+    local_event_date?: string;
     image_standard_url: string;
+    image_large_url?: string;
     ticket_cheapest_price?: number;
     package_price_min?: number;
     has_hotel_offers?: boolean;
@@ -19,111 +25,155 @@ interface EventCardProps {
     seats_available?: boolean;
     hotels_count?: number;
     attraction_names?: string[];
+    categories?: Array<{ name: string }>;
   };
 }
 
 const EventCard = ({ event }: EventCardProps) => {
   const eventDate = parseISO(event.event_date);
-  const daysUntil = differenceInDays(eventDate, new Date());
+  const now = new Date();
+  const daysUntil = differenceInDays(eventDate, now);
   const dayNumber = format(eventDate, "dd");
   const monthName = format(eventDate, "MMM", { locale: es }).toUpperCase();
+  const year = format(eventDate, "yyyy");
+  const time = event.local_event_date ? format(parseISO(event.local_event_date), "HH:mm") : format(eventDate, "HH:mm");
+
+  // Countdown state
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const days = Math.max(0, differenceInDays(eventDate, now));
+      const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
+      const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
+      const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
+      
+      setCountdown({ days, hours, minutes, seconds });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [eventDate]);
 
   // Determine badge
-  let badgeVariant: "hot" | "limitado" | "disponible" | "agotado" | undefined;
+  let badgeVariant: "disponible" | "agotado" | undefined;
   let badgeText: string | undefined;
 
   if (event.sold_out) {
     badgeVariant = "agotado";
     badgeText = "AGOTADO";
-  } else if (daysUntil <= 3 && daysUntil >= 0) {
-    badgeVariant = "hot";
-    badgeText = "HOT";
-  } else if (daysUntil <= 7 && daysUntil > 3) {
-    badgeVariant = "limitado";
-    badgeText = `${daysUntil} DÍAS`;
   } else if (event.seats_available) {
     badgeVariant = "disponible";
     badgeText = "DISPONIBLE";
   }
 
+  // Get first 2 categories for display
+  const displayCategories = event.categories?.slice(0, 2) || [];
+
   return (
     <Link to={`/producto/${event.event_id}`} className="group block">
-      <Card className="overflow-hidden h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover border-border">
-        {/* Image Section */}
-        <div className="relative h-64 overflow-hidden">
-          <img
-            src={event.image_standard_url || "/placeholder.svg"}
-            alt={event.event_name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          
-          {/* Date Badge - Top Left */}
-          <div className="absolute top-3 left-3 bg-[#121212] text-white rounded-md overflow-hidden shadow-lg">
-            <div className="text-center px-3 py-2 border-b border-[#00FF8F]">
-              <div className="text-2xl font-bold leading-none">{dayNumber}</div>
-            </div>
-            <div className="text-center px-3 py-1 bg-[#00FF8F] text-[#121212]">
-              <div className="text-xs font-bold">{monthName}</div>
-            </div>
-          </div>
+      <Card className="overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover border-0">
+        <div className="flex flex-col">
+          {/* Main Event Area with Background Image */}
+          <div className="relative h-48 overflow-hidden">
+            {/* Background Image */}
+            <img
+              src={event.image_large_url || event.image_standard_url || "/placeholder.svg"}
+              alt={event.event_name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-purple-800/70 to-black/90" />
 
-          {/* Status Badge - Top Right */}
-          {badgeText && badgeVariant && (
-            <div className="absolute top-3 right-3">
-              <Badge variant={badgeVariant}>{badgeText}</Badge>
-            </div>
-          )}
-
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/90 via-[#121212]/40 to-transparent" />
-
-          {/* Event Name - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white text-lg font-bold line-clamp-2 mb-2">
-              {event.event_name}
-            </h3>
-            <div className="flex items-center gap-2 text-white/80 text-sm">
-              <MapPin className="h-4 w-4 text-[#00FF8F]" />
-              <span>{event.venue_city}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content Section */}
-        <div className="p-4 space-y-3 bg-white dark:bg-[#1a1a1a]">
-          {/* Artists */}
-          {event.attraction_names && event.attraction_names.length > 0 && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4 text-[#00FF8F]" />
-              <span className="truncate">{event.attraction_names.join(", ")}</span>
-            </div>
-          )}
-
-          {/* Pricing */}
-          <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">Desde</div>
-              <div className="text-2xl font-bold text-[#121212] dark:text-white">
-                {event.ticket_cheapest_price?.toFixed(0)}€
+            {/* Date Card - Absolute positioned on the left */}
+            <div className="absolute -left-2 top-4 bg-white rounded-lg shadow-xl overflow-hidden z-10" style={{ width: '100px' }}>
+              <div className="text-center px-3 py-2">
+                <div className="text-xs font-semibold text-gray-600 uppercase">{monthName}</div>
+                <div className="text-4xl font-bold text-gray-900 leading-none my-1">{dayNumber}</div>
+                <div className="text-sm font-medium text-gray-600">{year}</div>
               </div>
+              {badgeText && badgeVariant && (
+                <div className="px-2 pb-2">
+                  <Badge variant={badgeVariant} className="w-full justify-center text-xs">
+                    {badgeText}
+                  </Badge>
+                </div>
+              )}
             </div>
 
-            {event.has_hotel_offers && event.package_price_min && (
-              <div className="text-right">
-                <Badge variant="popular" className="mb-1">PAQUETE</Badge>
-                <div className="text-sm font-bold text-[#00FF8F]">
-                  {event.package_price_min.toFixed(0)}€
+            {/* Content over image */}
+            <div className="relative h-full flex flex-col justify-between p-4 pl-28">
+              {/* Event Name and Categories */}
+              <div>
+                <h3 className="text-white text-xl font-bold mb-2 line-clamp-2">
+                  {event.event_name}
+                </h3>
+                {displayCategories.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {displayCategories.map((cat, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 bg-black/50 backdrop-blur-sm text-white text-xs rounded-full border border-white/20"
+                      >
+                        {cat.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Countdown Timer - Top Right */}
+              {daysUntil >= 0 && daysUntil <= 30 && (
+                <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <div className="flex gap-3 text-white text-center">
+                    <div>
+                      <div className="text-lg font-bold">{countdown.days}</div>
+                      <div className="text-[10px] uppercase">DÍAS</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold">{countdown.hours}</div>
+                      <div className="text-[10px] uppercase">HRS</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold">{countdown.minutes}</div>
+                      <div className="text-[10px] uppercase">MIN</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold">{countdown.seconds}</div>
+                      <div className="text-[10px] uppercase">SEG</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Time and Location */}
+              <div className="text-white space-y-1">
+                <div className="text-sm font-semibold">{time}h</div>
+                <div className="flex items-start gap-1 text-sm text-white/90">
+                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span className="line-clamp-2">
+                    {event.venue_name && `${event.venue_name}, `}
+                    {event.venue_address || event.venue_city}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Hotel Count */}
-          {event.has_hotel_offers && event.hotels_count && event.hotels_count > 0 && (
-            <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border">
-              {event.hotels_count} {event.hotels_count === 1 ? "hotel disponible" : "hoteles disponibles"}
-            </div>
-          )}
+          {/* Bottom Section with Button */}
+          <div className="bg-background p-4 flex justify-end">
+            <Button variant="primary" size="lg" className="gap-2">
+              Ver Entradas →
+            </Button>
+          </div>
         </div>
       </Card>
     </Link>
