@@ -53,13 +53,14 @@ const Navbar = () => {
             >
               Destinos
             </NavLink>
-            <NavLink
-              to="/about"
+            <a
+              href="https://feelomove-.nuitee.link/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
             >
-              Sobre Nosotros
-            </NavLink>
+              Hoteles y Apartamentos
+            </a>
             
             {/* Search and Favorites Icons */}
             <div className="flex items-center gap-2 ml-2">
@@ -135,14 +136,15 @@ const Navbar = () => {
             >
               Destinos
             </NavLink>
-            <NavLink
-              to="/about"
+            <a
+              href="https://feelomove-.nuitee.link/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
               onClick={() => setIsMenuOpen(false)}
             >
-              Sobre Nosotros
-            </NavLink>
+              Hoteles y Apartamentos
+            </a>
             <div className="flex items-center gap-2 pt-2">
               <Button
                 variant="outline"

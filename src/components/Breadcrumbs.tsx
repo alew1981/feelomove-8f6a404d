@@ -21,7 +21,7 @@ const Breadcrumbs = () => {
       
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("name, categories")
+        .select("name, categories, attraction_names, venue_city")
         .eq("id", params.id)
         .maybeSingle();
       
@@ -41,6 +41,14 @@ const Breadcrumbs = () => {
     return null;
   })();
 
+  // Extract first artist from event
+  const eventArtist = eventDetails?.attraction_names && Array.isArray(eventDetails.attraction_names)
+    ? eventDetails.attraction_names[0]
+    : null;
+  
+  // Extract city from event
+  const eventCity = eventDetails?.venue_city || null;
+
   const breadcrumbNames: Record<string, string> = {
     about: "Nosotros",
     destinos: "Destinos",
@@ -51,6 +59,9 @@ const Breadcrumbs = () => {
 
   // Obtener el nombre del género desde la URL si existe
   const genreFromPath = params.genero ? decodeURIComponent(params.genero) : null;
+  
+  // Obtener el nombre del destino desde la URL si existe
+  const destinoFromPath = params.destino ? decodeURIComponent(params.destino) : null;
 
   return (
     <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
@@ -61,8 +72,55 @@ const Breadcrumbs = () => {
         <Home className="h-4 w-4" />
         <span>Inicio</span>
       </Link>
-      {/* For product page with genre: Inicio > Música > Género > Evento */}
-      {pathnames[0] === "producto" && eventDetails && eventGenre ? (
+      {/* For product page from city/destination: Inicio > Destinos > Ciudad > Evento */}
+      {pathnames[0] === "producto" && eventDetails && !eventGenre && !eventArtist && eventCity ? (
+        <>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to="/destinos"
+              className="hover:text-foreground transition-colors"
+            >
+              Destinos
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to={`/destinos/${encodeURIComponent(eventCity)}`}
+              className="hover:text-foreground transition-colors"
+            >
+              {eventCity}
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">{eventDetails.name}</span>
+          </div>
+        </>
+      ) : pathnames[0] === "producto" && eventDetails && !eventGenre && eventArtist ? (
+        <>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to="/artistas"
+              className="hover:text-foreground transition-colors"
+            >
+              Artistas
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="hover:text-foreground transition-colors">
+              {eventArtist}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">{eventDetails.name}</span>
+          </div>
+        </>
+      ) : pathnames[0] === "producto" && eventDetails && eventGenre ? (
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
@@ -141,6 +199,23 @@ const Breadcrumbs = () => {
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground font-medium">{genreFromPath}</span>
+          </div>
+        </>
+      ) : pathnames[0] === "destinos" && destinoFromPath ? (
+        /* Para página de destino: Inicio > Destinos > Ciudad */
+        <>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to="/destinos"
+              className="hover:text-foreground transition-colors"
+            >
+              Destinos
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">{destinoFromPath}</span>
           </div>
         </>
       ) : (
