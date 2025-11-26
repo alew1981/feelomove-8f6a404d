@@ -43,28 +43,29 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
-    minutes: 0
+    minutes: 0,
+    seconds: 0
   });
-
-  useEffect(() => {
-    const updateCountdown = () => {
-      const now = new Date();
-      const totalHours = differenceInHours(eventDate, now);
-      const days = Math.max(0, differenceInDays(eventDate, now));
-      const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
-      const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
-      
-      setCountdown({ days, hours, minutes });
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 60000); // Update every minute
-    return () => clearInterval(interval);
-  }, [eventDate]);
 
   // Show countdown only if within 30 days
   const showCountdown = daysUntil >= 0 && daysUntil <= 30;
   const isLessThan24Hours = differenceInHours(eventDate, new Date()) < 24 && differenceInHours(eventDate, new Date()) > 0;
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const days = Math.max(0, differenceInDays(eventDate, now));
+      const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
+      const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
+      const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
+      
+      setCountdown({ days, hours, minutes, seconds });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, isLessThan24Hours ? 1000 : 60000); // Update every second if <24h, else every minute
+    return () => clearInterval(interval);
+  }, [eventDate, isLessThan24Hours]);
 
   // Determine badge
   let badgeVariant: "disponible" | "agotado" | undefined;
@@ -84,7 +85,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
         <Card className="overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover border-0">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
-            <div className="relative h-48 overflow-hidden">
+            <div className="relative h-56 overflow-hidden">
               {/* Background Image */}
               <img
                 src={event.image_large_url || event.image_standard_url || "/placeholder.svg"}
@@ -92,84 +93,83 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               
-              {/* Gradient Overlay - Only at bottom for readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              {/* Minimal Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
               {/* Date Card - Absolute positioned on the left */}
-              <div className="absolute -left-3 top-4 bg-white rounded-xl shadow-2xl overflow-hidden z-10 border-2 border-gray-100" style={{ width: '110px' }}>
+              <div className="absolute -left-3 top-4 bg-white rounded-xl shadow-2xl overflow-hidden z-10 border-2 border-gray-100" style={{ width: '120px' }}>
                 <div className="text-center px-3 py-3 bg-gradient-to-b from-gray-50 to-white">
                   <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{monthName}</div>
                   <div className="text-5xl font-black text-gray-900 leading-none my-2">{dayNumber}</div>
-                  <div className="text-sm font-semibold text-gray-600">{year}</div>
-                </div>
-                {badgeText && badgeVariant && (
-                  <div className="px-2 pb-2">
-                    <Badge variant={badgeVariant} className="w-full justify-center text-xs font-bold py-1.5">
-                      {badgeText}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              {/* Content over image */}
-              <div className="relative h-full flex flex-col justify-between p-4 pl-32">
-                {/* Event Name */}
-                <div>
-                  <h3 className="text-white text-2xl font-black mb-3 line-clamp-2 drop-shadow-lg leading-tight tracking-tight">
-                    {event.event_name}
-                  </h3>
-                </div>
-
-                {/* Countdown Timer and Badge - Top Right */}
-                <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
-                  {showCountdown && (
-                    <div className="bg-black/80 backdrop-blur-md rounded-xl px-4 py-2.5 shadow-xl">
-                      <div className="flex gap-4 text-white text-center">
-                        {isLessThan24Hours ? (
-                          <>
-                            <div>
-                              <div className="text-2xl font-black">{countdown.hours}</div>
-                              <div className="text-[9px] uppercase font-bold tracking-wider">HRS</div>
-                            </div>
-                            <div>
-                              <div className="text-2xl font-black">{countdown.minutes}</div>
-                              <div className="text-[9px] uppercase font-bold tracking-wider">MIN</div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div>
-                              <div className="text-2xl font-black">{countdown.days}</div>
-                              <div className="text-[9px] uppercase font-bold tracking-wider">DÍAS</div>
-                            </div>
-                            <div>
-                              <div className="text-2xl font-black">{countdown.hours}</div>
-                              <div className="text-[9px] uppercase font-bold tracking-wider">HRS</div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Time and Location */}
-                <div className="text-white space-y-1.5 drop-shadow-lg">
-                  <div className="text-base font-bold">{time}h</div>
-                  <div className="flex items-start gap-2 text-sm text-white/95">
-                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-2 font-medium">
-                      {event.venue_name && `${event.venue_name}, `}
-                      {event.venue_address || event.venue_city}
+                  <div className="text-sm font-semibold text-gray-600 mb-2">{year}</div>
+                  {/* Time */}
+                  <div className="text-base font-bold text-gray-900 border-t border-gray-200 pt-2">{time}h</div>
+                  {/* Location */}
+                  <div className="flex items-start gap-1 text-xs text-gray-600 mt-2">
+                    <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    <span className="line-clamp-2 font-medium text-left">
+                      {event.venue_city}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* Countdown Timer and Badge - Top Right */}
+              <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                {showCountdown && (
+                  <div className="bg-black/90 backdrop-blur-md rounded-lg px-4 py-3 shadow-2xl border border-white/20">
+                    <div className="flex gap-3 text-accent font-mono text-center">
+                      {isLessThan24Hours ? (
+                        <>
+                          <div className="flex flex-col items-center">
+                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
+                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">HRS</div>
+                          </div>
+                          <div className="text-3xl font-black self-center leading-none pb-3">:</div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.minutes).padStart(2, '0')}</div>
+                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">MIN</div>
+                          </div>
+                          <div className="text-3xl font-black self-center leading-none pb-3">:</div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.seconds).padStart(2, '0')}</div>
+                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">SEG</div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex flex-col items-center">
+                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.days).padStart(2, '0')}</div>
+                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">DÍAS</div>
+                          </div>
+                          <div className="text-3xl font-black self-center leading-none pb-3">:</div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
+                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">HRS</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {badgeText && badgeVariant && (
+                  <Badge variant={badgeVariant} className="text-xs font-bold px-3 py-1.5">
+                    {badgeText}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Event Name Below Image */}
+            <div className="bg-background px-4 pt-4 pb-2">
+              <h3 className="text-foreground text-xl font-black line-clamp-2 leading-tight tracking-tight">
+                {event.event_name}
+              </h3>
             </div>
 
             {/* Bottom Section with Button */}
-            <div className="bg-background p-4 flex justify-center items-center">
-              <Button variant="primary" size="lg" className="gap-2 min-w-[280px] flex items-center justify-center">
+            <div className="bg-background px-4 pb-4 flex justify-center items-center">
+              <Button variant="primary" size="lg" className="gap-2 w-full flex items-center justify-center">
                 <span>Entradas</span>
                 <span>→</span>
                 <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
@@ -223,10 +223,10 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                     </Badge>
                   )}
                   {showCountdown && (
-                    <div className="text-xs font-bold text-muted-foreground">
+                    <div className="text-xs font-bold font-mono text-muted-foreground">
                       {isLessThan24Hours 
-                        ? `${countdown.hours}h ${countdown.minutes}m`
-                        : `${countdown.days}d ${countdown.hours}h`
+                        ? `${String(countdown.hours).padStart(2, '0')}:${String(countdown.minutes).padStart(2, '0')}:${String(countdown.seconds).padStart(2, '0')}`
+                        : `${countdown.days}d ${String(countdown.hours).padStart(2, '0')}h`
                       }
                     </div>
                   )}
