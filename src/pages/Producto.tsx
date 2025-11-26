@@ -226,7 +226,7 @@ const Producto = () => {
                                 €{Number(hotel.price || 0).toFixed(0)}
                               </p>
                             </div>
-                            <Button variant="primary">Ver Hotel</Button>
+                            <Button variant="primary">Añadir hotel </Button>
                           </div>
                         </div>
                       </div>
