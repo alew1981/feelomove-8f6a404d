@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
@@ -15,39 +16,56 @@ import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
 const Artistas = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterGenre, setFilterGenre] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("all");
 
-  // Query for unique artists extracted from events
+  // Query for unique artists extracted from events with more details
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["allArtists"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("attraction_names, image_standard_url")
+        .select("attraction_names, image_standard_url, venue_city, event_date, categories")
         .gte("event_date", new Date().toISOString())
         .not("attraction_names", "is", null);
       
       if (error) throw error;
       
-      // Extract unique artists
+      // Extract unique artists with aggregated data
       const artistMap = new Map();
       data?.forEach(event => {
         if (event.attraction_names && Array.isArray(event.attraction_names)) {
           event.attraction_names.forEach((name: string) => {
             if (!artistMap.has(name)) {
+              const categories = Array.isArray(event.categories) ? event.categories : [];
+              const genres = categories.map((cat: any) => cat.subGenre?.name).filter(Boolean) || [];
               artistMap.set(name, {
                 main_attraction_name: name,
                 event_count: 1,
-                attraction_image_standard_url: event.image_standard_url
+                attraction_image_standard_url: event.image_standard_url,
+                cities: new Set([event.venue_city]),
+                genres: new Set(genres),
+                dates: [event.event_date]
               });
             } else {
               const artist = artistMap.get(name);
               artist.event_count++;
+              if (event.venue_city) artist.cities.add(event.venue_city);
+              const categories = Array.isArray(event.categories) ? event.categories : [];
+              const genres = categories.map((cat: any) => cat.subGenre?.name).filter(Boolean) || [];
+              genres.forEach((g: string) => artist.genres.add(g));
+              artist.dates.push(event.event_date);
             }
           });
         }
       });
       
-      return Array.from(artistMap.values()).sort((a, b) => b.event_count - a.event_count);
+      return Array.from(artistMap.values()).map(artist => ({
+        ...artist,
+        cities: Array.from(artist.cities),
+        genres: Array.from(artist.genres),
+      })).sort((a, b) => b.event_count - a.event_count);
     },
   });
 
@@ -75,9 +93,52 @@ const Artistas = () => {
     enabled: !!selectedArtist,
   });
 
+  // Extract unique cities and genres for filters
+  const cities = useMemo(() => {
+    if (!artists) return [];
+    const uniqueCities = [...new Set(artists.flatMap((a: any) => a.cities))];
+    return uniqueCities.sort();
+  }, [artists]);
+
+  const genres = useMemo(() => {
+    if (!artists) return [];
+    const uniqueGenres = [...new Set(artists.flatMap((a: any) => a.genres))];
+    return uniqueGenres.sort();
+  }, [artists]);
+
   const filteredArtists = artists?.filter((artist: any) => {
     const matchesSearch = artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    
+    // Apply city filter
+    const matchesCity = filterCity === "all" || artist.cities.includes(filterCity);
+    
+    // Apply genre filter
+    const matchesGenre = filterGenre === "all" || artist.genres.includes(filterGenre);
+    
+    // Apply date filter
+    let matchesDate = true;
+    if (filterDate !== "all") {
+      const now = new Date();
+      const dates = artist.dates || [];
+      
+      if (filterDate === "this-month") {
+        matchesDate = dates.some((d: string) => {
+          const eventDate = new Date(d);
+          return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear();
+        });
+      } else if (filterDate === "next-month") {
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1);
+        matchesDate = dates.some((d: string) => {
+          const eventDate = new Date(d);
+          return eventDate.getMonth() === nextMonth.getMonth() && eventDate.getFullYear() === nextMonth.getFullYear();
+        });
+      } else if (filterDate === "3-months") {
+        const threeMonthsLater = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+        matchesDate = dates.some((d: string) => new Date(d) <= threeMonthsLater);
+      }
+    }
+    
+    return matchesSearch && matchesCity && matchesGenre && matchesDate;
   });
 
   const selectedArtistData = artists?.find((a: any) => a.main_attraction_name === selectedArtist);
@@ -188,7 +249,7 @@ const Artistas = () => {
         </div>
 
         {/* Search */}
-        <div className="mb-8">
+        <div className="mb-8 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
@@ -196,8 +257,59 @@ const Artistas = () => {
               placeholder="Buscar artistas por nombre..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 text-base"
+              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
             />
+          </div>
+
+          {/* Filter Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Select value={filterDate} onValueChange={setFilterDate}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todas las fechas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las fechas</SelectItem>
+                <SelectItem value="this-month">Este mes</SelectItem>
+                <SelectItem value="next-month">Próximo mes</SelectItem>
+                <SelectItem value="3-months">Próximos 3 meses</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterGenre} onValueChange={setFilterGenre}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todos los géneros" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los géneros</SelectItem>
+                {genres.map(genre => (
+                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todas las ciudades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
+                {cities.map(city => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setFilterCity("all");
+                setFilterGenre("all");
+                setFilterDate("all");
+              }}
+              className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
+            >
+              Limpiar filtros
+            </button>
           </div>
         </div>
 
@@ -205,17 +317,7 @@ const Artistas = () => {
         <div className="mb-6">
           <p className="text-muted-foreground">
             {filteredArtists?.length || 0} artistas encontrados
-            {searchQuery && ` con "${searchQuery}"`}
           </p>
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              onClick={() => setSearchQuery("")}
-              className="mt-2"
-            >
-              Limpiar búsqueda
-            </Button>
-          )}
         </div>
 
         {/* Artist Cards */}
@@ -244,9 +346,12 @@ const Artistas = () => {
                     <div className="w-full h-full bg-muted" />
                   )}
                   {artist.event_count > 0 && (
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 right-3 flex flex-col gap-2">
                       <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
                         Disponible
+                      </Badge>
+                      <Badge className="bg-background/90 text-foreground border-2 border-[#00FF8F]/20 font-medium px-3 py-1 text-xs">
+                        {artist.event_count} eventos
                       </Badge>
                     </div>
                   )}
@@ -255,15 +360,10 @@ const Artistas = () => {
                   <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
                     {artist.main_attraction_name}
                   </h3>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground" style={{ fontFamily: 'Poppins' }}>
-                      {artist.event_count} eventos próximos
-                    </p>
-                  </div>
                 </CardContent>
-                <CardFooter className="p-4 pt-0 flex justify-center">
+                <CardFooter className="p-4 pt-0">
                   <Button 
-                    className="bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold px-6 py-2 rounded-lg text-sm"
+                    className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm"
                     style={{ fontFamily: 'Poppins' }}
                   >
                     Ver Eventos →
