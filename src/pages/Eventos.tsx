@@ -7,7 +7,8 @@ import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Grid3x3, List } from "lucide-react";
 import { EventCardSkeleton } from "@/components/ui/skeleton-loader";
 
 const Eventos = () => {
@@ -15,6 +16,7 @@ const Eventos = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Fetch events using vw_events_with_hotels
   const { data: events, isLoading } = useQuery({
@@ -137,8 +139,8 @@ const Eventos = () => {
             />
           </div>
 
-          {/* Filter Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Filter Row with View Toggle */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="h-11 border-2">
                 <SelectValue placeholder="Ordenar por" />
@@ -187,12 +189,35 @@ const Eventos = () => {
             >
               Limpiar filtros
             </button>
+
+            {/* View Toggle */}
+            <div className="flex gap-2 h-11">
+              <Button
+                variant={viewMode === "grid" ? "primary" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("grid")}
+                className="flex-1"
+              >
+                <Grid3x3 className="h-5 w-5" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "primary" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("list")}
+                className="flex-1"
+              >
+                <List className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Events Grid */}
+        {/* Events Grid/List */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={viewMode === "grid" 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "space-y-4"
+          }>
             {[...Array(8)].map((_, i) => (
               <EventCardSkeleton key={i} />
             ))}
@@ -203,9 +228,12 @@ const Eventos = () => {
             <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={viewMode === "grid" 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "space-y-4"
+          }>
             {filteredAndSortedEvents.map(event => (
-              <EventCard key={event.event_id} event={event} />
+              <EventCard key={event.event_id} event={event} viewMode={viewMode} />
             ))}
           </div>
         )}
