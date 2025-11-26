@@ -190,13 +190,13 @@ const Eventos = () => {
         </div>
 
         {/* Events Grid */}
-        {isLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {isLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => <EventCardSkeleton key={i} />)}
           </div> : filteredAndSortedEvents.length === 0 ? <div className="text-center py-16">
             <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
             <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
           </div> : <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedEvents.map((event, index) => <div key={event.event_id} className="animate-fade-in" style={{
             animationDelay: `${index * 0.05}s`
           }}>

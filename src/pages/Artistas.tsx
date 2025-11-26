@@ -354,14 +354,14 @@ const Artistas = () => {
 
         {/* Artist Cards */}
         {isLoadingArtists ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(6)].map((_, i) => (
               <ArtistCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredArtists && filteredArtists.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedArtists.map((artist: any, index) => (
               <Card
                 key={artist.main_attraction_name}

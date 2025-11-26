@@ -231,7 +231,7 @@ const Destinos = () => {
 
         {/* City Cards */}
         {isLoadingCities ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="overflow-hidden">
                 <Skeleton className="h-64 w-full" />
@@ -248,7 +248,7 @@ const Destinos = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedCities.map((city: any, index) => (
                 <Link
                   key={city.city_name}
