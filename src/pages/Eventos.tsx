@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Grid3x3, List } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 
 const Eventos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
@@ -17,6 +18,11 @@ const Eventos = () => {
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [displayCount, setDisplayCount] = useState<number>(30);
+  
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0,
+  });
 
   // Fetch events using vw_events_with_hotels
   const { data: events, isLoading } = useQuery({
@@ -111,6 +117,18 @@ const Eventos = () => {
     return filtered;
   }, [events, searchQuery, filterCity, filterArtist, sortBy]);
 
+  // Display only the first displayCount events
+  const displayedEvents = useMemo(() => {
+    return filteredAndSortedEvents.slice(0, displayCount);
+  }, [filteredAndSortedEvents, displayCount]);
+
+  // Load more when scrolling to bottom
+  useMemo(() => {
+    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
+      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
+    }
+  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -121,7 +139,7 @@ const Eventos = () => {
         <div className="mb-8 mt-6">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">Todos los Eventos</h1>
           <p className="text-muted-foreground text-lg">
-            {filteredAndSortedEvents.length} eventos disponibles
+            {filteredAndSortedEvents.length} eventos disponibles {displayedEvents.length < filteredAndSortedEvents.length && `(mostrando ${displayedEvents.length})`}
           </p>
         </div>
 
@@ -228,20 +246,32 @@ const Eventos = () => {
             <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
           </div>
         ) : (
-          <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
-          }>
-            {filteredAndSortedEvents.map((event, index) => (
-              <div 
-                key={event.event_id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <EventCard event={event} viewMode={viewMode} />
+          <>
+            <div className={viewMode === "grid" 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              : "space-y-4"
+            }>
+              {displayedEvents.map((event, index) => (
+                <div 
+                  key={event.event_id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <EventCard event={event} viewMode={viewMode} />
+                </div>
+              ))}
+            </div>
+            
+            {/* Infinite Scroll Loader */}
+            {displayedEvents.length < filteredAndSortedEvents.length && (
+              <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                  <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
       <Footer />

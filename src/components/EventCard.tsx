@@ -173,10 +173,15 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
 
             {/* Bottom Section with Button */}
             <div className="bg-background px-4 pb-4 flex justify-center items-center">
-              <Button variant="primary" size="lg" className="gap-2 w-full flex items-center justify-center transition-all duration-300 group-hover:gap-3">
-                <span>Entradas</span>
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
+              <Button variant="primary" size="lg" className="w-full flex flex-col items-center justify-center py-4 h-auto transition-all duration-300">
+                <div className="flex items-center gap-2">
+                  <span>Entradas</span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                  <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
+                </div>
+                {event.has_hotel_offers && (
+                  <span className="text-xs font-semibold mt-1">+ hoteles disponibles</span>
+                )}
               </Button>
             </div>
           </div>
@@ -192,46 +197,55 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                 alt={event.event_name}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+              
+              {/* Minimal Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+              {/* Badge "Disponible" - Top Left above Date Card */}
+              {badgeText && badgeVariant && (
+                <div className="absolute left-2 top-0.5 z-20">
+                  <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
+                    {badgeText}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Date Card - Absolute positioned on the left */}
+              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
+                <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
+                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
+                  <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
+                  <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
+                  {/* Time */}
+                  <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>
+                  {/* Location */}
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
+                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                    <span className="line-clamp-1 font-medium">
+                      {event.venue_city}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Content Section - Right */}
             <div className="flex-1 flex items-center justify-between p-6">
               <div className="flex-1 space-y-3">
-                {/* Date and Event Name */}
-                <div className="flex items-start gap-4">
-                  <div className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-gray-100 flex-shrink-0" style={{ width: '70px' }}>
-                    <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
-                      <div className="text-[8px] font-bold text-gray-500 uppercase">{monthName}</div>
-                      <div className="text-3xl font-black text-gray-900 leading-none">{dayNumber}</div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-foreground mb-1 line-clamp-1 font-['Poppins']">
-                      {event.event_name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{event.venue_city}</span>
-                      <span>•</span>
-                      <span>{time}h</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Badges */}
-                <div className="flex gap-2 items-center">
-                  {badgeText && badgeVariant && (
-                    <Badge variant={badgeVariant} className="text-xs">
-                      {badgeText}
-                    </Badge>
-                  )}
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-foreground mb-3 line-clamp-2 font-['Poppins']">
+                    {event.event_name}
+                  </h3>
+                  
+                  {/* Countdown */}
                   {showCountdown && (
-                    <div className="text-xs font-semibold font-['Poppins'] text-muted-foreground">
-                      {isLessThan24Hours 
-                        ? `${String(countdown.hours).padStart(2, '0')}:${String(countdown.minutes).padStart(2, '0')}:${String(countdown.seconds).padStart(2, '0')}`
-                        : `${countdown.days}d ${String(countdown.hours).padStart(2, '0')}h`
-                      }
+                    <div className="inline-flex items-center gap-2 bg-accent/10 rounded-lg px-3 py-2">
+                      <span className="text-sm font-semibold text-accent font-['Poppins']">
+                        {isLessThan24Hours 
+                          ? `${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`
+                          : `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m`
+                        }
+                      </span>
                     </div>
                   )}
                 </div>
@@ -239,10 +253,15 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
 
               {/* Price Button */}
               <div className="flex-shrink-0">
-                <Button variant="primary" size="lg" className="gap-2">
-                  <span>Entradas</span>
-                  <span>→</span>
-                  <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
+                <Button variant="primary" size="lg" className="flex flex-col items-center justify-center py-4 h-auto min-w-[200px]">
+                  <div className="flex items-center gap-2">
+                    <span>Entradas</span>
+                    <span>→</span>
+                    <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
+                  </div>
+                  {event.has_hotel_offers && (
+                    <span className="text-xs font-semibold mt-1">+ hoteles disponibles</span>
+                  )}
                 </Button>
               </div>
             </div>
