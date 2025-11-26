@@ -1,267 +1,264 @@
-import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import EventCard from "@/components/EventCard";
+import EventCardSkeleton from "@/components/EventCardSkeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, Calendar, MapPin } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
+import { useInView } from "react-intersection-observer";
 
 const GeneroDetalle = () => {
   const { genero } = useParams<{ genero: string }>();
-  const navigate = useNavigate();
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const genreNameDecoded = genero ? decodeURIComponent(genero) : "";
-
-  // Query for artists of this genre
-  const { data: artists, isLoading: isLoadingArtists } = useQuery({
-    queryKey: ["genreArtists", genreNameDecoded],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("attraction_names, image_standard_url, categories")
-        .gte("event_date", new Date().toISOString());
-      
-      if (error) throw error;
-      
-      // Filter events that match this genre and extract artists
-      const artistMap = new Map();
-      data?.forEach(event => {
-        if (event.categories) {
-          const cats = typeof event.categories === 'string' ? JSON.parse(event.categories) : event.categories;
-          const subgenres = cats?.subgenres || [];
-          const hasGenre = subgenres.some((sg: any) => {
-            const name = sg.name || sg;
-            return name === genreNameDecoded;
-          });
-          
-          if (hasGenre && event.attraction_names && Array.isArray(event.attraction_names)) {
-            event.attraction_names.forEach((artistName: string) => {
-              if (!artistMap.has(artistName)) {
-                artistMap.set(artistName, {
-                  main_attraction_name: artistName,
-                  event_count: 1,
-                  attraction_image_standard_url: event.image_standard_url,
-                  subcategory_name: genreNameDecoded
-                });
-              } else {
-                const artist = artistMap.get(artistName);
-                artist.event_count++;
-              }
-            });
-          }
-        }
-      });
-      
-      return Array.from(artistMap.values()).sort((a, b) => b.event_count - a.event_count);
-    },
-    enabled: !!genreNameDecoded,
+  
+  const [sortBy, setSortBy] = useState<string>("date-asc");
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterArtist, setFilterArtist] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [displayCount, setDisplayCount] = useState<number>(30);
+  
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0
   });
 
-  // Query for artist events when an artist is selected
-  const { data: artistEvents, isLoading: isLoadingEvents } = useQuery({
-    queryKey: ["artistEvents", selectedArtist],
+  // Fetch events for this genre using vw_events_with_hotels
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["genre-events", genreNameDecoded],
     queryFn: async () => {
-      if (!selectedArtist) return null;
-      
       const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("id, name, venue_city, venue_name, event_date, image_standard_url, price_min_excl_fees")
-        .contains("attraction_names", [selectedArtist])
+        .from("vw_events_with_hotels")
+        .select(`
+          event_id,
+          event_name,
+          event_date,
+          venue_city,
+          image_standard_url,
+          ticket_cheapest_price,
+          package_price_min,
+          has_hotel_offers,
+          sold_out,
+          seats_available,
+          hotels_count,
+          attraction_names,
+          categories
+        `)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
-      return data?.map(e => ({ 
-        ...e, 
-        event_id: e.id,
-        event_name: e.name,
-        min_price: e.price_min_excl_fees
-      }));
+
+      // Filter events that match this genre
+      return data?.filter(event => {
+        const categories = Array.isArray(event.categories) ? event.categories : [];
+        return categories.some((cat: any) => {
+          if (cat.subcategories && Array.isArray(cat.subcategories)) {
+            return cat.subcategories.some((subcat: any) => subcat.name === genreNameDecoded);
+          }
+          return false;
+        });
+      }) || [];
     },
-    enabled: !!selectedArtist,
+    enabled: !!genreNameDecoded,
   });
 
-  const filteredArtists = artists?.filter((artist: any) => 
-    artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Extract unique cities and artists for filters
+  const cities = useMemo(() => {
+    if (!events) return [];
+    const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
+    return uniqueCities.sort();
+  }, [events]);
 
-  const selectedArtistData = artists?.find((a: any) => a.main_attraction_name === selectedArtist);
+  const artists = useMemo(() => {
+    if (!events) return [];
+    const allArtists = events.flatMap(e => e.attraction_names || []);
+    const uniqueArtists = [...new Set(allArtists)];
+    return uniqueArtists.sort();
+  }, [events]);
 
-  // View: Artist's Events
-  if (selectedArtist && selectedArtistData) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        
-        <main className="container mx-auto px-4 py-8 mt-20">
-          <Breadcrumbs />
-          
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedArtist(null)}
-            className="mb-6"
-          >
-            ← Volver a Artistas de {genreNameDecoded}
-          </Button>
+  // Filter and sort events
+  const filteredAndSortedEvents = useMemo(() => {
+    if (!events) return [];
+    let filtered = [...events];
 
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              {(selectedArtistData as any).attraction_image_standard_url && (
-                <img
-                  src={(selectedArtistData as any).attraction_image_standard_url}
-                  alt={(selectedArtistData as any).main_attraction_name}
-                  className="w-24 h-24 rounded-lg object-cover"
-                />
-              )}
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold">{(selectedArtistData as any).main_attraction_name}</h1>
-                <p className="text-muted-foreground text-lg mt-2">
-                  {artistEvents?.length || 0} eventos próximos
-                </p>
-              </div>
-            </div>
-          </div>
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(event => 
+        event.event_name.toLowerCase().includes(query) ||
+        event.venue_city?.toLowerCase().includes(query) ||
+        event.attraction_names?.some(artist => artist.toLowerCase().includes(query))
+      );
+    }
 
-          {isLoadingEvents ? (
-            <div className="text-center py-12">Cargando eventos...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {artistEvents?.map((event) => {
-                const eventDate = new Date(event.event_date);
-                const formattedDate = eventDate.toLocaleDateString('es-ES', { 
-                  day: 'numeric', 
-                  month: 'short',
-                  year: 'numeric'
-                });
+    // Apply city filter
+    if (filterCity !== "all") {
+      filtered = filtered.filter(event => event.venue_city === filterCity);
+    }
 
-                return (
-                  <Link key={event.event_id} to={`/producto/${event.event_id}`}>
-                    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={event.image_standard_url || "/placeholder.svg"}
-                          alt={event.event_name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h3>
-                        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-accent" />
-                            <span>{formattedDate}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-accent" />
-                            <span>{event.venue_city}</span>
-                          </div>
-                        </div>
-                        {event.min_price && (
-                          <div className="mt-3">
-                            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
-                              Desde €{Number(event.min_price).toFixed(2)}
-                            </Badge>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </main>
+    // Apply artist filter
+    if (filterArtist !== "all") {
+      filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
+    }
 
-        <Footer />
-      </div>
-    );
-  }
+    // Apply sorting
+    switch (sortBy) {
+      case "date-asc":
+        filtered.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+        break;
+      case "date-desc":
+        filtered.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+        break;
+      case "price-asc":
+        filtered.sort((a, b) => (a.ticket_cheapest_price || 0) - (b.ticket_cheapest_price || 0));
+        break;
+      case "price-desc":
+        filtered.sort((a, b) => (b.ticket_cheapest_price || 0) - (a.ticket_cheapest_price || 0));
+        break;
+      case "packages":
+        filtered = filtered.filter(e => e.has_hotel_offers);
+        filtered.sort((a, b) => (a.package_price_min || 0) - (b.package_price_min || 0));
+        break;
+    }
+    
+    return filtered;
+  }, [events, searchQuery, filterCity, filterArtist, sortBy]);
 
-  // View: All Artists in Genre
+  // Display only the first displayCount events
+  const displayedEvents = useMemo(() => {
+    return filteredAndSortedEvents.slice(0, displayCount);
+  }, [filteredAndSortedEvents, displayCount]);
+
+  // Load more when scrolling to bottom
+  useMemo(() => {
+    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
+      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
+    }
+  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      <main className="container mx-auto px-4 py-8 mt-20">
+      <div className="container mx-auto px-4 py-8">
         <Breadcrumbs />
         
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">{genreNameDecoded}</h1>
+        {/* Header */}
+        <div className="mb-8 mt-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-2">{genreNameDecoded}</h1>
           <p className="text-muted-foreground text-lg">
-            {artists?.length || 0} artistas encontrados en {genreNameDecoded}
+            Descubre los mejores eventos de {genreNameDecoded}
           </p>
         </div>
 
-        {/* Search */}
-        <div className="mb-8">
+        {/* Filters and Search */}
+        <div className="mb-8 space-y-4">
+          {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar artistas..."
+              placeholder="Buscar eventos, ciudades o artistas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 text-base"
+              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
             />
+          </div>
+
+          {/* Filter Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
+                <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
+                <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
+                <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                <SelectItem value="packages">Con paquetes</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todas las ciudades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
+                {cities.map(city => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterArtist} onValueChange={setFilterArtist}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todos los artistas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los artistas</SelectItem>
+                {artists.map(artist => (
+                  <SelectItem key={artist} value={artist}>{artist}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <button
+              onClick={() => {
+                setSortBy("date-asc");
+                setFilterCity("all");
+                setFilterArtist("all");
+                setSearchQuery("");
+              }}
+              className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
+            >
+              Limpiar filtros
+            </button>
           </div>
         </div>
 
-        {/* Artist Cards */}
-        {isLoadingArtists ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <ArtistCardSkeleton key={i} />
+        {/* Events Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <EventCardSkeleton key={i} />
             ))}
           </div>
-        ) : filteredArtists && filteredArtists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredArtists.map((artist: any) => (
-              <Card
-                key={artist.main_attraction_name}
-                className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
-                onClick={() => setSelectedArtist(artist.main_attraction_name)}
-              >
-                <div className="relative h-64 overflow-hidden">
-                  {artist.attraction_image_standard_url ? (
-                    <img
-                      src={artist.attraction_image_standard_url}
-                      alt={artist.main_attraction_name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-muted" />
-                  )}
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-[#00FF8F] text-[#121212] font-bold border-0">
-                      {artist.event_count} eventos
-                    </Badge>
-                  </div>
-                </div>
-                <CardContent className="p-5">
-                  <h3 className="font-bold text-xl mb-2">{artist.main_attraction_name}</h3>
-                </CardContent>
-                <CardFooter className="p-5 pt-0">
-                  <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-bold">
-                    Ver Eventos
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+        ) : filteredAndSortedEvents.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
+            <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No se encontraron artistas</p>
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayedEvents.map((event, index) => (
+                <div
+                  key={event.event_id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <EventCard event={event as any} />
+                </div>
+              ))}
+            </div>
+            
+            {/* Infinite Scroll Loader */}
+            {displayedEvents.length < filteredAndSortedEvents.length && (
+              <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                  <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </main>
-
+      </div>
       <Footer />
     </div>
   );
