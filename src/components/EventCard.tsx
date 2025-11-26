@@ -42,8 +42,7 @@ const EventCard = ({ event }: EventCardProps) => {
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
-    minutes: 0,
-    seconds: 0
+    minutes: 0
   });
 
   useEffect(() => {
@@ -52,13 +51,12 @@ const EventCard = ({ event }: EventCardProps) => {
       const days = Math.max(0, differenceInDays(eventDate, now));
       const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
       const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
-      const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
       
-      setCountdown({ days, hours, minutes, seconds });
+      setCountdown({ days, hours, minutes });
     };
 
     updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
     return () => clearInterval(interval);
   }, [eventDate]);
 
@@ -146,10 +144,6 @@ const EventCard = ({ event }: EventCardProps) => {
                       <div className="text-lg font-bold">{countdown.minutes}</div>
                       <div className="text-[10px] uppercase">MIN</div>
                     </div>
-                    <div>
-                      <div className="text-lg font-bold">{countdown.seconds}</div>
-                      <div className="text-[10px] uppercase">SEG</div>
-                    </div>
                   </div>
                 </div>
               )}
@@ -169,9 +163,9 @@ const EventCard = ({ event }: EventCardProps) => {
           </div>
 
           {/* Bottom Section with Button */}
-          <div className="bg-background p-4 flex justify-end">
-            <Button variant="primary" size="lg" className="gap-2">
-              Ver Entradas →
+          <div className="bg-background p-4 flex justify-center items-center">
+            <Button variant="primary" size="lg" className="gap-2 min-w-[200px]">
+              Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€
             </Button>
           </div>
         </div>
