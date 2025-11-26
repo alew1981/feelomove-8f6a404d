@@ -164,8 +164,10 @@ const EventCard = ({ event }: EventCardProps) => {
 
           {/* Bottom Section with Button */}
           <div className="bg-background p-4 flex justify-center items-center">
-            <Button variant="primary" size="lg" className="gap-2 min-w-[200px]">
-              Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€
+            <Button variant="primary" size="lg" className="gap-2 min-w-[280px] flex items-center justify-center">
+              <span>Entradas</span>
+              <span>→</span>
+              <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
             </Button>
           </div>
         </div>
