@@ -117,7 +117,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
               {/* Countdown Timer and Badge - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                 {showCountdown && (
-                  <div className="bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border border-accent/30">
+                  <div className={`bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border ${isLessThan24Hours ? 'border-accent shadow-accent/50 shadow-lg animate-pulse' : 'border-accent/30'}`}>
                     <div className="flex gap-2 text-accent font-['Poppins'] text-center">
                       {isLessThan24Hours ? (
                         <>
@@ -162,7 +162,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
 
             {/* Event Name Below Image */}
             <div className="bg-background px-4 pt-4 pb-2">
-              <h3 className="text-foreground text-lg font-bold truncate leading-tight tracking-tight font-['Poppins']" title={event.event_name}>
+              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']" title={event.event_name}>
                 {event.event_name}
               </h3>
             </div>

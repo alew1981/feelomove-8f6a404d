@@ -5,11 +5,11 @@ import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
+import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Grid3x3, List } from "lucide-react";
-import { EventCardSkeleton } from "@/components/ui/skeleton-loader";
 
 const Eventos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
@@ -215,11 +215,11 @@ const Eventos = () => {
         {/* Events Grid/List */}
         {isLoading ? (
           <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             : "space-y-4"
           }>
             {[...Array(8)].map((_, i) => (
-              <EventCardSkeleton key={i} />
+              <EventCardSkeleton key={i} viewMode={viewMode} />
             ))}
           </div>
         ) : filteredAndSortedEvents.length === 0 ? (
@@ -229,11 +229,17 @@ const Eventos = () => {
           </div>
         ) : (
           <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             : "space-y-4"
           }>
-            {filteredAndSortedEvents.map(event => (
-              <EventCard key={event.event_id} event={event} viewMode={viewMode} />
+            {filteredAndSortedEvents.map((event, index) => (
+              <div 
+                key={event.event_id}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <EventCard event={event} viewMode={viewMode} />
+              </div>
             ))}
           </div>
         )}
