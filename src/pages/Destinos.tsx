@@ -32,7 +32,7 @@ const getCityImage = (cityName: string): string => {
 
 const Destinos = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterGenre, setFilterGenre] = useState<string>("all");
+  const [filterSubcategory, setFilterSubcategory] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -94,11 +94,14 @@ const Destinos = () => {
     },
   });
 
-  // Extract unique genres for filters
-  const genres = useMemo(() => {
+  // Extract unique subcategories (genres) for filter
+  const subcategories = useMemo(() => {
     if (!cities) return [];
     const uniqueGenres = [...new Set(cities.flatMap((c: any) => c.genres))];
-    return uniqueGenres.sort();
+    return uniqueGenres.sort().map((name, index) => ({
+      id: index,
+      name
+    }));
   }, [cities]);
 
   // Extract unique months from event dates
@@ -132,8 +135,8 @@ const Destinos = () => {
     return cities.filter((city: any) => {
       const matchesSearch = city.city_name.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Apply genre filter
-      const matchesGenre = filterGenre === "all" || city.genres.includes(filterGenre);
+      // Apply subcategory filter
+      const matchesSubcategory = filterSubcategory === "all" || city.genres.includes(filterSubcategory);
       
       // Apply date filter
       let matchesDate = true;
@@ -146,9 +149,9 @@ const Destinos = () => {
         });
       }
       
-      return matchesSearch && matchesGenre && matchesDate;
+      return matchesSearch && matchesSubcategory && matchesDate;
     });
-  }, [cities, searchQuery, filterGenre, filterDate]);
+  }, [cities, searchQuery, filterSubcategory, filterDate]);
 
   // Display only the first displayCount cities
   const displayedCities = useMemo(() => {
@@ -204,14 +207,16 @@ const Destinos = () => {
               </SelectContent>
             </Select>
 
-            <Select value={filterGenre} onValueChange={setFilterGenre}>
+            <Select value={filterSubcategory} onValueChange={setFilterSubcategory}>
               <SelectTrigger className="h-11 border-2">
                 <SelectValue placeholder="Todos los géneros" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los géneros</SelectItem>
-                {genres.map(genre => (
-                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                {subcategories.map((subcategory: any) => (
+                  <SelectItem key={subcategory.id} value={subcategory.name}>
+                    {subcategory.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -219,7 +224,7 @@ const Destinos = () => {
             <button
               onClick={() => {
                 setSearchQuery("");
-                setFilterGenre("all");
+                setFilterSubcategory("all");
                 setFilterDate("all");
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
@@ -256,7 +261,7 @@ const Destinos = () => {
                   className="block"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative animate-fade-in">
+                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative animate-fade-in hover-lift">
                     <div className="relative h-64 overflow-hidden">
                       <img
                         src={city.image_url}
