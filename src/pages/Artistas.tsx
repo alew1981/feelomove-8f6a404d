@@ -31,8 +31,8 @@ const Artistas = () => {
     queryKey: ["allArtists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("attraction_names, image_standard_url, venue_city, event_date, categories")
+        .from("vw_events_with_hotels")
+        .select("attraction_names, attraction_slug, image_standard_url, venue_city, event_date, categories")
         .gte("event_date", new Date().toISOString())
         .not("attraction_names", "is", null);
       
@@ -52,6 +52,7 @@ const Artistas = () => {
               ).filter(Boolean);
               artistMap.set(name, {
                 main_attraction_name: name,
+                attraction_slug: event.attraction_slug,
                 event_count: 1,
                 attraction_image_standard_url: event.image_standard_url,
                 cities: new Set([event.venue_city]),
@@ -364,41 +365,45 @@ const Artistas = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedArtists.map((artist: any, index) => (
-              <Card
+              <Link
+                to={`/artista/${artist.attraction_slug}`}
                 key={artist.main_attraction_name}
-                className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative"
-                onClick={() => setSelectedArtist(artist.main_attraction_name)}
+                className="block"
               >
-                <div className="relative h-64 overflow-hidden">
-                  {artist.attraction_image_standard_url ? (
-                    <img
-                      src={artist.attraction_image_standard_url}
-                      alt={artist.main_attraction_name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-muted" />
-                  )}
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                      {artist.event_count} eventos
-                    </Badge>
+                <Card
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    {artist.attraction_image_standard_url ? (
+                      <img
+                        src={artist.attraction_image_standard_url}
+                        alt={artist.main_attraction_name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted" />
+                    )}
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                        {artist.event_count} eventos próximos
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-                <CardContent className="p-4 space-y-3">
-                  <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
-                    {artist.main_attraction_name}
-                  </h3>
-                </CardContent>
-                <CardFooter className="p-4 pt-0">
-                  <Button 
-                    className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm"
-                    style={{ fontFamily: 'Poppins' }}
-                  >
-                    Ver Eventos →
-                  </Button>
-                </CardFooter>
-              </Card>
+                  <CardContent className="p-4 space-y-3">
+                    <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
+                      {artist.main_attraction_name}
+                    </h3>
+                  </CardContent>
+                  <CardFooter className="p-4 pt-0">
+                    <Button 
+                      className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm"
+                      style={{ fontFamily: 'Poppins' }}
+                    >
+                      Ver Eventos →
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </Link>
             ))}
           </div>
           

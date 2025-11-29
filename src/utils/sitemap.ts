@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../integrations/supabase/client";
 
 interface SitemapUrl {
   loc: string;
@@ -30,7 +30,7 @@ export const generateSitemap = async (): Promise<string> => {
     .limit(1000);
 
   if (events) {
-    events.forEach((event) => {
+    events.forEach((event: any) => {
       urls.push({
         loc: `${baseUrl}/producto/${event.event_slug}`,
         lastmod: event.event_updated_at || new Date().toISOString(),
@@ -48,7 +48,7 @@ export const generateSitemap = async (): Promise<string> => {
     .not("attraction_slug", "is", null);
 
   if (artistData) {
-    const uniqueArtistSlugs = [...new Set(artistData.map(a => a.attraction_slug))];
+    const uniqueArtistSlugs = [...new Set(artistData.map((a: any) => a.attraction_slug))];
     uniqueArtistSlugs.forEach((slug) => {
       if (slug) {
         urls.push({
@@ -68,9 +68,9 @@ export const generateSitemap = async (): Promise<string> => {
     .not("venue_city", "is", null);
 
   if (cities) {
-    const uniqueCities = [...new Set(cities.map(c => c.venue_city))];
-    uniqueCities.forEach((city) => {
-      if (city) {
+    const uniqueCities = [...new Set(cities.map((c: any) => c.venue_city))];
+    uniqueCities.forEach((city: any) => {
+      if (city && typeof city === 'string') {
         const citySlug = city.toLowerCase().replace(/\s+/g, '-');
         urls.push({
           loc: `${baseUrl}/destinos/${citySlug}`,

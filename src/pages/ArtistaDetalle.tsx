@@ -1,0 +1,340 @@
+import { useState, useMemo, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import { SEOHead } from "@/components/SEOHead";
+import { SEOText } from "@/components/SEOText";
+import EventCard from "@/components/EventCard";
+import EventCardSkeleton from "@/components/EventCardSkeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useInView } from "react-intersection-observer";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+const ArtistaDetalle = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const artistSlug = slug ? decodeURIComponent(slug) : "";
+  
+  const [sortBy, setSortBy] = useState<string>("date-asc");
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterGenre, setFilterGenre] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [displayCount, setDisplayCount] = useState<number>(30);
+  
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0
+  });
+
+  // Fetch events for this artist using vw_events_with_hotels
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["artist-events", artistSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vw_events_with_hotels")
+        .select(`
+          event_id,
+          event_name,
+          event_slug,
+          event_date,
+          venue_city,
+          image_standard_url,
+          ticket_cheapest_price,
+          package_price_min,
+          has_hotel_offers,
+          sold_out,
+          seats_available,
+          hotels_count,
+          attraction_names,
+          attraction_slug,
+          categories
+        `)
+        .eq("attraction_slug", artistSlug)
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!artistSlug,
+  });
+
+  // Get artist name from first event
+  const artistName = events && events.length > 0 ? events[0].attraction_names?.[0] : artistSlug;
+
+  // Extract unique cities, genres, and dates for filters
+  const cities = useMemo(() => {
+    if (!events) return [];
+    const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
+    return uniqueCities.sort();
+  }, [events]);
+
+  const genres = useMemo(() => {
+    if (!events) return [];
+    const genreSet = new Set<string>();
+    
+    events.forEach(event => {
+      const categories = Array.isArray(event.categories) ? event.categories : [];
+      categories.forEach((cat: any) => {
+        if (cat.subcategories && Array.isArray(cat.subcategories)) {
+          cat.subcategories.forEach((subcat: any) => {
+            if (subcat.name) genreSet.add(subcat.name);
+          });
+        }
+      });
+    });
+    
+    return Array.from(genreSet).sort();
+  }, [events]);
+
+  const availableMonths = useMemo(() => {
+    if (!events) return [];
+    const monthSet = new Set<string>();
+    
+    events.forEach(event => {
+      if (event.event_date) {
+        const date = new Date(event.event_date);
+        const monthYear = format(date, "MMMM yyyy", { locale: es });
+        monthSet.add(monthYear);
+      }
+    });
+    
+    return Array.from(monthSet).sort((a, b) => {
+      const dateA = new Date(a);
+      const dateB = new Date(b);
+      return dateA.getTime() - dateB.getTime();
+    });
+  }, [events]);
+
+  // Filter and sort events
+  const filteredAndSortedEvents = useMemo(() => {
+    if (!events) return [];
+    let filtered = [...events];
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(event => 
+        event.event_name.toLowerCase().includes(query) ||
+        event.venue_city?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply city filter
+    if (filterCity !== "all") {
+      filtered = filtered.filter(event => event.venue_city === filterCity);
+    }
+
+    // Apply genre filter
+    if (filterGenre !== "all") {
+      filtered = filtered.filter(event => {
+        const categories = Array.isArray(event.categories) ? event.categories : [];
+        return categories.some((cat: any) => {
+          if (cat.subcategories && Array.isArray(cat.subcategories)) {
+            return cat.subcategories.some((subcat: any) => subcat.name === filterGenre);
+          }
+          return false;
+        });
+      });
+    }
+
+    // Apply date filter
+    if (filterDate !== "all") {
+      filtered = filtered.filter(event => {
+        if (!event.event_date) return false;
+        const eventMonth = format(new Date(event.event_date), "MMMM yyyy", { locale: es });
+        return eventMonth === filterDate;
+      });
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "date-asc":
+        filtered.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+        break;
+      case "date-desc":
+        filtered.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+        break;
+      case "price-asc":
+        filtered.sort((a, b) => (a.ticket_cheapest_price || 0) - (b.ticket_cheapest_price || 0));
+        break;
+      case "price-desc":
+        filtered.sort((a, b) => (b.ticket_cheapest_price || 0) - (a.ticket_cheapest_price || 0));
+        break;
+      case "packages":
+        filtered = filtered.filter(e => e.has_hotel_offers);
+        filtered.sort((a, b) => (a.package_price_min || 0) - (b.package_price_min || 0));
+        break;
+    }
+    
+    return filtered;
+  }, [events, searchQuery, filterCity, filterGenre, filterDate, sortBy]);
+
+  // Display only the first displayCount events
+  const displayedEvents = useMemo(() => {
+    return filteredAndSortedEvents.slice(0, displayCount);
+  }, [filteredAndSortedEvents, displayCount]);
+
+  // Load more when scrolling to bottom
+  useEffect(() => {
+    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
+      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
+    }
+  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
+
+  // SEO content
+  const firstCity = cities[0] || "España";
+  const seoDescription = `Descubre todos los conciertos de ${artistName} en ${firstCity} y otras ciudades. Compra entradas + hotel para los próximos eventos de ${artistName} en España.`;
+
+  return (
+    <>
+      <SEOHead
+        title={`${artistName} - Entradas y Paquetes | FEELOMOVE`}
+        description={seoDescription}
+        canonical={`https://feelomove.com/artista/${artistSlug}`}
+      />
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          
+          {/* Header */}
+          <div className="mb-8 mt-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{artistName}</h1>
+            <Breadcrumbs />
+            <SEOText 
+              title={`Conciertos de ${artistName}`}
+              description={`Encuentra todos los próximos conciertos de ${artistName} en España. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles de ${artistName} en ciudades como ${cities.slice(0, 3).join(", ")}.`}
+              keywords={[`${artistName} españa`, `${artistName} conciertos`, `entradas ${artistName}`, ...cities.slice(0, 3).map(city => `${artistName} ${city}`)]}
+            />
+          </div>
+
+          {/* Filters and Search */}
+          <div className="mb-8 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar eventos o ciudades..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
+              />
+            </div>
+
+            {/* Filter Row */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-11 border-2">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
+                  <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
+                  <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
+                  <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                  <SelectItem value="packages">Con paquetes</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterDate} onValueChange={setFilterDate}>
+                <SelectTrigger className="h-11 border-2">
+                  <SelectValue placeholder="Todas las fechas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las fechas</SelectItem>
+                  {availableMonths.map(month => (
+                    <SelectItem key={month} value={month}>{month}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterGenre} onValueChange={setFilterGenre}>
+                <SelectTrigger className="h-11 border-2">
+                  <SelectValue placeholder="Todos los géneros" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los géneros</SelectItem>
+                  {genres.map(genre => (
+                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterCity} onValueChange={setFilterCity}>
+                <SelectTrigger className="h-11 border-2">
+                  <SelectValue placeholder="Todas las ciudades" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las ciudades</SelectItem>
+                  {cities.map(city => (
+                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <button
+                onClick={() => {
+                  setSortBy("date-asc");
+                  setFilterCity("all");
+                  setFilterGenre("all");
+                  setFilterDate("all");
+                  setSearchQuery("");
+                }}
+                className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+
+          {/* Events Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : filteredAndSortedEvents.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
+              <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {displayedEvents.map((event, index) => (
+                  <div
+                    key={event.event_id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <EventCard event={event as any} />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Infinite Scroll Loader */}
+              {displayedEvents.length < filteredAndSortedEvents.length && (
+                <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                    <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        <Footer />
+      </div>
+    </>
+  );
+};
+
+export default ArtistaDetalle;

@@ -14,6 +14,7 @@ import { useCart, CartTicket } from "@/contexts/CartContext";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { handleLegacyRedirect } from "@/utils/redirects";
 
 const Producto = () => {
   const { slug } = useParams();
@@ -33,6 +34,13 @@ const Producto = () => {
         .maybeSingle();
       
       if (error) throw error;
+      
+      // If no event found with slug, try legacy redirect
+      if (!data && slug) {
+        const redirected = await handleLegacyRedirect(slug, navigate);
+        if (redirected) return null;
+      }
+      
       return data;
     }
   });
@@ -106,7 +114,7 @@ const Producto = () => {
     let updatedTickets = [...existingTickets];
     
     if (ticketIndex >= 0) {
-      const newQuantity = Math.max(0, updatedTickets[ticketIndex].quantity + change);
+      const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
       if (newQuantity === 0) {
         updatedTickets = updatedTickets.filter(t => t.type !== ticketType);
       } else {
@@ -120,7 +128,7 @@ const Producto = () => {
         type: ticketData.type,
         price: ticketData.price,
         fees: ticketData.fees,
-        quantity: 1
+        quantity: 2
       });
     }
 
@@ -304,6 +312,7 @@ const Producto = () => {
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
                                 onClick={() => handleTicketQuantityChange(ticket.type, -1)}
+                                disabled={quantity === 0}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
@@ -313,6 +322,7 @@ const Producto = () => {
                                 size="icon"
                                 className="h-8 w-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
                                 onClick={() => handleTicketQuantityChange(ticket.type, 1)}
+                                disabled={quantity >= 10}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
