@@ -1,4 +1,5 @@
-import { supabase } from "../integrations/supabase/client";
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '../integrations/supabase/types';
 
 interface SitemapUrl {
   loc: string;
@@ -8,6 +9,12 @@ interface SitemapUrl {
 }
 
 export const generateSitemap = async (): Promise<string> => {
+  // Create a Supabase client without auth storage for build-time usage
+  const supabase = createClient<Database>(
+    "https://ycgnutvyklpohfwwabes.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ251dHZ5a2xwb2hmd3dhYmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjM4MzgsImV4cCI6MjA3ODU5OTgzOH0.hdrVQtNWYV4LtP1e89zFJTkTcIqgpc4Qmj8pTrHm2pc"
+  );
+  
   const baseUrl = "https://feelomove.com";
   const urls: SitemapUrl[] = [];
 
