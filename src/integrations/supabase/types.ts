@@ -37,6 +37,7 @@ export type Database = {
           longitude: number | null
           main_photo: string | null
           name: string
+          place_id: string | null
           primary_hotel_id: string | null
           rating: number | null
           raw_hotel_data: Json | null
@@ -73,6 +74,7 @@ export type Database = {
           longitude?: number | null
           main_photo?: string | null
           name: string
+          place_id?: string | null
           primary_hotel_id?: string | null
           rating?: number | null
           raw_hotel_data?: Json | null
@@ -109,6 +111,7 @@ export type Database = {
           longitude?: number | null
           main_photo?: string | null
           name?: string
+          place_id?: string | null
           primary_hotel_id?: string | null
           rating?: number | null
           raw_hotel_data?: Json | null
