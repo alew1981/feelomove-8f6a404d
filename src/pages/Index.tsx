@@ -163,11 +163,14 @@ const Index = () => {
       <Hero />
 
       <main className="container mx-auto px-4 py-12 space-y-16">
-        {/* Próximamente */}
+        {/* Próximos Conciertos */}
         <section>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Próximamente</h2>
-            <Link to="/eventos" className="text-accent hover:underline font-medium">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Próximos Conciertos</h2>
+              <p className="text-muted-foreground">Los conciertos más esperados</p>
+            </div>
+            <Link to="/conciertos" className="text-accent hover:underline font-medium">
               Ver todos →
             </Link>
           </div>
@@ -175,17 +178,56 @@ const Index = () => {
             {upcomingLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              upcomingEvents?.map((event: any) => (
-                <EventCard key={event.event_id} event={event} />
-              ))
+              upcomingEvents
+                ?.filter(event => 
+                  event.event_badges?.some((badge: string) => 
+                    badge.toLowerCase().includes('concert')
+                  )
+                )
+                .slice(0, 4)
+                .map((event: any) => (
+                  <EventCard key={event.event_id} event={event} />
+                ))
             )}
           </div>
         </section>
 
-        {/* Destacados */}
+        {/* Próximos Festivales */}
         <section>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Destacados</h2>
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Próximos Festivales</h2>
+              <p className="text-muted-foreground">Experiencias multi-día inolvidables</p>
+            </div>
+            <Link to="/festivales" className="text-accent hover:underline font-medium">
+              Ver todos →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {upcomingLoading ? (
+              Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
+            ) : (
+              upcomingEvents
+                ?.filter(event => 
+                  event.event_badges?.some((badge: string) => 
+                    badge.toLowerCase().includes('festival')
+                  )
+                )
+                .slice(0, 4)
+                .map((event: any) => (
+                  <EventCard key={event.event_id} event={event} />
+                ))
+            )}
+          </div>
+        </section>
+
+        {/* Eventos con Hotel */}
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Eventos con Hotel</h2>
+              <p className="text-muted-foreground">Paquetes completos de evento + alojamiento</p>
+            </div>
             <Link to="/eventos" className="text-accent hover:underline font-medium">
               Ver todos →
             </Link>

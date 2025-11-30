@@ -8,6 +8,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { SEOText } from "@/components/SEOText";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
+import { ToggleWithHotels } from "@/components/ToggleWithHotels";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -24,6 +25,7 @@ const ArtistaDetalle = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
+  const [withHotels, setWithHotels] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -173,7 +175,7 @@ const ArtistaDetalle = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterDate, sortBy]);
+  }, [events, searchQuery, filterCity, filterGenre, filterDate, withHotels, sortBy]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -213,21 +215,26 @@ const ArtistaDetalle = () => {
             />
           </div>
 
-          {/* Filters and Search */}
-          <div className="mb-8 space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar eventos o ciudades..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
-              />
-            </div>
+        {/* Filters and Search */}
+        <div className="mb-8 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar eventos o ciudades..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
+            />
+          </div>
 
-            {/* Filter Row */}
+          {/* Toggle Hotels */}
+          <div className="flex justify-end">
+            <ToggleWithHotels value={withHotels} onChange={setWithHotels} />
+          </div>
+
+          {/* Filter Row */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="h-11 border-2">
@@ -278,18 +285,19 @@ const ArtistaDetalle = () => {
                 </SelectContent>
               </Select>
 
-              <button
-                onClick={() => {
-                  setSortBy("date-asc");
-                  setFilterCity("all");
-                  setFilterGenre("all");
-                  setFilterDate("all");
-                  setSearchQuery("");
-                }}
-                className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
-              >
-                Limpiar filtros
-              </button>
+            <button
+              onClick={() => {
+                setSortBy("date-asc");
+                setFilterCity("all");
+                setFilterGenre("all");
+                setFilterDate("all");
+                setSearchQuery("");
+                setWithHotels(false);
+              }}
+              className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
+            >
+              Limpiar filtros
+            </button>
             </div>
           </div>
 

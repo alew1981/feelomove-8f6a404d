@@ -12,11 +12,22 @@ import GeneroDetalle from "./pages/GeneroDetalle";
 import Artistas from "./pages/Artistas";
 import ArtistaDetalle from "./pages/ArtistaDetalle";
 import Eventos from "./pages/Eventos";
+import Conciertos from "./pages/Conciertos";
+import Festivales from "./pages/Festivales";
 import Producto from "./pages/Producto";
 import Favoritos from "./pages/Favoritos";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      gcTime: 10 * 60 * 1000, // 10 minutos
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,6 +45,8 @@ const App = () => (
           <Route path="/artistas" element={<Artistas />} />
           <Route path="/artista/:slug" element={<ArtistaDetalle />} />
           <Route path="/eventos" element={<Eventos />} />
+          <Route path="/conciertos" element={<Conciertos />} />
+          <Route path="/festivales" element={<Festivales />} />
           <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/producto/:slug" element={<Producto />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

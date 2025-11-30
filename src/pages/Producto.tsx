@@ -15,6 +15,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { handleLegacyRedirect } from "@/utils/redirects";
+import { CategoryBadge } from "@/components/CategoryBadge";
+import { SEOHead } from "@/components/SEOHead";
 
 const Producto = () => {
   const { slug } = useParams();
@@ -168,8 +170,17 @@ const Producto = () => {
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
+      <SEOHead
+        title={`${eventDetails.event_name} - Entradas y Hotel`}
+        description={seoDescription}
+        canonical={`/producto/${eventDetails.event_slug}`}
+        ogImage={eventDetails.image_large_url || eventDetails.image_standard_url}
+        ogType="event"
+        keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
+      />
+      <div className="min-h-screen bg-background">
+        <Navbar />
 
       <main className="container mx-auto px-4 py-8 mt-20">
         {/* Event Hero Section */}
@@ -180,6 +191,11 @@ const Producto = () => {
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/60 to-transparent" />
+          
+          {/* Category Badge - Top Left */}
+          <div className="absolute top-6 left-6">
+            <CategoryBadge badges={eventDetails.event_badges} />
+          </div>
           
           <div className="absolute top-6 right-6 flex flex-col gap-2">
             {!eventDetails.sold_out && eventDetails.seats_available && <Badge variant="disponible">DISPONIBLE</Badge>}
@@ -537,8 +553,9 @@ const Producto = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 };
 

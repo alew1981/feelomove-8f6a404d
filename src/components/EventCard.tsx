@@ -6,6 +6,7 @@ import { MapPin } from "lucide-react";
 import { format, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useEffect, useState } from "react";
+import { CategoryBadge } from "./CategoryBadge";
 
 interface EventCardProps {
   event: {
@@ -27,6 +28,7 @@ interface EventCardProps {
     hotels_count?: number;
     attraction_names?: string[];
     categories?: Array<{ name: string }>;
+    event_badges?: string[];
   };
 }
 
@@ -105,6 +107,11 @@ const EventCard = ({ event }: EventCardProps) => {
                   </Badge>
                 </div>
               )}
+              
+              {/* Category Badge - Bottom Left */}
+              <div className="absolute bottom-3 left-3 z-10">
+                <CategoryBadge badges={event.event_badges} />
+              </div>
 
               {/* Date Card - Absolute positioned on the left */}
               <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
