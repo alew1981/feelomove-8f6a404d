@@ -101,8 +101,8 @@ const Producto = () => {
     }));
   }).sort((a, b) => a.price - b.price);
 
-  const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 5);
-  const hasMoreTickets = ticketPrices.length > 5;
+  const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 6);
+  const hasMoreTickets = ticketPrices.length > 6;
 
   const hotels = Array.isArray(eventDetails.hotels) ? eventDetails.hotels.slice(0, 10) : [];
 
@@ -184,63 +184,120 @@ const Producto = () => {
 
       <main className="container mx-auto px-4 py-8 mt-20">
         {/* Event Hero Section */}
-        <div className="relative rounded-lg overflow-hidden mb-8 h-[500px]">
-          <img
-            src={eventDetails.image_large_url || eventDetails.image_standard_url || "/placeholder.svg"}
-            alt={eventDetails.event_name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/60 to-transparent" />
-          
-          {/* Category Badge - Top Left */}
-          <div className="absolute top-6 left-6">
-            <CategoryBadge badges={eventDetails.event_badges} />
-          </div>
-          
-          <div className="absolute top-6 right-6 flex flex-col gap-2">
-            {!eventDetails.sold_out && eventDetails.seats_available && <Badge variant="disponible">DISPONIBLE</Badge>}
-            {eventDetails.sold_out && <Badge variant="agotado">AGOTADO</Badge>}
-          </div>
+        <div className="relative bg-brand-black rounded-lg overflow-hidden mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
+            {/* Left: Date Block */}
+            <div className="md:col-span-2 bg-white p-8 flex flex-col items-center justify-center border-r-4 border-brand-black">
+              <div className="text-center">
+                <p className="text-lg font-medium mb-2">{format(eventDate, "EEE", { locale: es })}</p>
+                <p className="text-7xl font-black leading-none mb-2">{format(eventDate, "dd")}</p>
+                <p className="text-base mb-4">{format(eventDate, "MMM yyyy", { locale: es })}</p>
+                <p className="text-lg font-medium">{eventDetails.venue_city}</p>
+                <p className="text-3xl font-bold mt-6">{formattedTime}</p>
+              </div>
+            </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-6 left-6 bg-white/10 backdrop-blur hover:bg-white/20"
-            onClick={() => toggleFavorite({
-              event_id: eventDetails.event_id!,
-              event_name: eventDetails.event_name,
-              event_slug: eventDetails.event_slug,
-              event_date: eventDetails.event_date || '',
-              venue_city: eventDetails.venue_city || '',
-              image_url: eventDetails.image_standard_url || ''
-            })}
-          >
-            <Heart className={`h-5 w-5 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
-          </Button>
+            {/* Center: Artist Image with Badges */}
+            <div className="md:col-span-5 relative h-[500px]">
+              <img
+                src={eventDetails.image_large_url || eventDetails.image_standard_url || "/placeholder.svg"}
+                alt={eventDetails.event_name}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Badges Above Image */}
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                <CategoryBadge badges={eventDetails.event_badges} />
+                {eventDetails.categories && (
+                  <Badge className="bg-white text-brand-black font-bold px-3 py-1">
+                    {eventDetails.categories[0]?.segment?.name || "Pop/Rock"}
+                  </Badge>
+                )}
+                {artistNames[0] && (
+                  <Badge className="bg-white text-brand-black font-bold px-3 py-1 flex items-center gap-1">
+                    {artistNames[0]}
+                    <span className="text-accent">✓</span>
+                  </Badge>
+                )}
+              </div>
 
-          <div className="absolute bottom-6 left-6 right-6 space-y-3">
-            <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
-              {eventDetails.event_name}
-            </h1>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-white/90 font-medium">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-accent" />
-                <div>
-                  <div className="text-sm capitalize">{formattedDate}</div>
-                  <div className="text-sm">{formattedTime}</div>
+              {/* DISPONIBLE Badge */}
+              <div className="absolute top-4 right-4">
+                {!eventDetails.sold_out && eventDetails.seats_available && (
+                  <Badge className="bg-accent text-brand-black font-black px-6 py-2 text-base">
+                    DISPONIBLE
+                  </Badge>
+                )}
+                {eventDetails.sold_out && (
+                  <Badge className="bg-red-600 text-white font-black px-6 py-2 text-base">
+                    AGOTADO
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Event Info */}
+            <div className="md:col-span-5 bg-brand-black text-white p-8 flex flex-col justify-between">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-black mb-6 leading-tight">
+                  {eventDetails.event_name}
+                </h1>
+
+                {/* Info Badges */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {eventDetails.off_sale_date && (
+                    <Badge variant="outline" className="bg-white text-brand-black border-0 font-medium px-4 py-2">
+                      Off sale: {format(new Date(eventDetails.off_sale_date), "d MMM yyyy")}
+                    </Badge>
+                  )}
+                  {eventDetails.has_hotel_offers && (
+                    <Badge className="bg-accent text-brand-black font-bold px-4 py-2 flex items-center gap-1">
+                      Hoteles
+                      <span>✓</span>
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Description */}
+                <p className="text-base leading-relaxed mb-6">
+                  {seoDescription}
+                </p>
+
+                {/* Venue Info */}
+                <div className="space-y-2 text-sm">
+                  <p className="font-bold">
+                    [{eventDetails.venue_name}. {eventDetails.venue_address}]
+                  </p>
+                  <p className="text-white/70">
+                    [{eventDetails.venue_city}, {eventDetails.venue_country}]
+                  </p>
+                  {eventDetails.promoter_name && (
+                    <p className="text-white/70 font-medium">
+                      [{eventDetails.promoter_name}]
+                    </p>
+                  )}
                 </div>
               </div>
-              
-              {eventDetails.venue_name && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-accent" />
-                  <div>
-                    <div className="text-sm">{eventDetails.venue_name}</div>
-                    {eventDetails.venue_address && <div className="text-xs opacity-80">{eventDetails.venue_address}</div>}
-                  </div>
-                </div>
-              )}
+
+              {/* Favorite Button */}
+              <div className="mt-6">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full border-2 border-accent text-accent hover:bg-accent hover:text-brand-black font-bold"
+                  onClick={() => toggleFavorite({
+                    event_id: eventDetails.event_id!,
+                    event_name: eventDetails.event_name,
+                    event_slug: eventDetails.event_slug,
+                    event_date: eventDetails.event_date || '',
+                    venue_city: eventDetails.venue_city || '',
+                    image_url: eventDetails.image_standard_url || ''
+                  })}
+                >
+                  <Heart className={`h-5 w-5 mr-2 ${isFavorite(eventDetails.event_id!) ? 'fill-accent' : ''}`} />
+                  {isFavorite(eventDetails.event_id!) ? 'En Favoritos' : 'Añadir a Favoritos'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -250,40 +307,6 @@ const Producto = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* SEO Description */}
-            <Card className="border-2 border-border">
-              <CardHeader className="bg-brand-black text-white">
-                <CardTitle className="flex items-center gap-2 uppercase tracking-wide text-sm">
-                  <Music className="h-5 w-5 text-accent" />
-                  Descripción
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <p className="text-foreground leading-relaxed">{seoDescription}</p>
-              </CardContent>
-            </Card>
-
-            {/* Artists */}
-            {artistNames.length > 0 && (
-              <Card className="border-2 border-border">
-                <CardHeader className="bg-brand-black text-white">
-                  <CardTitle className="flex items-center gap-2 uppercase tracking-wide text-sm">
-                    <Music className="h-5 w-5 text-accent" />
-                    Artistas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="flex flex-wrap gap-2">
-                    {artistNames.map((artist: string, index: number) => (
-                      <Badge key={index} className="bg-brand-black text-white text-sm px-4 py-2 rounded-md">
-                        {artist}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Ticket Prices */}
             {ticketPrices.length > 0 && (
               <Card className="border-2 border-border overflow-hidden">
@@ -299,69 +322,72 @@ const Producto = () => {
                     return (
                       <div
                         key={index}
-                        className="p-6 border-b border-border last:border-0 hover:bg-brand-light-gray transition-colors"
+                        className="p-6 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                       >
-                        <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="flex items-center justify-between gap-6">
+                          {/* Left: Ticket Info */}
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-bold text-lg">{ticket.type}</h3>
-                              <span className="text-xs text-muted-foreground">({ticket.code})</span>
+                              <span className="text-xs bg-muted px-2 py-1 rounded">
+                                {ticket.code}
+                              </span>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              Entrada anticipada + 1 bebida
+                            <p className="text-sm text-muted-foreground">
+                              {ticket.type.includes("VIP") ? "Acceso preferente + merchandising" : "Entrada anticipada + 1 bebida"}
                             </p>
                           </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-brand-black">
-                              €{ticket.price.toFixed(2)}
-                            </div>
-                            <p className="text-xs text-muted-foreground">+ fees: €{ticket.fees.toFixed(2)}</p>
-                          </div>
-                        </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">Cantidad:</span>
+                          {/* Center: Price */}
+                          <div className="text-center">
+                            <div className="text-3xl font-black text-brand-black">
+                              €{ticket.price.toFixed(0)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">+ €{ticket.fees.toFixed(2)} fees</p>
+                          </div>
+
+                          {/* Right: Quantity Selector */}
+                          <div className="flex flex-col items-end gap-2">
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-8 w-8 rounded-full"
+                                className="h-10 w-10 rounded-full border-2"
                                 onClick={() => handleTicketQuantityChange(ticket.type, -1)}
                                 disabled={quantity === 0}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <span className="text-lg font-bold w-8 text-center">{quantity}</span>
+                              <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
                               <Button
                                 variant="default"
                                 size="icon"
-                                className="h-8 w-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
+                                className="h-10 w-10 rounded-full bg-accent text-brand-black hover:bg-accent/90 border-2 border-accent"
                                 onClick={() => handleTicketQuantityChange(ticket.type, 1)}
                                 disabled={quantity >= 10}
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-5 w-5 font-bold" />
                               </Button>
                             </div>
+                            {quantity > 0 && (
+                              <div className="text-lg font-bold text-accent">
+                                Total: €{((ticket.price + ticket.fees) * quantity).toFixed(2)}
+                              </div>
+                            )}
                           </div>
-                          {quantity > 0 && (
-                            <div className="text-right">
-                              <div className="text-xl font-bold">€{((ticket.price + ticket.fees) * quantity).toFixed(2)}</div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
                   })}
                   
                   {hasMoreTickets && (
-                    <div className="p-4 text-center">
+                    <div className="p-4 text-center bg-muted/20">
                       <Button
                         variant="outline"
                         onClick={() => setShowAllTickets(!showAllTickets)}
-                        className="w-full"
+                        className="w-full border-2 hover:border-accent hover:text-accent font-bold"
                       >
-                        {showAllTickets ? "Ver menos" : `Ver más (${ticketPrices.length - 5} más)`}
+                        {showAllTickets ? "Ver menos entradas" : `Ver más entradas (${ticketPrices.length - 6} más)`}
                       </Button>
                     </div>
                   )}

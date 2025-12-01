@@ -26,13 +26,6 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <NavLink
-              to="/eventos"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
-            >
-              Eventos
-            </NavLink>
-            <NavLink
               to="/conciertos"
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
@@ -118,14 +111,6 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4">
-            <NavLink
-              to="/eventos"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Eventos
-            </NavLink>
             <NavLink
               to="/conciertos"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2"

@@ -8,7 +8,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { SEOText } from "@/components/SEOText";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import { ToggleWithHotels } from "@/components/ToggleWithHotels";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -25,7 +25,7 @@ const ArtistaDetalle = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
-  const [withHotels, setWithHotels] = useState<boolean>(false);
+  
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -175,7 +175,7 @@ const ArtistaDetalle = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterDate, withHotels, sortBy]);
+  }, [events, searchQuery, filterCity, filterGenre, filterDate, sortBy]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -227,11 +227,6 @@ const ArtistaDetalle = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
             />
-          </div>
-
-          {/* Toggle Hotels */}
-          <div className="flex justify-end">
-            <ToggleWithHotels value={withHotels} onChange={setWithHotels} />
           </div>
 
           {/* Filter Row */}
@@ -292,7 +287,6 @@ const ArtistaDetalle = () => {
                 setFilterGenre("all");
                 setFilterDate("all");
                 setSearchQuery("");
-                setWithHotels(false);
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
             >
