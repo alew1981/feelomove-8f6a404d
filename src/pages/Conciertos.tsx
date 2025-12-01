@@ -6,7 +6,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import { ToggleWithHotels } from "@/components/ToggleWithHotels";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -17,7 +17,7 @@ const Conciertos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
-  const [withHotels, setWithHotels] = useState<boolean>(false);
+  
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -83,10 +83,6 @@ const Conciertos = () => {
       filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
     }
 
-    // Apply hotel filter
-    if (withHotels) {
-      filtered = filtered.filter(event => event.has_hotel_offers === true);
-    }
 
     // Apply sorting
     switch (sortBy) {
@@ -105,7 +101,7 @@ const Conciertos = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterArtist, withHotels, sortBy]);
+  }, [events, searchQuery, filterCity, filterArtist, sortBy]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -162,11 +158,6 @@ const Conciertos = () => {
               />
             </div>
 
-            {/* Toggle Hotels */}
-            <div className="flex justify-end">
-              <ToggleWithHotels value={withHotels} onChange={setWithHotels} />
-            </div>
-
             {/* Filter Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Select value={sortBy} onValueChange={setSortBy}>
@@ -211,7 +202,6 @@ const Conciertos = () => {
                   setFilterCity("all");
                   setFilterArtist("all");
                   setSearchQuery("");
-                  setWithHotels(false);
                 }}
                 className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
               >

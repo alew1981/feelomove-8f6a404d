@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import { ToggleWithHotels } from "@/components/ToggleWithHotels";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -20,7 +20,7 @@ const DestinoDetalle = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
-  const [withHotels, setWithHotels] = useState<boolean>(false);
+  
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -118,10 +118,6 @@ const DestinoDetalle = () => {
       filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
     }
 
-    // Apply hotel filter
-    if (withHotels) {
-      filtered = filtered.filter(event => event.has_hotel_offers === true);
-    }
 
     // Apply sorting
     switch (sortBy) {
@@ -144,7 +140,7 @@ const DestinoDetalle = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterGenre, filterArtist, withHotels, sortBy]);
+  }, [events, searchQuery, filterGenre, filterArtist, sortBy]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -184,11 +180,6 @@ const DestinoDetalle = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
             />
-          </div>
-
-          {/* Toggle Hotels */}
-          <div className="flex justify-end">
-            <ToggleWithHotels value={withHotels} onChange={setWithHotels} />
           </div>
 
           {/* Filter Row */}
@@ -236,7 +227,6 @@ const DestinoDetalle = () => {
                 setFilterGenre("all");
                 setFilterArtist("all");
                 setSearchQuery("");
-                setWithHotels(false);
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
             >
