@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, X, Calendar, MapPin } from "lucide-react";
@@ -20,17 +20,16 @@ interface SearchBarProps {
 const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return [];
       
-      const { data, error} = await supabase
-        .from("vw_events_with_hotels")
-        .select("event_id, event_name, event_slug, event_date, venue_city, venue_name, image_standard_url")
-        .or(`event_name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%`)
+      const { data, error } = await supabase
+        .from("mv_events_cards")
+        .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url")
+        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,primary_attraction_name.ilike.%${searchTerm}%`)
         .order("event_date", { ascending: true })
         .limit(10);
       
@@ -90,21 +89,21 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
             <p className="text-center text-muted-foreground py-4">No se encontraron resultados</p>
           )}
           
-          {searchResults?.map((result) => (
+          {searchResults?.map((result: any) => (
             <button
-              key={result.event_id}
-              onClick={() => handleResultClick(result.event_slug)}
+              key={result.id}
+              onClick={() => handleResultClick(result.slug)}
               className="w-full p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 transition-all text-left flex gap-3"
             >
               {result.image_standard_url && (
                 <img
                   src={result.image_standard_url}
-                  alt={result.event_name}
+                  alt={result.name}
                   className="w-16 h-16 object-cover rounded"
                 />
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">{result.event_name}</h3>
+                <h3 className="font-semibold text-sm truncate">{result.name}</h3>
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />

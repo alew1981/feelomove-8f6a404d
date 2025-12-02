@@ -7,30 +7,14 @@ import EventCard from "./EventCard";
 import { Card } from "./ui/card";
 
 const FeaturedEvents = () => {
-  // Fetch featured events using vw_events_with_hotels
+  // Fetch featured events using mv_events_cards
   const { data: featuredEvents, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["featured-events"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select(`
-          event_id,
-          event_name,
-          event_slug,
-          event_date,
-          venue_city,
-          image_standard_url,
-          ticket_cheapest_price,
-          package_price_min,
-          has_hotel_offers,
-          sold_out,
-          seats_available,
-          hotels_count,
-          attraction_names
-        `)
-        .gte("event_date", new Date().toISOString())
-        .eq("has_hotel_offers", true)
-        .order("hotels_count", { ascending: false })
+        .from("mv_events_cards")
+        .select("*")
+        .order("event_date", { ascending: true })
         .limit(8);
       
       if (error) throw error;
@@ -38,36 +22,18 @@ const FeaturedEvents = () => {
     },
   });
 
-  // Fetch top destinations
+  // Fetch top destinations from mv_destinations_cards
   const { data: destinations, isLoading: isLoadingDestinations } = useQuery({
     queryKey: ["top-destinations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select("venue_city, venue_country, event_date")
-        .gte("event_date", new Date().toISOString())
-        .not("venue_city", "is", null);
+        .from("mv_destinations_cards")
+        .select("*")
+        .order("event_count", { ascending: false })
+        .limit(4);
       
       if (error) throw error;
-      
-      // Aggregate by city
-      const cityCounts = data.reduce((acc: any, item) => {
-        const city = item.venue_city;
-        if (!acc[city]) {
-          acc[city] = {
-            city_name: city,
-            country: item.venue_country,
-            upcoming_events: 0,
-            city_slug: city.toLowerCase().replace(/\s+/g, '-')
-          };
-        }
-        acc[city].upcoming_events++;
-        return acc;
-      }, {});
-      
-      return Object.values(cityCounts)
-        .sort((a: any, b: any) => b.upcoming_events - a.upcoming_events)
-        .slice(0, 4);
+      return data || [];
     },
   });
 
@@ -89,8 +55,8 @@ const FeaturedEvents = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredEvents?.slice(0, 4).map((event) => (
-                <EventCard key={event.event_id} event={event} />
+              {featuredEvents?.slice(0, 4).map((event: any) => (
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
           )}
@@ -112,7 +78,7 @@ const FeaturedEvents = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {destinations?.map((city: any) => (
-                <Link key={city.city_slug} to={`/destinos`} className="group">
+                <Link key={city.city_name} to={`/destinos/${encodeURIComponent(city.city_name)}`} className="group">
                   <Card className="p-8 text-center transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-card-hover border-border">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-16 h-16 rounded-full bg-[#00FF8F]/10 flex items-center justify-center group-hover:bg-[#00FF8F]/20 transition-colors">
@@ -120,7 +86,7 @@ const FeaturedEvents = () => {
                       </div>
                       <h3 className="text-xl font-bold text-[#121212] dark:text-white">{city.city_name}</h3>
                       <p className="text-sm font-bold text-[#00FF8F] uppercase tracking-wide">
-                        {city.upcoming_events} eventos
+                        {city.event_count} eventos
                       </p>
                     </div>
                   </Card>
@@ -138,8 +104,8 @@ const FeaturedEvents = () => {
               <p className="text-muted-foreground">Descubre más opciones increíbles</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredEvents.slice(4, 8).map((event) => (
-                <EventCard key={event.event_id} event={event} />
+              {featuredEvents.slice(4, 8).map((event: any) => (
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
           </section>
@@ -151,7 +117,7 @@ const FeaturedEvents = () => {
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
             Explora todos nuestros eventos y encuentra el plan perfecto para ti
           </p>
-          <Link to="/eventos">
+          <Link to="/conciertos">
             <Button size="lg" variant="primary">
               Ver Todos los Eventos
             </Button>

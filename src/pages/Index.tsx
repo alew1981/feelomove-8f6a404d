@@ -10,14 +10,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
-  // Fetch upcoming events (Próximamente)
-  const { data: upcomingEvents, isLoading: upcomingLoading } = useQuery({
-    queryKey: ["upcoming-events"],
+  // Fetch concerts from mv_concerts_cards
+  const { data: concerts, isLoading: concertsLoading } = useQuery({
+    queryKey: ["homepage-concerts"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
+        .from("mv_concerts_cards")
         .select("*")
-        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(4);
       if (error) throw error;
@@ -25,135 +24,73 @@ const Index = () => {
     }
   });
 
-  // Fetch featured events (Destacados - events with hotel offers)
-  const { data: featuredEvents, isLoading: featuredLoading } = useQuery({
-    queryKey: ["featured-events"],
+  // Fetch festivals from mv_festivals_cards
+  const { data: festivals, isLoading: festivalsLoading } = useQuery({
+    queryKey: ["homepage-festivals"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
+        .from("mv_festivals_cards")
         .select("*")
-        .eq("has_hotel_offers", true)
-        .gte("event_date", new Date().toISOString())
-        .order("hotels_count", { ascending: false })
+        .order("event_date", { ascending: true })
         .limit(4);
       if (error) throw error;
       return data || [];
     }
   });
 
-  // Fetch top destinations (cities with most events)
-  const { data: topDestinations, isLoading: destinationsLoading } = useQuery({
-    queryKey: ["top-destinations"],
+  // Fetch all events for "Eventos con Hotel" section
+  const { data: eventsWithHotels, isLoading: eventsLoading } = useQuery({
+    queryKey: ["homepage-events-hotels"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select("venue_city, image_standard_url")
-        .gte("event_date", new Date().toISOString())
-        .not("venue_city", "is", null);
-      
+        .from("mv_events_cards")
+        .select("*")
+        .order("event_date", { ascending: true })
+        .limit(4);
       if (error) throw error;
-
-      // Count events per city and get image
-      const cityCounts = (data || []).reduce((acc: any, event: any) => {
-        const city = event.venue_city;
-        if (!acc[city]) {
-          acc[city] = { count: 0, image: event.image_standard_url };
-        }
-        acc[city].count++;
-        return acc;
-      }, {});
-
-      // Convert to array and sort
-      const cities = Object.entries(cityCounts)
-        .map(([city, data]: any) => ({
-          city,
-          count: data.count,
-          image: data.image
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 4);
-
-      return cities;
+      return data || [];
     }
   });
 
-  // Fetch top artists (artists with most events)
-  const { data: topArtists, isLoading: artistsLoading } = useQuery({
-    queryKey: ["top-artists"],
+  // Fetch destinations from mv_destinations_cards
+  const { data: destinations, isLoading: destinationsLoading } = useQuery({
+    queryKey: ["homepage-destinations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select("attraction_names, image_standard_url")
-        .gte("event_date", new Date().toISOString())
-        .not("attraction_names", "is", null);
-      
+        .from("mv_destinations_cards")
+        .select("*")
+        .order("event_count", { ascending: false })
+        .limit(4);
       if (error) throw error;
-
-      // Count events per artist
-      const artistCounts = (data || []).reduce((acc: any, event: any) => {
-        const artists = event.attraction_names || [];
-        artists.forEach((artist: string) => {
-          if (!acc[artist]) {
-            acc[artist] = { count: 0, image: event.image_standard_url };
-          }
-          acc[artist].count++;
-        });
-        return acc;
-      }, {});
-
-      // Convert to array and sort
-      const artists = Object.entries(artistCounts)
-        .map(([artist, data]: any) => ({
-          artist,
-          count: data.count,
-          image: data.image
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 4);
-
-      return artists;
+      return data || [];
     }
   });
 
-  // Fetch top genres (subcategories with most events)
-  const { data: topGenres, isLoading: genresLoading } = useQuery({
-    queryKey: ["top-genres"],
+  // Fetch artists from mv_artists_cards
+  const { data: artists, isLoading: artistsLoading } = useQuery({
+    queryKey: ["homepage-artists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select("categories, image_standard_url")
-        .gte("event_date", new Date().toISOString())
-        .not("categories", "is", null);
-      
+        .from("mv_artists_cards")
+        .select("*")
+        .order("upcoming_events_count", { ascending: false })
+        .limit(4);
       if (error) throw error;
+      return data || [];
+    }
+  });
 
-      // Count events per genre
-      const genreCounts = (data || []).reduce((acc: any, event: any) => {
-        const categories = event.categories || [];
-        categories.forEach((cat: any) => {
-          const subcategories = cat.subcategories || [];
-          subcategories.forEach((sub: any) => {
-            const name = sub.name;
-            if (!acc[name]) {
-              acc[name] = { count: 0, image: event.image_standard_url };
-            }
-            acc[name].count++;
-          });
-        });
-        return acc;
-      }, {});
-
-      // Convert to array and sort
-      const genres = Object.entries(genreCounts)
-        .map(([genre, data]: any) => ({
-          genre,
-          count: data.count,
-          image: data.image
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 4);
-
-      return genres;
+  // Fetch genres from mv_genres_cards
+  const { data: genres, isLoading: genresLoading } = useQuery({
+    queryKey: ["homepage-genres"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mv_genres_cards")
+        .select("*")
+        .order("event_count", { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data || [];
     }
   });
 
@@ -175,19 +112,12 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {upcomingLoading ? (
+            {concertsLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              upcomingEvents
-                ?.filter(event => 
-                  event.event_badges?.some((badge: string) => 
-                    badge.toLowerCase().includes('concert')
-                  )
-                )
-                .slice(0, 4)
-                .map((event: any) => (
-                  <EventCard key={event.event_id} event={event} />
-                ))
+              concerts?.map((event: any) => (
+                <EventCard key={event.id} event={event} />
+              ))
             )}
           </div>
         </section>
@@ -204,19 +134,12 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {upcomingLoading ? (
+            {festivalsLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              upcomingEvents
-                ?.filter(event => 
-                  event.event_badges?.some((badge: string) => 
-                    badge.toLowerCase().includes('festival')
-                  )
-                )
-                .slice(0, 4)
-                .map((event: any) => (
-                  <EventCard key={event.event_id} event={event} />
-                ))
+              festivals?.map((event: any) => (
+                <EventCard key={event.id} event={event} />
+              ))
             )}
           </div>
         </section>
@@ -228,16 +151,16 @@ const Index = () => {
               <h2 className="text-3xl font-bold mb-2">Eventos con Hotel</h2>
               <p className="text-muted-foreground">Paquetes completos de evento + alojamiento</p>
             </div>
-            <Link to="/eventos" className="text-accent hover:underline font-medium">
+            <Link to="/conciertos" className="text-accent hover:underline font-medium">
               Ver todos →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredLoading ? (
+            {eventsLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              featuredEvents?.map((event: any) => (
-                <EventCard key={event.event_id} event={event} />
+              eventsWithHotels?.map((event: any) => (
+                <EventCard key={event.id} event={event} />
               ))
             )}
           </div>
@@ -257,24 +180,24 @@ const Index = () => {
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              topDestinations?.map((destination: any) => (
+              destinations?.map((destination: any) => (
                 <Link
-                  key={destination.city}
-                  to={`/destinos/${destination.city.toLowerCase()}`}
+                  key={destination.city_name}
+                  to={`/destinos/${encodeURIComponent(destination.city_name)}`}
                   className="group block"
                 >
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
                     <div className="relative h-full">
                       <img
-                        src={destination.image || "/placeholder.svg"}
-                        alt={destination.city}
+                        src={destination.sample_image_url || "/placeholder.svg"}
+                        alt={destination.city_name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <h3 className="text-2xl font-bold text-white mb-2">{destination.city}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2">{destination.city_name}</h3>
                         <Badge className="bg-accent text-brand-black">
-                          {destination.count} eventos
+                          {destination.event_count} eventos
                         </Badge>
                       </div>
                     </div>
@@ -299,24 +222,24 @@ const Index = () => {
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              topArtists?.map((artist: any) => (
+              artists?.map((artist: any) => (
                 <Link
-                  key={artist.artist}
-                  to={`/artistas?artist=${encodeURIComponent(artist.artist)}`}
+                  key={artist.artist_id}
+                  to={`/artista/${artist.artist_slug}`}
                   className="group block"
                 >
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
                     <div className="relative h-full">
                       <img
-                        src={artist.image || "/placeholder.svg"}
-                        alt={artist.artist}
+                        src={artist.image_url || "/placeholder.svg"}
+                        alt={artist.artist_name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <h3 className="text-2xl font-bold text-white mb-2">{artist.artist}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2">{artist.artist_name}</h3>
                         <Badge className="bg-accent text-brand-black">
-                          {artist.count} eventos
+                          {artist.upcoming_events_count} eventos
                         </Badge>
                       </div>
                     </div>
@@ -341,24 +264,24 @@ const Index = () => {
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              topGenres?.map((genre: any) => (
+              genres?.map((genre: any) => (
                 <Link
-                  key={genre.genre}
-                  to={`/musica/${genre.genre.toLowerCase()}`}
+                  key={genre.genre_id}
+                  to={`/musica/${encodeURIComponent(genre.genre_name)}`}
                   className="group block"
                 >
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
                     <div className="relative h-full">
                       <img
-                        src={genre.image || "/placeholder.svg"}
-                        alt={genre.genre}
+                        src={genre.sample_image_url || "/placeholder.svg"}
+                        alt={genre.genre_name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <h3 className="text-2xl font-bold text-white mb-2">{genre.genre}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2">{genre.genre_name}</h3>
                         <Badge className="bg-accent text-brand-black">
-                          {genre.count} eventos
+                          {genre.event_count} eventos
                         </Badge>
                       </div>
                     </div>

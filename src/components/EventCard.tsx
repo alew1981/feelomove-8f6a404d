@@ -10,29 +10,41 @@ import { CategoryBadge } from "./CategoryBadge";
 
 interface EventCardProps {
   event: {
-    event_id: string;
-    event_name: string;
-    event_slug: string;
+    // Support both old and new field names
+    id?: string;
+    event_id?: string;
+    name?: string;
+    event_name?: string;
+    slug?: string;
+    event_slug?: string;
     event_date: string;
     venue_city: string;
     venue_name?: string;
     venue_address?: string;
     local_event_date?: string;
-    image_standard_url: string;
+    image_standard_url?: string;
     image_large_url?: string;
+    event_image_large?: string;
+    event_image_standard?: string;
+    price_min_incl_fees?: number | null;
+    ticket_price_min?: number | null;
     ticket_cheapest_price?: number;
-    package_price_min?: number;
-    has_hotel_offers?: boolean;
     sold_out?: boolean;
     seats_available?: boolean;
-    hotels_count?: number;
-    attraction_names?: string[];
-    categories?: Array<{ name: string }>;
+    badges?: string[];
     event_badges?: string[];
   };
 }
 
 const EventCard = ({ event }: EventCardProps) => {
+  // Normalize field names (support both old and new views)
+  const eventId = event.id || event.event_id;
+  const eventName = event.name || event.event_name || '';
+  const eventSlug = event.slug || event.event_slug;
+  const imageUrl = event.image_large_url || event.event_image_large || event.image_standard_url || event.event_image_standard || "/placeholder.svg";
+  const price = event.price_min_incl_fees ?? event.ticket_price_min ?? event.ticket_cheapest_price ?? 0;
+  const badges = event.badges || event.event_badges || [];
+
   const eventDate = parseISO(event.event_date);
   const now = new Date();
   const daysUntil = differenceInDays(eventDate, now);
@@ -65,7 +77,7 @@ const EventCard = ({ event }: EventCardProps) => {
     };
 
     updateCountdown();
-    const interval = setInterval(updateCountdown, isLessThan24Hours ? 1000 : 60000); // Update every second if <24h, else every minute
+    const interval = setInterval(updateCountdown, isLessThan24Hours ? 1000 : 60000);
     return () => clearInterval(interval);
   }, [eventDate, isLessThan24Hours]);
 
@@ -76,12 +88,12 @@ const EventCard = ({ event }: EventCardProps) => {
   if (event.sold_out) {
     badgeVariant = "agotado";
     badgeText = "AGOTADO";
-  } else if (event.seats_available) {
+  } else if (event.seats_available !== false) {
     badgeVariant = "disponible";
     badgeText = "DISPONIBLE";
   }
 
-  const eventUrl = `/producto/${event.event_slug}`;
+  const eventUrl = `/producto/${eventSlug}`;
 
   return (
     <Link to={eventUrl} className="group block">
@@ -91,8 +103,8 @@ const EventCard = ({ event }: EventCardProps) => {
             <div className="relative h-56 overflow-hidden">
               {/* Background Image */}
               <img
-                src={event.image_large_url || event.image_standard_url || "/placeholder.svg"}
-                alt={event.event_name}
+                src={imageUrl}
+                alt={eventName}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               
@@ -110,7 +122,7 @@ const EventCard = ({ event }: EventCardProps) => {
               
               {/* Category Badge - Bottom Left */}
               <div className="absolute bottom-3 left-3 z-10">
-                <CategoryBadge badges={event.event_badges} />
+                <CategoryBadge badges={badges} />
               </div>
 
               {/* Date Card - Absolute positioned on the left */}
@@ -174,8 +186,8 @@ const EventCard = ({ event }: EventCardProps) => {
 
             {/* Event Name Below Image */}
             <div className="bg-background px-4 pt-4 pb-2">
-              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']" title={event.event_name}>
-                {event.event_name}
+              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']" title={eventName}>
+                {eventName}
               </h3>
             </div>
 
@@ -184,7 +196,7 @@ const EventCard = ({ event }: EventCardProps) => {
               <Button variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 py-3 h-auto transition-all duration-300">
                 <span>Entradas</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
+                <span>Desde {Number(price).toFixed(0)}€</span>
               </Button>
             </div>
           </div>
