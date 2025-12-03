@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -28,28 +28,13 @@ const DestinoDetalle = () => {
     threshold: 0
   });
 
-  // Fetch events for this city using vw_events_with_hotels
+  // Fetch events for this city using mv_events_cards
   const { data: events, isLoading } = useQuery({
     queryKey: ["city-events", cityNameDecoded],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select(`
-          event_id,
-          event_name,
-          event_slug,
-          event_date,
-          venue_city,
-          image_standard_url,
-          ticket_cheapest_price,
-          package_price_min,
-          has_hotel_offers,
-          sold_out,
-          seats_available,
-          hotels_count,
-          attraction_names,
-          categories
-        `)
+        .from("mv_events_cards")
+        .select("*")
         .eq("venue_city", cityNameDecoded)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
@@ -64,18 +49,11 @@ const DestinoDetalle = () => {
   const genres = useMemo(() => {
     if (!events) return [];
     const genreSet = new Set<string>();
-    
     events.forEach(event => {
-      const categories = Array.isArray(event.categories) ? event.categories : [];
-      categories.forEach((cat: any) => {
-        if (cat.subcategories && Array.isArray(cat.subcategories)) {
-          cat.subcategories.forEach((subcat: any) => {
-            if (subcat.name) genreSet.add(subcat.name);
-          });
-        }
-      });
+      if (event.primary_subcategory_name) {
+        genreSet.add(event.primary_subcategory_name);
+      }
     });
-    
     return Array.from(genreSet).sort();
   }, [events]);
 
@@ -83,7 +61,7 @@ const DestinoDetalle = () => {
     if (!events) return [];
     const allArtists = events.flatMap(e => e.attraction_names || []);
     const uniqueArtists = [...new Set(allArtists)];
-    return uniqueArtists.sort();
+    return uniqueArtists.sort() as string[];
   }, [events]);
 
   // Filter and sort events
@@ -95,22 +73,14 @@ const DestinoDetalle = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(event => 
-        event.event_name.toLowerCase().includes(query) ||
-        event.attraction_names?.some(artist => artist.toLowerCase().includes(query))
+        event.name?.toLowerCase().includes(query) ||
+        event.attraction_names?.some((artist: string) => artist.toLowerCase().includes(query))
       );
     }
 
     // Apply genre filter
     if (filterGenre !== "all") {
-      filtered = filtered.filter(event => {
-        const categories = Array.isArray(event.categories) ? event.categories : [];
-        return categories.some((cat: any) => {
-          if (cat.subcategories && Array.isArray(cat.subcategories)) {
-            return cat.subcategories.some((subcat: any) => subcat.name === filterGenre);
-          }
-          return false;
-        });
-      });
+      filtered = filtered.filter(event => event.primary_subcategory_name === filterGenre);
     }
 
     // Apply artist filter
@@ -118,24 +88,19 @@ const DestinoDetalle = () => {
       filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
     }
 
-
     // Apply sorting
     switch (sortBy) {
       case "date-asc":
-        filtered.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+        filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
         break;
       case "date-desc":
-        filtered.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+        filtered.sort((a, b) => new Date(b.event_date || 0).getTime() - new Date(a.event_date || 0).getTime());
         break;
       case "price-asc":
-        filtered.sort((a, b) => (a.ticket_cheapest_price || 0) - (b.ticket_cheapest_price || 0));
+        filtered.sort((a, b) => (a.price_min_incl_fees || 0) - (b.price_min_incl_fees || 0));
         break;
       case "price-desc":
-        filtered.sort((a, b) => (b.ticket_cheapest_price || 0) - (a.ticket_cheapest_price || 0));
-        break;
-      case "packages":
-        filtered = filtered.filter(e => e.has_hotel_offers);
-        filtered.sort((a, b) => (a.package_price_min || 0) - (b.package_price_min || 0));
+        filtered.sort((a, b) => (b.price_min_incl_fees || 0) - (a.price_min_incl_fees || 0));
         break;
     }
     
@@ -148,7 +113,7 @@ const DestinoDetalle = () => {
   }, [filteredAndSortedEvents, displayCount]);
 
   // Load more when scrolling to bottom
-  useMemo(() => {
+  useEffect(() => {
     if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
       setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
     }
@@ -193,7 +158,6 @@ const DestinoDetalle = () => {
                 <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
                 <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
                 <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
-                <SelectItem value="packages">Con paquetes</SelectItem>
               </SelectContent>
             </Select>
 
@@ -252,11 +216,11 @@ const DestinoDetalle = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedEvents.map((event, index) => (
                 <div
-                  key={event.event_id}
+                  key={event.id}
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <EventCard event={event as any} />
+                  <EventCard event={event} />
                 </div>
               ))}
             </div>
