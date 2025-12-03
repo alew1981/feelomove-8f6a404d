@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { handleLegacyRedirect } from "@/utils/redirects";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SEOHead } from "@/components/SEOHead";
+import { EventProductPage, TicketArea } from "@/types/events.types";
 
 const Producto = () => {
   const { slug } = useParams();
@@ -26,19 +27,19 @@ const Producto = () => {
   
   const [showAllTickets, setShowAllTickets] = useState(false);
 
-  const { data: eventDetails, isLoading } = useQuery({
-    queryKey: ["event-with-hotels", slug],
+  // Fetch event details from lovable_mv_event_product_page
+  const { data: eventData, isLoading } = useQuery({
+    queryKey: ["event-product-page", slug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
+        .from("lovable_mv_event_product_page")
         .select("*")
-        .eq("event_slug", slug)
-        .maybeSingle();
+        .eq("event_slug", slug);
       
       if (error) throw error;
       
       // If no event found with slug, try legacy redirect
-      if (!data && slug) {
+      if ((!data || data.length === 0) && slug) {
         const redirected = await handleLegacyRedirect(slug, navigate);
         if (redirected) return null;
       }
@@ -46,6 +47,27 @@ const Producto = () => {
       return data;
     }
   });
+
+  // Process data - first row has event details, all rows have hotel data
+  const eventDetails = eventData?.[0] as EventProductPage | null;
+  
+  // Collect unique hotels from all rows
+  const hotels = eventData?.filter(row => row.hotel_id).map(row => ({
+    hotel_id: row.hotel_id,
+    hotel_name: row.hotel_name,
+    hotel_main_photo: row.hotel_main_photo,
+    hotel_thumbnail: row.hotel_thumbnail,
+    hotel_description: row.hotel_description,
+    hotel_stars: row.hotel_stars,
+    hotel_rating: row.hotel_rating,
+    hotel_reviews: row.hotel_reviews,
+    price: row.hotel_min_price,
+    selling_price: row.hotel_selling_price,
+    distance_km: row.distance_km,
+    distance_badge: row.distance_badge,
+  })).filter((hotel, index, self) => 
+    index === self.findIndex(h => h.hotel_id === hotel.hotel_id)
+  ).slice(0, 10) || [];
 
   // Clear cart when changing events
   useEffect(() => {
@@ -88,23 +110,18 @@ const Producto = () => {
   // Generate SEO description
   const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
 
-  // Parse ticket prices from ticket_prices_detail
-  const rawTicketPrices = Array.isArray(eventDetails.ticket_prices_detail) ? eventDetails.ticket_prices_detail : [];
-  const ticketPrices = rawTicketPrices.flatMap((ticket: any) => {
-    if (!ticket.price_levels || !Array.isArray(ticket.price_levels)) return [];
-    return ticket.price_levels.map((level: any) => ({
-      type: ticket.name || ticket.description || "Entrada General",
-      code: ticket.code,
-      price: Number(level.face_value || 0),
-      fees: Number(level.ticket_fees || 0),
-      availability: level.availability || "high"
-    }));
-  }).sort((a, b) => a.price - b.price);
+  // Parse ticket prices from ticket_areas
+  const rawTicketAreas = (eventDetails.ticket_areas as TicketArea[] | null) || [];
+  const ticketPrices = rawTicketAreas.map(area => ({
+    type: area.area_name || "Entrada General",
+    code: area.area_code,
+    price: Number(area.price_min || 0),
+    fees: 0,
+    availability: "available"
+  })).sort((a, b) => a.price - b.price);
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 6);
   const hasMoreTickets = ticketPrices.length > 6;
-
-  const hotels = Array.isArray(eventDetails.hotels) ? eventDetails.hotels.slice(0, 10) : [];
 
   const handleTicketQuantityChange = (ticketType: string, change: number) => {
     const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
@@ -135,7 +152,7 @@ const Producto = () => {
     }
 
     if (updatedTickets.length > 0) {
-      addTickets(eventDetails.event_id!, eventDetails, updatedTickets);
+      addTickets(eventDetails.event_id!, eventDetails as any, updatedTickets);
     } else {
       clearCart();
     }
@@ -148,8 +165,8 @@ const Producto = () => {
   };
 
   const handleAddHotel = (hotel: any) => {
-    const nights = 2;
-    const pricePerNight = Number(hotel.price || 0);
+    const nights = eventDetails.package_nights || 2;
+    const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
     addHotel(eventDetails.event_id!, {
       hotel_id: hotel.hotel_id,
       hotel_name: hotel.hotel_name,
@@ -158,8 +175,8 @@ const Producto = () => {
       total_price: pricePerNight * nights,
       image: hotel.hotel_main_photo || hotel.hotel_thumbnail || "/placeholder.svg",
       description: hotel.hotel_description || "Hotel confortable cerca del venue",
-      checkin_date: format(eventDate, "yyyy-MM-dd"),
-      checkout_date: format(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+      checkin_date: eventDetails.package_checkin || format(eventDate, "yyyy-MM-dd"),
+      checkout_date: eventDetails.package_checkout || format(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
     });
     toast.success("Hotel añadido al carrito");
   };
@@ -175,7 +192,7 @@ const Producto = () => {
         title={`${eventDetails.event_name} - Entradas y Hotel`}
         description={seoDescription}
         canonical={`/producto/${eventDetails.event_slug}`}
-        ogImage={eventDetails.image_large_url || eventDetails.image_standard_url}
+        ogImage={eventDetails.event_image_large || eventDetails.event_image_standard}
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
       />
@@ -200,7 +217,7 @@ const Producto = () => {
             {/* Center: Artist Image with Badges */}
             <div className="md:col-span-5 relative h-[500px]">
               <img
-                src={eventDetails.image_large_url || eventDetails.image_standard_url || "/placeholder.svg"}
+                src={eventDetails.event_image_large || eventDetails.event_image_standard || "/placeholder.svg"}
                 alt={eventDetails.event_name}
                 className="w-full h-full object-cover"
               />
@@ -208,9 +225,9 @@ const Producto = () => {
               {/* Badges Above Image */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                 <CategoryBadge badges={eventDetails.event_badges} />
-                {eventDetails.categories && (
+                {eventDetails.primary_subcategory_name && (
                   <Badge className="bg-white text-brand-black font-bold px-3 py-1">
-                    {eventDetails.categories[0]?.segment?.name || "Pop/Rock"}
+                    {eventDetails.primary_subcategory_name}
                   </Badge>
                 )}
                 {artistNames[0] && (
@@ -250,7 +267,7 @@ const Producto = () => {
                       Off sale: {format(new Date(eventDetails.off_sale_date), "d MMM yyyy")}
                     </Badge>
                   )}
-                  {eventDetails.has_hotel_offers && (
+                  {hotels.length > 0 && (
                     <Badge className="bg-accent text-brand-black font-bold px-4 py-2 flex items-center gap-1">
                       Hoteles
                       <span>✓</span>
@@ -269,13 +286,8 @@ const Producto = () => {
                     [{eventDetails.venue_name}. {eventDetails.venue_address}]
                   </p>
                   <p className="text-white/70">
-                    [{eventDetails.venue_city}, {eventDetails.venue_country}]
+                    [{eventDetails.venue_city}]
                   </p>
-                  {eventDetails.promoter_name && (
-                    <p className="text-white/70 font-medium">
-                      [{eventDetails.promoter_name}]
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -287,11 +299,11 @@ const Producto = () => {
                   className="w-full border-2 border-accent text-accent hover:bg-accent hover:text-brand-black font-bold"
                   onClick={() => toggleFavorite({
                     event_id: eventDetails.event_id!,
-                    event_name: eventDetails.event_name,
-                    event_slug: eventDetails.event_slug,
+                    event_name: eventDetails.event_name || '',
+                    event_slug: eventDetails.event_slug || '',
                     event_date: eventDetails.event_date || '',
                     venue_city: eventDetails.venue_city || '',
-                    image_url: eventDetails.image_standard_url || ''
+                    image_url: eventDetails.event_image_standard || ''
                   })}
                 >
                   <Heart className={`h-5 w-5 mr-2 ${isFavorite(eventDetails.event_id!) ? 'fill-accent' : ''}`} />
@@ -343,7 +355,9 @@ const Producto = () => {
                             <div className="text-3xl font-black text-brand-black">
                               €{ticket.price.toFixed(0)}
                             </div>
-                            <p className="text-xs text-muted-foreground">+ €{ticket.fees.toFixed(2)} fees</p>
+                            {ticket.fees > 0 && (
+                              <p className="text-xs text-muted-foreground">+ €{ticket.fees.toFixed(2)} fees</p>
+                            )}
                           </div>
 
                           {/* Right: Quantity Selector */}
@@ -401,10 +415,8 @@ const Producto = () => {
                 <h2 className="text-3xl font-bold mb-6">Hoteles Disponibles</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {hotels.map((hotel: any) => {
-                    const pricePerNight = Number(hotel.price || 0);
-                    const facilities = hotel.facilities_catalog?.slice(0, 3) || [];
-                    const reviewScore = hotel.hotel_review_score || hotel.hotel_stars;
-                    const reviewCount = hotel.hotel_review_count || 0;
+                    const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
+                    const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
                     
                     return (
                       <Card key={hotel.hotel_id} className="border-2 border-border overflow-hidden hover:shadow-lg transition-all">
@@ -416,7 +428,12 @@ const Producto = () => {
                           />
                           {reviewScore && (
                             <Badge className="absolute top-2 left-2 bg-brand-black/80 text-white backdrop-blur text-xs">
-                              ★ {reviewScore.toFixed(1)}
+                              ★ {Number(reviewScore).toFixed(1)}
+                            </Badge>
+                          )}
+                          {hotel.distance_badge && (
+                            <Badge className="absolute top-2 right-2 bg-accent text-brand-black text-xs">
+                              {hotel.distance_badge}
                             </Badge>
                           )}
                         </div>
@@ -427,16 +444,6 @@ const Producto = () => {
                           <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                             {hotel.hotel_description || "Hotel confortable cerca del venue"}
                           </p>
-
-                          {facilities.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-3">
-                              {facilities.map((facility: any, idx: number) => (
-                                <Badge key={idx} className="bg-brand-black text-white text-[10px] rounded-md px-2 py-0.5">
-                                  {facility.name || facility}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
 
                           <div className="flex items-center justify-between">
                             <div>
@@ -512,7 +519,7 @@ const Producto = () => {
                       className="w-full h-10 text-sm bg-accent text-brand-black hover:bg-accent/90"
                       asChild
                     >
-                      <a href={eventDetails.event_url || "#"} target="_blank" rel="noopener noreferrer">
+                      <a href={eventDetails.event_ticketmaster_url || "#"} target="_blank" rel="noopener noreferrer">
                         Reservar Entradas
                       </a>
                     </Button>

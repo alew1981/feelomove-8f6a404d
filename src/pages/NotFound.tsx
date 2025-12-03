@@ -15,13 +15,13 @@ const NotFound = () => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
-  // Fetch suggested events
+  // Fetch suggested events using mv_events_cards
   const { data: suggestedEvents } = useQuery({
     queryKey: ["suggestedEvents"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
-        .select("event_id, event_name, event_slug, venue_city, event_date, image_standard_url, ticket_price_min_no_fees")
+        .from("mv_events_cards")
+        .select("id, name, slug, venue_city, event_date, image_standard_url, price_min_incl_fees")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(4);
@@ -65,20 +65,20 @@ const NotFound = () => {
                 <h3 className="text-2xl font-bold mb-6">O explora estos eventos</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {suggestedEvents.map((event) => (
-                    <Link key={event.event_id} to={`/producto/${event.event_slug}`}>
+                    <Link key={event.id} to={`/producto/${event.slug}`}>
                       <Card className="hover-lift overflow-hidden h-full">
                         <div className="aspect-[4/3] overflow-hidden">
                           <img 
                             src={event.image_standard_url || "/placeholder.svg"} 
-                            alt={event.event_name}
+                            alt={event.name || "Evento"}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         <CardContent className="p-4">
-                          <h4 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h4>
+                          <h4 className="font-bold text-lg mb-2 line-clamp-2">{event.name}</h4>
                           <p className="text-sm text-muted-foreground mb-1">{event.venue_city}</p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(event.event_date).toLocaleDateString('es-ES', {
+                            {event.event_date && new Date(event.event_date).toLocaleDateString('es-ES', {
                               day: 'numeric',
                               month: 'long',
                               year: 'numeric'

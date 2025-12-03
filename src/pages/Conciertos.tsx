@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -23,24 +23,18 @@ const Conciertos = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch conciertos
+  // Fetch conciertos using mv_concerts_cards
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vw_events_with_hotels")
+        .from("mv_concerts_cards")
         .select("*")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
-      
-      // Filtrar solo conciertos
-      return data?.filter(event => 
-        event.event_badges?.some((badge: string) => 
-          badge.toLowerCase().includes('concert')
-        )
-      ) || [];
+      return data || [];
     }
   });
 
@@ -48,14 +42,13 @@ const Conciertos = () => {
   const cities = useMemo(() => {
     if (!events) return [];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
-    return uniqueCities.sort();
+    return uniqueCities.sort() as string[];
   }, [events]);
 
   const artists = useMemo(() => {
     if (!events) return [];
-    const allArtists = events.flatMap(e => e.attraction_names || []);
-    const uniqueArtists = [...new Set(allArtists)];
-    return uniqueArtists.sort();
+    const uniqueArtists = [...new Set(events.map(e => e.artist_name).filter(Boolean))];
+    return uniqueArtists.sort() as string[];
   }, [events]);
 
   // Filter and sort events
@@ -67,9 +60,9 @@ const Conciertos = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(event => 
-        event.event_name.toLowerCase().includes(query) ||
+        event.name?.toLowerCase().includes(query) ||
         event.venue_city?.toLowerCase().includes(query) ||
-        event.attraction_names?.some((artist: string) => artist.toLowerCase().includes(query))
+        event.artist_name?.toLowerCase().includes(query)
       );
     }
 
@@ -80,23 +73,22 @@ const Conciertos = () => {
 
     // Apply artist filter
     if (filterArtist !== "all") {
-      filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
+      filtered = filtered.filter(event => event.artist_name === filterArtist);
     }
-
 
     // Apply sorting
     switch (sortBy) {
       case "date-asc":
-        filtered.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+        filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
         break;
       case "date-desc":
-        filtered.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+        filtered.sort((a, b) => new Date(b.event_date || 0).getTime() - new Date(a.event_date || 0).getTime());
         break;
       case "price-asc":
-        filtered.sort((a, b) => (a.ticket_cheapest_price || 0) - (b.ticket_cheapest_price || 0));
+        filtered.sort((a, b) => (a.price_min_incl_fees || 0) - (b.price_min_incl_fees || 0));
         break;
       case "price-desc":
-        filtered.sort((a, b) => (b.ticket_cheapest_price || 0) - (a.ticket_cheapest_price || 0));
+        filtered.sort((a, b) => (b.price_min_incl_fees || 0) - (a.price_min_incl_fees || 0));
         break;
     }
     
@@ -109,7 +101,7 @@ const Conciertos = () => {
   }, [filteredAndSortedEvents, displayCount]);
 
   // Load more when scrolling to bottom
-  useMemo(() => {
+  useEffect(() => {
     if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
       setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
     }
@@ -225,9 +217,9 @@ const Conciertos = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {displayedEvents.map((event: any, index: number) => (
+                {displayedEvents.map((event, index) => (
                   <div
-                    key={event.event_id}
+                    key={event.id}
                     className="animate-fade-in"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
