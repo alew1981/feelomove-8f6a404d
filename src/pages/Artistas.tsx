@@ -22,17 +22,42 @@ const Artistas = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch artists from mv_artists_cards
+  // Fetch artists by aggregating from mv_events_cards
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["allArtists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_artists_cards")
-        .select("*")
-        .order("upcoming_events_count", { ascending: false });
+        .from("mv_events_cards")
+        .select("primary_attraction_id, primary_attraction_name, image_large_url, primary_subcategory_name, venue_city")
+        .gte("event_date", new Date().toISOString())
+        .not("primary_attraction_id", "is", null);
       
       if (error) throw error;
-      return data || [];
+      
+      // Group by artist and aggregate data
+      const artistMap = new Map<string, any>();
+      data?.forEach((event: any) => {
+        const id = event.primary_attraction_id;
+        if (!artistMap.has(id)) {
+          artistMap.set(id, {
+            artist_id: id,
+            artist_name: event.primary_attraction_name,
+            artist_slug: event.primary_attraction_name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            image_url: event.image_large_url,
+            genre: event.primary_subcategory_name,
+            cities: new Set([event.venue_city]),
+            upcoming_events_count: 1
+          });
+        } else {
+          const artist = artistMap.get(id);
+          artist.upcoming_events_count++;
+          if (event.venue_city) artist.cities.add(event.venue_city);
+        }
+      });
+      
+      return Array.from(artistMap.values())
+        .map(a => ({ ...a, cities: Array.from(a.cities) }))
+        .sort((a, b) => b.upcoming_events_count - a.upcoming_events_count);
     },
   });
 

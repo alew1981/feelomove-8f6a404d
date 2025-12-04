@@ -14,22 +14,22 @@ export const handleLegacyRedirect = async (
     const isNumericId = /^\d+$/.test(idOrName);
     
     let query = supabase
-      .from("vw_events_with_hotels")
-      .select("event_slug")
+      .from("mv_events_cards")
+      .select("slug")
       .limit(1);
     
     if (isNumericId) {
-      query = query.eq("event_id", idOrName);
+      query = query.eq("id", idOrName);
     } else {
-      // Try matching by event_name
-      query = query.eq("event_name", decodeURIComponent(idOrName));
+      // Try matching by event name
+      query = query.eq("name", decodeURIComponent(idOrName));
     }
     
     const { data, error } = await query.single();
     
-    if (!error && data?.event_slug) {
+    if (!error && data?.slug) {
       // Redirect to the new slug-based URL
-      navigate(`/producto/${data.event_slug}`, { replace: true });
+      navigate(`/producto/${data.slug}`, { replace: true });
       return true;
     }
     

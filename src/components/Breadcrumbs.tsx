@@ -13,16 +13,16 @@ const Breadcrumbs = () => {
   const artistId = searchParams.get('artist');
   const artistDetails = null;
 
-  // Get event name and categories for product page using correct column name
+  // Get event name and categories for product page using mv_events_cards
   const { data: eventDetails } = useQuery({
     queryKey: ["event-breadcrumb", params.id],
     queryFn: async () => {
       if (!params.id) return null;
       
       const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("name, categories, attraction_names, venue_city")
-        .eq("id", params.id)
+        .from("mv_events_cards")
+        .select("name, primary_subcategory_name, attraction_names, venue_city")
+        .eq("slug", params.id)
         .maybeSingle();
       
       if (error) return null;
@@ -31,15 +31,8 @@ const Breadcrumbs = () => {
     enabled: !!params.id && pathnames[0] === "producto",
   });
 
-  // Extract genre from event categories
-  const eventGenre = (() => {
-    if (!eventDetails?.categories || !Array.isArray(eventDetails.categories)) return null;
-    const firstCategory = eventDetails.categories[0] as any;
-    if (firstCategory?.subcategories && Array.isArray(firstCategory.subcategories)) {
-      return firstCategory.subcategories[0]?.name || null;
-    }
-    return null;
-  })();
+  // Extract genre from event
+  const eventGenre = eventDetails?.primary_subcategory_name || null;
 
   // Extract first artist from event
   const eventArtist = eventDetails?.attraction_names && Array.isArray(eventDetails.attraction_names)

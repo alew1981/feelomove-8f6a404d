@@ -107,11 +107,14 @@ export interface ArtistCard {
   cities: string[] | null;
 }
 
-export interface TicketArea {
-  area_code: string;
-  area_name: string;
-  price_min: number;
-  price_max: number;
+export interface TicketType {
+  availability: string;
+  code: string;
+  description: string;
+  face_value: number;
+  fees: number;
+  name: string;
+  total: number;
 }
 
 export interface EventProductPage {
@@ -152,8 +155,7 @@ export interface EventProductPage {
   // Ticket prices
   ticket_price_min: number | null;
   ticket_price_max: number | null;
-  ticket_areas: TicketArea[];
-  ticket_areas_count: number;
+  ticket_types: TicketType[];
   ticket_currency: string;
   
   // Hotel

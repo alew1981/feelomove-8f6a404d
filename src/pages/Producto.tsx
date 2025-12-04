@@ -17,7 +17,17 @@ import { toast } from "sonner";
 import { handleLegacyRedirect } from "@/utils/redirects";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { SEOHead } from "@/components/SEOHead";
-import { EventProductPage, TicketArea } from "@/types/events.types";
+import { EventProductPage } from "@/types/events.types";
+
+interface TicketType {
+  availability: string;
+  code: string;
+  description: string;
+  face_value: number;
+  fees: number;
+  name: string;
+  total: number;
+}
 
 const Producto = () => {
   const { slug } = useParams();
@@ -49,22 +59,20 @@ const Producto = () => {
   });
 
   // Process data - first row has event details, all rows have hotel data
-  const eventDetails = eventData?.[0] as EventProductPage | null;
+  const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
   
   // Collect unique hotels from all rows
   const hotels = eventData?.filter(row => row.hotel_id).map(row => ({
     hotel_id: row.hotel_id,
     hotel_name: row.hotel_name,
     hotel_main_photo: row.hotel_main_photo,
-    hotel_thumbnail: row.hotel_thumbnail,
     hotel_description: row.hotel_description,
     hotel_stars: row.hotel_stars,
     hotel_rating: row.hotel_rating,
-    hotel_reviews: row.hotel_reviews,
-    price: row.hotel_min_price,
-    selling_price: row.hotel_selling_price,
+    hotel_reviews: row.hotel_reviews_count,
+    price: 0, // Will come from prices lookup
+    selling_price: 0,
     distance_km: row.distance_km,
-    distance_badge: row.distance_badge,
   })).filter((hotel, index, self) => 
     index === self.findIndex(h => h.hotel_id === hotel.hotel_id)
   ).slice(0, 10) || [];
@@ -110,14 +118,14 @@ const Producto = () => {
   // Generate SEO description
   const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
 
-  // Parse ticket prices from ticket_areas
-  const rawTicketAreas = (eventDetails.ticket_areas as TicketArea[] | null) || [];
-  const ticketPrices = rawTicketAreas.map(area => ({
-    type: area.area_name || "Entrada General",
-    code: area.area_code,
-    price: Number(area.price_min || 0),
-    fees: 0,
-    availability: "available"
+  // Parse ticket prices from ticket_types
+  const rawTicketTypes = ((eventDetails as any).ticket_types as TicketType[] | null) || [];
+  const ticketPrices = rawTicketTypes.map(ticket => ({
+    type: ticket.name || "Entrada General",
+    code: ticket.code,
+    price: Number(ticket.face_value || 0),
+    fees: Number(ticket.fees || 0),
+    availability: ticket.availability || "available"
   })).sort((a, b) => a.price - b.price);
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 6);
