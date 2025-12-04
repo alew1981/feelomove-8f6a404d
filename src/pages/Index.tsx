@@ -10,110 +10,105 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
-  // Fetch concerts from mv_concerts_cards
-  const { data: concerts, isLoading: concertsLoading } = useQuery({
-    queryKey: ["homepage-concerts"],
+  // Fetch all events from lovable_mv_event_product_page
+  const { data: allEvents, isLoading } = useQuery({
+    queryKey: ["homepage-events"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch festivals from mv_festivals_cards
-  const { data: festivals, isLoading: festivalsLoading } = useQuery({
-    queryKey: ["homepage-festivals"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_festivals_cards")
-        .select("*")
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch all events for "Eventos con Hotel" section
-  const { data: eventsWithHotels, isLoading: eventsLoading } = useQuery({
-    queryKey: ["homepage-events-hotels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_events_cards")
-        .select("*")
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch destinations from mv_destinations_cards
-  const { data: destinations, isLoading: destinationsLoading } = useQuery({
-    queryKey: ["homepage-destinations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_destinations_cards")
-        .select("*")
-        .order("event_count", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch artists by aggregating from mv_events_cards
-  const { data: artists, isLoading: artistsLoading } = useQuery({
-    queryKey: ["homepage-artists"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_events_cards")
-        .select("primary_attraction_id, primary_attraction_name, image_large_url, primary_subcategory_name")
+        .from("lovable_mv_event_product_page")
+        .select("event_id, event_name, event_slug, event_date, venue_city, venue_name, image_large_url, image_standard_url, primary_attraction_id, primary_attraction_name, primary_subcategory_name, ticket_price_min, ticket_price_max, sold_out, seats_available, event_badges, is_festival")
         .gte("event_date", new Date().toISOString())
-        .not("primary_attraction_id", "is", null)
-        .limit(100);
+        .order("event_date", { ascending: true })
+        .limit(200);
       if (error) throw error;
       
-      // Group by artist and count events
-      const artistMap = new Map<string, any>();
-      data?.forEach((event: any) => {
-        const id = event.primary_attraction_id;
-        if (!artistMap.has(id)) {
-          artistMap.set(id, {
-            artist_id: id,
-            artist_name: event.primary_attraction_name,
-            artist_slug: event.primary_attraction_name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            image_url: event.image_large_url,
-            genre: event.primary_subcategory_name,
-            upcoming_events_count: 1
-          });
-        } else {
-          artistMap.get(id).upcoming_events_count++;
+      // Deduplicate by event_id
+      const uniqueEvents = data?.reduce((acc: any[], event) => {
+        if (!acc.find(e => e.event_id === event.event_id)) {
+          acc.push(event);
         }
-      });
+        return acc;
+      }, []) || [];
       
-      return Array.from(artistMap.values())
-        .sort((a, b) => b.upcoming_events_count - a.upcoming_events_count)
-        .slice(0, 4);
+      return uniqueEvents;
     }
   });
 
-  // Fetch genres from mv_genres_cards
-  const { data: genres, isLoading: genresLoading } = useQuery({
-    queryKey: ["homepage-genres"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_genres_cards")
-        .select("*")
-        .order("event_count", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
+  // Process events into different categories
+  const concerts = allEvents?.filter(e => !e.is_festival).slice(0, 4) || [];
+  const festivals = allEvents?.filter(e => e.is_festival).slice(0, 4) || [];
+  const eventsWithHotels = allEvents?.slice(0, 4) || [];
+
+  // Extract destinations with event counts
+  const destinations = (() => {
+    if (!allEvents) return [];
+    const cityMap = new Map<string, { city_name: string; event_count: number; sample_image_url: string }>();
+    allEvents.forEach(event => {
+      const city = event.venue_city;
+      if (city) {
+        if (!cityMap.has(city)) {
+          cityMap.set(city, { city_name: city, event_count: 1, sample_image_url: event.image_large_url || '' });
+        } else {
+          cityMap.get(city)!.event_count++;
+        }
+      }
+    });
+    return Array.from(cityMap.values()).sort((a, b) => b.event_count - a.event_count).slice(0, 4);
+  })();
+
+  // Extract artists with event counts
+  const artists = (() => {
+    if (!allEvents) return [];
+    const artistMap = new Map<string, any>();
+    allEvents.forEach(event => {
+      const id = event.primary_attraction_id;
+      if (id && !artistMap.has(id)) {
+        artistMap.set(id, {
+          artist_id: id,
+          artist_name: event.primary_attraction_name,
+          artist_slug: event.primary_attraction_name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+          image_url: event.image_large_url,
+          upcoming_events_count: 1
+        });
+      } else if (id) {
+        artistMap.get(id).upcoming_events_count++;
+      }
+    });
+    return Array.from(artistMap.values()).sort((a, b) => b.upcoming_events_count - a.upcoming_events_count).slice(0, 4);
+  })();
+
+  // Extract genres with event counts
+  const genres = (() => {
+    if (!allEvents) return [];
+    const genreMap = new Map<string, { genre_name: string; event_count: number; sample_image_url: string }>();
+    allEvents.forEach(event => {
+      const genre = event.primary_subcategory_name;
+      if (genre) {
+        if (!genreMap.has(genre)) {
+          genreMap.set(genre, { genre_name: genre, event_count: 1, sample_image_url: event.image_large_url || '' });
+        } else {
+          genreMap.get(genre)!.event_count++;
+        }
+      }
+    });
+    return Array.from(genreMap.values()).sort((a, b) => b.event_count - a.event_count).slice(0, 4);
+  })();
+
+  // Transform event for EventCard component
+  const transformEvent = (event: any) => ({
+    id: event.event_id,
+    slug: event.event_slug,
+    name: event.event_name,
+    event_date: event.event_date,
+    venue_city: event.venue_city,
+    venue_name: event.venue_name,
+    image_large_url: event.image_large_url,
+    image_standard_url: event.image_standard_url,
+    primary_attraction_name: event.primary_attraction_name,
+    price_min_incl_fees: event.ticket_price_min,
+    sold_out: event.sold_out,
+    seats_available: event.seats_available,
+    badges: event.event_badges
   });
 
   return (
@@ -134,11 +129,11 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {concertsLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              concerts?.map((event: any) => (
-                <EventCard key={event.id} event={event} />
+              concerts.map((event: any) => (
+                <EventCard key={event.event_id} event={transformEvent(event)} />
               ))
             )}
           </div>
@@ -156,12 +151,14 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {festivalsLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
-            ) : (
-              festivals?.map((event: any) => (
-                <EventCard key={event.id} event={event} />
+            ) : festivals.length > 0 ? (
+              festivals.map((event: any) => (
+                <EventCard key={event.event_id} event={transformEvent(event)} />
               ))
+            ) : (
+              <p className="text-muted-foreground col-span-4">No hay festivales próximos</p>
             )}
           </div>
         </section>
@@ -178,11 +175,11 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {eventsLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              eventsWithHotels?.map((event: any) => (
-                <EventCard key={event.id} event={event} />
+              eventsWithHotels.map((event: any) => (
+                <EventCard key={event.event_id} event={transformEvent(event)} />
               ))
             )}
           </div>
@@ -197,12 +194,12 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {destinationsLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              destinations?.map((destination: any) => (
+              destinations.map((destination: any) => (
                 <Link
                   key={destination.city_name}
                   to={`/destinos/${encodeURIComponent(destination.city_name)}`}
@@ -239,12 +236,12 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {artistsLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              artists?.map((artist: any) => (
+              artists.map((artist: any) => (
                 <Link
                   key={artist.artist_id}
                   to={`/artista/${artist.artist_slug}`}
@@ -281,14 +278,14 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {genresLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              genres?.map((genre: any) => (
+              genres.map((genre: any) => (
                 <Link
-                  key={genre.genre_id}
+                  key={genre.genre_name}
                   to={`/musica/${encodeURIComponent(genre.genre_name)}`}
                   className="group block"
                 >

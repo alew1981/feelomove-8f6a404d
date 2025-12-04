@@ -9,7 +9,6 @@ interface SitemapUrl {
 }
 
 export const generateSitemap = async (): Promise<string> => {
-  // Create a Supabase client without auth storage for build-time usage
   const supabase = createClient<Database>(
     "https://ycgnutvyklpohfwwabes.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ251dHZ5a2xwb2hmd3dhYmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjM4MzgsImV4cCI6MjA3ODU5OTgzOH0.hdrVQtNWYV4LtP1e89zFJTkTcIqgpc4Qmj8pTrHm2pc"
@@ -30,36 +29,50 @@ export const generateSitemap = async (): Promise<string> => {
     { loc: `${baseUrl}/favoritos`, changefreq: 'weekly', priority: 0.5 }
   );
 
-  // Fetch events from mv_events_cards
+  // Fetch events
   const { data: events } = await supabase
-    .from("mv_events_cards")
-    .select("slug, event_date, primary_attraction_name")
+    .from("lovable_mv_event_product_page")
+    .select("event_slug, event_date, primary_attraction_name, venue_city, primary_subcategory_name")
     .gte("event_date", new Date().toISOString())
     .order("event_date", { ascending: true })
     .limit(1000);
 
   if (events) {
-    // Add event URLs
+    const seenSlugs = new Set<string>();
+    const artistSlugs = new Set<string>();
+    const cities = new Set<string>();
+    const genres = new Set<string>();
+
     events.forEach((event) => {
-      if (event.slug) {
+      // Add event URLs
+      if (event.event_slug && !seenSlugs.has(event.event_slug)) {
+        seenSlugs.add(event.event_slug);
         urls.push({
-          loc: `${baseUrl}/producto/${event.slug}`,
+          loc: `${baseUrl}/producto/${event.event_slug}`,
           lastmod: new Date().toISOString(),
           changefreq: 'daily',
           priority: 0.8
         });
       }
-    });
 
-    // Extract unique artists for sitemap
-    const artistSlugs = new Set<string>();
-    events.forEach((event) => {
+      // Collect artists
       if (event.primary_attraction_name) {
         const slug = event.primary_attraction_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         artistSlugs.add(slug);
       }
+
+      // Collect cities
+      if (event.venue_city) {
+        cities.add(event.venue_city);
+      }
+
+      // Collect genres
+      if (event.primary_subcategory_name) {
+        genres.add(event.primary_subcategory_name);
+      }
     });
 
+    // Add artist URLs
     artistSlugs.forEach((slug) => {
       urls.push({
         loc: `${baseUrl}/artista/${slug}`,
@@ -67,45 +80,25 @@ export const generateSitemap = async (): Promise<string> => {
         priority: 0.7
       });
     });
-  }
 
-  // Fetch unique cities from mv_destinations_cards
-  const { data: cities } = await supabase
-    .from("mv_destinations_cards")
-    .select("city_name")
-    .not("city_name", "is", null)
-    .limit(100);
-
-  if (cities) {
+    // Add city URLs
     cities.forEach((city) => {
-      if (city.city_name && typeof city.city_name === 'string') {
-        const citySlug = city.city_name.toLowerCase().replace(/\s+/g, '-');
-        urls.push({
-          loc: `${baseUrl}/destinos/${citySlug}`,
-          changefreq: 'weekly',
-          priority: 0.7
-        });
-      }
+      const citySlug = city.toLowerCase().replace(/\s+/g, '-');
+      urls.push({
+        loc: `${baseUrl}/destinos/${citySlug}`,
+        changefreq: 'weekly',
+        priority: 0.7
+      });
     });
-  }
 
-  // Fetch genres from mv_genres_cards
-  const { data: genres } = await supabase
-    .from("mv_genres_cards")
-    .select("genre_name")
-    .not("genre_name", "is", null)
-    .limit(50);
-
-  if (genres) {
+    // Add genre URLs
     genres.forEach((genre) => {
-      if (genre.genre_name && typeof genre.genre_name === 'string') {
-        const genreSlug = genre.genre_name.toLowerCase().replace(/\s+/g, '-');
-        urls.push({
-          loc: `${baseUrl}/musica/${genreSlug}`,
-          changefreq: 'weekly',
-          priority: 0.7
-        });
-      }
+      const genreSlug = encodeURIComponent(genre);
+      urls.push({
+        loc: `${baseUrl}/musica/${genreSlug}`,
+        changefreq: 'weekly',
+        priority: 0.7
+      });
     });
   }
 

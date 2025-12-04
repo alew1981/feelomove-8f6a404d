@@ -28,19 +28,44 @@ const GeneroDetalle = () => {
     threshold: 0
   });
 
-  // Fetch events for this genre using mv_events_cards
+  // Fetch events for this genre using lovable_mv_event_product_page
   const { data: events, isLoading } = useQuery({
     queryKey: ["genre-events", genreNameDecoded],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_events_cards")
-        .select("*")
+        .from("lovable_mv_event_product_page")
+        .select("event_id, event_name, event_slug, event_date, venue_city, venue_name, image_large_url, image_standard_url, primary_attraction_name, attraction_names, primary_subcategory_name, ticket_price_min, sold_out, seats_available, event_badges")
         .eq("primary_subcategory_name", genreNameDecoded)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      
+      // Deduplicate by event_id and transform
+      const uniqueEvents = data?.reduce((acc: any[], event) => {
+        if (!acc.find(e => e.id === event.event_id)) {
+          acc.push({
+            id: event.event_id,
+            slug: event.event_slug,
+            name: event.event_name,
+            event_date: event.event_date,
+            venue_city: event.venue_city,
+            venue_name: event.venue_name,
+            image_large_url: event.image_large_url,
+            image_standard_url: event.image_standard_url,
+            primary_attraction_name: event.primary_attraction_name,
+            attraction_names: event.attraction_names,
+            primary_subcategory_name: event.primary_subcategory_name,
+            price_min_incl_fees: event.ticket_price_min,
+            sold_out: event.sold_out,
+            seats_available: event.seats_available,
+            badges: event.event_badges
+          });
+        }
+        return acc;
+      }, []) || [];
+      
+      return uniqueEvents;
     },
     enabled: !!genreNameDecoded,
   });

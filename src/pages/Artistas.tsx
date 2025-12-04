@@ -22,12 +22,12 @@ const Artistas = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch artists by aggregating from mv_events_cards
+  // Fetch events and aggregate artists
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["allArtists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_events_cards")
+        .from("lovable_mv_event_product_page")
         .select("primary_attraction_id, primary_attraction_name, image_large_url, primary_subcategory_name, venue_city")
         .gte("event_date", new Date().toISOString())
         .not("primary_attraction_id", "is", null);
@@ -115,7 +115,7 @@ const Artistas = () => {
               placeholder="Buscar artistas por nombre..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
+              className="pl-10 h-12 border-2 border-border focus:border-accent transition-colors"
             />
           </div>
 
@@ -150,7 +150,7 @@ const Artistas = () => {
                 setFilterCity("all");
                 setFilterGenre("all");
               }}
-              className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
+              className="h-11 px-4 border-2 border-border rounded-md hover:border-accent hover:text-accent transition-colors font-semibold"
             >
               Limpiar filtros
             </button>
@@ -159,7 +159,7 @@ const Artistas = () => {
 
         {isLoadingArtists ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(6)].map((_, i) => <ArtistCardSkeleton key={i} />)}
+            {[...Array(8)].map((_, i) => <ArtistCardSkeleton key={i} />)}
           </div>
         ) : filteredArtists.length > 0 ? (
           <>
@@ -174,7 +174,7 @@ const Artistas = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-3 right-3">
-                        <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                        <Badge className="bg-accent text-brand-black hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
                           {artist.upcoming_events_count} eventos próximos
                         </Badge>
                       </div>
@@ -185,7 +185,7 @@ const Artistas = () => {
                       </h3>
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm">
+                      <Button className="w-full bg-accent hover:bg-accent/90 text-brand-black font-semibold py-2 rounded-lg text-sm">
                         Ver Eventos →
                       </Button>
                     </CardFooter>
