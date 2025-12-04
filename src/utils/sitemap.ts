@@ -22,44 +22,66 @@ export const generateSitemap = async (): Promise<string> => {
   urls.push(
     { loc: `${baseUrl}/`, changefreq: 'daily', priority: 1.0 },
     { loc: `${baseUrl}/eventos`, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/conciertos`, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/festivales`, changefreq: 'daily', priority: 0.9 },
     { loc: `${baseUrl}/artistas`, changefreq: 'daily', priority: 0.9 },
     { loc: `${baseUrl}/musica`, changefreq: 'weekly', priority: 0.8 },
     { loc: `${baseUrl}/destinos`, changefreq: 'weekly', priority: 0.8 },
     { loc: `${baseUrl}/favoritos`, changefreq: 'weekly', priority: 0.5 }
   );
 
-  // Fetch events
+  // Fetch events from mv_events_cards
   const { data: events } = await supabase
-    .from("vw_events_with_hotels")
-    .select("event_slug, event_updated_at")
+    .from("mv_events_cards")
+    .select("slug, event_date, primary_attraction_name")
     .gte("event_date", new Date().toISOString())
     .order("event_date", { ascending: true })
     .limit(1000);
 
   if (events) {
-    events.forEach((event: any) => {
+    // Add event URLs
+    events.forEach((event) => {
+      if (event.slug) {
+        urls.push({
+          loc: `${baseUrl}/producto/${event.slug}`,
+          lastmod: new Date().toISOString(),
+          changefreq: 'daily',
+          priority: 0.8
+        });
+      }
+    });
+
+    // Extract unique artists for sitemap
+    const artistSlugs = new Set<string>();
+    events.forEach((event) => {
+      if (event.primary_attraction_name) {
+        const slug = event.primary_attraction_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        artistSlugs.add(slug);
+      }
+    });
+
+    artistSlugs.forEach((slug) => {
       urls.push({
-        loc: `${baseUrl}/producto/${event.event_slug}`,
-        lastmod: event.event_updated_at || new Date().toISOString(),
-        changefreq: 'daily',
-        priority: 0.8
+        loc: `${baseUrl}/artista/${slug}`,
+        changefreq: 'weekly',
+        priority: 0.7
       });
     });
   }
 
-  // Fetch unique artists
-  const { data: artistData } = await supabase
-    .from("vw_events_with_hotels")
-    .select("attraction_slug")
-    .gte("event_date", new Date().toISOString())
-    .not("attraction_slug", "is", null);
+  // Fetch unique cities from mv_destinations_cards
+  const { data: cities } = await supabase
+    .from("mv_destinations_cards")
+    .select("city_name")
+    .not("city_name", "is", null)
+    .limit(100);
 
-  if (artistData) {
-    const uniqueArtistSlugs = [...new Set(artistData.map((a: any) => a.attraction_slug))];
-    uniqueArtistSlugs.forEach((slug) => {
-      if (slug) {
+  if (cities) {
+    cities.forEach((city) => {
+      if (city.city_name && typeof city.city_name === 'string') {
+        const citySlug = city.city_name.toLowerCase().replace(/\s+/g, '-');
         urls.push({
-          loc: `${baseUrl}/artista/${slug}`,
+          loc: `${baseUrl}/destinos/${citySlug}`,
           changefreq: 'weekly',
           priority: 0.7
         });
@@ -67,20 +89,19 @@ export const generateSitemap = async (): Promise<string> => {
     });
   }
 
-  // Fetch unique cities
-  const { data: cities } = await supabase
-    .from("vw_events_with_hotels")
-    .select("venue_city")
-    .gte("event_date", new Date().toISOString())
-    .not("venue_city", "is", null);
+  // Fetch genres from mv_genres_cards
+  const { data: genres } = await supabase
+    .from("mv_genres_cards")
+    .select("genre_name")
+    .not("genre_name", "is", null)
+    .limit(50);
 
-  if (cities) {
-    const uniqueCities = [...new Set(cities.map((c: any) => c.venue_city))];
-    uniqueCities.forEach((city: any) => {
-      if (city && typeof city === 'string') {
-        const citySlug = city.toLowerCase().replace(/\s+/g, '-');
+  if (genres) {
+    genres.forEach((genre) => {
+      if (genre.genre_name && typeof genre.genre_name === 'string') {
+        const genreSlug = genre.genre_name.toLowerCase().replace(/\s+/g, '-');
         urls.push({
-          loc: `${baseUrl}/destinos/${citySlug}`,
+          loc: `${baseUrl}/musica/${genreSlug}`,
           changefreq: 'weekly',
           priority: 0.7
         });
