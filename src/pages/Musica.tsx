@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -39,7 +39,7 @@ const Musica = () => {
 
   const displayedGenres = useMemo(() => filteredGenres.slice(0, displayCount), [filteredGenres, displayCount]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (inView && displayedGenres.length < filteredGenres.length) {
       setDisplayCount(prev => Math.min(prev + 30, filteredGenres.length));
     }
@@ -80,17 +80,40 @@ const Musica = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedGenres.map((genre: any) => (
-                <Link key={genre.genre_id} to={`/musica/${encodeURIComponent(genre.genre_name)}`} className="block">
+                <Link key={genre.genre_id} to={`/musica/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`} className="block">
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
-                      <img src={genre.sample_image_url || "/placeholder.svg"} alt={genre.genre_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute top-3 right-3">
+                      <img 
+                        src={genre.sample_image_url || genre.sample_image_standard_url || "/placeholder.svg"} 
+                        alt={genre.genre_name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
+                      <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
                           {genre.event_count} eventos
                         </Badge>
                       </div>
+                      {genre.city_count > 0 && (
+                        <div className="absolute bottom-3 left-3">
+                          <Badge variant="secondary" className="text-xs">
+                            {genre.city_count} ciudades
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                    <CardContent className="p-4"><h3 className="font-bold text-xl text-foreground line-clamp-1">{genre.genre_name}</h3></CardContent>
+                    <CardContent className="p-4 space-y-2">
+                      <h3 className="font-bold text-xl text-foreground line-clamp-1">{genre.genre_name}</h3>
+                      {genre.top_artists && genre.top_artists.length > 0 && (
+                        <p className="text-sm text-muted-foreground line-clamp-1">
+                          {genre.top_artists.slice(0, 3).join(", ")}
+                        </p>
+                      )}
+                      {genre.price_from && (
+                        <p className="text-sm text-accent font-semibold">
+                          Desde {Number(genre.price_from).toFixed(0)}€
+                        </p>
+                      )}
+                    </CardContent>
                     <CardFooter className="p-4 pt-0">
                       <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
                     </CardFooter>

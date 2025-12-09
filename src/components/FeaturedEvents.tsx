@@ -7,13 +7,14 @@ import EventCard from "./EventCard";
 import { Card } from "./ui/card";
 
 const FeaturedEvents = () => {
-  // Fetch featured events using mv_events_cards
+  // Fetch featured events using mv_concerts_cards (concerts have the best card format)
   const { data: featuredEvents, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["featured-events"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_events_cards")
+        .from("mv_concerts_cards")
         .select("*")
+        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(8);
       
@@ -78,7 +79,7 @@ const FeaturedEvents = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {destinations?.map((city: any) => (
-                <Link key={city.city_name} to={`/destinos/${encodeURIComponent(city.city_name)}`} className="group">
+                <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="group">
                   <Card className="p-8 text-center transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-card-hover border-border">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-16 h-16 rounded-full bg-[#00FF8F]/10 flex items-center justify-center group-hover:bg-[#00FF8F]/20 transition-colors">

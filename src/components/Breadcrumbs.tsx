@@ -9,20 +9,16 @@ const Breadcrumbs = () => {
   const [searchParams] = useSearchParams();
   const pathnames = location.pathname.split("/").filter((x) => x);
 
-  // For now, disable artist breadcrumb since tm_tbl_attractions doesn't exist
-  const artistId = searchParams.get('artist');
-  const artistDetails = null;
-
-  // Get event name and categories for product page using mv_events_cards
+  // Get event name and categories for product page using lovable_mv_event_product_page
   const { data: eventDetails } = useQuery({
     queryKey: ["event-breadcrumb", params.id],
     queryFn: async () => {
       if (!params.id) return null;
       
       const { data, error } = await supabase
-        .from("mv_events_cards")
-        .select("name, primary_subcategory_name, attraction_names, venue_city")
-        .eq("slug", params.id)
+        .from("lovable_mv_event_product_page")
+        .select("event_name, primary_subcategory_name, attraction_names, venue_city")
+        .eq("event_slug", params.id)
         .maybeSingle();
       
       if (error) return null;
@@ -47,7 +43,7 @@ const Breadcrumbs = () => {
     destinos: "Destinos",
     musica: "Música",
     eventos: "Eventos",
-    producto: eventDetails?.name || "Evento",
+    producto: eventDetails?.event_name || "Evento",
   };
 
   // Obtener el nombre del género desde la URL si existe
@@ -88,7 +84,7 @@ const Breadcrumbs = () => {
           </div>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.name}</span>
+            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
           </div>
         </>
       ) : pathnames[0] === "producto" && eventDetails && !eventGenre && eventArtist ? (
@@ -110,7 +106,7 @@ const Breadcrumbs = () => {
           </div>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.name}</span>
+            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
           </div>
         </>
       ) : pathnames[0] === "producto" && eventDetails && eventGenre ? (
@@ -135,7 +131,7 @@ const Breadcrumbs = () => {
           </div>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.name}</span>
+            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
           </div>
         </>
       ) : pathnames[0] === "producto" && eventDetails ? (
@@ -152,29 +148,7 @@ const Breadcrumbs = () => {
           </div>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.name}</span>
-          </div>
-        </>
-      ) : pathnames[0] === "musica" && genreFromPath && artistId ? (
-        /* For artists in genres: Inicio > Música > Género */
-        <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to="/musica"
-              className="hover:text-foreground transition-colors"
-            >
-              Música
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to={`/musica/${encodeURIComponent(genreFromPath)}`}
-              className="hover:text-foreground transition-colors"
-            >
-              {genreFromPath}
-            </Link>
+            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
           </div>
         </>
       ) : pathnames[0] === "musica" && genreFromPath ? (

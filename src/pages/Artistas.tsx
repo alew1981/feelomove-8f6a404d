@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -16,79 +16,46 @@ import { useInView } from "react-intersection-observer";
 
 const Artistas = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch events and aggregate artists from mv_events_cards
+  // Fetch artists from mv_attractions
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["allArtists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_events_cards")
-        .select("primary_attraction_id, primary_attraction_name, image_large_url, primary_subcategory_name, venue_city")
-        .gte("event_date", new Date().toISOString())
-        .not("primary_attraction_id", "is", null);
+        .from("mv_attractions")
+        .select("*")
+        .order("event_count", { ascending: false });
       
       if (error) throw error;
-      
-      // Group by artist and aggregate data
-      const artistMap = new Map<string, any>();
-      data?.forEach((event: any) => {
-        const id = event.primary_attraction_id;
-        if (!artistMap.has(id)) {
-          artistMap.set(id, {
-            artist_id: id,
-            artist_name: event.primary_attraction_name,
-            artist_slug: event.primary_attraction_name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            image_url: event.image_large_url,
-            genre: event.primary_subcategory_name,
-            cities: new Set([event.venue_city]),
-            upcoming_events_count: 1
-          });
-        } else {
-          const artist = artistMap.get(id);
-          artist.upcoming_events_count++;
-          if (event.venue_city) artist.cities.add(event.venue_city);
-        }
-      });
-      
-      return Array.from(artistMap.values())
-        .map(a => ({ ...a, cities: Array.from(a.cities) }))
-        .sort((a, b) => b.upcoming_events_count - a.upcoming_events_count);
+      return data || [];
     },
   });
 
-  // Extract unique cities and genres for filters
-  const cities = useMemo(() => {
-    if (!artists) return [];
-    const allCities = artists.flatMap((a: any) => a.cities || []);
-    return [...new Set(allCities)].sort();
-  }, [artists]);
-
+  // Extract unique genres for filters
   const genres = useMemo(() => {
     if (!artists) return [];
-    const allGenres = artists.map((a: any) => a.genre).filter(Boolean);
-    return [...new Set(allGenres)].sort();
+    const allGenres = artists.flatMap((a: any) => a.genres || []).filter(Boolean);
+    return [...new Set(allGenres)].sort() as string[];
   }, [artists]);
 
   const filteredArtists = useMemo(() => {
     if (!artists) return [];
     return artists.filter((artist: any) => {
-      const matchesSearch = artist.artist_name?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCity = filterCity === "all" || artist.cities?.includes(filterCity);
-      const matchesGenre = filterGenre === "all" || artist.genre === filterGenre;
-      return matchesSearch && matchesCity && matchesGenre;
+      const matchesSearch = artist.attraction_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesGenre = filterGenre === "all" || artist.genres?.includes(filterGenre);
+      return matchesSearch && matchesGenre;
     });
-  }, [artists, searchQuery, filterCity, filterGenre]);
+  }, [artists, searchQuery, filterGenre]);
 
   const displayedArtists = useMemo(() => {
     return filteredArtists.slice(0, displayCount);
   }, [filteredArtists, displayCount]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (inView && displayedArtists.length < filteredArtists.length) {
       setDisplayCount(prev => Math.min(prev + 30, filteredArtists.length));
     }
@@ -132,22 +99,11 @@ const Artistas = () => {
               </SelectContent>
             </Select>
 
-            <Select value={filterCity} onValueChange={setFilterCity}>
-              <SelectTrigger className="h-11 border-2">
-                <SelectValue placeholder="Todas las ciudades" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
-                {cities.map((city: string) => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div />
 
             <button
               onClick={() => {
                 setSearchQuery("");
-                setFilterCity("all");
                 setFilterGenre("all");
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-accent hover:text-accent transition-colors font-semibold"
@@ -165,24 +121,36 @@ const Artistas = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedArtists.map((artist: any) => (
-                <Link to={`/artista/${artist.artist_slug}`} key={artist.artist_id} className="block">
+                <Link to={`/artista/${artist.attraction_slug}`} key={artist.attraction_id} className="block">
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
                       <img
-                        src={artist.image_url || "/placeholder.svg"}
-                        alt={artist.artist_name}
+                        src={artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg"}
+                        alt={artist.attraction_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-3 right-3">
                         <Badge className="bg-accent text-brand-black hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                          {artist.upcoming_events_count} eventos próximos
+                          {artist.event_count} eventos
                         </Badge>
                       </div>
+                      {artist.genres && artist.genres[0] && (
+                        <div className="absolute bottom-3 left-3">
+                          <Badge variant="secondary" className="text-xs">
+                            {artist.genres[0]}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                    <CardContent className="p-4 space-y-3">
+                    <CardContent className="p-4 space-y-2">
                       <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
-                        {artist.artist_name}
+                        {artist.attraction_name}
                       </h3>
+                      {artist.city_count && (
+                        <p className="text-sm text-muted-foreground">
+                          {artist.city_count} ciudades
+                        </p>
+                      )}
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
                       <Button className="w-full bg-accent hover:bg-accent/90 text-brand-black font-semibold py-2 rounded-lg text-sm">
