@@ -23,7 +23,6 @@ const ArtistaDetalle = () => {
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
-  const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
   
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -33,59 +32,34 @@ const ArtistaDetalle = () => {
     threshold: 0
   });
 
-  // Fetch events for this artist using lovable_mv_event_product_page
+  // Fetch events for this artist using mv_concerts_cards
   const { data: events, isLoading } = useQuery({
     queryKey: ["artist-events", artistSlug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("lovable_mv_event_product_page")
-        .select("event_id, event_name, event_slug, event_date, venue_city, venue_name, image_large_url, image_standard_url, primary_attraction_name, attraction_names, primary_subcategory_name, ticket_price_min, sold_out, seats_available, event_badges")
+        .from("mv_concerts_cards")
+        .select("*")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       
-      // Filter by artist slug and deduplicate
+      // Filter by artist slug
       const filtered = data?.filter(event => {
-        const names = event.attraction_names || [];
-        return names.some((name: string) => 
-          name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') === artistSlug.toLowerCase() ||
-          name.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ')
-        );
+        const artistName = event.artist_name || '';
+        const artistSlugFromName = artistName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        return artistSlugFromName === artistSlug.toLowerCase() ||
+               artistName.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ');
       }) || [];
       
-      // Deduplicate by event_id
-      const uniqueEvents = filtered.reduce((acc: any[], event) => {
-        if (!acc.find(e => e.event_id === event.event_id)) {
-          acc.push({
-            id: event.event_id,
-            slug: event.event_slug,
-            name: event.event_name,
-            event_date: event.event_date,
-            venue_city: event.venue_city,
-            venue_name: event.venue_name,
-            image_large_url: event.image_large_url,
-            image_standard_url: event.image_standard_url,
-            primary_attraction_name: event.primary_attraction_name,
-            attraction_names: event.attraction_names,
-            primary_subcategory_name: event.primary_subcategory_name,
-            price_min_incl_fees: event.ticket_price_min,
-            sold_out: event.sold_out,
-            seats_available: event.seats_available,
-            badges: event.event_badges
-          });
-        }
-        return acc;
-      }, []);
-      
-      return uniqueEvents;
+      return filtered;
     },
     enabled: !!artistSlug,
   });
 
   // Get artist name from first event
   const artistName = events && events.length > 0 
-    ? events[0].primary_attraction_name || artistSlug.replace(/-/g, ' ')
+    ? events[0].artist_name || artistSlug.replace(/-/g, ' ')
     : artistSlug.replace(/-/g, ' ');
 
   // Extract unique cities for filters
@@ -93,18 +67,6 @@ const ArtistaDetalle = () => {
     if (!events) return [];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
     return uniqueCities.sort() as string[];
-  }, [events]);
-
-  // Extract genres from subcategory
-  const genres = useMemo(() => {
-    if (!events) return [];
-    const genreSet = new Set<string>();
-    events.forEach(event => {
-      if (event.primary_subcategory_name) {
-        genreSet.add(event.primary_subcategory_name);
-      }
-    });
-    return Array.from(genreSet).sort();
   }, [events]);
 
   const availableMonths = useMemo(() => {
@@ -145,11 +107,6 @@ const ArtistaDetalle = () => {
       filtered = filtered.filter(event => event.venue_city === filterCity);
     }
 
-    // Apply genre filter
-    if (filterGenre !== "all") {
-      filtered = filtered.filter(event => event.primary_subcategory_name === filterGenre);
-    }
-
     // Apply date filter
     if (filterDate !== "all") {
       filtered = filtered.filter(event => {
@@ -176,7 +133,7 @@ const ArtistaDetalle = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterDate, sortBy]);
+  }, [events, searchQuery, filterCity, filterDate, sortBy]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -231,7 +188,7 @@ const ArtistaDetalle = () => {
           </div>
 
           {/* Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="h-11 border-2">
                   <SelectValue placeholder="Ordenar por" />
@@ -256,18 +213,6 @@ const ArtistaDetalle = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterGenre} onValueChange={setFilterGenre}>
-                <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Todos los géneros" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los géneros</SelectItem>
-                  {genres.map(genre => (
-                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className="h-11 border-2">
                   <SelectValue placeholder="Todas las ciudades" />
@@ -284,7 +229,6 @@ const ArtistaDetalle = () => {
               onClick={() => {
                 setSortBy("date-asc");
                 setFilterCity("all");
-                setFilterGenre("all");
                 setFilterDate("all");
                 setSearchQuery("");
               }}

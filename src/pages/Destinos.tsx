@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Hotel } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInView } from "react-intersection-observer";
@@ -39,7 +39,7 @@ const Destinos = () => {
 
   const displayedCities = useMemo(() => filteredCities.slice(0, displayCount), [filteredCities, displayCount]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (inView && displayedCities.length < filteredCities.length) {
       setDisplayCount(prev => Math.min(prev + 30, filteredCities.length));
     }
@@ -80,17 +80,40 @@ const Destinos = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedCities.map((city: any) => (
-                <Link key={city.city_name} to={`/destinos/${encodeURIComponent(city.city_name)}`} className="block">
+                <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block">
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
-                      <img src={city.sample_image_url || "/placeholder.svg"} alt={city.city_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute top-3 right-3">
+                      <img 
+                        src={city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
+                        alt={city.city_name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
+                      <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
                           {city.event_count} eventos
                         </Badge>
                       </div>
+                      {city.hotels_count > 0 && (
+                        <div className="absolute bottom-3 left-3">
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Hotel className="h-3 w-3" />
+                            {city.hotels_count} hoteles
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                    <CardContent className="p-4"><h3 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h3></CardContent>
+                    <CardContent className="p-4 space-y-2">
+                      <h3 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h3>
+                      <div className="flex gap-2 text-sm text-muted-foreground">
+                        {city.concerts_count > 0 && <span>{city.concerts_count} conciertos</span>}
+                        {city.festivals_count > 0 && <span>• {city.festivals_count} festivales</span>}
+                      </div>
+                      {city.price_from && (
+                        <p className="text-sm text-accent font-semibold">
+                          Desde {Number(city.price_from).toFixed(0)}€
+                        </p>
+                      )}
+                    </CardContent>
                     <CardFooter className="p-4 pt-0">
                       <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
                     </CardFooter>

@@ -28,55 +28,56 @@ const DestinoDetalle = () => {
     threshold: 0
   });
 
-  // Fetch events for this city using lovable_mv_event_product_page
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["city-events", cityNameDecoded],
+  // Fetch concerts for this city
+  const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
+    queryKey: ["city-concerts", cityNameDecoded],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("lovable_mv_event_product_page")
-        .select("event_id, event_name, event_slug, event_date, venue_city, venue_name, image_large_url, image_standard_url, primary_attraction_name, attraction_names, primary_subcategory_name, ticket_price_min, sold_out, seats_available, event_badges")
+        .from("mv_concerts_cards")
+        .select("*")
         .eq("venue_city", cityNameDecoded)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
-      
-      // Deduplicate by event_id and transform
-      const uniqueEvents = data?.reduce((acc: any[], event) => {
-        if (!acc.find(e => e.id === event.event_id)) {
-          acc.push({
-            id: event.event_id,
-            slug: event.event_slug,
-            name: event.event_name,
-            event_date: event.event_date,
-            venue_city: event.venue_city,
-            venue_name: event.venue_name,
-            image_large_url: event.image_large_url,
-            image_standard_url: event.image_standard_url,
-            primary_attraction_name: event.primary_attraction_name,
-            attraction_names: event.attraction_names,
-            primary_subcategory_name: event.primary_subcategory_name,
-            price_min_incl_fees: event.ticket_price_min,
-            sold_out: event.sold_out,
-            seats_available: event.seats_available,
-            badges: event.event_badges
-          });
-        }
-        return acc;
-      }, []) || [];
-      
-      return uniqueEvents;
+      return data || [];
     },
     enabled: !!cityNameDecoded,
   });
+
+  // Fetch festivals for this city
+  const { data: festivals, isLoading: isLoadingFestivals } = useQuery({
+    queryKey: ["city-festivals", cityNameDecoded],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mv_festivals_cards")
+        .select("*")
+        .eq("venue_city", cityNameDecoded)
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!cityNameDecoded,
+  });
+
+  const isLoading = isLoadingConcerts || isLoadingFestivals;
+
+  // Combine and dedupe events
+  const events = useMemo(() => {
+    const allEvents = [...(concerts || []), ...(festivals || [])];
+    // Sort by date
+    return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
+  }, [concerts, festivals]);
 
   // Extract unique genres and artists for filters
   const genres = useMemo(() => {
     if (!events) return [];
     const genreSet = new Set<string>();
     events.forEach(event => {
-      if (event.primary_subcategory_name) {
-        genreSet.add(event.primary_subcategory_name);
+      if (event.genre) {
+        genreSet.add(event.genre);
       }
     });
     return Array.from(genreSet).sort();
@@ -84,9 +85,12 @@ const DestinoDetalle = () => {
 
   const artists = useMemo(() => {
     if (!events) return [];
-    const allArtists = events.flatMap(e => e.attraction_names || []);
-    const uniqueArtists = [...new Set(allArtists)];
-    return uniqueArtists.sort() as string[];
+    const artistSet = new Set<string>();
+    events.forEach(event => {
+      if (event.artist_name) artistSet.add(event.artist_name);
+      if (event.main_attraction) artistSet.add(event.main_attraction);
+    });
+    return Array.from(artistSet).sort();
   }, [events]);
 
   // Filter and sort events
@@ -99,18 +103,21 @@ const DestinoDetalle = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(event => 
         event.name?.toLowerCase().includes(query) ||
-        event.attraction_names?.some((artist: string) => artist.toLowerCase().includes(query))
+        event.artist_name?.toLowerCase().includes(query) ||
+        event.main_attraction?.toLowerCase().includes(query)
       );
     }
 
     // Apply genre filter
     if (filterGenre !== "all") {
-      filtered = filtered.filter(event => event.primary_subcategory_name === filterGenre);
+      filtered = filtered.filter(event => event.genre === filterGenre);
     }
 
     // Apply artist filter
     if (filterArtist !== "all") {
-      filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
+      filtered = filtered.filter(event => 
+        event.artist_name === filterArtist || event.main_attraction === filterArtist
+      );
     }
 
     // Apply sorting

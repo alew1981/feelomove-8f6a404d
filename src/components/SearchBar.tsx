@@ -26,15 +26,30 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return [];
       
-      const { data, error } = await supabase
-        .from("mv_events_cards")
+      // Search in concerts
+      const { data: concerts, error: concertsError } = await supabase
+        .from("mv_concerts_cards")
         .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url")
-        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,primary_attraction_name.ilike.%${searchTerm}%`)
+        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,artist_name.ilike.%${searchTerm}%`)
+        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
-        .limit(10);
+        .limit(5);
       
-      if (error) throw error;
-      return data || [];
+      // Search in festivals  
+      const { data: festivals, error: festivalsError } = await supabase
+        .from("mv_festivals_cards")
+        .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url")
+        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%`)
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true })
+        .limit(5);
+      
+      const allResults = [...(concerts || []), ...(festivals || [])];
+      
+      // Sort by date and limit
+      return allResults
+        .sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime())
+        .slice(0, 10);
     },
     enabled: searchTerm.length >= 2,
   });
