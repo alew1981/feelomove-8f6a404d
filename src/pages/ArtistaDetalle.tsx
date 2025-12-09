@@ -33,38 +33,71 @@ const ArtistaDetalle = () => {
     threshold: 0
   });
 
-  // Fetch events for this artist using mv_concerts_cards
+  // Fetch events for this artist from both concerts and festivals
   const { data: events, isLoading } = useQuery({
     queryKey: ["artist-events", artistSlug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
+      // Fetch from both sources in parallel
+      const [concertsRes, festivalsRes] = await Promise.all([
+        supabase
+          .from("mv_concerts_cards")
+          .select("*")
+          .gte("event_date", new Date().toISOString())
+          .order("event_date", { ascending: true }),
+        supabase
+          .from("mv_festivals_cards")
+          .select("*")
+          .gte("event_date", new Date().toISOString())
+          .order("event_date", { ascending: true })
+      ]);
       
-      if (error) throw error;
+      if (concertsRes.error) throw concertsRes.error;
+      if (festivalsRes.error) throw festivalsRes.error;
       
-      // Filter by artist slug
-      const filtered = data?.filter(event => {
+      const allEvents = [...(concertsRes.data || []), ...(festivalsRes.data || [])] as any[];
+      
+      // Filter by artist slug - check artist_name and attraction_names
+      const filtered = allEvents.filter((event: any) => {
+        // Check primary artist_name (concerts)
         const artistName = event.artist_name || '';
         const artistSlugFromName = artistName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        return artistSlugFromName === artistSlug.toLowerCase() ||
-               artistName.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ');
-      }) || [];
+        if (artistSlugFromName === artistSlug.toLowerCase() ||
+            artistName.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ')) {
+          return true;
+        }
+        
+        // Check main_attraction (festivals)
+        const mainAttraction = event.main_attraction || '';
+        const mainAttractionSlug = mainAttraction.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        if (mainAttractionSlug === artistSlug.toLowerCase() ||
+            mainAttraction.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ')) {
+          return true;
+        }
+        
+        // Check attraction_names array (for festivals with multiple artists)
+        const attractionNames = event.attraction_names || [];
+        return attractionNames.some((name: string) => {
+          const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          return slug === artistSlug.toLowerCase() ||
+                 name.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ');
+        });
+      });
+      
+      // Sort by date after filtering
+      filtered.sort((a: any, b: any) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
       
       return filtered;
     },
     enabled: !!artistSlug,
   });
 
-  // Get artist name from first event
+  // Get artist name from first event - check both artist_name (concerts) and main_attraction (festivals)
   const artistName = events && events.length > 0 
-    ? events[0].artist_name || artistSlug.replace(/-/g, ' ')
+    ? (events[0] as any).artist_name || (events[0] as any).main_attraction || artistSlug.replace(/-/g, ' ')
     : artistSlug.replace(/-/g, ' ');
 
   // Get hero image from first event
-  const heroImage = events?.[0]?.image_large_url || events?.[0]?.image_standard_url;
+  const heroImage = (events?.[0] as any)?.image_large_url || (events?.[0] as any)?.image_standard_url;
 
   // Extract unique cities for filters
   const cities = useMemo(() => {
