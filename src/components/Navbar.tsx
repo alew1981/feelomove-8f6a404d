@@ -61,12 +61,20 @@ const Navbar = () => {
               Destinos
             </NavLink>
             <a
-              href="https://feelomove-.nuitee.link/"
+              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground/80 hover:text-foreground transition-colors"
             >
-              Hoteles y Apartamentos
+              Hoteles
+            </a>
+            <a
+              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground/80 hover:text-foreground transition-colors"
+            >
+              Apartamentos
             </a>
             
             {/* Search and Favorites Icons */}
@@ -152,13 +160,22 @@ const Navbar = () => {
               Destinos
             </NavLink>
             <a
-              href="https://feelomove-.nuitee.link/"
+              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >
-              Hoteles y Apartamentos
+              Hoteles
+            </a>
+            <a
+              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Apartamentos
             </a>
             <div className="flex items-center gap-2 pt-2">
               <Button

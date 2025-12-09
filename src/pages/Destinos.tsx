@@ -4,10 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import PageHero from "@/components/PageHero";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Hotel } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +17,8 @@ import { useInView } from "react-intersection-observer";
 
 const Destinos = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterGenre, setFilterGenre] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState<number>(30);
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
@@ -30,12 +34,30 @@ const Destinos = () => {
     },
   });
 
+  // Get hero image from first city
+  const heroImage = cities?.[0]?.sample_image_url || cities?.[0]?.sample_image_standard_url;
+
+  // Extract unique cities and genres for filters
+  const cityNames = useMemo(() => {
+    if (!cities) return [];
+    return [...new Set(cities.map((c: any) => c.city_name).filter(Boolean))].sort() as string[];
+  }, [cities]);
+
+  const genres = useMemo(() => {
+    if (!cities) return [];
+    const allGenres = cities.flatMap((c: any) => c.genres || []).filter(Boolean);
+    return [...new Set(allGenres)].sort() as string[];
+  }, [cities]);
+
   const filteredCities = useMemo(() => {
     if (!cities) return [];
-    return cities.filter((city: any) =>
-      city.city_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [cities, searchQuery]);
+    return cities.filter((city: any) => {
+      const matchesSearch = city.city_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCity = filterCity === "all" || city.city_name === filterCity;
+      const matchesGenre = filterGenre === "all" || city.genres?.includes(filterGenre);
+      return matchesSearch && matchesCity && matchesGenre;
+    });
+  }, [cities, searchQuery, filterCity, filterGenre]);
 
   const displayedCities = useMemo(() => filteredCities.slice(0, displayCount), [filteredCities, displayCount]);
 
@@ -48,25 +70,72 @@ const Destinos = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container mx-auto px-4 py-8 mt-20">
+      <main className="container mx-auto px-4 py-8 mt-16">
+        
+        {/* Hero Image */}
+        <PageHero title="Destinos" imageUrl={heroImage} />
+        
+        {/* Breadcrumbs */}
         <div className="mb-6">
-          <h1 className="text-4xl md:text-5xl font-black text-foreground mb-6">Destinos</h1>
-          <div className="mb-8"><Breadcrumbs /></div>
-          <p className="text-muted-foreground leading-relaxed">
-            Explora eventos musicales en las mejores ciudades de España.
-          </p>
+          <Breadcrumbs />
         </div>
+        
+        {/* Description */}
+        <p className="text-muted-foreground leading-relaxed mb-8">
+          Explora eventos musicales en las mejores ciudades de España.
+        </p>
 
-        <div className="mb-8">
+        {/* Search and Filters */}
+        <div className="mb-8 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar destinos..."
+              placeholder="Buscar eventos, artistas, ciudades..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
+              className="pl-10 h-12 border-2 border-border focus:border-accent transition-colors"
             />
+          </div>
+          
+          {/* Filter Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todas las ciudades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
+                {cityNames.map((city: string) => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterGenre} onValueChange={setFilterGenre}>
+              <SelectTrigger className="h-11 border-2">
+                <SelectValue placeholder="Todos los géneros" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los géneros</SelectItem>
+                {genres.map((genre: string) => (
+                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div />
+
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setFilterCity("all");
+                setFilterGenre("all");
+              }}
+              className="h-11 px-4 border-2 border-border rounded-md hover:border-accent hover:text-accent transition-colors font-semibold"
+            >
+              Limpiar filtros
+            </button>
           </div>
         </div>
 
@@ -89,7 +158,7 @@ const Destinos = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                       />
                       <div className="absolute top-3 right-3 flex flex-col gap-2">
-                        <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                        <Badge className="bg-accent text-accent-foreground hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
                           {city.event_count} eventos
                         </Badge>
                       </div>
@@ -115,7 +184,7 @@ const Destinos = () => {
                       )}
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
-                      <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
+                      <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
                     </CardFooter>
                   </Card>
                 </Link>
