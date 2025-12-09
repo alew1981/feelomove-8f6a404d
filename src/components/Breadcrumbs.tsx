@@ -43,6 +43,10 @@ const Breadcrumbs = () => {
     destinos: "Destinos",
     musica: "Música",
     eventos: "Eventos",
+    conciertos: "Conciertos",
+    festivales: "Festivales",
+    artistas: "Artistas",
+    artista: "Artistas",
     producto: eventDetails?.event_name || "Evento",
   };
 
@@ -51,6 +55,9 @@ const Breadcrumbs = () => {
   
   // Obtener el nombre del destino desde la URL si existe
   const destinoFromPath = params.destino ? decodeURIComponent(params.destino) : null;
+  
+  // Obtener el slug del artista desde la URL si existe
+  const artistaFromPath = pathnames[0] === "artista" && params.slug ? decodeURIComponent(params.slug) : null;
 
   return (
     <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
@@ -183,6 +190,25 @@ const Breadcrumbs = () => {
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground font-medium">{destinoFromPath}</span>
+          </div>
+        </>
+      ) : pathnames[0] === "artista" && artistaFromPath ? (
+        /* Para página de artista: Inicio > Artistas > Nombre del artista */
+        <>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to="/artistas"
+              className="hover:text-foreground transition-colors"
+            >
+              Artistas
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">
+              {artistaFromPath.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </span>
           </div>
         </>
       ) : (
