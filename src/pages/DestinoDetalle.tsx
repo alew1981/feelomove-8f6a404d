@@ -87,11 +87,23 @@ const DestinoDetalle = () => {
     if (!events) return [];
     const artistSet = new Set<string>();
     events.forEach(event => {
-      if (event.artist_name) artistSet.add(event.artist_name);
-      if (event.main_attraction) artistSet.add(event.main_attraction);
+      // For concerts: artist_name, for festivals: main_attraction
+      if ('artist_name' in event && event.artist_name) {
+        artistSet.add(event.artist_name);
+      }
+      if ('main_attraction' in event && event.main_attraction) {
+        artistSet.add(event.main_attraction);
+      }
     });
     return Array.from(artistSet).sort();
   }, [events]);
+
+  // Helper to get artist name from event (works for both concerts and festivals)
+  const getEventArtist = (event: typeof events[0]) => {
+    if ('artist_name' in event && event.artist_name) return event.artist_name;
+    if ('main_attraction' in event && event.main_attraction) return event.main_attraction;
+    return null;
+  };
 
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
@@ -101,11 +113,11 @@ const DestinoDetalle = () => {
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(event => 
-        event.name?.toLowerCase().includes(query) ||
-        event.artist_name?.toLowerCase().includes(query) ||
-        event.main_attraction?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter(event => {
+        const nameMatch = event.name?.toLowerCase().includes(query);
+        const artistMatch = getEventArtist(event)?.toLowerCase().includes(query);
+        return nameMatch || artistMatch;
+      });
     }
 
     // Apply genre filter
@@ -115,9 +127,7 @@ const DestinoDetalle = () => {
 
     // Apply artist filter
     if (filterArtist !== "all") {
-      filtered = filtered.filter(event => 
-        event.artist_name === filterArtist || event.main_attraction === filterArtist
-      );
+      filtered = filtered.filter(event => getEventArtist(event) === filterArtist);
     }
 
     // Apply sorting

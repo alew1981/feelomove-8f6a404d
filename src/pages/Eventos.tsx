@@ -21,12 +21,12 @@ const Eventos = () => {
   const [displayCount, setDisplayCount] = useState<number>(30);
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch events using mv_events_cards
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["all-events"],
+  // Fetch concerts
+  const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
+    queryKey: ["all-concerts"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_events_cards")
+        .from("mv_concerts_cards")
         .select("*")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
@@ -35,6 +35,29 @@ const Eventos = () => {
       return data || [];
     }
   });
+
+  // Fetch festivals
+  const { data: festivals, isLoading: isLoadingFestivals } = useQuery({
+    queryKey: ["all-festivals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mv_festivals_cards")
+        .select("*")
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const isLoading = isLoadingConcerts || isLoadingFestivals;
+
+  // Combine events
+  const events = useMemo(() => {
+    const allEvents = [...(concerts || []), ...(festivals || [])];
+    return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
+  }, [concerts, festivals]);
 
   // Extract unique cities and artists for filters
   const cities = useMemo(() => {
@@ -45,9 +68,20 @@ const Eventos = () => {
 
   const artists = useMemo(() => {
     if (!events) return [];
-    const allArtists = events.flatMap(e => e.attraction_names || []);
-    const uniqueArtists = [...new Set(allArtists)];
-    return uniqueArtists.sort() as string[];
+    const artistSet = new Set<string>();
+    events.forEach(event => {
+      // For concerts: artist_name, for festivals: main_attraction or attraction_names
+      if ('artist_name' in event && event.artist_name) {
+        artistSet.add(event.artist_name);
+      }
+      if ('main_attraction' in event && event.main_attraction) {
+        artistSet.add(event.main_attraction);
+      }
+      if ('attraction_names' in event && event.attraction_names) {
+        event.attraction_names.forEach((name: string) => artistSet.add(name));
+      }
+    });
+    return Array.from(artistSet).sort();
   }, [events]);
 
   // Filter and sort events
@@ -58,11 +92,14 @@ const Eventos = () => {
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(event => 
-        event.name?.toLowerCase().includes(query) || 
-        event.venue_city?.toLowerCase().includes(query) || 
-        event.attraction_names?.some((artist: string) => artist.toLowerCase().includes(query))
-      );
+      filtered = filtered.filter(event => {
+        const nameMatch = event.name?.toLowerCase().includes(query);
+        const cityMatch = event.venue_city?.toLowerCase().includes(query);
+        const artistMatch = ('artist_name' in event && event.artist_name?.toLowerCase().includes(query)) ||
+          ('main_attraction' in event && event.main_attraction?.toLowerCase().includes(query)) ||
+          ('attraction_names' in event && event.attraction_names?.some((a: string) => a.toLowerCase().includes(query)));
+        return nameMatch || cityMatch || artistMatch;
+      });
     }
 
     // Apply city filter
@@ -72,7 +109,12 @@ const Eventos = () => {
 
     // Apply artist filter
     if (filterArtist !== "all") {
-      filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
+      filtered = filtered.filter(event => {
+        if ('artist_name' in event && event.artist_name === filterArtist) return true;
+        if ('main_attraction' in event && event.main_attraction === filterArtist) return true;
+        if ('attraction_names' in event && event.attraction_names?.includes(filterArtist)) return true;
+        return false;
+      });
     }
 
     // Apply sorting
