@@ -19,6 +19,8 @@ interface HotelCardProps {
     facility_names_es?: string[];
   };
   onAddHotel: (hotel: any) => void;
+  checkinDate?: string;
+  checkoutDate?: string;
 }
 
 // Helper to strip HTML tags
@@ -27,7 +29,7 @@ const stripHtml = (html: string): string => {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 };
 
-const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
+const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate }: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
@@ -41,7 +43,12 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
   const rawDescription = stripHtml(hotel.hotel_description) || "Hotel confortable cerca del venue";
   const shortDescription = rawDescription.length > 120 ? rawDescription.substring(0, 120) + "..." : rawDescription;
   const distanceText = hotel.distance_km > 0 ? `${hotel.distance_km.toFixed(1)} km` : "";
-
+  
+  // Format dates
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
   return (
     <Card className="border-2 overflow-hidden hover:shadow-lg transition-all">
       <div className="relative h-40 sm:h-48">
@@ -112,6 +119,14 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
             </button>
           )}
         </div>
+
+        {/* Check-in/Check-out dates */}
+        {checkinDate && checkoutDate && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2 pb-2 border-b border-border">
+            <span>Check-in: {formatDate(checkinDate)}</span>
+            <span>Check-out: {formatDate(checkoutDate)}</span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <div>

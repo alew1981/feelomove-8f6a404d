@@ -260,16 +260,40 @@ const Festivales = () => {
             </div>
           ) : (
             <div className="space-y-12">
-              {Object.entries(groupedEvents).map(([festivalName, festivalEvents]) => (
+              {Object.entries(groupedEvents).map(([festivalName, festivalEvents]) => {
+                const festivalImage = festivalEvents[0]?.image_large_url || festivalEvents[0]?.image_standard_url;
+                return (
                 <div key={festivalName} className="space-y-6">
-                  {/* Festival Header */}
-                  <div className="border-b-2 border-accent pb-3">
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground font-['Poppins']">
-                      {festivalName}
-                    </h2>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {festivalEvents.length} {festivalEvents.length === 1 ? 'concierto' : 'conciertos'}
-                    </p>
+                  {/* Festival Header with Image */}
+                  <div className="relative rounded-xl overflow-hidden">
+                    {festivalImage && (
+                      <div className="relative h-48 md:h-64">
+                        <img 
+                          src={festivalImage} 
+                          alt={festivalName}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-6">
+                          <h2 className="text-2xl md:text-3xl font-bold text-white font-['Poppins']">
+                            {festivalName}
+                          </h2>
+                          <p className="text-white/80 text-sm mt-1">
+                            {festivalEvents.length} {festivalEvents.length === 1 ? 'concierto' : 'conciertos'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {!festivalImage && (
+                      <div className="border-b-2 border-accent pb-3">
+                        <h2 className="text-2xl md:text-3xl font-bold text-foreground font-['Poppins']">
+                          {festivalName}
+                        </h2>
+                        <p className="text-muted-foreground text-sm mt-1">
+                          {festivalEvents.length} {festivalEvents.length === 1 ? 'concierto' : 'conciertos'}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Festival Events Grid */}
@@ -285,7 +309,7 @@ const Festivales = () => {
                     ))}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>
