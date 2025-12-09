@@ -18,6 +18,7 @@ const Festivales = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
+  const [filterFestival, setFilterFestival] = useState<string>("all");
   
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
@@ -56,6 +57,13 @@ const Festivales = () => {
     return uniqueArtists.sort() as string[];
   }, [events]);
 
+  // Extract unique festivals (secondary_attraction_name)
+  const festivals = useMemo(() => {
+    if (!events) return [];
+    const uniqueFestivals = [...new Set(events.map(e => e.secondary_attraction_name).filter(Boolean))];
+    return uniqueFestivals.sort() as string[];
+  }, [events]);
+
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
     if (!events) return [];
@@ -81,6 +89,11 @@ const Festivales = () => {
       filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
     }
 
+    // Apply festival filter
+    if (filterFestival !== "all") {
+      filtered = filtered.filter(event => event.secondary_attraction_name === filterFestival);
+    }
+
     // Apply sorting
     switch (sortBy) {
       case "date-asc":
@@ -98,7 +111,20 @@ const Festivales = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterArtist, sortBy]);
+  }, [events, searchQuery, filterCity, filterArtist, filterFestival, sortBy]);
+
+  // Group events by festival
+  const groupedEvents = useMemo(() => {
+    const groups: Record<string, typeof filteredAndSortedEvents> = {};
+    filteredAndSortedEvents.forEach(event => {
+      const festivalName = event.secondary_attraction_name || "Otros Eventos";
+      if (!groups[festivalName]) {
+        groups[festivalName] = [];
+      }
+      groups[festivalName].push(event);
+    });
+    return groups;
+  }, [filteredAndSortedEvents]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -156,16 +182,16 @@ const Festivales = () => {
             </div>
 
             {/* Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select value={sortBy} onValueChange={setSortBy}>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Select value={filterFestival} onValueChange={setFilterFestival}>
                 <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Ordenar por" />
+                  <SelectValue placeholder="Todos los festivales" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
-                  <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
-                  <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
-                  <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                  <SelectItem value="all">Todos los festivales</SelectItem>
+                  {festivals.map(festival => (
+                    <SelectItem key={festival} value={festival}>{festival}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -193,11 +219,24 @@ const Festivales = () => {
                 </SelectContent>
               </Select>
 
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-11 border-2">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
+                  <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
+                  <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
+                  <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                </SelectContent>
+              </Select>
+
               <button
                 onClick={() => {
                   setSortBy("date-asc");
                   setFilterCity("all");
                   setFilterArtist("all");
+                  setFilterFestival("all");
                   setSearchQuery("");
                 }}
                 className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
@@ -207,7 +246,7 @@ const Festivales = () => {
             </div>
           </div>
 
-          {/* Events Grid */}
+          {/* Events Grid - Grouped by Festival */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
@@ -220,36 +259,34 @@ const Festivales = () => {
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {displayedEvents.map((event, index) => {
-                  // For festivals, use secondary_attraction_name as the display name
-                  const festivalEvent = {
-                    ...event,
-                    name: event.secondary_attraction_name || event.name
-                  };
-                  return (
-                    <div
-                      key={event.id}
-                      className="animate-fade-in"
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      <EventCard event={festivalEvent} />
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Infinite Scroll Loader */}
-              {displayedEvents.length < filteredAndSortedEvents.length && (
-                <div ref={loadMoreRef} className="flex justify-center items-center py-12">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-                    <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más festivales...</p>
+            <div className="space-y-12">
+              {Object.entries(groupedEvents).map(([festivalName, festivalEvents]) => (
+                <div key={festivalName} className="space-y-6">
+                  {/* Festival Header */}
+                  <div className="border-b-2 border-accent pb-3">
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground font-['Poppins']">
+                      {festivalName}
+                    </h2>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {festivalEvents.length} {festivalEvents.length === 1 ? 'concierto' : 'conciertos'}
+                    </p>
+                  </div>
+                  
+                  {/* Festival Events Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {festivalEvents.map((event, index) => (
+                      <div
+                        key={event.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <EventCard event={event} />
+                      </div>
+                    ))}
                   </div>
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
         <Footer />
