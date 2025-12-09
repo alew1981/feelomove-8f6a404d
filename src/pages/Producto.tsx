@@ -525,9 +525,14 @@ const Producto = () => {
                             </div>
                           </div>
 
-                          {/* Reserve hotel button */}
-                          <Button className="w-full h-10 text-sm bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
-                            Reservar Hotel
+                      {/* Reserve hotel button with deeplink */}
+                          <Button 
+                            className="w-full h-10 text-sm bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                            asChild
+                          >
+                            <a href={(eventDetails as any).destination_deeplink || "#"} target="_blank" rel="noopener noreferrer">
+                              Reservar Hotel
+                            </a>
                           </Button>
                         </>
                       )}
@@ -552,12 +557,6 @@ const Producto = () => {
                       </p>
                     </div>
                   )}
-
-                  <div className="pt-4 border-t">
-                    <p className="text-xs text-muted-foreground text-center">
-                      🔒 Pago seguro y confirmación instantánea
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </div>

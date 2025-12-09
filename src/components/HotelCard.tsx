@@ -21,30 +21,42 @@ interface HotelCardProps {
   onAddHotel: (hotel: any) => void;
 }
 
+// Helper to strip HTML tags
+const stripHtml = (html: string): string => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+};
+
 const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
+  const reviewCount = hotel.hotel_reviews || 0;
   const facilities = hotel.facility_names_es || [];
-  const displayFacilities = facilities.slice(0, 5);
-  const remainingFacilities = facilities.length - 5;
-  const description = hotel.hotel_description || "Hotel confortable cerca del venue";
-  const shortDescription = description.length > 120 ? description.substring(0, 120) + "..." : description;
+  const displayFacilities = facilities.slice(0, 3);
+  const remainingFacilities = facilities.length - 3;
+  
+  // Strip HTML from description
+  const rawDescription = stripHtml(hotel.hotel_description) || "Hotel confortable cerca del venue";
+  const shortDescription = rawDescription.length > 120 ? rawDescription.substring(0, 120) + "..." : rawDescription;
   const distanceText = hotel.distance_km > 0 ? `${hotel.distance_km.toFixed(1)} km` : "";
 
   return (
     <Card className="border-2 overflow-hidden hover:shadow-lg transition-all">
-      <div className="relative h-48">
+      <div className="relative h-40 sm:h-48">
         <img
           src={hotel.hotel_main_photo || "/placeholder.svg"}
           alt={hotel.hotel_name}
           className="w-full h-full object-cover"
         />
-        {/* Rating badge - top left */}
+        {/* Rating badge with reviews - top left */}
         {reviewScore > 0 && (
-          <Badge className="absolute top-2 left-2 bg-background/80 backdrop-blur text-xs">
+          <Badge className="absolute top-2 left-2 bg-white text-foreground text-xs flex items-center gap-1">
             ★ {Number(reviewScore).toFixed(1)}
+            {reviewCount > 0 && (
+              <span className="text-muted-foreground">({reviewCount})</span>
+            )}
           </Badge>
         )}
         {/* Distance badge - top right */}
@@ -56,17 +68,17 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
         )}
       </div>
       
-      <div className="p-4">
-        <h3 className="font-bold text-base mb-2 line-clamp-1">{hotel.hotel_name}</h3>
+      <div className="p-3 sm:p-4">
+        <h3 className="font-bold text-sm sm:text-base mb-2 line-clamp-1">{hotel.hotel_name}</h3>
         
-        {/* Facilities badges */}
+        {/* Facilities badges - max 3 */}
         {facilities.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="flex flex-wrap gap-1 mb-2">
             {displayFacilities.map((facility, idx) => (
               <Badge 
                 key={idx} 
                 variant="secondary" 
-                className="text-[10px] px-2 py-0.5 bg-muted text-muted-foreground"
+                className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 bg-muted text-muted-foreground"
               >
                 {facility}
               </Badge>
@@ -74,7 +86,7 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
             {remainingFacilities > 0 && (
               <Badge 
                 variant="outline" 
-                className="text-[10px] px-2 py-0.5 border-accent text-accent"
+                className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 border-accent text-accent"
               >
                 +{remainingFacilities} más
               </Badge>
@@ -83,14 +95,14 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
         )}
         
         {/* Description with expand */}
-        <div className="mb-3">
-          <p className="text-xs text-muted-foreground">
-            {showFullDescription ? description : shortDescription}
+        <div className="mb-2">
+          <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+            {showFullDescription ? rawDescription : shortDescription}
           </p>
-          {description.length > 120 && (
+          {rawDescription.length > 120 && (
             <button
               onClick={() => setShowFullDescription(!showFullDescription)}
-              className="text-xs text-accent font-medium hover:underline mt-1 flex items-center gap-1"
+              className="text-[11px] sm:text-xs text-accent font-medium hover:underline mt-1 flex items-center gap-1"
             >
               {showFullDescription ? (
                 <>Ver menos <ChevronUp className="h-3 w-3" /></>
@@ -103,16 +115,16 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">desde</p>
-            <p className="text-xl font-bold text-foreground">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">desde</p>
+            <p className="text-lg sm:text-xl font-bold text-foreground">
               €{pricePerNight.toFixed(0)}
             </p>
-            <p className="text-[10px] text-muted-foreground">/noche</p>
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground">/noche</p>
           </div>
           <Button
             variant="default"
             size="sm"
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
+            className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs sm:text-sm"
             onClick={() => onAddHotel(hotel)}
           >
             Añadir

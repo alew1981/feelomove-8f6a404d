@@ -1,4 +1,6 @@
+import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, MapPin } from "lucide-react";
 import HotelCard from "./HotelCard";
 
@@ -23,30 +25,73 @@ interface HotelMapTabsProps {
 }
 
 const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel }: HotelMapTabsProps) => {
+  const [sortBy, setSortBy] = useState<string>("price-asc");
+
+  const sortedHotels = useMemo(() => {
+    const sorted = [...hotels];
+    switch (sortBy) {
+      case "price-asc":
+        sorted.sort((a, b) => (a.selling_price || a.price || 0) - (b.selling_price || b.price || 0));
+        break;
+      case "price-desc":
+        sorted.sort((a, b) => (b.selling_price || b.price || 0) - (a.selling_price || a.price || 0));
+        break;
+      case "distance-asc":
+        sorted.sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
+        break;
+      case "rating-desc":
+        sorted.sort((a, b) => (b.hotel_rating || b.hotel_stars || 0) - (a.hotel_rating || a.hotel_stars || 0));
+        break;
+      case "stars-desc":
+        sorted.sort((a, b) => (b.hotel_stars || 0) - (a.hotel_stars || 0));
+        break;
+    }
+    return sorted;
+  }, [hotels, sortBy]);
+
   return (
     <Tabs defaultValue="hotels" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="hotels" className="flex items-center gap-2">
+      <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsTrigger value="hotels" className="flex items-center gap-2 text-xs sm:text-sm">
           <Building2 className="h-4 w-4" />
-          Hoteles Disponibles
+          <span className="hidden sm:inline">Hoteles Disponibles</span>
+          <span className="sm:hidden">Hoteles</span>
         </TabsTrigger>
-        <TabsTrigger value="map" className="flex items-center gap-2" disabled={!mapWidgetHtml}>
+        <TabsTrigger value="map" className="flex items-center gap-2 text-xs sm:text-sm" disabled={!mapWidgetHtml}>
           <MapPin className="h-4 w-4" />
-          Mapa Hoteles
+          <span className="hidden sm:inline">Mapa Hoteles</span>
+          <span className="sm:hidden">Mapa</span>
         </TabsTrigger>
       </TabsList>
       
       <TabsContent value="hotels">
         {hotels.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {hotels.map((hotel) => (
-              <HotelCard 
-                key={hotel.hotel_id} 
-                hotel={hotel} 
-                onAddHotel={onAddHotel} 
-              />
-            ))}
-          </div>
+          <>
+            {/* Sorting dropdown */}
+            <div className="flex justify-end mb-4">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48 h-9 text-sm border-2">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
+                  <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                  <SelectItem value="distance-asc">Distancia (más cercano)</SelectItem>
+                  <SelectItem value="rating-desc">Valoración (mejor primero)</SelectItem>
+                  <SelectItem value="stars-desc">Estrellas (más primero)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              {sortedHotels.map((hotel) => (
+                <HotelCard 
+                  key={hotel.hotel_id} 
+                  hotel={hotel} 
+                  onAddHotel={onAddHotel} 
+                />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground">No hay hoteles disponibles para este evento</p>
@@ -59,7 +104,7 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel }: HotelMapTabsProps) 
           <div className="rounded-xl overflow-hidden border-2 border-border">
             <iframe
               srcDoc={mapWidgetHtml}
-              className="w-full min-h-[450px] border-0"
+              className="w-full min-h-[350px] sm:min-h-[450px] border-0"
               title="Mapa de hoteles"
               sandbox="allow-scripts allow-same-origin"
             />

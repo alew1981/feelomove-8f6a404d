@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import PageHero from "@/components/PageHero";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,9 @@ const Artistas = () => {
     },
   });
 
+  // Get hero image from first artist
+  const heroImage = artists?.[0]?.sample_image_url || artists?.[0]?.sample_image_standard_url;
+
   // Extract unique genres for filters
   const genres = useMemo(() => {
     if (!artists) return [];
@@ -65,14 +69,20 @@ const Artistas = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8 mt-20">
-        <div className="mb-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Artistas</h1>
+      <main className="container mx-auto px-4 py-8 mt-16">
+        
+        {/* Hero Image */}
+        <PageHero title="Artistas" imageUrl={heroImage} />
+        
+        {/* Breadcrumbs */}
+        <div className="mb-6">
           <Breadcrumbs />
-          <p className="text-muted-foreground text-lg mt-2">
-            Explora nuestra colección de {filteredArtists?.length || 0} artistas
-          </p>
         </div>
+        
+        {/* Description */}
+        <p className="text-muted-foreground text-lg mb-8">
+          Explora nuestra colección de {filteredArtists?.length || 0} artistas
+        </p>
 
         <div className="mb-8 space-y-4">
           <div className="relative">

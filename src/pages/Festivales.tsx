@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
+import PageHero from "@/components/PageHero";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 
@@ -37,6 +38,9 @@ const Festivales = () => {
       return data || [];
     }
   });
+
+  // Get first event image for hero
+  const heroImage = events?.[0]?.image_large_url || events?.[0]?.image_standard_url;
 
   // Extract unique cities and artists
   const cities = useMemo(() => {
@@ -119,22 +123,22 @@ const Festivales = () => {
       
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 mt-16">
           
-          {/* Header */}
-          <div className="mb-6 mt-6">
-            <h1 className="text-4xl md:text-5xl font-black text-foreground mb-6">
-              Festivales
-            </h1>
-            <div className="mb-8">
-              <Breadcrumbs />
-            </div>
-            <div className="prose prose-lg max-w-none mb-12">
-              <p className="text-muted-foreground leading-relaxed">
-                Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. 
-                Encuentra tu festival perfecto y reserva hotel cerca del recinto.
-              </p>
-            </div>
+          {/* Hero Image */}
+          <PageHero title="Festivales" imageUrl={heroImage} />
+          
+          {/* Breadcrumbs */}
+          <div className="mb-6">
+            <Breadcrumbs />
+          </div>
+          
+          {/* Description */}
+          <div className="prose prose-lg max-w-none mb-8">
+            <p className="text-muted-foreground leading-relaxed">
+              Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. 
+              Encuentra tu festival perfecto y reserva hotel cerca del recinto.
+            </p>
           </div>
 
           {/* Filters and Search */}
