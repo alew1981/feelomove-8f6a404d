@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface HotelCardProps {
   hotel: {
     hotel_id: string;
     hotel_name: string;
     hotel_main_photo: string;
+    hotel_photos?: string[];
     hotel_description: string;
     hotel_stars: number;
     hotel_rating: number;
@@ -31,6 +32,7 @@ const stripHtml = (html: string): string => {
 
 const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate }: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
@@ -38,6 +40,12 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate }: HotelCardPr
   const facilities = hotel.facility_names_es || [];
   const displayFacilities = facilities.slice(0, 3);
   const remainingFacilities = facilities.length - 3;
+  
+  // Get photos array - main photo + additional photos if available
+  const photos = hotel.hotel_photos?.length 
+    ? [hotel.hotel_main_photo, ...hotel.hotel_photos.filter(p => p !== hotel.hotel_main_photo)]
+    : [hotel.hotel_main_photo];
+  const hasMultiplePhotos = photos.length > 1;
   
   // Strip HTML from description
   const rawDescription = stripHtml(hotel.hotel_description) || "Hotel confortable cerca del venue";
@@ -49,14 +57,65 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate }: HotelCardPr
     if (!dateStr) return "";
     return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
+
+  const nextPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const prevPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
   return (
     <Card className="border-2 overflow-hidden hover:shadow-lg transition-all">
-      <div className="relative h-40 sm:h-48">
+      <div className="relative h-40 sm:h-48 group">
         <img
-          src={hotel.hotel_main_photo || "/placeholder.svg"}
+          src={photos[currentPhotoIndex] || "/placeholder.svg"}
           alt={hotel.hotel_name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-opacity duration-300"
         />
+        
+        {/* Carousel controls */}
+        {hasMultiplePhotos && (
+          <>
+            <button
+              onClick={prevPhoto}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={nextPhoto}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            
+            {/* Photo indicators */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {photos.slice(0, 5).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentPhotoIndex(idx);
+                  }}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    idx === currentPhotoIndex 
+                      ? "bg-accent w-3" 
+                      : "bg-background/60 hover:bg-background/80"
+                  }`}
+                />
+              ))}
+              {photos.length > 5 && (
+                <span className="text-[10px] text-background/80 ml-1">+{photos.length - 5}</span>
+              )}
+            </div>
+          </>
+        )}
+        
         {/* Rating badge with reviews - top left */}
         {reviewScore > 0 && (
           <Badge className="absolute top-2 left-2 bg-white text-foreground text-xs flex items-center gap-1">
