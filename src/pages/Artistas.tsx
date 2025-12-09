@@ -22,12 +22,12 @@ const Artistas = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch events and aggregate artists
+  // Fetch events and aggregate artists from mv_events_cards
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["allArtists"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("lovable_mv_event_product_page")
+        .from("mv_events_cards")
         .select("primary_attraction_id, primary_attraction_name, image_large_url, primary_subcategory_name, venue_city")
         .gte("event_date", new Date().toISOString())
         .not("primary_attraction_id", "is", null);
@@ -103,7 +103,7 @@ const Artistas = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-2">Artistas</h1>
           <Breadcrumbs />
           <p className="text-muted-foreground text-lg mt-2">
-            Explora nuestra colección de {artists?.length || 0} artistas
+            Explora nuestra colección de {filteredArtists?.length || 0} artistas
           </p>
         </div>
 
