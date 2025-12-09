@@ -248,7 +248,7 @@ const Producto = () => {
           {/* Hero Section */}
           <div className="relative rounded-2xl overflow-hidden mb-8">
             {/* Background Image */}
-            <div className="relative h-[450px] md:h-[500px]">
+            <div className="relative h-[380px] sm:h-[420px] md:h-[500px]">
               <img
                 src={eventImage}
                 alt={eventDetails.event_name || "Evento"}
@@ -272,58 +272,63 @@ const Producto = () => {
                 )}
               </div>
 
-              {/* Countdown Badge - Top Right - Only show if less than 7 days */}
+              {/* Countdown Badge + Urgency Badge - Top Right - Only show if less than 7 days */}
               {daysUntil >= 0 && daysUntil < 7 && (
-                <div className="absolute top-4 right-4">
-                  <div className="bg-background/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-3 border-2 border-accent">
+                <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-2">
+                  {/* Urgency Badge */}
+                  <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs md:text-sm animate-pulse">
+                    ¡ÚLTIMA SEMANA!
+                  </Badge>
+                  {/* Countdown */}
+                  <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
                     <div className="text-center">
-                      <span className="text-2xl md:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                      <p className="text-[10px] uppercase text-muted-foreground font-medium">Días</p>
+                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
+                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
                     </div>
-                    <span className="text-2xl text-accent font-bold">:</span>
+                    <span className="text-lg md:text-2xl text-accent font-bold">:</span>
                     <div className="text-center">
-                      <span className="text-2xl md:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                      <p className="text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
+                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
+                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Date Card - Bottom Left (Extended height) */}
-              <div className="absolute bottom-4 left-4 bg-card rounded-xl shadow-lg p-5 min-w-[160px]">
+              {/* Date Card - Bottom Left (Responsive) */}
+              <div className="absolute bottom-3 left-3 md:bottom-4 md:left-4 bg-card rounded-xl shadow-lg p-3 md:p-5 min-w-[120px] md:min-w-[160px]">
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     {format(eventDate, "MMM", { locale: es })}
                   </p>
-                  <p className="text-6xl font-black text-foreground leading-none my-2">
+                  <p className="text-4xl md:text-6xl font-black text-foreground leading-none my-1 md:my-2">
                     {format(eventDate, "dd")}
                   </p>
-                  <p className="text-base font-medium text-muted-foreground">
+                  <p className="text-sm md:text-base font-medium text-muted-foreground">
                     {format(eventDate, "yyyy")}
                   </p>
-                  <div className="border-t border-border mt-4 pt-4">
-                    <p className="text-2xl font-bold text-foreground">{formattedTime}h</p>
-                    <div className="flex items-center justify-center gap-1 mt-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-sm">{eventDetails.venue_city}</span>
+                  <div className="border-t border-border mt-3 pt-3 md:mt-4 md:pt-4">
+                    <p className="text-xl md:text-2xl font-bold text-foreground">{formattedTime}h</p>
+                    <div className="flex items-center justify-center gap-1 mt-1 md:mt-2 text-muted-foreground">
+                      <MapPin className="h-3 w-3 md:h-4 md:w-4" />
+                      <span className="text-xs md:text-sm">{eventDetails.venue_city}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Event Name + Favorite Button - Bottom Right */}
-              <div className="absolute bottom-4 right-4 max-w-md text-right">
-                <div className="flex items-start justify-end gap-3">
+              <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 max-w-[200px] sm:max-w-xs md:max-w-md text-right">
+                <div className="flex items-start justify-end gap-2 md:gap-3">
                   <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg leading-tight">
+                    <h1 className="text-lg sm:text-xl md:text-3xl font-black text-white drop-shadow-lg leading-tight line-clamp-2">
                       {eventDetails.event_name}
                     </h1>
-                    <p className="text-sm text-white/80 mt-1">{eventDetails.venue_name}</p>
+                    <p className="text-xs md:text-sm text-white/80 mt-1 line-clamp-1">{eventDetails.venue_name}</p>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/40 flex-shrink-0"
+                    className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/40 flex-shrink-0"
                     onClick={() => toggleFavorite({
                       event_id: eventDetails.event_id!,
                       event_name: eventDetails.event_name || '',
@@ -333,7 +338,7 @@ const Producto = () => {
                       image_url: eventImage
                     })}
                   >
-                    <Heart className={`h-5 w-5 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                    <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
                 </div>
               </div>

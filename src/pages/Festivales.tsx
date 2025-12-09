@@ -222,15 +222,22 @@ const Festivales = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {displayedEvents.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <EventCard event={event} />
-                  </div>
-                ))}
+                {displayedEvents.map((event, index) => {
+                  // For festivals, use secondary_attraction_name as the display name
+                  const festivalEvent = {
+                    ...event,
+                    name: event.secondary_attraction_name || event.name
+                  };
+                  return (
+                    <div
+                      key={event.id}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 0.05}s` }}
+                    >
+                      <EventCard event={festivalEvent} />
+                    </div>
+                  );
+                })}
               </div>
               
               {/* Infinite Scroll Loader */}
