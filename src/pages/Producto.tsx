@@ -439,11 +439,12 @@ const Producto = () => {
               )}
 
               {/* Hotels & Map Section with Tabs */}
-              {(hotels.length > 0 || mapWidgetHtml) && (
+              {(hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.hotels_list_widget_html) && (
                 <div>
                   <HotelMapTabs 
                     hotels={hotels} 
                     mapWidgetHtml={mapWidgetHtml} 
+                    hotelsListWidgetHtml={(eventDetails as any)?.hotels_list_widget_html}
                     onAddHotel={handleAddHotel}
                     checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
                     checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}

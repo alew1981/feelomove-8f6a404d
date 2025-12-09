@@ -16,7 +16,7 @@ import { useInView } from "react-intersection-observer";
 
 const GeneroDetalle = () => {
   const { genero } = useParams<{ genero: string }>();
-  const genreSlug = genero ? decodeURIComponent(genero) : "";
+  const genreParam = genero ? decodeURIComponent(genero) : "";
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -28,6 +28,36 @@ const GeneroDetalle = () => {
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0
   });
+
+  // Fetch genre info to get the correct slug
+  const { data: genreInfo } = useQuery({
+    queryKey: ["genre-info", genreParam],
+    queryFn: async () => {
+      // First try by genre_name (for URLs like /musica/Pop%2FRock)
+      let { data } = await supabase
+        .from("mv_genres_cards")
+        .select("genre_name, genre_slug, sample_image_url, sample_image_standard_url")
+        .eq("genre_name", genreParam)
+        .maybeSingle();
+      
+      // If not found, try by genre_slug (for URLs like /musica/pop-rock)
+      if (!data) {
+        const { data: bySlug } = await supabase
+          .from("mv_genres_cards")
+          .select("genre_name, genre_slug, sample_image_url, sample_image_standard_url")
+          .eq("genre_slug", genreParam)
+          .maybeSingle();
+        data = bySlug;
+      }
+      
+      return data;
+    },
+    enabled: !!genreParam,
+  });
+
+  const genreSlug = genreInfo?.genre_slug || genreParam;
+  const genreName = genreInfo?.genre_name || genreParam.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const genreHeroImage = genreInfo?.sample_image_url || genreInfo?.sample_image_standard_url;
 
   // Fetch concerts for this genre using genre_slug
   const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
@@ -71,11 +101,8 @@ const GeneroDetalle = () => {
     return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
   }, [concerts, festivals]);
 
-  // Get genre name from first event or format from slug
-  const genreName = events[0]?.genre || genreSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  
-  // Get hero image from first event
-  const heroImage = events[0]?.image_large_url || events[0]?.image_standard_url;
+  // Get hero image from genre info first, then from first event
+  const heroImage = genreHeroImage || events[0]?.image_large_url || events[0]?.image_standard_url;
 
   // Extract unique cities and artists for filters
   const cities = useMemo(() => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, X, Calendar, MapPin } from "lucide-react";
+import { Search, X, Calendar, MapPin, Clock, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +17,41 @@ interface SearchBarProps {
   onClose: () => void;
 }
 
+interface SearchHistoryItem {
+  type: 'event' | 'destination' | 'artist' | 'genre';
+  id: string;
+  name: string;
+  path: string;
+  timestamp: number;
+}
+
+const SEARCH_HISTORY_KEY = 'feelomove_search_history';
+const MAX_HISTORY_ITEMS = 5;
+
 const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const navigate = useNavigate();
+
+  // Load search history from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (stored) {
+      setSearchHistory(JSON.parse(stored));
+    }
+  }, [isOpen]);
+
+  const saveToHistory = (item: Omit<SearchHistoryItem, 'timestamp'>) => {
+    const newItem = { ...item, timestamp: Date.now() };
+    const updated = [newItem, ...searchHistory.filter(h => h.path !== item.path)].slice(0, MAX_HISTORY_ITEMS);
+    setSearchHistory(updated);
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+  };
+
+  const clearHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+  };
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
@@ -79,7 +111,10 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     enabled: searchTerm.length >= 2,
   });
 
-  const handleResultClick = (path: string) => {
+  const handleResultClick = (path: string, historyItem?: Omit<SearchHistoryItem, 'timestamp'>) => {
+    if (historyItem) {
+      saveToHistory(historyItem);
+    }
     navigate(path);
     onClose();
     setSearchTerm("");
@@ -97,6 +132,18 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       setSearchTerm("");
     }
   }, [isOpen]);
+
+  const formatHistoryTime = (timestamp: number) => {
+    const diff = Date.now() - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return "Ahora";
+    if (minutes < 60) return `Hace ${minutes}m`;
+    if (hours < 24) return `Hace ${hours}h`;
+    return `Hace ${days}d`;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -128,6 +175,42 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
         </div>
 
         <div className="space-y-4 overflow-y-auto max-h-[50vh]">
+          {/* Search History - Show when no search term */}
+          {!searchTerm && searchHistory.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase">Búsquedas recientes</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs text-muted-foreground hover:text-destructive"
+                  onClick={clearHistory}
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Limpiar
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {searchHistory.map((item, idx) => (
+                  <button
+                    key={`${item.path}-${idx}`}
+                    onClick={() => handleResultClick(item.path)}
+                    className="w-full p-3 rounded-lg border border-border hover:border-accent/50 hover:bg-muted/30 transition-all text-left flex items-center gap-3"
+                  >
+                    <div className="p-2 bg-muted rounded-full">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{item.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{item.type}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatHistoryTime(item.timestamp)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {isLoading && searchTerm.length >= 2 && (
             <p className="text-center text-muted-foreground py-4">Buscando...</p>
           )}
@@ -144,7 +227,12 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
                 {searchResults.events.map((result: any) => (
                   <button
                     key={result.id}
-                    onClick={() => handleResultClick(`/producto/${result.slug}`)}
+                    onClick={() => handleResultClick(`/producto/${result.slug}`, {
+                      type: 'event',
+                      id: result.id,
+                      name: result.name,
+                      path: `/producto/${result.slug}`
+                    })}
                     className="w-full p-3 rounded-lg border border-border hover:border-accent/50 hover:bg-muted/30 transition-all text-left flex gap-3"
                   >
                     {result.image_standard_url && (
@@ -181,7 +269,12 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
                 {searchResults.destinations.map((dest: any) => (
                   <button
                     key={dest.city_name}
-                    onClick={() => handleResultClick(`/destinos/${encodeURIComponent(dest.city_name)}`)}
+                    onClick={() => handleResultClick(`/destinos/${encodeURIComponent(dest.city_name)}`, {
+                      type: 'destination',
+                      id: dest.city_name,
+                      name: dest.city_name,
+                      path: `/destinos/${encodeURIComponent(dest.city_name)}`
+                    })}
                     className="p-2 rounded-lg border border-border hover:border-accent/50 hover:bg-muted/30 transition-all text-center"
                   >
                     <p className="font-medium text-sm truncate">{dest.city_name}</p>
@@ -200,7 +293,12 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
                 {searchResults.artists.map((artist: any) => (
                   <button
                     key={artist.attraction_id}
-                    onClick={() => handleResultClick(`/artista/${artist.attraction_slug}`)}
+                    onClick={() => handleResultClick(`/artista/${artist.attraction_slug}`, {
+                      type: 'artist',
+                      id: artist.attraction_id,
+                      name: artist.attraction_name,
+                      path: `/artista/${artist.attraction_slug}`
+                    })}
                     className="p-2 rounded-lg border border-border hover:border-accent/50 hover:bg-muted/30 transition-all text-center"
                   >
                     <p className="font-medium text-sm truncate">{artist.attraction_name}</p>
@@ -219,7 +317,12 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
                 {searchResults.genres.map((genre: any) => (
                   <button
                     key={genre.genre_name}
-                    onClick={() => handleResultClick(`/musica/${encodeURIComponent(genre.genre_name)}`)}
+                    onClick={() => handleResultClick(`/musica/${genre.genre_slug}`, {
+                      type: 'genre',
+                      id: genre.genre_slug,
+                      name: genre.genre_name,
+                      path: `/musica/${genre.genre_slug}`
+                    })}
                     className="p-2 rounded-lg border border-border hover:border-accent/50 hover:bg-muted/30 transition-all text-center"
                   >
                     <p className="font-medium text-sm truncate">{genre.genre_name}</p>

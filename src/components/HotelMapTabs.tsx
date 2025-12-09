@@ -21,12 +21,13 @@ interface HotelData {
 interface HotelMapTabsProps {
   hotels: HotelData[];
   mapWidgetHtml: string | null;
+  hotelsListWidgetHtml?: string | null;
   onAddHotel: (hotel: HotelData) => void;
   checkinDate?: string;
   checkoutDate?: string;
 }
 
-const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel, checkinDate, checkoutDate }: HotelMapTabsProps) => {
+const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel, checkinDate, checkoutDate }: HotelMapTabsProps) => {
   const [sortBy, setSortBy] = useState<string>("price-asc");
 
   const sortedHotels = useMemo(() => {
@@ -96,6 +97,15 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel, checkinDate, checkout
               ))}
             </div>
           </>
+        ) : hotelsListWidgetHtml ? (
+          <div className="rounded-xl overflow-hidden border-2 border-border">
+            <iframe
+              srcDoc={hotelsListWidgetHtml}
+              className="w-full min-h-[500px] sm:min-h-[600px] border-0"
+              title="Lista de hoteles"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground">No hay hoteles disponibles para este evento</p>
