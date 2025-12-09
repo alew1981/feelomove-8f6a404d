@@ -1,16 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, X, Calendar, MapPin, Clock, Trash2 } from "lucide-react";
+import { Search, X, Calendar, MapPin, Clock, Trash2, SlidersHorizontal, Euro, Music } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface SearchBarProps {
   isOpen: boolean;
@@ -25,13 +32,42 @@ interface SearchHistoryItem {
   timestamp: number;
 }
 
+interface SearchFilters {
+  priceRange: [number, number];
+  eventType: 'all' | 'concerts' | 'festivals';
+  dateRange: 'all' | 'week' | 'month' | '3months';
+}
+
 const SEARCH_HISTORY_KEY = 'feelomove_search_history';
 const MAX_HISTORY_ITEMS = 5;
 
 const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<SearchFilters>({
+    priceRange: [0, 500],
+    eventType: 'all',
+    dateRange: 'all'
+  });
   const navigate = useNavigate();
+  const debounceRef = useRef<NodeJS.Timeout>();
+
+  // Debounce search term for live search
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+    }, 300);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   // Load search history from localStorage
   useEffect(() => {
@@ -53,51 +89,99 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     localStorage.removeItem(SEARCH_HISTORY_KEY);
   };
 
+  const getDateFilter = () => {
+    const now = new Date();
+    switch (filters.dateRange) {
+      case 'week':
+        const weekLater = new Date(now);
+        weekLater.setDate(weekLater.getDate() + 7);
+        return weekLater.toISOString();
+      case 'month':
+        const monthLater = new Date(now);
+        monthLater.setMonth(monthLater.getMonth() + 1);
+        return monthLater.toISOString();
+      case '3months':
+        const threeLater = new Date(now);
+        threeLater.setMonth(threeLater.getMonth() + 3);
+        return threeLater.toISOString();
+      default:
+        return null;
+    }
+  };
+
   const { data: searchResults, isLoading } = useQuery({
-    queryKey: ["search", searchTerm],
+    queryKey: ["search", debouncedTerm, filters],
     queryFn: async () => {
-      if (!searchTerm || searchTerm.length < 2) return { events: [], destinations: [], artists: [], genres: [] };
+      if (!debouncedTerm || debouncedTerm.length < 1) return { events: [], destinations: [], artists: [], genres: [] };
+      
+      const dateEnd = getDateFilter();
+      const now = new Date().toISOString();
+      
+      let concerts: any[] = [];
+      let festivals: any[] = [];
       
       // Search in concerts
-      const { data: concerts } = await supabase
-        .from("mv_concerts_cards")
-        .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, artist_name")
-        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,artist_name.ilike.%${searchTerm}%`)
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
+      if (filters.eventType === 'all' || filters.eventType === 'concerts') {
+        let query = supabase
+          .from("mv_concerts_cards")
+          .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, artist_name, price_min_incl_fees")
+          .or(`name.ilike.%${debouncedTerm}%,venue_city.ilike.%${debouncedTerm}%,artist_name.ilike.%${debouncedTerm}%`)
+          .gte("event_date", now)
+          .gte("price_min_incl_fees", filters.priceRange[0])
+          .lte("price_min_incl_fees", filters.priceRange[1])
+          .order("event_date", { ascending: true })
+          .limit(4);
+        
+        if (dateEnd) {
+          query = query.lte("event_date", dateEnd);
+        }
+        
+        const { data } = await query;
+        concerts = data || [];
+      }
       
       // Search in festivals  
-      const { data: festivals } = await supabase
-        .from("mv_festivals_cards")
-        .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, main_attraction")
-        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%,main_attraction.ilike.%${searchTerm}%`)
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
+      if (filters.eventType === 'all' || filters.eventType === 'festivals') {
+        let query = supabase
+          .from("mv_festivals_cards")
+          .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, main_attraction, price_min_incl_fees")
+          .or(`name.ilike.%${debouncedTerm}%,venue_city.ilike.%${debouncedTerm}%,main_attraction.ilike.%${debouncedTerm}%`)
+          .gte("event_date", now)
+          .gte("price_min_incl_fees", filters.priceRange[0])
+          .lte("price_min_incl_fees", filters.priceRange[1])
+          .order("event_date", { ascending: true })
+          .limit(4);
+        
+        if (dateEnd) {
+          query = query.lte("event_date", dateEnd);
+        }
+        
+        const { data } = await query;
+        festivals = data || [];
+      }
 
       // Search destinations
       const { data: destinations } = await supabase
         .from("mv_destinations_cards")
         .select("city_name, city_slug, event_count, sample_image_url")
-        .ilike("city_name", `%${searchTerm}%`)
+        .ilike("city_name", `%${debouncedTerm}%`)
         .limit(3);
 
       // Search artists
       const { data: artists } = await supabase
         .from("mv_attractions")
         .select("attraction_id, attraction_name, attraction_slug, event_count, sample_image_url")
-        .ilike("attraction_name", `%${searchTerm}%`)
+        .ilike("attraction_name", `%${debouncedTerm}%`)
         .limit(3);
 
       // Search genres
       const { data: genres } = await supabase
         .from("mv_genres_cards")
         .select("genre_name, genre_slug, event_count, sample_image_url")
-        .ilike("genre_name", `%${searchTerm}%`)
+        .ilike("genre_name", `%${debouncedTerm}%`)
         .limit(3);
       
-      const events = [...(concerts || []), ...(festivals || [])]
+      const events = [...concerts, ...festivals]
         .sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime())
         .slice(0, 6);
       
@@ -108,7 +192,7 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
         genres: genres || [] 
       };
     },
-    enabled: searchTerm.length >= 2,
+    enabled: debouncedTerm.length >= 1,
   });
 
   const handleResultClick = (path: string, historyItem?: Omit<SearchHistoryItem, 'timestamp'>) => {
@@ -127,9 +211,15 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     searchResults.genres?.length > 0
   );
 
+  const activeFiltersCount = 
+    (filters.eventType !== 'all' ? 1 : 0) + 
+    (filters.dateRange !== 'all' ? 1 : 0) + 
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < 500 ? 1 : 0);
+
   useEffect(() => {
     if (!isOpen) {
       setSearchTerm("");
+      setDebouncedTerm("");
     }
   }, [isOpen]);
 
@@ -145,9 +235,17 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     return `Hace ${days}d`;
   };
 
+  const resetFilters = () => {
+    setFilters({
+      priceRange: [0, 500],
+      eventType: 'all',
+      dateRange: 'all'
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle>Buscar Eventos</DialogTitle>
         </DialogHeader>
@@ -156,23 +254,107 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Buscar eventos, artistas, destinos o géneros..."
+            placeholder="Escribe para buscar eventos, artistas, destinos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-20"
             autoFocus
           />
-          {searchTerm && (
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setSearchTerm("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-              onClick={() => setSearchTerm("")}
+              className="h-7 w-7 relative"
+              onClick={() => setShowFilters(!showFilters)}
             >
-              <X className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4" />
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-accent-foreground text-[10px] rounded-full flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
             </Button>
-          )}
+          </div>
         </div>
+
+        {/* Advanced Filters */}
+        <Collapsible open={showFilters} onOpenChange={setShowFilters}>
+          <CollapsibleContent className="space-y-4 pt-2 pb-4 border-b border-border">
+            {/* Event Type Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Tipo de evento</label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { value: 'all', label: 'Todos' },
+                  { value: 'concerts', label: 'Conciertos' },
+                  { value: 'festivals', label: 'Festivales' }
+                ].map((type) => (
+                  <Badge
+                    key={type.value}
+                    variant={filters.eventType === type.value ? "default" : "outline"}
+                    className="cursor-pointer hover:bg-accent/80"
+                    onClick={() => setFilters(f => ({ ...f, eventType: type.value as any }))}
+                  >
+                    {type.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Fecha</label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { value: 'all', label: 'Cualquier fecha' },
+                  { value: 'week', label: 'Esta semana' },
+                  { value: 'month', label: 'Este mes' },
+                  { value: '3months', label: 'Próximos 3 meses' }
+                ].map((date) => (
+                  <Badge
+                    key={date.value}
+                    variant={filters.dateRange === date.value ? "default" : "outline"}
+                    className="cursor-pointer hover:bg-accent/80"
+                    onClick={() => setFilters(f => ({ ...f, dateRange: date.value as any }))}
+                  >
+                    {date.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                Rango de precio: {filters.priceRange[0]}€ - {filters.priceRange[1]}€
+              </label>
+              <Slider
+                value={filters.priceRange}
+                onValueChange={(value) => setFilters(f => ({ ...f, priceRange: value as [number, number] }))}
+                min={0}
+                max={500}
+                step={10}
+                className="w-full"
+              />
+            </div>
+
+            {activeFiltersCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs">
+                Limpiar filtros
+              </Button>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="space-y-4 overflow-y-auto max-h-[50vh]">
           {/* Search History - Show when no search term */}
@@ -211,11 +393,11 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
             </div>
           )}
 
-          {isLoading && searchTerm.length >= 2 && (
+          {isLoading && debouncedTerm.length >= 1 && (
             <p className="text-center text-muted-foreground py-4">Buscando...</p>
           )}
           
-          {!hasResults && searchTerm.length >= 2 && !isLoading && (
+          {!hasResults && debouncedTerm.length >= 1 && !isLoading && (
             <p className="text-center text-muted-foreground py-4">No se encontraron resultados</p>
           )}
           
@@ -253,6 +435,12 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
                           <MapPin className="h-3 w-3" />
                           {result.venue_city}
                         </span>
+                        {result.price_min_incl_fees && (
+                          <span className="flex items-center gap-1">
+                            <Euro className="h-3 w-3" />
+                            {result.price_min_incl_fees}€
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>
