@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import PageHero from "@/components/PageHero";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 
@@ -15,7 +16,7 @@ import { useInView } from "react-intersection-observer";
 
 const GeneroDetalle = () => {
   const { genero } = useParams<{ genero: string }>();
-  const genreNameDecoded = genero ? decodeURIComponent(genero) : "";
+  const genreSlug = genero ? decodeURIComponent(genero) : "";
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -28,38 +29,38 @@ const GeneroDetalle = () => {
     threshold: 0
   });
 
-  // Fetch concerts for this genre
+  // Fetch concerts for this genre using genre_slug
   const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
-    queryKey: ["genre-concerts", genreNameDecoded],
+    queryKey: ["genre-concerts", genreSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_concerts_cards")
         .select("*")
-        .eq("genre", genreNameDecoded)
+        .eq("genre_slug", genreSlug)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!genreNameDecoded,
+    enabled: !!genreSlug,
   });
 
-  // Fetch festivals for this genre
+  // Fetch festivals for this genre using genre_slug
   const { data: festivals, isLoading: isLoadingFestivals } = useQuery({
-    queryKey: ["genre-festivals", genreNameDecoded],
+    queryKey: ["genre-festivals", genreSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_festivals_cards")
         .select("*")
-        .eq("genre", genreNameDecoded)
+        .eq("genre_slug", genreSlug)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!genreNameDecoded,
+    enabled: !!genreSlug,
   });
 
   const isLoading = isLoadingConcerts || isLoadingFestivals;
@@ -69,6 +70,12 @@ const GeneroDetalle = () => {
     const allEvents = [...(concerts || []), ...(festivals || [])];
     return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
   }, [concerts, festivals]);
+
+  // Get genre name from first event or format from slug
+  const genreName = events[0]?.genre || genreSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  
+  // Get hero image from first event
+  const heroImage = events[0]?.image_large_url || events[0]?.image_standard_url;
 
   // Extract unique cities and artists for filters
   const cities = useMemo(() => {
@@ -154,16 +161,20 @@ const GeneroDetalle = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-16">
         
-        {/* Header */}
-        <div className="mb-4 mt-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">{genreNameDecoded}</h1>
+        {/* Hero Image */}
+        <PageHero title={genreName} imageUrl={heroImage} />
+        
+        {/* Breadcrumbs */}
+        <div className="mb-6">
           <Breadcrumbs />
-          <p className="text-muted-foreground text-lg mt-2">
-            Descubre los mejores eventos de {genreNameDecoded}
-          </p>
         </div>
+        
+        {/* Description */}
+        <p className="text-muted-foreground text-lg mb-8">
+          Descubre los mejores eventos de {genreName}
+        </p>
 
         {/* Filters and Search */}
         <div className="mb-8 space-y-4">
