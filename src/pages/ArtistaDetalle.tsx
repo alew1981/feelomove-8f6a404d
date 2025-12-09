@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import PageHero from "@/components/PageHero";
 import { SEOHead } from "@/components/SEOHead";
 import { SEOText } from "@/components/SEOText";
 import EventCard from "@/components/EventCard";
@@ -61,6 +62,9 @@ const ArtistaDetalle = () => {
   const artistName = events && events.length > 0 
     ? events[0].artist_name || artistSlug.replace(/-/g, ' ')
     : artistSlug.replace(/-/g, ' ');
+
+  // Get hero image from first event
+  const heroImage = events?.[0]?.image_large_url || events?.[0]?.image_standard_url;
 
   // Extract unique cities for filters
   const cities = useMemo(() => {
@@ -160,18 +164,22 @@ const ArtistaDetalle = () => {
       />
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 mt-16">
           
-          {/* Header */}
-          <div className="mb-8 mt-6">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">{artistName}</h1>
+          {/* Hero Image */}
+          <PageHero title={artistName} imageUrl={heroImage} />
+          
+          {/* Breadcrumbs */}
+          <div className="mb-6">
             <Breadcrumbs />
-            <SEOText 
-              title={`Conciertos de ${artistName}`}
-              description={`Encuentra todos los próximos conciertos de ${artistName} en España. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles de ${artistName} en ciudades como ${cities.slice(0, 3).join(", ")}.`}
-              keywords={[`${artistName} españa`, `${artistName} conciertos`, `entradas ${artistName}`, ...cities.slice(0, 3).map(city => `${artistName} ${city}`)]}
-            />
           </div>
+          
+          {/* SEO Text */}
+          <SEOText 
+            title={`Conciertos de ${artistName}`}
+            description={`Encuentra todos los próximos conciertos de ${artistName} en España. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles de ${artistName} en ciudades como ${cities.slice(0, 3).join(", ")}.`}
+            keywords={[`${artistName} españa`, `${artistName} conciertos`, `entradas ${artistName}`, ...cities.slice(0, 3).map(city => `${artistName} ${city}`)]}
+          />
 
         {/* Filters and Search */}
         <div className="mb-8 space-y-4">

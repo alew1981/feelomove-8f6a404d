@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import PageHero from "@/components/PageHero";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 
@@ -15,7 +16,7 @@ import { useInView } from "react-intersection-observer";
 
 const DestinoDetalle = () => {
   const { destino } = useParams<{ destino: string }>();
-  const cityNameDecoded = destino ? decodeURIComponent(destino) : "";
+  const citySlug = destino ? decodeURIComponent(destino) : "";
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -28,38 +29,38 @@ const DestinoDetalle = () => {
     threshold: 0
   });
 
-  // Fetch concerts for this city
+  // Fetch concerts for this city using venue_city_slug
   const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
-    queryKey: ["city-concerts", cityNameDecoded],
+    queryKey: ["city-concerts", citySlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_concerts_cards")
         .select("*")
-        .eq("venue_city", cityNameDecoded)
+        .eq("venue_city_slug", citySlug)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!cityNameDecoded,
+    enabled: !!citySlug,
   });
 
-  // Fetch festivals for this city
+  // Fetch festivals for this city using venue_city_slug
   const { data: festivals, isLoading: isLoadingFestivals } = useQuery({
-    queryKey: ["city-festivals", cityNameDecoded],
+    queryKey: ["city-festivals", citySlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_festivals_cards")
         .select("*")
-        .eq("venue_city", cityNameDecoded)
+        .eq("venue_city_slug", citySlug)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!cityNameDecoded,
+    enabled: !!citySlug,
   });
 
   const isLoading = isLoadingConcerts || isLoadingFestivals;
@@ -70,6 +71,12 @@ const DestinoDetalle = () => {
     // Sort by date
     return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
   }, [concerts, festivals]);
+
+  // Get city name from first event or format from slug
+  const cityName = events[0]?.venue_city || citySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  
+  // Get hero image from first event
+  const heroImage = events[0]?.image_large_url || events[0]?.image_standard_url;
 
   // Extract unique genres and artists for filters
   const genres = useMemo(() => {
@@ -164,16 +171,20 @@ const DestinoDetalle = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-16">
         
-        {/* Header */}
-        <div className="mb-4 mt-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">{cityNameDecoded}</h1>
+        {/* Hero Image */}
+        <PageHero title={cityName} imageUrl={heroImage} />
+        
+        {/* Breadcrumbs */}
+        <div className="mb-6">
           <Breadcrumbs />
-          <p className="text-muted-foreground text-lg mt-2">
-            Descubre los mejores eventos en {cityNameDecoded}
-          </p>
         </div>
+        
+        {/* Description */}
+        <p className="text-muted-foreground text-lg mb-8">
+          Descubre los mejores eventos en {cityName}
+        </p>
 
         {/* Filters and Search */}
         <div className="mb-8 space-y-4">
