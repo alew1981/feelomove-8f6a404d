@@ -58,24 +58,28 @@ const Producto = () => {
     }
   });
 
-  // Process data - first row has event details, all rows have hotel data
+  // Process data - first row has event details
   const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
   
-  // Collect unique hotels from all rows
-  const hotels = eventData?.filter(row => row.hotel_id).map(row => ({
-    hotel_id: row.hotel_id,
-    hotel_name: row.hotel_name,
-    hotel_main_photo: row.hotel_main_photo,
-    hotel_description: row.hotel_description,
-    hotel_stars: row.hotel_stars,
-    hotel_rating: row.hotel_rating,
-    hotel_reviews: row.hotel_reviews_count,
-    price: 0, // Will come from prices lookup
-    selling_price: 0,
-    distance_km: row.distance_km,
-  })).filter((hotel, index, self) => 
-    index === self.findIndex(h => h.hotel_id === hotel.hotel_id)
-  ).slice(0, 10) || [];
+  // Get hotels from hotels_prices_aggregated_jsonb
+  const hotels = (() => {
+    if (!eventDetails) return [];
+    const aggregatedHotels = (eventDetails as any).hotels_prices_aggregated_jsonb;
+    if (!aggregatedHotels || !Array.isArray(aggregatedHotels)) return [];
+    
+    return aggregatedHotels.slice(0, 10).map((hotel: any) => ({
+      hotel_id: hotel.hotel_id || hotel.id,
+      hotel_name: hotel.hotel_name || hotel.name,
+      hotel_main_photo: hotel.main_photo || hotel.hotel_main_photo,
+      hotel_description: hotel.hotel_description || hotel.description || "Hotel confortable cerca del venue",
+      hotel_stars: hotel.stars || hotel.hotel_stars || 0,
+      hotel_rating: hotel.rating || hotel.hotel_rating || 0,
+      hotel_reviews: hotel.review_count || hotel.hotel_reviews || 0,
+      price: hotel.min_price || 0,
+      selling_price: hotel.suggested_selling_price || hotel.min_price || 0,
+      distance_km: hotel.distance_km || 0,
+    }));
+  })();
 
   // Clear cart when changing events
   useEffect(() => {

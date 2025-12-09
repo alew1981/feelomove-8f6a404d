@@ -15,12 +15,12 @@ const NotFound = () => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
-  // Fetch suggested events using mv_events_cards
+  // Fetch suggested events using mv_concerts_cards
   const { data: suggestedEvents } = useQuery({
     queryKey: ["suggestedEvents"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_events_cards")
+        .from("mv_concerts_cards")
         .select("id, name, slug, venue_city, event_date, image_standard_url, price_min_incl_fees")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
