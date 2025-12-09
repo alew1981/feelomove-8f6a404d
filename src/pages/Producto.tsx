@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import HotelCard from "@/components/HotelCard";
+import HotelMapTabs from "@/components/HotelMapTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -348,7 +349,7 @@ const Producto = () => {
               {ticketPrices.length > 0 && (
                 <div>
                   <h2 className="text-2xl font-bold mb-6">Entradas</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {displayedTickets.map((ticket: any, index: number) => {
                       const quantity = getTicketQuantity(ticket.type);
                       
@@ -363,14 +364,16 @@ const Producto = () => {
                                   {ticket.description}
                                 </p>
                               )}
-                              <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground mt-2 inline-block">
-                                {ticket.code}
-                              </span>
+                              {ticket.code && (
+                                <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground mt-2 inline-block">
+                                  {ticket.code}
+                                </span>
+                              )}
                             </div>
 
                             {/* Price */}
-                            <div className="text-center py-4 border-y border-border">
-                              <div className="text-3xl font-black text-foreground">
+                            <div className="text-center py-3 border-y border-border">
+                              <div className="text-2xl font-black text-foreground">
                                 €{ticket.price.toFixed(0)}
                               </div>
                               {ticket.fees > 0 && (
@@ -379,32 +382,32 @@ const Producto = () => {
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className="flex items-center justify-between mt-4">
+                            <div className="flex items-center justify-between mt-3">
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-9 w-9 rounded-full border-2"
+                                className="h-8 w-8 rounded-full border-2"
                                 onClick={() => handleTicketQuantityChange(ticket.type, -1)}
                                 disabled={quantity === 0}
                               >
-                                <Minus className="h-4 w-4" />
+                                <Minus className="h-3 w-3" />
                               </Button>
-                              <span className="text-xl font-bold">{quantity}</span>
+                              <span className="text-lg font-bold">{quantity}</span>
                               <Button
                                 variant="default"
                                 size="icon"
-                                className="h-9 w-9 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
+                                className="h-8 w-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
                                 onClick={() => handleTicketQuantityChange(ticket.type, 1)}
                                 disabled={quantity >= 10}
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-3 w-3" />
                               </Button>
                             </div>
 
                             {/* Total if selected */}
                             {quantity > 0 && (
-                              <div className="mt-3 text-center">
-                                <span className="text-sm font-bold text-accent">
+                              <div className="mt-2 text-center">
+                                <span className="text-xs font-bold text-accent">
                                   Total: €{((ticket.price + ticket.fees) * quantity).toFixed(2)}
                                 </span>
                               </div>
@@ -429,34 +432,14 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Hotels Section */}
-              {hotels.length > 0 && (
+              {/* Hotels & Map Section with Tabs */}
+              {(hotels.length > 0 || mapWidgetHtml) && (
                 <div>
-                  <h2 className="text-2xl font-bold mb-6">Hoteles Disponibles</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {hotels.map((hotel) => (
-                      <HotelCard 
-                        key={hotel.hotel_id} 
-                        hotel={hotel} 
-                        onAddHotel={handleAddHotel} 
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Map Widget */}
-              {mapWidgetHtml && (
-                <div className="mt-8">
-                  <h2 className="text-2xl font-bold mb-6">Ubicación</h2>
-                  <div className="rounded-xl overflow-hidden border-2 border-border">
-                    <iframe
-                      srcDoc={mapWidgetHtml}
-                      className="w-full min-h-[400px] border-0"
-                      title="Ubicación del evento"
-                      sandbox="allow-scripts allow-same-origin"
-                    />
-                  </div>
+                  <HotelMapTabs 
+                    hotels={hotels} 
+                    mapWidgetHtml={mapWidgetHtml} 
+                    onAddHotel={handleAddHotel} 
+                  />
                 </div>
               )}
             </div>

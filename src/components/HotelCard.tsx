@@ -30,7 +30,7 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
   const displayFacilities = facilities.slice(0, 5);
   const remainingFacilities = facilities.length - 5;
   const description = hotel.hotel_description || "Hotel confortable cerca del venue";
-  const shortDescription = description.length > 100 ? description.substring(0, 100) + "..." : description;
+  const shortDescription = description.length > 120 ? description.substring(0, 120) + "..." : description;
   const distanceText = hotel.distance_km > 0 ? `${hotel.distance_km.toFixed(1)} km` : "";
 
   return (
@@ -87,7 +87,7 @@ const HotelCard = ({ hotel, onAddHotel }: HotelCardProps) => {
           <p className="text-xs text-muted-foreground">
             {showFullDescription ? description : shortDescription}
           </p>
-          {description.length > 100 && (
+          {description.length > 120 && (
             <button
               onClick={() => setShowFullDescription(!showFullDescription)}
               className="text-xs text-accent font-medium hover:underline mt-1 flex items-center gap-1"
