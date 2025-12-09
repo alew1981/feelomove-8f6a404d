@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 46%;
 
-    --accent: 152 100% 50%;
+    --accent: 141 100% 50%;
     --accent-foreground: 0 0% 7%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,22 +34,22 @@ All colors MUST be HSL.
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 152 100% 50%;
+    --ring: 141 100% 50%;
 
     --radius: 0.75rem;
 
     /* Feelomove+ Brandbook Colors */
-    --brand-green: 152 100% 50%; /* #00FF8F */
+    --brand-green: 141 100% 50%; /* #00FF8F */
     --brand-black: 0 0% 7%; /* #121212 */
     --brand-white: 0 0% 100%; /* #FFFFFF */
     --brand-light-gray: 0 0% 95%; /* #F2F2F2 */
     --brand-dark-gray: 0 0% 33%; /* #555555 */
     
     /* Badge Colors */
-    --badge-hot: 0 100% 50%; /* #FF0000 */
-    --badge-vip: 45 100% 50%; /* Gold #FFD700 */
-    --badge-popular: 152 100% 50%; /* Green #00FF8F */
-    --badge-limited: 25 100% 50%; /* Orange #FF8000 */
+    --badge-hot: 141 100% 50%; /* Green #00FF8F */
+    --badge-vip: 0 0% 7%; /* Black #121212 */
+    --badge-popular: 141 100% 50%; /* Green #00FF8F */
+    --badge-limited: 0 84% 60%; /* Red */
     --badge-sold-out: 0 0% 60%; /* Gray #999999 */
     --badge-verified: 217 91% 60%; /* Blue #3B82F6 */
     
@@ -98,7 +98,7 @@ All colors MUST be HSL.
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 152 100% 50%;
+    --accent: 141 100% 50%;
     --accent-foreground: 0 0% 7%;
 
     --destructive: 0 62.8% 30.6%;
@@ -106,7 +106,9 @@ All colors MUST be HSL.
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 152 100% 50%;
+    --ring: 141 100% 50%;
+    
+    --brand-green: 141 100% 50%;
 
     --gradient-hero: linear-gradient(135deg, hsl(0 0% 10%) 0%, hsl(0 0% 20%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(152 100% 50%) 0%, hsl(152 100% 60%) 100%);
