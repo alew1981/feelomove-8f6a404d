@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import PageHero from "@/components/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Heart } from "lucide-react";
@@ -10,15 +11,26 @@ import { useFavorites } from "@/hooks/useFavorites";
 const Favoritos = () => {
   const { favorites, removeFavorite } = useFavorites();
 
+  // Get first favorite image for hero
+  const heroImage = favorites.length > 0 ? favorites[0].image_url : undefined;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8 mt-20">
-        <Breadcrumbs />
+      <main className="container mx-auto px-4 py-8 mt-16">
+        {/* Hero Image */}
+        <PageHero 
+          title="Mis Favoritos" 
+          imageUrl={heroImage || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1920"} 
+        />
+        
+        {/* Breadcrumbs */}
+        <div className="mb-6">
+          <Breadcrumbs />
+        </div>
         
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Mis Favoritos</h1>
           <p className="text-muted-foreground">
             {favorites.length === 0 
               ? "No tienes eventos favoritos guardados"

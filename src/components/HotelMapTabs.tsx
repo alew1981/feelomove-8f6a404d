@@ -22,9 +22,11 @@ interface HotelMapTabsProps {
   hotels: HotelData[];
   mapWidgetHtml: string | null;
   onAddHotel: (hotel: HotelData) => void;
+  checkinDate?: string;
+  checkoutDate?: string;
 }
 
-const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel }: HotelMapTabsProps) => {
+const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel, checkinDate, checkoutDate }: HotelMapTabsProps) => {
   const [sortBy, setSortBy] = useState<string>("price-asc");
 
   const sortedHotels = useMemo(() => {
@@ -87,7 +89,9 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, onAddHotel }: HotelMapTabsProps) 
                 <HotelCard 
                   key={hotel.hotel_id} 
                   hotel={hotel} 
-                  onAddHotel={onAddHotel} 
+                  onAddHotel={onAddHotel}
+                  checkinDate={checkinDate}
+                  checkoutDate={checkoutDate}
                 />
               ))}
             </div>

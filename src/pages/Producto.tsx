@@ -187,6 +187,7 @@ const Producto = () => {
     } else if (change > 0) {
       updatedTickets.push({
         type: ticketData.type,
+        description: ticketData.description,
         price: ticketData.price,
         fees: ticketData.fees,
         quantity: 2
@@ -443,7 +444,9 @@ const Producto = () => {
                   <HotelMapTabs 
                     hotels={hotels} 
                     mapWidgetHtml={mapWidgetHtml} 
-                    onAddHotel={handleAddHotel} 
+                    onAddHotel={handleAddHotel}
+                    checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
+                    checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
                   />
                 </div>
               )}
@@ -460,16 +463,11 @@ const Producto = () => {
                 <CardContent className="pt-6 space-y-4">
                   {isEventInCart && cart ? (
                     <>
-                      {/* Event Info with Image */}
+                      {/* Event Info */}
                       <div className="mb-4">
-                        <p className="text-sm font-bold text-foreground mb-2">
+                        <p className="text-sm font-bold text-foreground">
                           {eventDetails.event_name}
                         </p>
-                        <img 
-                          src={eventImage} 
-                          alt={eventDetails.event_name || "Evento"} 
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
                       </div>
 
                       {/* Tickets in cart */}
@@ -478,6 +476,11 @@ const Producto = () => {
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
                               <h3 className="font-bold text-sm">{ticket.type}</h3>
+                              {ticket.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  {ticket.description}
+                                </p>
+                              )}
                             </div>
                             <Button
                               variant="ghost"
@@ -529,9 +532,14 @@ const Producto = () => {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground mb-2">
-                              {cart.hotel.nights} noches
-                            </p>
+                            <div className="space-y-1 text-xs text-muted-foreground mb-2">
+                              {cart.hotel.checkin_date && cart.hotel.checkout_date && (
+                                <p>
+                                  {new Date(cart.hotel.checkin_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(cart.hotel.checkout_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                </p>
+                              )}
+                              <p>{cart.hotel.nights} noches · {getTotalTickets()} huéspedes</p>
+                            </div>
                             <div className="text-right">
                               <div className="text-lg font-bold">€{cart.hotel.total_price.toFixed(2)}</div>
                             </div>
