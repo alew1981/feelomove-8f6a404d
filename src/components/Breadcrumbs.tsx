@@ -11,20 +11,20 @@ const Breadcrumbs = () => {
 
   // Get event name and categories for product page using lovable_mv_event_product_page
   const { data: eventDetails } = useQuery({
-    queryKey: ["event-breadcrumb", params.id],
+    queryKey: ["event-breadcrumb", params.slug],
     queryFn: async () => {
-      if (!params.id) return null;
+      if (!params.slug) return null;
       
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page")
         .select("event_name, primary_subcategory_name, attraction_names, venue_city")
-        .eq("event_slug", params.id)
+        .eq("event_slug", params.slug)
         .maybeSingle();
       
       if (error) return null;
       return data;
     },
-    enabled: !!params.id && pathnames[0] === "producto",
+    enabled: !!params.slug && pathnames[0] === "producto",
   });
 
   // Extract genre from event
