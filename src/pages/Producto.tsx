@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import HotelCard from "@/components/HotelCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Trash2, Plus, Minus, MapPin, Clock } from "lucide-react";
+import { Heart, Trash2, Plus, Minus, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart, CartTicket } from "@/contexts/CartContext";
@@ -26,6 +27,20 @@ interface TicketType {
   fees: number;
   name: string;
   total: number;
+}
+
+interface HotelData {
+  hotel_id: string;
+  hotel_name: string;
+  hotel_main_photo: string;
+  hotel_description: string;
+  hotel_stars: number;
+  hotel_rating: number;
+  hotel_reviews: number;
+  price: number;
+  selling_price: number;
+  distance_km: number;
+  facility_names_es?: string[];
 }
 
 const Producto = () => {
@@ -61,23 +76,30 @@ const Producto = () => {
   const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
   
   // Get hotels from hotels_prices_aggregated_jsonb
-  const hotels = (() => {
+  const hotels: HotelData[] = (() => {
     if (!eventDetails) return [];
     const aggregatedHotels = (eventDetails as any).hotels_prices_aggregated_jsonb;
     if (!aggregatedHotels || !Array.isArray(aggregatedHotels)) return [];
     
-    return aggregatedHotels.slice(0, 10).map((hotel: any) => ({
-      hotel_id: hotel.hotel_id || hotel.id,
-      hotel_name: hotel.hotel_name || hotel.name,
-      hotel_main_photo: hotel.main_photo || hotel.hotel_main_photo,
-      hotel_description: hotel.hotel_description || hotel.description || "Hotel confortable cerca del venue",
-      hotel_stars: hotel.stars || hotel.hotel_stars || 0,
-      hotel_rating: hotel.rating || hotel.hotel_rating || 0,
-      hotel_reviews: hotel.review_count || hotel.hotel_reviews || 0,
-      price: hotel.min_price || 0,
-      selling_price: hotel.suggested_selling_price || hotel.min_price || 0,
-      distance_km: hotel.distance_km || 0,
-    }));
+    return aggregatedHotels.slice(0, 10).map((hotel: any) => {
+      // Calculate distance in km (data comes as distance_meters)
+      const distanceMeters = hotel.distance_meters || 0;
+      const distanceKm = distanceMeters > 0 ? distanceMeters / 1000 : (hotel.distance_km || 0);
+      
+      return {
+        hotel_id: hotel.hotel_id || hotel.id,
+        hotel_name: hotel.name || hotel.hotel_name,
+        hotel_main_photo: hotel.main_photo || hotel.hotel_main_photo,
+        hotel_description: hotel.hotel_description || hotel.description || "Hotel confortable cerca del venue",
+        hotel_stars: hotel.stars || hotel.hotel_stars || 0,
+        hotel_rating: hotel.rating || hotel.hotel_rating || 0,
+        hotel_reviews: hotel.review_count || hotel.hotel_reviews || 0,
+        price: hotel.min_price || 0,
+        selling_price: hotel.ssp_price || hotel.min_price || 0,
+        distance_km: distanceKm,
+        facility_names_es: hotel.facility_names_es || [],
+      };
+    });
   })();
 
   // Get map widget HTML
@@ -133,6 +155,7 @@ const Producto = () => {
   const ticketPrices = rawTicketTypes.map(ticket => ({
     type: ticket.name || "Entrada General",
     code: ticket.code,
+    description: ticket.description || "",
     price: Number(ticket.face_value || 0),
     fees: Number(ticket.fees || 0),
     availability: ticket.availability || "available"
@@ -335,7 +358,12 @@ const Producto = () => {
                             {/* Ticket Header */}
                             <div className="mb-3">
                               <h3 className="font-bold text-sm line-clamp-2 min-h-[40px]">{ticket.type}</h3>
-                              <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                              {ticket.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  {ticket.description}
+                                </p>
+                              )}
+                              <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground mt-2 inline-block">
                                 {ticket.code}
                               </span>
                             </div>
@@ -406,53 +434,13 @@ const Producto = () => {
                 <div>
                   <h2 className="text-2xl font-bold mb-6">Hoteles Disponibles</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {hotels.map((hotel: any) => {
-                      const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
-                      const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
-                      
-                      return (
-                        <Card key={hotel.hotel_id} className="border-2 overflow-hidden hover:shadow-lg transition-all">
-                          <div className="relative h-48">
-                            <img
-                              src={hotel.hotel_main_photo || "/placeholder.svg"}
-                              alt={hotel.hotel_name}
-                              className="w-full h-full object-cover"
-                            />
-                            {reviewScore && (
-                              <Badge className="absolute top-2 left-2 bg-background/80 backdrop-blur text-xs">
-                                ★ {Number(reviewScore).toFixed(1)}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="p-4">
-                            <h3 className="font-bold text-base mb-1 line-clamp-1">{hotel.hotel_name}</h3>
-                            
-                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                              {hotel.hotel_description || "Hotel confortable cerca del venue"}
-                            </p>
-
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-xs text-muted-foreground">desde</p>
-                                <p className="text-xl font-bold text-foreground">
-                                  €{pricePerNight.toFixed(0)}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground">/noche</p>
-                              </div>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="bg-accent text-accent-foreground hover:bg-accent/90"
-                                onClick={() => handleAddHotel(hotel)}
-                              >
-                                Añadir
-                              </Button>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
+                    {hotels.map((hotel) => (
+                      <HotelCard 
+                        key={hotel.hotel_id} 
+                        hotel={hotel} 
+                        onAddHotel={handleAddHotel} 
+                      />
+                    ))}
                   </div>
                 </div>
               )}
@@ -461,10 +449,14 @@ const Producto = () => {
               {mapWidgetHtml && (
                 <div className="mt-8">
                   <h2 className="text-2xl font-bold mb-6">Ubicación</h2>
-                  <div 
-                    className="rounded-xl overflow-hidden border-2 border-border"
-                    dangerouslySetInnerHTML={{ __html: mapWidgetHtml }}
-                  />
+                  <div className="rounded-xl overflow-hidden border-2 border-border">
+                    <iframe
+                      srcDoc={mapWidgetHtml}
+                      className="w-full min-h-[400px] border-0"
+                      title="Ubicación del evento"
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -551,22 +543,22 @@ const Producto = () => {
                           </div>
 
                           {/* Reserve hotel button */}
-                          <Button variant="outline" className="w-full h-10 text-sm border-2">
+                          <Button className="w-full h-10 text-sm bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
                             Reservar Hotel
                           </Button>
                         </>
                       )}
 
-                      {/* Summary */}
-                      <div className="pt-4 border-t-2 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold">Total</span>
-                          <span className="text-2xl font-bold text-accent">€{totalPrice.toFixed(2)}</span>
+                      {/* Summary - Inverted: Por persona grande, Total pequeño */}
+                      <div className="pt-4 border-t-2 space-y-3">
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground mb-1">Total por persona</p>
+                          <span className="text-3xl font-black text-accent">€{pricePerPerson.toFixed(2)}</span>
                         </div>
                         
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Por persona</span>
-                          <span className="text-lg font-bold">€{pricePerPerson.toFixed(2)}</span>
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-sm text-muted-foreground">Total ({totalPersons} personas)</span>
+                          <span className="text-base font-bold">€{totalPrice.toFixed(2)}</span>
                         </div>
                       </div>
                     </>
