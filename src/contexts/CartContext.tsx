@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 export interface CartTicket {
   type: string;
@@ -43,7 +43,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem | null>(() => {
     const saved = localStorage.getItem('feelomove_cart');
     return saved ? JSON.parse(saved) : null;
