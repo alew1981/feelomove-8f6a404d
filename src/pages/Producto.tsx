@@ -272,8 +272,8 @@ const Producto = () => {
                 )}
               </div>
 
-              {/* Countdown Badge - Top Right */}
-              {daysUntil >= 0 && (
+              {/* Countdown Badge - Top Right - Only show if less than 7 days */}
+              {daysUntil >= 0 && daysUntil < 7 && (
                 <div className="absolute top-4 right-4">
                   <div className="bg-background/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-3 border-2 border-accent">
                     <div className="text-center">
@@ -289,23 +289,23 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Date Card - Bottom Left (Like Event Cards) */}
-              <div className="absolute bottom-4 left-4 bg-card rounded-xl shadow-lg p-4 min-w-[140px]">
+              {/* Date Card - Bottom Left (Extended height) */}
+              <div className="absolute bottom-4 left-4 bg-card rounded-xl shadow-lg p-5 min-w-[160px]">
                 <div className="text-center">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     {format(eventDate, "MMM", { locale: es })}
                   </p>
-                  <p className="text-5xl font-black text-foreground leading-none my-1">
+                  <p className="text-6xl font-black text-foreground leading-none my-2">
                     {format(eventDate, "dd")}
                   </p>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-base font-medium text-muted-foreground">
                     {format(eventDate, "yyyy")}
                   </p>
-                  <div className="border-t border-border mt-3 pt-3">
-                    <p className="text-xl font-bold text-foreground">{formattedTime}h</p>
-                    <div className="flex items-center justify-center gap-1 mt-1 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span className="text-xs">{eventDetails.venue_city}</span>
+                  <div className="border-t border-border mt-4 pt-4">
+                    <p className="text-2xl font-bold text-foreground">{formattedTime}h</p>
+                    <div className="flex items-center justify-center gap-1 mt-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-sm">{eventDetails.venue_city}</span>
                     </div>
                   </div>
                 </div>
@@ -455,9 +455,16 @@ const Producto = () => {
                 <CardContent className="pt-6 space-y-4">
                   {isEventInCart && cart ? (
                     <>
-                      {/* Event Info */}
-                      <div className="text-sm font-medium text-muted-foreground mb-4">
-                        {eventDetails.event_name}
+                      {/* Event Info with Image */}
+                      <div className="mb-4">
+                        <p className="text-sm font-bold text-foreground mb-2">
+                          {eventDetails.event_name}
+                        </p>
+                        <img 
+                          src={eventImage} 
+                          alt={eventDetails.event_name || "Evento"} 
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
                       </div>
 
                       {/* Tickets in cart */}
