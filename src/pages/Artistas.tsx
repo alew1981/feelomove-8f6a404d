@@ -14,6 +14,7 @@ import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
 import { useInView } from "react-intersection-observer";
+import { matchesSearch } from "@/lib/searchUtils";
 
 const Artistas = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,9 +50,9 @@ const Artistas = () => {
   const filteredArtists = useMemo(() => {
     if (!artists) return [];
     return artists.filter((artist: any) => {
-      const matchesSearch = artist.attraction_name?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesGenre = filterGenre === "all" || artist.genres?.includes(filterGenre);
-      return matchesSearch && matchesGenre;
+      const searchMatches = matchesSearch(artist.attraction_name, searchQuery);
+      const matchesGenreFilter = filterGenre === "all" || artist.genres?.includes(filterGenre);
+      return searchMatches && matchesGenreFilter;
     });
   }, [artists, searchQuery, filterGenre]);
 

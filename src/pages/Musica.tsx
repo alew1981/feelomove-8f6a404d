@@ -13,6 +13,7 @@ import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInView } from "react-intersection-observer";
+import { matchesSearch } from "@/lib/searchUtils";
 
 const Musica = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,7 +38,7 @@ const Musica = () => {
   const filteredGenres = useMemo(() => {
     if (!genres) return [];
     return genres.filter((genre: any) =>
-      genre.genre_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      matchesSearch(genre.genre_name, searchQuery)
     );
   }, [genres, searchQuery]);
 

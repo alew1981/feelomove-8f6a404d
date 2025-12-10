@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
+import { matchesSearch } from "@/lib/searchUtils";
 
 const Conciertos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
@@ -60,13 +61,12 @@ const Conciertos = () => {
     if (!events) return [];
     let filtered = [...events];
 
-    // Apply search filter
+    // Apply search filter (accent-insensitive)
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(event => 
-        event.name?.toLowerCase().includes(query) ||
-        event.venue_city?.toLowerCase().includes(query) ||
-        event.artist_name?.toLowerCase().includes(query)
+        matchesSearch(event.name, searchQuery) ||
+        matchesSearch(event.venue_city, searchQuery) ||
+        matchesSearch(event.artist_name, searchQuery)
       );
     }
 
