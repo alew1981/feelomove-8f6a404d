@@ -29,68 +29,56 @@ const GeneroDetalle = () => {
     threshold: 0
   });
 
-  // Fetch genre info to get the correct slug
+  // Fetch genre info to get the correct name
   const { data: genreInfo } = useQuery({
     queryKey: ["genre-info", genreParam],
     queryFn: async () => {
-      // First try by genre_name (for URLs like /musica/Pop%2FRock)
-      let { data } = await supabase
+      // Try by genre_name
+      const { data } = await supabase
         .from("mv_genres_cards")
-        .select("genre_name, genre_slug, sample_image_url, sample_image_standard_url")
+        .select("genre_name, genre_id, event_count")
         .eq("genre_name", genreParam)
         .maybeSingle();
-      
-      // If not found, try by genre_slug (for URLs like /musica/pop-rock)
-      if (!data) {
-        const { data: bySlug } = await supabase
-          .from("mv_genres_cards")
-          .select("genre_name, genre_slug, sample_image_url, sample_image_standard_url")
-          .eq("genre_slug", genreParam)
-          .maybeSingle();
-        data = bySlug;
-      }
       
       return data;
     },
     enabled: !!genreParam,
   });
 
-  const genreSlug = genreInfo?.genre_slug || genreParam;
   const genreName = genreInfo?.genre_name || genreParam.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  const genreHeroImage = genreInfo?.sample_image_url || genreInfo?.sample_image_standard_url;
 
-  // Fetch concerts for this genre using genre_slug
+  // Fetch concerts for this genre using genre name
   const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
-    queryKey: ["genre-concerts", genreSlug],
+    queryKey: ["genre-concerts", genreName],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_concerts_cards")
         .select("*")
-        .eq("genre_slug", genreSlug)
+        .eq("genre", genreName)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!genreSlug,
+    enabled: !!genreName,
   });
 
-  // Fetch festivals for this genre using genre_slug
+  // Fetch festivals for this genre using genre name
   const { data: festivals, isLoading: isLoadingFestivals } = useQuery({
-    queryKey: ["genre-festivals", genreSlug],
+    queryKey: ["genre-festivals", genreName],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_festivals_cards")
         .select("*")
-        .eq("genre_slug", genreSlug)
+        .eq("genre", genreName)
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!genreSlug,
+    enabled: !!genreName,
   });
 
   const isLoading = isLoadingConcerts || isLoadingFestivals;
@@ -101,8 +89,8 @@ const GeneroDetalle = () => {
     return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
   }, [concerts, festivals]);
 
-  // Get hero image from genre info first, then from first event
-  const heroImage = genreHeroImage || events[0]?.image_large_url || events[0]?.image_standard_url;
+  // Get hero image from first event
+  const heroImage = events[0]?.image_large_url || events[0]?.image_standard_url;
 
   // Extract unique cities and artists for filters
   const cities = useMemo(() => {
