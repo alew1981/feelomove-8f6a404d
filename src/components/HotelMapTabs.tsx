@@ -101,7 +101,8 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
           <div className="rounded-xl overflow-hidden border-2 border-border">
             <iframe
               srcDoc={hotelsListWidgetHtml}
-              className="w-full min-h-[500px] sm:min-h-[600px] border-0"
+              className="w-full border-0"
+              style={{ minHeight: '800px', height: '80vh' }}
               title="Lista de hoteles"
               sandbox="allow-scripts allow-same-origin"
             />
@@ -118,7 +119,8 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
           <div className="rounded-xl overflow-hidden border-2 border-border">
             <iframe
               srcDoc={mapWidgetHtml}
-              className="w-full min-h-[350px] sm:min-h-[450px] border-0"
+              className="w-full border-0"
+              style={{ minHeight: '700px', height: '75vh' }}
               title="Mapa de hoteles"
               sandbox="allow-scripts allow-same-origin"
             />

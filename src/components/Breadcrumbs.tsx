@@ -68,91 +68,29 @@ const Breadcrumbs = () => {
         <Home className="h-4 w-4" />
         <span>Inicio</span>
       </Link>
-      {/* For product page from city/destination: Inicio > Destinos > Ciudad > Evento */}
-      {pathnames[0] === "producto" && eventDetails && !eventGenre && !eventArtist && eventCity ? (
+      {/* For product page: Inicio > Conciertos > Evento */}
+      {pathnames[0] === "producto" && eventDetails ? (
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <Link
-              to="/destinos"
+              to="/conciertos"
               className="hover:text-foreground transition-colors"
             >
-              Destinos
+              Conciertos
             </Link>
           </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to={`/destinos/${encodeURIComponent(eventCity)}`}
-              className="hover:text-foreground transition-colors"
-            >
-              {eventCity}
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
-          </div>
-        </>
-      ) : pathnames[0] === "producto" && eventDetails && !eventGenre && eventArtist ? (
-        <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to="/artistas"
-              className="hover:text-foreground transition-colors"
-            >
-              Artistas
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="hover:text-foreground transition-colors">
-              {eventArtist}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
-          </div>
-        </>
-      ) : pathnames[0] === "producto" && eventDetails && eventGenre ? (
-        <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to="/musica"
-              className="hover:text-foreground transition-colors"
-            >
-              Música
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to={`/musica/${encodeURIComponent(eventGenre)}`}
-              className="hover:text-foreground transition-colors"
-            >
-              {eventGenre}
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
-          </div>
-        </>
-      ) : pathnames[0] === "producto" && eventDetails ? (
-        /* For product page without genre: Inicio > Eventos > Event */
-        <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              to="/eventos"
-              className="hover:text-foreground transition-colors"
-            >
-              Eventos
-            </Link>
-          </div>
+          {eventCity && (
+            <div className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" />
+              <Link
+                to={`/destinos/${encodeURIComponent(eventCity.toLowerCase().replace(/\s+/g, '-'))}`}
+                className="hover:text-foreground transition-colors"
+              >
+                {eventCity}
+              </Link>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground font-medium">{eventDetails.event_name}</span>

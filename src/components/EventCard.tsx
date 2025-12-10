@@ -63,23 +63,30 @@ const EventCard = ({ event }: EventCardProps) => {
 
   // Show countdown only if within 30 days
   const showCountdown = daysUntil >= 0 && daysUntil <= 30;
-  const isLessThan24Hours = differenceInHours(eventDate, new Date()) < 24 && differenceInHours(eventDate, new Date()) > 0;
 
   useEffect(() => {
+    if (!showCountdown) return;
+
     const updateCountdown = () => {
       const now = new Date();
       const days = Math.max(0, differenceInDays(eventDate, now));
       const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
       const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
       const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
+      const hoursUntil = differenceInHours(eventDate, now);
+      const isUnder24h = hoursUntil < 24 && hoursUntil > 0;
       
       setCountdown({ days, hours, minutes, seconds });
+      
+      return isUnder24h;
     };
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, isLessThan24Hours ? 1000 : 60000);
+    const isUnder24h = updateCountdown();
+    const interval = setInterval(updateCountdown, isUnder24h ? 1000 : 60000);
     return () => clearInterval(interval);
-  }, [eventDate, isLessThan24Hours]);
+  }, [eventDate, showCountdown]);
+
+  const isLessThan24Hours = differenceInHours(eventDate, now) < 24 && differenceInHours(eventDate, now) > 0;
 
   // Determine badge
   let badgeVariant: "disponible" | "agotado" | undefined;
