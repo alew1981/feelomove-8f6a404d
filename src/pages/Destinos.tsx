@@ -14,6 +14,7 @@ import { Search, Hotel } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInView } from "react-intersection-observer";
+import { matchesSearch } from "@/lib/searchUtils";
 
 const Destinos = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,10 +53,10 @@ const Destinos = () => {
   const filteredCities = useMemo(() => {
     if (!cities) return [];
     return cities.filter((city: any) => {
-      const matchesSearch = city.city_name?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCity = filterCity === "all" || city.city_name === filterCity;
-      const matchesGenre = filterGenre === "all" || city.genres?.includes(filterGenre);
-      return matchesSearch && matchesCity && matchesGenre;
+      const searchMatches = matchesSearch(city.city_name, searchQuery);
+      const matchesCityFilter = filterCity === "all" || city.city_name === filterCity;
+      const matchesGenreFilter = filterGenre === "all" || city.genres?.includes(filterGenre);
+      return searchMatches && matchesCityFilter && matchesGenreFilter;
     });
   }, [cities, searchQuery, filterCity, filterGenre]);
 

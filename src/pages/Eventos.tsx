@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useInView } from "react-intersection-observer";
+import { matchesSearch } from "@/lib/searchUtils";
 
 const Eventos = () => {
   const [sortBy, setSortBy] = useState<string>("date-asc");
@@ -89,15 +90,14 @@ const Eventos = () => {
     if (!events) return [];
     let filtered = [...events];
 
-    // Apply search filter
+    // Apply search filter (accent-insensitive)
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(event => {
-        const nameMatch = event.name?.toLowerCase().includes(query);
-        const cityMatch = event.venue_city?.toLowerCase().includes(query);
-        const artistMatch = ('artist_name' in event && event.artist_name?.toLowerCase().includes(query)) ||
-          ('main_attraction' in event && event.main_attraction?.toLowerCase().includes(query)) ||
-          ('attraction_names' in event && event.attraction_names?.some((a: string) => a.toLowerCase().includes(query)));
+        const nameMatch = matchesSearch(event.name, searchQuery);
+        const cityMatch = matchesSearch(event.venue_city, searchQuery);
+        const artistMatch = ('artist_name' in event && matchesSearch(event.artist_name, searchQuery)) ||
+          ('main_attraction' in event && matchesSearch(event.main_attraction, searchQuery)) ||
+          ('attraction_names' in event && event.attraction_names?.some((a: string) => matchesSearch(a, searchQuery)));
         return nameMatch || cityMatch || artistMatch;
       });
     }
