@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, X, Calendar, MapPin, Clock, Trash2, SlidersHorizontal, Euro, Music, Sparkles } from "lucide-react";
+import { Search, X, Calendar, MapPin, Clock, Trash2, Euro, Music, Sparkles, User, Disc, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
-import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
+import { matchesSearch } from "@/lib/searchUtils";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   isOpen: boolean;
@@ -38,6 +35,15 @@ interface SearchFilters {
   dateRange: 'all' | 'week' | 'month' | '3months';
 }
 
+interface AutocompleteSuggestion {
+  type: 'event' | 'artist' | 'destination' | 'genre';
+  name: string;
+  path: string;
+  id: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+}
+
 const SEARCH_HISTORY_KEY = 'feelomove_search_history';
 const MAX_HISTORY_ITEMS = 5;
 
@@ -46,6 +52,7 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
   const [debouncedTerm, setDebouncedTerm] = useState("");
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [filters, setFilters] = useState<SearchFilters>({
     priceRange: [0, 500],
     eventType: 'all',
@@ -53,15 +60,17 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
   });
   const navigate = useNavigate();
   const debounceRef = useRef<NodeJS.Timeout>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Debounce search term for live search
+  // Debounce search term for autocomplete
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
     debounceRef.current = setTimeout(() => {
       setDebouncedTerm(searchTerm);
-    }, 300);
+    }, 150); // Faster debounce for autocomplete
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
@@ -109,9 +118,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     }
   };
 
-  // Normalize search term for accent-insensitive matching
-  const normalizedSearchTerm = normalizeSearch(debouncedTerm);
-
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", debouncedTerm, filters],
     queryFn: async () => {
@@ -123,7 +129,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       let concerts: any[] = [];
       let festivals: any[] = [];
       
-      // Search in concerts - fetch more results for client-side filtering
       if (filters.eventType === 'all' || filters.eventType === 'concerts') {
         let query = supabase
           .from("mv_concerts_cards")
@@ -132,14 +137,13 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
           .gte("price_min_incl_fees", filters.priceRange[0])
           .lte("price_min_incl_fees", filters.priceRange[1])
           .order("event_date", { ascending: true })
-          .limit(50); // Fetch more for client-side filtering
+          .limit(50);
         
         if (dateEnd) {
           query = query.lte("event_date", dateEnd);
         }
         
         const { data } = await query;
-        // Client-side accent-insensitive filtering
         concerts = (data || []).filter(item => 
           matchesSearch(item.name, debouncedTerm) ||
           matchesSearch(item.venue_city, debouncedTerm) ||
@@ -147,7 +151,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
         ).slice(0, 6);
       }
       
-      // Search in festivals  
       if (filters.eventType === 'all' || filters.eventType === 'festivals') {
         let query = supabase
           .from("mv_festivals_cards")
@@ -170,7 +173,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
         ).slice(0, 6);
       }
 
-      // Search destinations with client-side filtering
       const { data: allDestinations } = await supabase
         .from("mv_destinations_cards")
         .select("city_name, city_slug, event_count, sample_image_url")
@@ -180,7 +182,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
         matchesSearch(dest.city_name, debouncedTerm)
       ).slice(0, 3);
 
-      // Search artists with client-side filtering
       const { data: allArtists } = await supabase
         .from("mv_attractions")
         .select("attraction_id, attraction_name, attraction_slug, event_count, sample_image_url")
@@ -190,10 +191,9 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
         matchesSearch(artist.attraction_name, debouncedTerm)
       ).slice(0, 3);
 
-      // Search genres with client-side filtering
       const { data: allGenres } = await supabase
         .from("mv_genres_cards")
-        .select("genre_name, genre_slug, event_count, sample_image_url")
+        .select("genre_name, genre_id, event_count")
         .limit(50);
       
       const genres = (allGenres || []).filter(genre =>
@@ -214,6 +214,56 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     enabled: debouncedTerm.length >= 1,
   });
 
+  // Generate autocomplete suggestions
+  const autocompleteSuggestions: AutocompleteSuggestion[] = [];
+  
+  if (searchResults) {
+    searchResults.artists?.slice(0, 2).forEach(artist => {
+      autocompleteSuggestions.push({
+        type: 'artist',
+        name: artist.attraction_name,
+        path: `/artista/${artist.attraction_slug}`,
+        id: artist.attraction_id,
+        subtitle: `${artist.event_count} eventos`,
+        icon: <User className="h-4 w-4" />
+      });
+    });
+    
+    searchResults.destinations?.slice(0, 2).forEach(dest => {
+      autocompleteSuggestions.push({
+        type: 'destination',
+        name: dest.city_name,
+        path: `/destinos/${encodeURIComponent(dest.city_name)}`,
+        id: dest.city_name,
+        subtitle: `${dest.event_count} eventos`,
+        icon: <MapPin className="h-4 w-4" />
+      });
+    });
+    
+    searchResults.genres?.slice(0, 2).forEach(genre => {
+      const genreSlug = encodeURIComponent(genre.genre_name?.toLowerCase().replace(/\s+/g, '-') || '');
+      autocompleteSuggestions.push({
+        type: 'genre',
+        name: genre.genre_name,
+        path: `/musica/${genreSlug}`,
+        id: String(genre.genre_id),
+        subtitle: `${genre.event_count} eventos`,
+        icon: <Disc className="h-4 w-4" />
+      });
+    });
+    
+    searchResults.events?.slice(0, 4).forEach(event => {
+      autocompleteSuggestions.push({
+        type: 'event',
+        name: event.name,
+        path: `/producto/${event.slug}`,
+        id: event.id,
+        subtitle: `${event.venue_city} · ${new Date(event.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`,
+        icon: <Music className="h-4 w-4" />
+      });
+    });
+  }
+
   const handleResultClick = (path: string, historyItem?: Omit<SearchHistoryItem, 'timestamp'>) => {
     if (historyItem) {
       saveToHistory(historyItem);
@@ -222,6 +272,35 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     onClose();
     setSearchTerm("");
   };
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const totalItems = autocompleteSuggestions.length;
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < totalItems - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : totalItems - 1));
+    } else if (e.key === 'Enter' && selectedIndex >= 0 && selectedIndex < totalItems) {
+      e.preventDefault();
+      const selected = autocompleteSuggestions[selectedIndex];
+      handleResultClick(selected.path, {
+        type: selected.type,
+        id: selected.id,
+        name: selected.name,
+        path: selected.path
+      });
+    } else if (e.key === 'Escape') {
+      onClose();
+    }
+  }, [autocompleteSuggestions, selectedIndex, onClose]);
+
+  // Reset selected index when results change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [debouncedTerm]);
 
   const hasResults = searchResults && (
     searchResults.events?.length > 0 || 
@@ -239,6 +318,8 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     if (!isOpen) {
       setSearchTerm("");
       setDebouncedTerm("");
+      setShowFilters(false);
+      setSelectedIndex(-1);
     }
   }, [isOpen]);
 
@@ -262,166 +343,152 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     });
   };
 
+  const filterOptions = {
+    eventType: [
+      { value: 'all', label: 'Todos' },
+      { value: 'concerts', label: 'Conciertos' },
+      { value: 'festivals', label: 'Festivales' }
+    ],
+    dateRange: [
+      { value: 'all', label: 'Cualquier fecha' },
+      { value: 'week', label: 'Esta semana' },
+      { value: 'month', label: 'Este mes' },
+      { value: '3months', label: '3 meses' }
+    ]
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] p-0 gap-0 overflow-hidden bg-gradient-to-b from-background to-muted/30">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50 bg-background/80 backdrop-blur-sm">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <Sparkles className="h-5 w-5 text-accent" />
-            Buscar Eventos
-          </DialogTitle>
+      <DialogContent className="max-w-2xl max-h-[85vh] p-0 gap-0 overflow-hidden border-border/50 bg-background">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Buscar eventos</DialogTitle>
         </DialogHeader>
         
-        <div className="px-6 py-4 space-y-4">
-          {/* Search Input - Enhanced Design */}
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
-            <div className="relative bg-card border-2 border-border rounded-xl focus-within:border-accent/50 transition-all duration-200 shadow-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Busca eventos, artistas, ciudades..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 pr-24 h-14 text-base border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/60"
-                autoFocus
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                {searchTerm && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full hover:bg-muted"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button
-                  variant={showFilters ? "default" : "ghost"}
-                  size="icon"
-                  className={`h-8 w-8 rounded-full relative ${showFilters ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  {activeFiltersCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-medium">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </Button>
-              </div>
-            </div>
+        {/* Search Input */}
+        <div className="p-4 border-b border-border/50">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              type="text"
+              placeholder="Buscar eventos, artistas, ciudades, géneros..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="pl-12 pr-12 h-14 text-base bg-muted/50 border-0 rounded-xl focus-visible:ring-2 focus-visible:ring-accent/50 placeholder:text-muted-foreground/60"
+              autoFocus
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full hover:bg-muted"
+                onClick={() => setSearchTerm("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+          
+          {/* Filter Pills */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <span className="text-xs text-muted-foreground font-medium">Filtros:</span>
+            
+            {filterOptions.eventType.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setFilters(f => ({ ...f, eventType: type.value as any }))}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
+                  filters.eventType === type.value 
+                    ? "bg-accent text-accent-foreground shadow-sm" 
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {type.label}
+              </button>
+            ))}
+            
+            <div className="w-px h-4 bg-border mx-1" />
+            
+            {filterOptions.dateRange.map((date) => (
+              <button
+                key={date.value}
+                onClick={() => setFilters(f => ({ ...f, dateRange: date.value as any }))}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
+                  filters.dateRange === date.value 
+                    ? "bg-accent text-accent-foreground shadow-sm" 
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {date.label}
+              </button>
+            ))}
+            
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={resetFilters}
+                className="px-2 py-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+          
+          {/* Price Range */}
+          {showFilters && (
+            <div className="mt-4 p-4 bg-muted/30 rounded-xl animate-in slide-in-from-top-2 duration-200">
+              <label className="text-xs font-semibold text-muted-foreground mb-3 block">
+                Precio: <span className="text-foreground">{filters.priceRange[0]}€ - {filters.priceRange[1]}€</span>
+              </label>
+              <Slider
+                value={filters.priceRange}
+                onValueChange={(value) => setFilters(f => ({ ...f, priceRange: value as [number, number] }))}
+                min={0}
+                max={500}
+                step={10}
+                className="w-full"
+              />
+            </div>
+          )}
+          
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="mt-2 text-xs text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
+          >
+            {showFilters ? 'Ocultar precio' : 'Filtrar por precio'}
+            <ChevronRight className={cn("h-3 w-3 transition-transform", showFilters && "rotate-90")} />
+          </button>
+        </div>
 
-          {/* Quick Search Hints */}
-          {!searchTerm && !showFilters && searchHistory.length === 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs text-muted-foreground">Prueba:</span>
-              {['Madrid', 'Rock', 'Barcelona', 'Festival'].map(hint => (
-                <Badge
-                  key={hint}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground hover:border-accent transition-colors text-xs"
-                  onClick={() => setSearchTerm(hint)}
-                >
-                  {hint}
-                </Badge>
-              ))}
+        <div ref={resultsRef} className="px-4 pb-4 space-y-3 overflow-y-auto max-h-[55vh]">
+          {/* Quick Suggestions - when no search */}
+          {!searchTerm && searchHistory.length === 0 && (
+            <div className="py-4">
+              <p className="text-xs text-muted-foreground font-medium mb-3">Sugerencias populares</p>
+              <div className="flex flex-wrap gap-2">
+                {['Madrid', 'Barcelona', 'Rock', 'Festival', 'Reggaeton'].map(hint => (
+                  <button
+                    key={hint}
+                    onClick={() => setSearchTerm(hint)}
+                    className="px-4 py-2 bg-muted/50 hover:bg-accent hover:text-accent-foreground rounded-full text-sm font-medium transition-all duration-200"
+                  >
+                    {hint}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Advanced Filters */}
-          <Collapsible open={showFilters} onOpenChange={setShowFilters}>
-            <CollapsibleContent className="space-y-4 pt-2 pb-4 animate-in slide-in-from-top-2 duration-200">
-              <div className="p-4 bg-muted/50 rounded-xl space-y-4 border border-border/50">
-                {/* Event Type Filter */}
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Tipo de evento</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {[
-                      { value: 'all', label: 'Todos', icon: '🎵' },
-                      { value: 'concerts', label: 'Conciertos', icon: '🎤' },
-                      { value: 'festivals', label: 'Festivales', icon: '🎪' }
-                    ].map((type) => (
-                      <Badge
-                        key={type.value}
-                        variant={filters.eventType === type.value ? "default" : "outline"}
-                        className={`cursor-pointer transition-all px-3 py-1.5 ${
-                          filters.eventType === type.value 
-                            ? 'bg-accent text-accent-foreground shadow-md' 
-                            : 'hover:bg-muted hover:border-accent/50'
-                        }`}
-                        onClick={() => setFilters(f => ({ ...f, eventType: type.value as any }))}
-                      >
-                        <span className="mr-1">{type.icon}</span>
-                        {type.label}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Date Range Filter */}
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Fecha</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {[
-                      { value: 'all', label: 'Cualquier fecha' },
-                      { value: 'week', label: 'Esta semana' },
-                      { value: 'month', label: 'Este mes' },
-                      { value: '3months', label: '3 meses' }
-                    ].map((date) => (
-                      <Badge
-                        key={date.value}
-                        variant={filters.dateRange === date.value ? "default" : "outline"}
-                        className={`cursor-pointer transition-all ${
-                          filters.dateRange === date.value 
-                            ? 'bg-accent text-accent-foreground shadow-md' 
-                            : 'hover:bg-muted hover:border-accent/50'
-                        }`}
-                        onClick={() => setFilters(f => ({ ...f, dateRange: date.value as any }))}
-                      >
-                        {date.label}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range Filter */}
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-3 block uppercase tracking-wide">
-                    Precio: <span className="text-foreground font-bold">{filters.priceRange[0]}€ - {filters.priceRange[1]}€</span>
-                  </label>
-                  <Slider
-                    value={filters.priceRange}
-                    onValueChange={(value) => setFilters(f => ({ ...f, priceRange: value as [number, number] }))}
-                    min={0}
-                    max={500}
-                    step={10}
-                    className="w-full"
-                  />
-                </div>
-
-                {activeFiltersCount > 0 && (
-                  <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs w-full mt-2">
-                    <X className="h-3 w-3 mr-1" />
-                    Limpiar filtros
-                  </Button>
-                )}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-
-        <div className="px-6 pb-6 space-y-4 overflow-y-auto max-h-[50vh]">
-          {/* Search History - Show when no search term */}
+          {/* Search History */}
           {!searchTerm && searchHistory.length > 0 && (
-            <div className="animate-in fade-in-0 duration-200">
+            <div className="py-2">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <p className="text-xs text-muted-foreground font-medium flex items-center gap-2">
                   <Clock className="h-3 w-3" />
                   Búsquedas recientes
-                </h4>
+                </p>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -432,12 +499,12 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
                   Limpiar
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {searchHistory.map((item, idx) => (
                   <button
                     key={`${item.path}-${idx}`}
                     onClick={() => handleResultClick(item.path)}
-                    className="w-full p-3 rounded-xl bg-card border border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-left flex items-center gap-3 group"
+                    className="w-full p-3 rounded-xl hover:bg-muted/50 transition-colors text-left flex items-center gap-3 group"
                   >
                     <div className="p-2 bg-muted rounded-lg group-hover:bg-accent/20 transition-colors">
                       <Clock className="h-4 w-4 text-muted-foreground group-hover:text-accent" />
@@ -453,154 +520,96 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
             </div>
           )}
 
+          {/* Loading State */}
           {isLoading && debouncedTerm.length >= 1 && (
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-3 text-muted-foreground">
                 <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-                <span>Buscando...</span>
+                <span className="text-sm">Buscando...</span>
               </div>
             </div>
           )}
           
+          {/* No Results */}
           {!hasResults && debouncedTerm.length >= 1 && !isLoading && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Search className="h-8 w-8 text-muted-foreground" />
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Search className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground">No se encontraron resultados para "<span className="font-medium text-foreground">{searchTerm}</span>"</p>
-              <p className="text-xs text-muted-foreground mt-1">Intenta con otros términos</p>
+              <p className="text-muted-foreground text-sm">
+                Sin resultados para "<span className="font-medium text-foreground">{searchTerm}</span>"
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Prueba con otros términos</p>
             </div>
           )}
           
-          {/* Events Section */}
-          {searchResults?.events && searchResults.events.length > 0 && (
-            <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Music className="h-3 w-3" />
-                Eventos
-              </h4>
-              <div className="space-y-2">
-                {searchResults.events.map((result: any) => (
+          {/* Autocomplete Suggestions */}
+          {autocompleteSuggestions.length > 0 && (
+            <div className="py-2">
+              <p className="text-xs text-muted-foreground font-medium mb-2 px-1">Resultados</p>
+              <div className="space-y-1">
+                {autocompleteSuggestions.map((suggestion, idx) => (
                   <button
-                    key={result.id}
-                    onClick={() => handleResultClick(`/producto/${result.slug}`, {
-                      type: 'event',
-                      id: result.id,
-                      name: result.name,
-                      path: `/producto/${result.slug}`
+                    key={`${suggestion.type}-${suggestion.id}`}
+                    onClick={() => handleResultClick(suggestion.path, {
+                      type: suggestion.type,
+                      id: suggestion.id,
+                      name: suggestion.name,
+                      path: suggestion.path
                     })}
-                    className="w-full p-3 rounded-xl bg-card border border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-left flex gap-4 group"
-                  >
-                    {result.image_standard_url && (
-                      <img
-                        src={result.image_standard_url}
-                        alt={result.name}
-                        className="w-16 h-16 object-cover rounded-lg group-hover:scale-105 transition-transform"
-                      />
+                    className={cn(
+                      "w-full p-3 rounded-xl transition-all text-left flex items-center gap-3 group",
+                      selectedIndex === idx 
+                        ? "bg-accent/10 border border-accent/30" 
+                        : "hover:bg-muted/50"
                     )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm truncate group-hover:text-accent transition-colors">{result.name}</h3>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(result.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {result.venue_city}
-                        </span>
-                        {result.price_min_incl_fees && (
-                          <span className="flex items-center gap-1 text-accent font-medium">
-                            <Euro className="h-3 w-3" />
-                            {result.price_min_incl_fees}€
-                          </span>
-                        )}
-                      </div>
+                  >
+                    <div className={cn(
+                      "p-2.5 rounded-lg transition-colors",
+                      selectedIndex === idx 
+                        ? "bg-accent text-accent-foreground" 
+                        : "bg-muted group-hover:bg-accent/20"
+                    )}>
+                      {suggestion.icon}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "font-medium text-sm truncate transition-colors",
+                        selectedIndex === idx ? "text-accent" : "group-hover:text-accent"
+                      )}>
+                        {suggestion.name}
+                      </p>
+                      {suggestion.subtitle && (
+                        <p className="text-xs text-muted-foreground truncate">{suggestion.subtitle}</p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide opacity-60">
+                      {suggestion.type === 'event' ? 'Evento' : 
+                       suggestion.type === 'artist' ? 'Artista' : 
+                       suggestion.type === 'destination' ? 'Ciudad' : 'Género'}
+                    </Badge>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Destinations Section */}
-          {searchResults?.destinations && searchResults.destinations.length > 0 && (
-            <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-75">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <MapPin className="h-3 w-3" />
-                Destinos
-              </h4>
-              <div className="grid grid-cols-3 gap-2">
-                {searchResults.destinations.map((dest: any) => (
-                  <button
-                    key={dest.city_name}
-                    onClick={() => handleResultClick(`/destinos/${encodeURIComponent(dest.city_name)}`, {
-                      type: 'destination',
-                      id: dest.city_name,
-                      name: dest.city_name,
-                      path: `/destinos/${encodeURIComponent(dest.city_name)}`
-                    })}
-                    className="p-3 rounded-xl bg-card border border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-center group"
-                  >
-                    <p className="font-medium text-sm truncate group-hover:text-accent transition-colors">{dest.city_name}</p>
-                    <p className="text-xs text-muted-foreground">{dest.event_count} eventos</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Artists Section */}
-          {searchResults?.artists && searchResults.artists.length > 0 && (
-            <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-100">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Sparkles className="h-3 w-3" />
-                Artistas
-              </h4>
-              <div className="grid grid-cols-3 gap-2">
-                {searchResults.artists.map((artist: any) => (
-                  <button
-                    key={artist.attraction_id}
-                    onClick={() => handleResultClick(`/artista/${artist.attraction_slug}`, {
-                      type: 'artist',
-                      id: artist.attraction_id,
-                      name: artist.attraction_name,
-                      path: `/artista/${artist.attraction_slug}`
-                    })}
-                    className="p-3 rounded-xl bg-card border border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-center group"
-                  >
-                    <p className="font-medium text-sm truncate group-hover:text-accent transition-colors">{artist.attraction_name}</p>
-                    <p className="text-xs text-muted-foreground">{artist.event_count} eventos</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Genres Section */}
-          {searchResults?.genres && searchResults.genres.length > 0 && (
-            <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-150">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Music className="h-3 w-3" />
-                Géneros
-              </h4>
-              <div className="grid grid-cols-3 gap-2">
-                {searchResults.genres.map((genre: any) => (
-                  <button
-                    key={genre.genre_name}
-                    onClick={() => handleResultClick(`/musica/${genre.genre_slug}`, {
-                      type: 'genre',
-                      id: genre.genre_slug,
-                      name: genre.genre_name,
-                      path: `/musica/${genre.genre_slug}`
-                    })}
-                    className="p-3 rounded-xl bg-card border border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-center group"
-                  >
-                    <p className="font-medium text-sm truncate group-hover:text-accent transition-colors">{genre.genre_name}</p>
-                    <p className="text-xs text-muted-foreground">{genre.event_count} eventos</p>
-                  </button>
-                ))}
-              </div>
+          {/* Keyboard hint */}
+          {autocompleteSuggestions.length > 0 && (
+            <div className="flex items-center justify-center gap-4 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-[9px] font-mono">↑↓</kbd>
+                navegar
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-[9px] font-mono">Enter</kbd>
+                seleccionar
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-[9px] font-mono">Esc</kbd>
+                cerrar
+              </span>
             </div>
           )}
         </div>

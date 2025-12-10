@@ -32,8 +32,8 @@ const Musica = () => {
     },
   });
 
-  // Get hero image from first genre
-  const heroImage = genres?.[0]?.sample_image_url || genres?.[0]?.sample_image_standard_url;
+  // Get hero image - using placeholder since genre cards don't have images
+  const heroImage = "/placeholder.svg";
 
   const filteredGenres = useMemo(() => {
     if (!genres) return [];

@@ -728,21 +728,14 @@ export type Database = {
       }
       mv_genres_cards: {
         Row: {
-          city_count: number | null
+          cities: string[] | null
           event_count: number | null
+          first_event_date: string | null
           genre_id: number | null
           genre_name: string | null
-          genre_slug: string | null
+          genre_name_fallback: string | null
+          genre_name_long: string | null
           last_event_date: string | null
-          meta_description: string | null
-          next_event_date: string | null
-          price_from: number | null
-          sample_image_standard_url: string | null
-          sample_image_url: string | null
-          seo_keywords: string[] | null
-          seo_title: string | null
-          top_artists: string[] | null
-          top_cities_json: Json | null
         }
         Relationships: []
       }

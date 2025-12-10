@@ -268,7 +268,7 @@ const Index = () => {
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
                     <div className="relative h-full">
                       <img
-                        src={genre.sample_image_url || "/placeholder.svg"}
+                        src="/placeholder.svg"
                         alt={genre.genre_name || "Género"}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
