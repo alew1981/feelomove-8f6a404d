@@ -105,8 +105,22 @@ const Producto = () => {
   // Get hotels from hotels_prices_aggregated_jsonb
   const hotels: HotelData[] = (() => {
     if (!eventDetails) return [];
-    const aggregatedHotels = (eventDetails as any).hotels_prices_aggregated_jsonb;
-    if (!aggregatedHotels || !Array.isArray(aggregatedHotels)) return [];
+    
+    let aggregatedHotels = (eventDetails as any).hotels_prices_aggregated_jsonb;
+    
+    // Handle case where JSONB might be returned as string
+    if (typeof aggregatedHotels === 'string') {
+      try {
+        aggregatedHotels = JSON.parse(aggregatedHotels);
+      } catch (e) {
+        console.error("Error parsing hotels JSON:", e);
+        return [];
+      }
+    }
+    
+    if (!aggregatedHotels || !Array.isArray(aggregatedHotels)) {
+      return [];
+    }
     
     return aggregatedHotels.slice(0, 10).map((hotel: any) => {
       // Calculate distance in km (data comes as distance_meters)
@@ -121,8 +135,8 @@ const Producto = () => {
         hotel_stars: hotel.stars || hotel.hotel_stars || 0,
         hotel_rating: hotel.rating || hotel.hotel_rating || 0,
         hotel_reviews: hotel.review_count || hotel.hotel_reviews || 0,
-        price: hotel.min_price || 0,
-        selling_price: hotel.ssp_price || hotel.min_price || 0,
+        price: Number(hotel.min_price) || 0,
+        selling_price: Number(hotel.ssp_price) || Number(hotel.min_price) || 0,
         distance_km: distanceKm,
         facility_names_es: hotel.facility_names_es || [],
         checkin_date: hotel.checkin_date,
