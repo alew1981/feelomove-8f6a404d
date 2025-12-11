@@ -2,6 +2,12 @@ import { Link, useLocation, useParams, useSearchParams } from "react-router-dom"
 import { ChevronRight, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
+
+// Helper to generate slug from name (accent-insensitive)
+const generateSlug = (name: string): string => {
+  return normalizeSearch(name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+};
 
 const Breadcrumbs = () => {
   const location = useLocation();
@@ -25,6 +31,47 @@ const Breadcrumbs = () => {
       return data;
     },
     enabled: !!params.slug && pathnames[0] === "producto",
+  });
+
+  // Get artist name from database for artist detail page
+  const artistSlug = pathnames[0] === "artista" && params.slug ? decodeURIComponent(params.slug) : null;
+  
+  const { data: artistData } = useQuery({
+    queryKey: ["artist-breadcrumb", artistSlug],
+    queryFn: async () => {
+      if (!artistSlug) return null;
+      
+      // Query attractions view directly using the slug
+      const { data, error } = await supabase
+        .from("mv_attractions")
+        .select("attraction_name")
+        .eq("attraction_slug", artistSlug.toLowerCase())
+        .maybeSingle();
+      
+      if (error || !data) return null;
+      return data.attraction_name || null;
+    },
+    enabled: !!artistSlug,
+  });
+
+  // Get destination name from database for destination detail page
+  const destinoSlug = pathnames[0] === "destinos" && params.destino ? decodeURIComponent(params.destino) : null;
+  
+  const { data: destinoData } = useQuery({
+    queryKey: ["destino-breadcrumb", destinoSlug],
+    queryFn: async () => {
+      if (!destinoSlug) return null;
+      
+      const { data, error } = await supabase
+        .from("mv_destinations_cards")
+        .select("city_name")
+        .eq("city_slug", destinoSlug)
+        .maybeSingle();
+      
+      if (error) return null;
+      return data?.city_name || null;
+    },
+    enabled: !!destinoSlug,
   });
 
   // Extract genre from event
@@ -52,12 +99,6 @@ const Breadcrumbs = () => {
 
   // Obtener el nombre del género desde la URL si existe
   const genreFromPath = params.genero ? decodeURIComponent(params.genero) : null;
-  
-  // Obtener el nombre del destino desde la URL si existe
-  const destinoFromPath = params.destino ? decodeURIComponent(params.destino) : null;
-  
-  // Obtener el slug del artista desde la URL si existe
-  const artistaFromPath = pathnames[0] === "artista" && params.slug ? decodeURIComponent(params.slug) : null;
 
   return (
     <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
@@ -113,7 +154,7 @@ const Breadcrumbs = () => {
             <span className="text-foreground font-medium">{genreFromPath}</span>
           </div>
         </>
-      ) : pathnames[0] === "destinos" && destinoFromPath ? (
+      ) : pathnames[0] === "destinos" && destinoSlug ? (
         /* Para página de destino: Inicio > Destinos > Ciudad */
         <>
           <div className="flex items-center gap-2">
@@ -127,10 +168,12 @@ const Breadcrumbs = () => {
           </div>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{destinoFromPath}</span>
+            <span className="text-foreground font-medium">
+              {destinoData || destinoSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </span>
           </div>
         </>
-      ) : pathnames[0] === "artista" && artistaFromPath ? (
+      ) : pathnames[0] === "artista" && artistSlug ? (
         /* Para página de artista: Inicio > Artistas > Nombre del artista */
         <>
           <div className="flex items-center gap-2">
@@ -145,7 +188,7 @@ const Breadcrumbs = () => {
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground font-medium">
-              {artistaFromPath.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              {artistData || artistSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </span>
           </div>
         </>

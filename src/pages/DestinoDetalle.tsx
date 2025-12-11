@@ -5,6 +5,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import PageHero from "@/components/PageHero";
+import { SEOHead } from "@/components/SEOHead";
+import { SEOText } from "@/components/SEOText";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 
@@ -168,23 +170,35 @@ const DestinoDetalle = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
+  // SEO content
+  const topArtists = artists.slice(0, 3).join(", ");
+  const seoDescription = `Descubre los mejores conciertos y festivales en ${cityName}. Compra entradas + hotel para ${events?.length || 0} eventos en ${cityName}. Artistas: ${topArtists || "próximamente"}.`;
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 mt-16">
-        
-        {/* Hero Image */}
-        <PageHero title={cityName} imageUrl={heroImage} />
-        
-        {/* Breadcrumbs */}
-        <div className="mb-6">
-          <Breadcrumbs />
-        </div>
-        
-        {/* Description */}
-        <p className="text-muted-foreground text-lg mb-8">
-          Descubre los mejores eventos en {cityName}
-        </p>
+    <>
+      <SEOHead
+        title={`Conciertos en ${cityName} - Entradas y Paquetes | FEELOMOVE`}
+        description={seoDescription}
+        canonical={`https://feelomove.com/destinos/${citySlug}`}
+      />
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 mt-16">
+          
+          {/* Hero Image */}
+          <PageHero title={cityName} imageUrl={heroImage} />
+          
+          {/* Breadcrumbs */}
+          <div className="mb-6">
+            <Breadcrumbs />
+          </div>
+          
+          {/* SEO Text */}
+          <SEOText 
+            title={`Eventos en ${cityName}`}
+            description={`Encuentra todos los próximos conciertos y festivales en ${cityName}. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles${topArtists ? ` con artistas como ${topArtists}` : ''}.`}
+            keywords={[`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]}
+          />
 
         {/* Filters and Search */}
         <div className="mb-8 space-y-4">
@@ -289,9 +303,10 @@ const DestinoDetalle = () => {
             )}
           </>
         )}
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </>
   );
 };
 
