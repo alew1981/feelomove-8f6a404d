@@ -6,10 +6,11 @@ import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import HotelCard from "@/components/HotelCard";
 import HotelMapTabs from "@/components/HotelMapTabs";
+import ProductoSkeleton from "@/components/ProductoSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Trash2, Plus, Minus, MapPin } from "lucide-react";
+import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart, CartTicket } from "@/contexts/CartContext";
@@ -53,25 +54,34 @@ const Producto = () => {
   const [showAllTickets, setShowAllTickets] = useState(false);
 
   // Fetch event details from lovable_mv_event_product_page
-  const { data: eventData, isLoading } = useQuery({
+  const { data: eventData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["event-product-page", slug],
     queryFn: async () => {
+      if (!slug) throw new Error("No se proporcionó el identificador del evento");
+      
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page")
         .select("*")
         .eq("event_slug", slug);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Error al cargar el evento: ${error.message}`);
+      }
       
       // If no event found with slug, try legacy redirect
       if ((!data || data.length === 0) && slug) {
         const redirected = await handleLegacyRedirect(slug, navigate);
         if (redirected) return null;
+        throw new Error("Evento no encontrado");
       }
       
       return data;
-    }
+    },
+    retry: 2,
+    retryDelay: 1000,
   });
+
 
   // Process data - first row has event details
   const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
@@ -114,12 +124,47 @@ const Producto = () => {
   }, [eventDetails, cart, clearCart]);
 
   if (isLoading) {
+    return <ProductoSkeleton />;
+  }
+
+  if (isError) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando evento...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8 mt-20">
+          <Card className="max-w-lg mx-auto border-destructive/50">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Error al cargar el evento</h2>
+                  <p className="text-muted-foreground text-sm">
+                    {error instanceof Error ? error.message : "Ha ocurrido un error inesperado"}
+                  </p>
+                </div>
+                <div className="flex gap-3 justify-center pt-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate(-1)}
+                    className="gap-2"
+                  >
+                    Volver atrás
+                  </Button>
+                  <Button 
+                    onClick={() => refetch()}
+                    className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Reintentar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -129,7 +174,27 @@ const Producto = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-8 mt-20">
-          <p className="text-center text-muted-foreground">Evento no encontrado</p>
+          <Card className="max-w-lg mx-auto">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Evento no encontrado</h2>
+                  <p className="text-muted-foreground text-sm">
+                    El evento que buscas no existe o ha sido eliminado.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate("/conciertos")}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  Ver todos los eventos
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>
