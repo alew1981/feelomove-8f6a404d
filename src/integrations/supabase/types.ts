@@ -541,7 +541,6 @@ export type Database = {
           created_at: string | null
           day_of_week: string | null
           days_until_event: number | null
-          destination_deeplink: string | null
           event_currency: string | null
           event_date: string | null
           event_day_name_es: string | null
@@ -555,7 +554,6 @@ export type Database = {
           event_year: number | null
           has_5_star_hotels: boolean | null
           has_vip_tickets: boolean | null
-          hotels_list_widget_html: string | null
           hotels_prices_aggregated_jsonb: Json | null
           hotels_with_high_rating: number | null
           image_large_url: string | null
@@ -566,9 +564,7 @@ export type Database = {
           is_package: boolean | null
           is_weekend: boolean | null
           low_availability: boolean | null
-          map_widget_html: string | null
           meta_description: string | null
-          meta_description_rich: string | null
           min_hotel_price: number | null
           minimum_age_required: number | null
           off_sale_date: string | null
@@ -586,13 +582,11 @@ export type Database = {
           secondary_attraction_name: string | null
           seo_keywords: string[] | null
           seo_title: string | null
-          seo_title_rich: string | null
           sold_out: boolean | null
           ticket_price_min: number | null
           ticket_types: Json | null
           timezone: string | null
           total_hotels_available: number | null
-          total_ticket_types: number | null
           updated_at: string | null
           venue_address: string | null
           venue_city: string | null

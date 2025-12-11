@@ -152,8 +152,9 @@ const Producto = () => {
   const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
 
   // Parse ticket prices from ticket_types
-  const rawTicketTypes = ((eventDetails as any).ticket_types as TicketType[] | null) || [];
-  const ticketPrices = rawTicketTypes.map(ticket => ({
+  const rawTicketTypes = (eventDetails as any).ticket_types;
+  const ticketTypesArray = Array.isArray(rawTicketTypes) ? rawTicketTypes : [];
+  const ticketPrices = ticketTypesArray.map((ticket: TicketType) => ({
     type: ticket.name || "Entrada General",
     code: ticket.code,
     description: ticket.description || "",
