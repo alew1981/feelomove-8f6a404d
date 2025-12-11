@@ -45,14 +45,23 @@ const FestivalDetalle = () => {
   const { concertEvents, transportEvents } = useMemo(() => {
     if (!events) return { concertEvents: [], transportEvents: [] };
     
-    const transport = events.filter(e => 
-      e.name?.toLowerCase().includes("autobus") || 
-      e.main_attraction?.toLowerCase().includes("autobus")
-    );
-    const concerts = events.filter(e => 
-      !e.name?.toLowerCase().includes("autobus") && 
-      !e.main_attraction?.toLowerCase().includes("autobus")
-    );
+    // Normalize text to handle accents (autobús -> autobus)
+    const normalizeText = (text: string) => 
+      text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+    
+    // Transport keywords
+    const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
+    
+    const isTransport = (event: typeof events[0]) => {
+      const name = normalizeText(event.name || "");
+      const attraction = normalizeText(event.main_attraction || "");
+      return transportKeywords.some(keyword => 
+        name.includes(keyword) || attraction.includes(keyword)
+      );
+    };
+    
+    const transport = events.filter(isTransport);
+    const concerts = events.filter(e => !isTransport(e));
     
     return { concertEvents: concerts, transportEvents: transport };
   }, [events]);
