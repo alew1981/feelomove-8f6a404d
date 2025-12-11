@@ -1,30 +1,41 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
-import EventCard from "@/components/EventCard";
-import EventCardSkeleton from "@/components/EventCardSkeleton";
-
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { useInView } from "react-intersection-observer";
+import { Search, Calendar, MapPin, Users } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+interface FestivalGroup {
+  name: string;
+  slug: string;
+  image: string;
+  city: string;
+  venue: string;
+  eventCount: number;
+  artistCount: number;
+  minPrice: number;
+  maxPrice: number;
+  firstDate: string;
+  lastDate: string;
+  genre: string;
+}
 
 const Festivales = () => {
-  const [sortBy, setSortBy] = useState<string>("date-asc");
-  const [filterCity, setFilterCity] = useState<string>("all");
-  const [filterArtist, setFilterArtist] = useState<string>("all");
-  const [filterFestival, setFilterFestival] = useState<string>("all");
-  
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [displayCount, setDisplayCount] = useState<number>(30);
-  
-  const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date-asc");
 
   // Fetch festivales using mv_festivals_cards
   const { data: events, isLoading } = useQuery({
@@ -41,102 +52,116 @@ const Festivales = () => {
     }
   });
 
-  // Get first event image for hero
-  const heroImage = events?.[0]?.image_large_url || events?.[0]?.image_standard_url;
+  // Group events by festival (secondary_attraction_name)
+  const festivalGroups = useMemo(() => {
+    if (!events) return [];
+    
+    const groups: Record<string, FestivalGroup> = {};
+    
+    events.forEach(event => {
+      const festivalName = event.secondary_attraction_name;
+      if (!festivalName) return;
+      
+      if (!groups[festivalName]) {
+        groups[festivalName] = {
+          name: festivalName,
+          slug: encodeURIComponent(festivalName.toLowerCase().replace(/\s+/g, "-")),
+          image: event.image_large_url || event.image_standard_url || "",
+          city: event.venue_city || "",
+          venue: event.venue_name || "",
+          eventCount: 0,
+          artistCount: 0,
+          minPrice: Infinity,
+          maxPrice: 0,
+          firstDate: event.event_date || "",
+          lastDate: event.event_date || "",
+          genre: event.genre || "",
+        };
+      }
+      
+      const group = groups[festivalName];
+      group.eventCount++;
+      
+      // Track unique artists
+      const artistsSet = new Set<string>();
+      events
+        .filter(e => e.secondary_attraction_name === festivalName)
+        .forEach(e => {
+          e.attraction_names?.forEach((a: string) => artistsSet.add(a));
+        });
+      group.artistCount = artistsSet.size;
+      
+      // Update price range
+      const eventMinPrice = Number(event.price_min_incl_fees) || 0;
+      const eventMaxPrice = Number(event.price_max_incl_fees) || 0;
+      if (eventMinPrice > 0 && eventMinPrice < group.minPrice) {
+        group.minPrice = eventMinPrice;
+      }
+      if (eventMaxPrice > group.maxPrice) {
+        group.maxPrice = eventMaxPrice;
+      }
+      
+      // Update date range
+      if (event.event_date && event.event_date > group.lastDate) {
+        group.lastDate = event.event_date;
+      }
+    });
+    
+    // Convert to array and fix infinite minPrice
+    return Object.values(groups).map(g => ({
+      ...g,
+      minPrice: g.minPrice === Infinity ? 0 : g.minPrice,
+    }));
+  }, [events]);
 
-  // Extract unique cities and artists
+  // Get unique cities
   const cities = useMemo(() => {
-    if (!events) return [];
-    const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
-    return uniqueCities.sort() as string[];
-  }, [events]);
+    const uniqueCities = [...new Set(festivalGroups.map(f => f.city).filter(Boolean))];
+    return uniqueCities.sort();
+  }, [festivalGroups]);
 
-  const artists = useMemo(() => {
-    if (!events) return [];
-    const allArtists = events.flatMap(e => e.attraction_names || []);
-    const uniqueArtists = [...new Set(allArtists)];
-    return uniqueArtists.sort() as string[];
-  }, [events]);
-
-  // Extract unique festivals (secondary_attraction_name)
-  const festivals = useMemo(() => {
-    if (!events) return [];
-    const uniqueFestivals = [...new Set(events.map(e => e.secondary_attraction_name).filter(Boolean))];
-    return uniqueFestivals.sort() as string[];
-  }, [events]);
-
-  // Filter and sort events
-  const filteredAndSortedEvents = useMemo(() => {
-    if (!events) return [];
-    let filtered = [...events];
-
-    // Apply search filter (accent-insensitive)
+  // Filter and sort festivals
+  const filteredFestivals = useMemo(() => {
+    let filtered = [...festivalGroups];
+    
+    // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(event => 
-        matchesSearch(event.name, searchQuery) ||
-        matchesSearch(event.venue_city, searchQuery) ||
-        event.attraction_names?.some((artist: string) => matchesSearch(artist, searchQuery))
+      filtered = filtered.filter(festival => 
+        matchesSearch(festival.name, searchQuery) ||
+        matchesSearch(festival.city, searchQuery) ||
+        matchesSearch(festival.venue, searchQuery)
       );
     }
-
+    
     // Apply city filter
     if (filterCity !== "all") {
-      filtered = filtered.filter(event => event.venue_city === filterCity);
+      filtered = filtered.filter(festival => festival.city === filterCity);
     }
-
-    // Apply artist filter
-    if (filterArtist !== "all") {
-      filtered = filtered.filter(event => event.attraction_names?.includes(filterArtist));
-    }
-
-    // Apply festival filter
-    if (filterFestival !== "all") {
-      filtered = filtered.filter(event => event.secondary_attraction_name === filterFestival);
-    }
-
+    
     // Apply sorting
     switch (sortBy) {
       case "date-asc":
-        filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
+        filtered.sort((a, b) => new Date(a.firstDate).getTime() - new Date(b.firstDate).getTime());
         break;
       case "date-desc":
-        filtered.sort((a, b) => new Date(b.event_date || 0).getTime() - new Date(a.event_date || 0).getTime());
+        filtered.sort((a, b) => new Date(b.firstDate).getTime() - new Date(a.firstDate).getTime());
         break;
       case "price-asc":
-        filtered.sort((a, b) => (a.price_min_incl_fees || 0) - (b.price_min_incl_fees || 0));
+        filtered.sort((a, b) => a.minPrice - b.minPrice);
         break;
       case "price-desc":
-        filtered.sort((a, b) => (b.price_min_incl_fees || 0) - (a.price_min_incl_fees || 0));
+        filtered.sort((a, b) => b.minPrice - a.minPrice);
+        break;
+      case "events-desc":
+        filtered.sort((a, b) => b.eventCount - a.eventCount);
         break;
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterArtist, filterFestival, sortBy]);
+  }, [festivalGroups, searchQuery, filterCity, sortBy]);
 
-  // Group events by festival
-  const groupedEvents = useMemo(() => {
-    const groups: Record<string, typeof filteredAndSortedEvents> = {};
-    filteredAndSortedEvents.forEach(event => {
-      const festivalName = event.secondary_attraction_name || "Otros Eventos";
-      if (!groups[festivalName]) {
-        groups[festivalName] = [];
-      }
-      groups[festivalName].push(event);
-    });
-    return groups;
-  }, [filteredAndSortedEvents]);
-
-  // Display only the first displayCount events
-  const displayedEvents = useMemo(() => {
-    return filteredAndSortedEvents.slice(0, displayCount);
-  }, [filteredAndSortedEvents, displayCount]);
-
-  // Load more when scrolling to bottom
-  useEffect(() => {
-    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
-      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
-    }
-  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
+  // Get hero image from first festival
+  const heroImage = festivalGroups[0]?.image || "/placeholder.svg";
 
   return (
     <>
@@ -174,7 +199,7 @@ const Festivales = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar festivales, ciudades o artistas..."
+                placeholder="Buscar festivales..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
@@ -182,19 +207,7 @@ const Festivales = () => {
             </div>
 
             {/* Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <Select value={filterFestival} onValueChange={setFilterFestival}>
-                <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Todos los festivales" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los festivales</SelectItem>
-                  {festivals.map(festival => (
-                    <SelectItem key={festival} value={festival}>{festival}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className="h-11 border-2">
                   <SelectValue placeholder="Todas las ciudades" />
@@ -203,18 +216,6 @@ const Festivales = () => {
                   <SelectItem value="all">Todas las ciudades</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterArtist} onValueChange={setFilterArtist}>
-                <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Todos los artistas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los artistas</SelectItem>
-                  {artists.map(artist => (
-                    <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -228,6 +229,7 @@ const Festivales = () => {
                   <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
                   <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
                   <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                  <SelectItem value="events-desc">Más conciertos</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -235,81 +237,114 @@ const Festivales = () => {
                 onClick={() => {
                   setSortBy("date-asc");
                   setFilterCity("all");
-                  setFilterArtist("all");
-                  setFilterFestival("all");
                   setSearchQuery("");
                 }}
                 className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
               >
                 Limpiar filtros
               </button>
+              
+              <div className="flex items-center justify-end text-muted-foreground text-sm">
+                {filteredFestivals.length} festivales encontrados
+              </div>
             </div>
           </div>
 
-          {/* Events Grid - Grouped by Festival */}
+          {/* Festival Cards Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <EventCardSkeleton key={i} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="h-48 w-full" />
+                  <CardContent className="p-4 space-y-3">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          ) : filteredAndSortedEvents.length === 0 ? (
+          ) : filteredFestivals.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-xl text-muted-foreground mb-4">No se encontraron festivales</p>
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <div className="space-y-12">
-              {Object.entries(groupedEvents).map(([festivalName, festivalEvents]) => {
-                const festivalImage = festivalEvents[0]?.image_large_url || festivalEvents[0]?.image_standard_url;
-                return (
-                <div key={festivalName} className="space-y-6">
-                  {/* Festival Header with Image */}
-                  <div className="relative rounded-xl overflow-hidden">
-                    {festivalImage && (
-                      <div className="relative h-48 md:h-64">
-                        <img 
-                          src={festivalImage} 
-                          alt={festivalName}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-6">
-                          <h2 className="text-2xl md:text-3xl font-bold text-white font-['Poppins']">
-                            {festivalName}
-                          </h2>
-                          <p className="text-white/80 text-sm mt-1">
-                            {festivalEvents.length} {festivalEvents.length === 1 ? 'concierto' : 'conciertos'}
-                          </p>
-                        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredFestivals.map((festival, index) => (
+                <Link 
+                  key={festival.name} 
+                  to={`/festivales/${festival.slug}`}
+                  className="block"
+                >
+                  <Card 
+                    className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 hover:border-[#00FF8F]/50 h-full"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={festival.image || "/placeholder.svg"} 
+                        alt={festival.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                      
+                      {/* Badges */}
+                      <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                        <Badge className="bg-[#00FF8F] text-black font-semibold">
+                          {festival.eventCount} {festival.eventCount === 1 ? 'concierto' : 'conciertos'}
+                        </Badge>
                       </div>
-                    )}
-                    {!festivalImage && (
-                      <div className="border-b-2 border-accent pb-3">
-                        <h2 className="text-2xl md:text-3xl font-bold text-foreground font-['Poppins']">
-                          {festivalName}
-                        </h2>
-                        <p className="text-muted-foreground text-sm mt-1">
-                          {festivalEvents.length} {festivalEvents.length === 1 ? 'concierto' : 'conciertos'}
-                        </p>
+                      
+                      {/* Price Badge */}
+                      <div className="absolute top-3 right-3">
+                        <Badge variant="secondary" className="bg-black/70 text-white">
+                          Desde €{festival.minPrice.toFixed(0)}
+                        </Badge>
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* Festival Events Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {festivalEvents.map((event, index) => (
-                      <div
-                        key={event.id}
-                        className="animate-fade-in"
-                        style={{ animationDelay: `${index * 0.05}s` }}
-                      >
-                        <EventCard event={event} />
+                      
+                      {/* Festival Name */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <h3 className="text-xl font-bold text-white font-['Poppins'] line-clamp-2">
+                          {festival.name}
+                        </h3>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )})}
+                    </div>
+                    
+                    <CardContent className="p-4 space-y-3">
+                      {/* Info Row */}
+                      <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {festival.city}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          {festival.artistCount} artistas
+                        </span>
+                      </div>
+                      
+                      {/* Date Range */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-[#00FF8F]" />
+                        <span className="font-medium">
+                          {festival.firstDate && format(new Date(festival.firstDate), "d MMM", { locale: es })}
+                          {festival.lastDate && festival.firstDate !== festival.lastDate && 
+                            ` - ${format(new Date(festival.lastDate), "d MMM yyyy", { locale: es })}`
+                          }
+                        </span>
+                      </div>
+                      
+                      {/* Genre Badge */}
+                      {festival.genre && (
+                        <Badge variant="outline" className="text-xs">
+                          {festival.genre}
+                        </Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
           )}
         </div>
