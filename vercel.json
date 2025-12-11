@@ -1,0 +1,40 @@
+{
+  "rewrites": [
+    {
+      "source": "/sitemap_index.xml",
+      "destination": "/sitemap_index.xml"
+    },
+    {
+      "source": "/sitemap-pages.xml",
+      "destination": "/sitemap-pages.xml"
+    },
+    {
+      "source": "/sitemap-events.xml",
+      "destination": "/sitemap-events.xml"
+    },
+    {
+      "source": "/sitemap-artists.xml",
+      "destination": "/sitemap-artists.xml"
+    },
+    {
+      "source": "/sitemap-destinations.xml",
+      "destination": "/sitemap-destinations.xml"
+    },
+    {
+      "source": "/sitemap-genres.xml",
+      "destination": "/sitemap-genres.xml"
+    },
+    {
+      "source": "/sitemap-festivals.xml",
+      "destination": "/sitemap-festivals.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/((?!api|sitemap.*\\.xml|robots\\.txt).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
