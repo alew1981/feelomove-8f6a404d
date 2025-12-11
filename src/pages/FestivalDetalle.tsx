@@ -33,10 +33,11 @@ const FestivalDetalle = () => {
       
       if (error) throw error;
       
-      // Filter by secondary_attraction_name (case-insensitive)
-      return (data || []).filter(e => 
-        e.secondary_attraction_name?.toLowerCase() === festivalName.toLowerCase()
-      );
+      // Filter by secondary_attraction_name OR main_attraction OR name (case-insensitive)
+      return (data || []).filter(e => {
+        const eName = (e.secondary_attraction_name || e.main_attraction || e.name || "").toLowerCase();
+        return eName === festivalName.toLowerCase();
+      });
     },
     enabled: !!festivalSlug,
   });
@@ -79,7 +80,7 @@ const FestivalDetalle = () => {
     const maxPrice = Math.max(...allEvents.map(e => Number(e.price_max_incl_fees) || 0));
     
     return {
-      name: firstEvent.secondary_attraction_name,
+      name: firstEvent.secondary_attraction_name || firstEvent.main_attraction || firstEvent.name,
       image: firstEvent.image_large_url || firstEvent.image_standard_url,
       venue: firstEvent.venue_name,
       city: firstEvent.venue_city,
@@ -216,10 +217,19 @@ const FestivalDetalle = () => {
                     {transportEvents.map((event, index) => (
                       <div
                         key={event.id}
-                        className="animate-fade-in"
+                        className="animate-fade-in relative"
                         style={{ animationDelay: `${index * 0.05}s` }}
                       >
-                        <EventCard event={event} />
+                        {/* Transport badge overlay */}
+                        <div className="absolute -top-2 -left-2 z-10">
+                          <div className="bg-amber-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                            <Bus className="h-3 w-3" />
+                            TRANSPORTE
+                          </div>
+                        </div>
+                        <div className="ring-2 ring-amber-500/50 rounded-lg overflow-hidden">
+                          <EventCard event={event} />
+                        </div>
                       </div>
                     ))}
                   </div>
