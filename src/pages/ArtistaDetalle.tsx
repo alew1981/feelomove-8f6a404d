@@ -17,6 +17,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { normalizeSearch } from "@/lib/searchUtils";
+
+// Helper to generate slug from name (accent-insensitive)
+const generateSlug = (name: string): string => {
+  return normalizeSearch(name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+};
 
 const ArtistaDetalle = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -57,29 +63,28 @@ const ArtistaDetalle = () => {
       const allEvents = [...(concertsRes.data || []), ...(festivalsRes.data || [])] as any[];
       
       // Filter by artist slug - check artist_name and attraction_names
+      const normalizedSlug = normalizeSearch(artistSlug.replace(/-/g, ' '));
+      
       const filtered = allEvents.filter((event: any) => {
         // Check primary artist_name (concerts)
         const artistName = event.artist_name || '';
-        const artistSlugFromName = artistName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        if (artistSlugFromName === artistSlug.toLowerCase() ||
-            artistName.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ')) {
+        if (generateSlug(artistName) === artistSlug.toLowerCase() ||
+            normalizeSearch(artistName) === normalizedSlug) {
           return true;
         }
         
         // Check main_attraction (festivals)
         const mainAttraction = event.main_attraction || '';
-        const mainAttractionSlug = mainAttraction.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        if (mainAttractionSlug === artistSlug.toLowerCase() ||
-            mainAttraction.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ')) {
+        if (generateSlug(mainAttraction) === artistSlug.toLowerCase() ||
+            normalizeSearch(mainAttraction) === normalizedSlug) {
           return true;
         }
         
         // Check attraction_names array (for festivals with multiple artists)
         const attractionNames = event.attraction_names || [];
         return attractionNames.some((name: string) => {
-          const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-          return slug === artistSlug.toLowerCase() ||
-                 name.toLowerCase() === artistSlug.toLowerCase().replace(/-/g, ' ');
+          return generateSlug(name) === artistSlug.toLowerCase() ||
+                 normalizeSearch(name) === normalizedSlug;
         });
       });
       
