@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Hotel } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInView } from "react-intersection-observer";
@@ -163,14 +163,6 @@ const Destinos = () => {
                           {city.event_count} eventos
                         </Badge>
                       </div>
-                      {city.hotels_count > 0 && (
-                        <div className="absolute bottom-3 left-3">
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <Hotel className="h-3 w-3" />
-                            {city.hotels_count} hoteles
-                          </Badge>
-                        </div>
-                      )}
                     </div>
                     <CardContent className="p-4 space-y-2">
                       <h3 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h3>
