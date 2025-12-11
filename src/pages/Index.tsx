@@ -162,17 +162,36 @@ const Index = () => {
     }
   });
 
-  // Fetch genres from mv_genres_cards
+  // Fetch genres from mv_genres_cards with images from concerts
   const { data: genres, isLoading: isLoadingGenres } = useQuery({
-    queryKey: ["homepage-genres"],
+    queryKey: ["homepage-genres-with-images"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: genreData, error } = await supabase
         .from("mv_genres_cards")
         .select("*")
         .order("event_count", { ascending: false })
         .limit(4);
       if (error) throw error;
-      return data || [];
+      
+      // Fetch sample images for each genre from concerts
+      const genresWithImages = await Promise.all(
+        (genreData || []).map(async (genre) => {
+          const { data: concertData } = await supabase
+            .from("mv_concerts_cards")
+            .select("image_standard_url")
+            .eq("genre", genre.genre_name)
+            .not("image_standard_url", "is", null)
+            .limit(1)
+            .single();
+          
+          return {
+            ...genre,
+            sample_image_url: concertData?.image_standard_url || null
+          };
+        })
+      );
+      
+      return genresWithImages;
     }
   });
 
@@ -420,7 +439,7 @@ const Index = () => {
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
                     <div className="relative h-full">
                       <img
-                        src="/placeholder.svg"
+                        src={genre.sample_image_url || "/placeholder.svg"}
                         alt={genre.genre_name || "Género"}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />

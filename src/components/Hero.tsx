@@ -241,11 +241,20 @@ const Hero = () => {
 
           {/* Search Results Dropdown */}
           {showResults && (searchQuery.length >= 2 || isSearching) && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-border overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl shadow-2xl border-2 border-accent/30 overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-border bg-muted/50">
+                <p className="text-sm font-medium text-foreground">
+                  <span className="text-foreground">feelomove</span>
+                  <span className="text-accent">+</span>
+                  <span className="text-muted-foreground ml-2">resultados</span>
+                </p>
+              </div>
+              
               {isSearching ? (
-                <div className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Buscando...</span>
+                <div className="p-6 flex items-center justify-center gap-3 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                  <span className="font-medium">Buscando experiencias...</span>
                 </div>
               ) : results.length > 0 ? (
                 <div className="py-2">
@@ -253,26 +262,26 @@ const Hero = () => {
                     <button
                       key={`${result.type}-${result.name}-${index}`}
                       onClick={() => handleResultClick(result.path)}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-accent/10 transition-colors text-left group"
                     >
                       {result.image ? (
                         <img 
                           src={result.image} 
                           alt={result.name}
-                          className="w-10 h-10 rounded-lg object-cover"
+                          className="w-12 h-12 rounded-lg object-cover border border-border group-hover:border-accent transition-colors"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center border border-accent/20 group-hover:border-accent transition-colors">
                           {getIcon(result.type)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate">{result.name}</p>
+                        <p className="font-semibold text-foreground truncate group-hover:text-accent transition-colors">{result.name}</p>
                         {result.subtitle && (
                           <p className="text-sm text-muted-foreground">{result.subtitle}</p>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground capitalize px-2 py-1 bg-muted rounded-full">
+                      <span className="text-xs font-medium text-accent-foreground capitalize px-3 py-1.5 bg-accent rounded-full">
                         {result.type === 'event' ? 'Evento' : 
                          result.type === 'artist' ? 'Artista' :
                          result.type === 'destination' ? 'Destino' : 'Género'}
@@ -281,8 +290,10 @@ const Hero = () => {
                   ))}
                 </div>
               ) : searchQuery.length >= 2 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  No se encontraron resultados para "{searchQuery}"
+                <div className="p-6 text-center">
+                  <p className="text-muted-foreground mb-2">No se encontraron resultados para</p>
+                  <p className="font-semibold text-foreground">"{searchQuery}"</p>
+                  <p className="text-sm text-muted-foreground mt-3">Prueba con otro término o explora nuestros <Link to="/conciertos" className="text-accent hover:underline">conciertos</Link></p>
                 </div>
               ) : null}
             </div>
