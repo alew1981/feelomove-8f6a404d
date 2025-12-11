@@ -29,36 +29,6 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Tu destino para experiencias musicales inolvidables con el mejor alojamiento.
             </p>
-            {/* Social Media Icons */}
-            <div className="flex items-center gap-4 pt-2">
-              <a 
-                href="https://www.instagram.com/feelomove/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a 
-                href="https://x.com/feelomove" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-colors"
-                aria-label="X (Twitter)"
-              >
-                <XIcon className="h-5 w-5" />
-              </a>
-              <a 
-                href="https://www.pinterest.com/feelomove/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-colors"
-                aria-label="Pinterest"
-              >
-                <PinterestIcon className="h-5 w-5" />
-              </a>
-            </div>
           </div>
 
           {/* Explorar */}

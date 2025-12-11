@@ -17,11 +17,11 @@ interface EventCardProps {
     event_name?: string;
     slug?: string;
     event_slug?: string;
-    event_date: string;
+    event_date?: string | null;
     venue_city: string;
     venue_name?: string;
     venue_address?: string;
-    local_event_date?: string;
+    local_event_date?: string | null;
     image_standard_url?: string;
     image_large_url?: string;
     event_image_large?: string;
@@ -45,11 +45,17 @@ const EventCard = ({ event }: EventCardProps) => {
   const price = event.price_min_incl_fees ?? event.ticket_price_min ?? event.ticket_cheapest_price ?? 0;
   const badges = event.badges || event.event_badges || [];
 
-  const eventDate = parseISO(event.event_date);
-  const dayNumber = format(eventDate, "dd");
-  const monthName = format(eventDate, "MMM", { locale: es }).toUpperCase();
-  const year = format(eventDate, "yyyy");
-  const time = event.local_event_date ? format(parseISO(event.local_event_date), "HH:mm") : format(eventDate, "HH:mm");
+  // Handle null/undefined dates
+  const hasDate = event.event_date && event.event_date.length > 0;
+  const eventDate = hasDate ? parseISO(event.event_date!) : null;
+  const dayNumber = eventDate ? format(eventDate, "dd") : '';
+  const monthName = eventDate ? format(eventDate, "MMM", { locale: es }).toUpperCase() : '';
+  const year = eventDate ? format(eventDate, "yyyy") : '';
+  const time = hasDate && event.local_event_date 
+    ? format(parseISO(event.local_event_date), "HH:mm") 
+    : eventDate 
+      ? format(eventDate, "HH:mm") 
+      : '';
 
   // Countdown state
   const [countdown, setCountdown] = useState({
@@ -60,16 +66,16 @@ const EventCard = ({ event }: EventCardProps) => {
     isLessThan24Hours: false
   });
 
-  // Calculate initial values for showing countdown
-  const initialDaysUntil = differenceInDays(eventDate, new Date());
-  const showCountdown = initialDaysUntil >= 0 && initialDaysUntil <= 30;
+  // Calculate initial values for showing countdown - only if we have a date
+  const initialDaysUntil = eventDate ? differenceInDays(eventDate, new Date()) : -1;
+  const showCountdown = eventDate && initialDaysUntil >= 0 && initialDaysUntil <= 30;
 
   useEffect(() => {
-    if (!showCountdown) return;
+    if (!showCountdown || !event.event_date) return;
 
     const updateCountdown = () => {
       const now = new Date();
-      const targetDate = parseISO(event.event_date);
+      const targetDate = parseISO(event.event_date!);
       const days = Math.max(0, differenceInDays(targetDate, now));
       const hours = Math.max(0, differenceInHours(targetDate, now) % 24);
       const minutes = Math.max(0, differenceInMinutes(targetDate, now) % 60);
@@ -129,23 +135,25 @@ const EventCard = ({ event }: EventCardProps) => {
                 <CategoryBadge badges={badges} />
               </div>
 
-              {/* Date Card - Absolute positioned on the left */}
-              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
-                <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
-                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
-                  <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
-                  <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
-                  {/* Time */}
-                  <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>
-                  {/* Location */}
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
-                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
-                    <span className="line-clamp-1 font-medium">
-                      {event.venue_city}
-                    </span>
+              {/* Date Card - Absolute positioned on the left - Only show if we have a date */}
+              {hasDate && (
+                <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
+                  <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
+                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
+                    <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
+                    <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
+                    {/* Time */}
+                    {time && <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>}
+                    {/* Location */}
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
+                      <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                      <span className="line-clamp-1 font-medium">
+                        {event.venue_city}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Countdown Timer - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">

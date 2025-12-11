@@ -47,13 +47,22 @@ const Hero = () => {
 
       try {
         // Search events (concerts + festivals)
+        // First get genres, then fetch images for them
         const [concertsRes, festivalsRes, destinationsRes, artistsRes, genresRes] = await Promise.all([
-          supabase.from("mv_concerts_cards").select("id, name, slug, venue_city, image_standard_url, artist_name").limit(50),
-          supabase.from("mv_festivals_cards").select("id, name, slug, venue_city, image_standard_url, main_attraction").limit(50),
+          supabase.from("mv_concerts_cards").select("id, name, slug, venue_city, image_standard_url, artist_name, genre").limit(50),
+          supabase.from("mv_festivals_cards").select("id, name, slug, venue_city, image_standard_url, main_attraction, genre").limit(50),
           supabase.from("mv_destinations_cards").select("city_name, city_slug, sample_image_url").limit(50),
           supabase.from("mv_attractions").select("attraction_id, attraction_name, attraction_slug, sample_image_url").limit(50),
           supabase.from("mv_genres_cards").select("genre_name, genre_id").limit(50)
         ]);
+
+        // Build genre image map from concert images
+        const genreImageMap: Record<string, string> = {};
+        [...(concertsRes.data || []), ...(festivalsRes.data || [])].forEach(event => {
+          if (event.genre && event.image_standard_url && !genreImageMap[event.genre]) {
+            genreImageMap[event.genre] = event.image_standard_url;
+          }
+        });
 
         // Filter concerts
         concertsRes.data?.forEach(event => {
@@ -109,13 +118,14 @@ const Hero = () => {
           }
         });
 
-        // Filter genres
+        // Filter genres with images
         genresRes.data?.forEach(genre => {
           if (matchesSearch(genre.genre_name || '', searchQuery)) {
             searchResults.push({
               type: 'genre',
               name: genre.genre_name || '',
-              path: `/musica/${encodeURIComponent(genre.genre_name || '')}`
+              path: `/musica/${encodeURIComponent(genre.genre_name || '')}`,
+              image: genreImageMap[genre.genre_name || ''] || ''
             });
           }
         });
