@@ -46,8 +46,6 @@ const EventCard = ({ event }: EventCardProps) => {
   const badges = event.badges || event.event_badges || [];
 
   const eventDate = parseISO(event.event_date);
-  const now = new Date();
-  const daysUntil = differenceInDays(eventDate, now);
   const dayNumber = format(eventDate, "dd");
   const monthName = format(eventDate, "MMM", { locale: es }).toUpperCase();
   const year = format(eventDate, "yyyy");
@@ -58,35 +56,34 @@ const EventCard = ({ event }: EventCardProps) => {
     days: 0,
     hours: 0,
     minutes: 0,
-    seconds: 0
+    seconds: 0,
+    isLessThan24Hours: false
   });
 
-  // Show countdown only if within 30 days
-  const showCountdown = daysUntil >= 0 && daysUntil <= 30;
+  // Calculate initial values for showing countdown
+  const initialDaysUntil = differenceInDays(eventDate, new Date());
+  const showCountdown = initialDaysUntil >= 0 && initialDaysUntil <= 30;
 
   useEffect(() => {
     if (!showCountdown) return;
 
     const updateCountdown = () => {
       const now = new Date();
-      const days = Math.max(0, differenceInDays(eventDate, now));
-      const hours = Math.max(0, differenceInHours(eventDate, now) % 24);
-      const minutes = Math.max(0, differenceInMinutes(eventDate, now) % 60);
-      const seconds = Math.max(0, differenceInSeconds(eventDate, now) % 60);
-      const hoursUntil = differenceInHours(eventDate, now);
+      const targetDate = parseISO(event.event_date);
+      const days = Math.max(0, differenceInDays(targetDate, now));
+      const hours = Math.max(0, differenceInHours(targetDate, now) % 24);
+      const minutes = Math.max(0, differenceInMinutes(targetDate, now) % 60);
+      const seconds = Math.max(0, differenceInSeconds(targetDate, now) % 60);
+      const hoursUntil = differenceInHours(targetDate, now);
       const isUnder24h = hoursUntil < 24 && hoursUntil > 0;
       
-      setCountdown({ days, hours, minutes, seconds });
-      
-      return isUnder24h;
+      setCountdown({ days, hours, minutes, seconds, isLessThan24Hours: isUnder24h });
     };
 
-    const isUnder24h = updateCountdown();
-    const interval = setInterval(updateCountdown, isUnder24h ? 1000 : 60000);
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [eventDate, showCountdown]);
-
-  const isLessThan24Hours = differenceInHours(eventDate, now) < 24 && differenceInHours(eventDate, now) > 0;
+  }, [event.event_date, showCountdown]);
 
   // Determine badge
   let badgeVariant: "disponible" | "agotado" | undefined;
@@ -155,7 +152,7 @@ const EventCard = ({ event }: EventCardProps) => {
                 {showCountdown && (
                   <div className="bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border border-accent/30">
                     <div className="flex gap-2 text-accent font-['Poppins'] text-center">
-                      {isLessThan24Hours ? (
+                      {countdown.isLessThan24Hours ? (
                         <>
                           <div className="flex flex-col items-center">
                             <div className="text-xl font-bold leading-none">{String(countdown.hours).padStart(2, '0')}</div>
