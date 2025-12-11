@@ -128,35 +128,6 @@ const FestivalDetalle = () => {
             <Breadcrumbs />
           </div>
           
-          {/* Festival Info */}
-          {festivalData && (
-            <div className="bg-card border-2 border-border rounded-xl p-6 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Fechas:</span>
-                  <p className="font-semibold">
-                    {festivalData.firstDate && format(new Date(festivalData.firstDate), "d MMM", { locale: es })}
-                    {festivalData.lastDate && festivalData.firstDate !== festivalData.lastDate && 
-                      ` - ${format(new Date(festivalData.lastDate), "d MMM yyyy", { locale: es })}`
-                    }
-                    {festivalData.firstDate === festivalData.lastDate && 
-                      ` ${format(new Date(festivalData.firstDate), "yyyy", { locale: es })}`
-                    }
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Venue:</span>
-                  <p className="font-semibold">{festivalData.venue}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Precios:</span>
-                  <p className="font-semibold text-[#00FF8F]">
-                    Desde €{festivalData.minPrice?.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Tabs for Concerts and Transport */}
           {isLoading ? (
