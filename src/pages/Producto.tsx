@@ -21,14 +21,27 @@ import { handleLegacyRedirect } from "@/utils/redirects";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 
-interface TicketType {
-  availability: string;
-  code: string;
-  description: string;
-  face_value: number;
-  fees: number;
+interface PriceLevel {
+  id: number;
   name: string;
-  total: number;
+  face_value: number;
+  ticket_fees: number;
+  total_price: number;
+  availability: string;
+}
+
+interface PriceType {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  regular: boolean;
+  price_levels: PriceLevel[];
+}
+
+interface TicketTypesData {
+  currency: string;
+  price_types: PriceType[];
 }
 
 interface HotelData {
@@ -43,6 +56,9 @@ interface HotelData {
   selling_price: number;
   distance_km: number;
   facility_names_es?: string[];
+  checkin_date?: string;
+  checkout_date?: string;
+  nights?: number;
 }
 
 const Producto = () => {
@@ -100,7 +116,7 @@ const Producto = () => {
       return {
         hotel_id: hotel.hotel_id || hotel.id,
         hotel_name: hotel.name || hotel.hotel_name,
-        hotel_main_photo: hotel.main_photo || hotel.hotel_main_photo,
+        hotel_main_photo: hotel.main_photo || hotel.thumbnail || hotel.hotel_main_photo,
         hotel_description: hotel.hotel_description || hotel.description || "Hotel confortable cerca del venue",
         hotel_stars: hotel.stars || hotel.hotel_stars || 0,
         hotel_rating: hotel.rating || hotel.hotel_rating || 0,
@@ -109,6 +125,9 @@ const Producto = () => {
         selling_price: hotel.ssp_price || hotel.min_price || 0,
         distance_km: distanceKm,
         facility_names_es: hotel.facility_names_es || [],
+        checkin_date: hotel.checkin_date,
+        checkout_date: hotel.checkout_date,
+        nights: hotel.nights || 1,
       };
     });
   })();
@@ -216,17 +235,43 @@ const Producto = () => {
   // Generate SEO description
   const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
 
-  // Parse ticket prices from ticket_types
-  const rawTicketTypes = (eventDetails as any).ticket_types;
-  const ticketTypesArray = Array.isArray(rawTicketTypes) ? rawTicketTypes : [];
-  const ticketPrices = ticketTypesArray.map((ticket: TicketType) => ({
-    type: ticket.name || "Entrada General",
-    code: ticket.code,
-    description: ticket.description || "",
-    price: Number(ticket.face_value || 0),
-    fees: Number(ticket.fees || 0),
-    availability: ticket.availability || "available"
-  })).sort((a, b) => a.price - b.price);
+  // Parse ticket prices from ticket_types (JSON string with price_types array containing price_levels)
+  const ticketPrices = (() => {
+    const rawTicketTypes = (eventDetails as any).ticket_types;
+    if (!rawTicketTypes) return [];
+    
+    try {
+      // Parse JSON string if needed
+      const ticketData: TicketTypesData = typeof rawTicketTypes === 'string' 
+        ? JSON.parse(rawTicketTypes) 
+        : rawTicketTypes;
+      
+      if (!ticketData?.price_types || !Array.isArray(ticketData.price_types)) return [];
+      
+      // Flatten price_types -> price_levels into individual ticket options
+      const tickets: Array<{type: string; code: string; description: string; price: number; fees: number; availability: string}> = [];
+      
+      ticketData.price_types.forEach((priceType) => {
+        if (priceType.price_levels && Array.isArray(priceType.price_levels)) {
+          priceType.price_levels.forEach((level) => {
+            tickets.push({
+              type: priceType.name || level.name || "Entrada General",
+              code: priceType.code || "",
+              description: priceType.description || "",
+              price: Number(level.face_value || 0),
+              fees: Number(level.ticket_fees || 0),
+              availability: level.availability || "available"
+            });
+          });
+        }
+      });
+      
+      return tickets.sort((a, b) => a.price - b.price);
+    } catch (e) {
+      console.error("Error parsing ticket_types:", e);
+      return [];
+    }
+  })();
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 6);
   const hasMoreTickets = ticketPrices.length > 6;
