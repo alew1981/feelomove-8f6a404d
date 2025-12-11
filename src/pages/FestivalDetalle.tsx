@@ -10,7 +10,8 @@ import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { SEOHead } from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, MapPin, Users, ArrowLeft, Bus, Music } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -40,16 +41,33 @@ const FestivalDetalle = () => {
     enabled: !!festivalSlug,
   });
 
-  // Get festival metadata
+  // Separate concert events from transport events
+  const { concertEvents, transportEvents } = useMemo(() => {
+    if (!events) return { concertEvents: [], transportEvents: [] };
+    
+    const transport = events.filter(e => 
+      e.name?.toLowerCase().includes("autobus") || 
+      e.main_attraction?.toLowerCase().includes("autobus")
+    );
+    const concerts = events.filter(e => 
+      !e.name?.toLowerCase().includes("autobus") && 
+      !e.main_attraction?.toLowerCase().includes("autobus")
+    );
+    
+    return { concertEvents: concerts, transportEvents: transport };
+  }, [events]);
+
+  // Get festival metadata (using only concert events for stats)
   const festivalData = useMemo(() => {
     if (!events || events.length === 0) return null;
     
-    const firstEvent = events[0];
-    const lastEvent = events[events.length - 1];
-    const uniqueArtists = [...new Set(events.flatMap(e => e.attraction_names || []))];
+    const allEvents = concertEvents.length > 0 ? concertEvents : events;
+    const firstEvent = allEvents[0];
+    const lastEvent = allEvents[allEvents.length - 1];
+    const uniqueArtists = [...new Set(concertEvents.flatMap(e => e.attraction_names || []))];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
-    const minPrice = Math.min(...events.map(e => Number(e.price_min_incl_fees) || 0).filter(p => p > 0));
-    const maxPrice = Math.max(...events.map(e => Number(e.price_max_incl_fees) || 0));
+    const minPrice = Math.min(...allEvents.map(e => Number(e.price_min_incl_fees) || 0).filter(p => p > 0));
+    const maxPrice = Math.max(...allEvents.map(e => Number(e.price_max_incl_fees) || 0));
     
     return {
       name: firstEvent.secondary_attraction_name,
@@ -58,14 +76,15 @@ const FestivalDetalle = () => {
       city: firstEvent.venue_city,
       cities: uniqueCities,
       artistCount: uniqueArtists.length,
-      eventCount: events.length,
+      eventCount: concertEvents.length,
+      transportCount: transportEvents.length,
       firstDate: firstEvent.event_date,
       lastDate: lastEvent.event_date,
       minPrice,
       maxPrice,
       genre: firstEvent.genre,
     };
-  }, [events]);
+  }, [events, concertEvents, transportEvents]);
 
   const heroImage = festivalData?.image || "/placeholder.svg";
 
@@ -116,6 +135,12 @@ const FestivalDetalle = () => {
                   <Calendar className="h-3 w-3" />
                   {festivalData.eventCount} conciertos
                 </Badge>
+                {festivalData.transportCount > 0 && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Bus className="h-3 w-3" />
+                    {festivalData.transportCount} transportes
+                  </Badge>
+                )}
                 {festivalData.cities.map(city => (
                   <Badge key={city} variant="outline" className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
@@ -151,9 +176,7 @@ const FestivalDetalle = () => {
             </div>
           )}
 
-          {/* Events Grid */}
-          <h2 className="text-2xl font-bold mb-6">Conciertos del Festival</h2>
-          
+          {/* Tabs for Concerts and Transport */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
@@ -172,17 +195,56 @@ const FestivalDetalle = () => {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {events.map((event, index) => (
-                <div
-                  key={event.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <EventCard event={event} />
-                </div>
-              ))}
-            </div>
+            <Tabs defaultValue="conciertos" className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="conciertos" className="flex items-center gap-2">
+                  <Music className="h-4 w-4" />
+                  Conciertos del Festival ({concertEvents.length})
+                </TabsTrigger>
+                {transportEvents.length > 0 && (
+                  <TabsTrigger value="transporte" className="flex items-center gap-2">
+                    <Bus className="h-4 w-4" />
+                    Transporte al Festival ({transportEvents.length})
+                  </TabsTrigger>
+                )}
+              </TabsList>
+              
+              <TabsContent value="conciertos">
+                {concertEvents.length === 0 ? (
+                  <div className="text-center py-16">
+                    <p className="text-xl text-muted-foreground">No hay conciertos disponibles</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {concertEvents.map((event, index) => (
+                      <div
+                        key={event.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <EventCard event={event} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              {transportEvents.length > 0 && (
+                <TabsContent value="transporte">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {transportEvents.map((event, index) => (
+                      <div
+                        key={event.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <EventCard event={event} />
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              )}
+            </Tabs>
           )}
         </div>
         <Footer />
