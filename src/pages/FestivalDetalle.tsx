@@ -11,7 +11,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { SEOHead } from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, Users, ArrowLeft, Bus, Music } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, Bus, Play } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -130,34 +130,6 @@ const FestivalDetalle = () => {
           {/* Festival Info */}
           {festivalData && (
             <div className="bg-card border-2 border-border rounded-xl p-6 mb-8">
-              <div className="flex flex-wrap gap-3 mb-4">
-                {festivalData.genre && (
-                  <Badge variant="secondary" className="bg-[#00FF8F]/10 text-[#00FF8F] border-[#00FF8F]/30">
-                    {festivalData.genre}
-                  </Badge>
-                )}
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {festivalData.artistCount} artistas
-                </Badge>
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {festivalData.eventCount} conciertos
-                </Badge>
-                {festivalData.transportCount > 0 && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Bus className="h-3 w-3" />
-                    {festivalData.transportCount} transportes
-                  </Badge>
-                )}
-                {festivalData.cities.map(city => (
-                  <Badge key={city} variant="outline" className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {city}
-                  </Badge>
-                ))}
-              </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                 <div>
                   <span className="text-muted-foreground">Fechas:</span>
@@ -207,13 +179,13 @@ const FestivalDetalle = () => {
             <Tabs defaultValue="conciertos" className="w-full">
               <TabsList className="mb-6">
                 <TabsTrigger value="conciertos" className="flex items-center gap-2">
-                  <Music className="h-4 w-4" />
-                  Conciertos del Festival ({concertEvents.length})
+                  <Play className="h-4 w-4" />
+                  Conciertos del Festival
                 </TabsTrigger>
                 {transportEvents.length > 0 && (
                   <TabsTrigger value="transporte" className="flex items-center gap-2">
                     <Bus className="h-4 w-4" />
-                    Transporte al Festival ({transportEvents.length})
+                    Transporte al Festival
                   </TabsTrigger>
                 )}
               </TabsList>
