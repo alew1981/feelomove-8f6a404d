@@ -14,6 +14,7 @@ import ArtistaDetalle from "./pages/ArtistaDetalle";
 import Eventos from "./pages/Eventos";
 import Conciertos from "./pages/Conciertos";
 import Festivales from "./pages/Festivales";
+import FestivalDetalle from "./pages/FestivalDetalle";
 import Producto from "./pages/Producto";
 import Favoritos from "./pages/Favoritos";
 import NotFound from "./pages/NotFound";
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/conciertos" element={<Conciertos />} />
           <Route path="/festivales" element={<Festivales />} />
+          <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
           <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/producto/:slug" element={<Producto />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
