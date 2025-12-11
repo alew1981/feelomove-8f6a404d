@@ -32,8 +32,30 @@ const Musica = () => {
     },
   });
 
-  // Get hero image - using placeholder since genre cards don't have images
-  const heroImage = "/placeholder.svg";
+  // Fetch sample images per genre from concerts
+  const { data: genreImages } = useQuery({
+    queryKey: ["genreImages"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mv_concerts_cards")
+        .select("genre, image_large_url, image_standard_url")
+        .not("genre", "is", null)
+        .not("image_large_url", "is", null);
+      
+      if (error) throw error;
+      
+      const images: Record<string, string> = {};
+      data?.forEach((concert) => {
+        if (concert.genre && !images[concert.genre]) {
+          images[concert.genre] = concert.image_large_url || concert.image_standard_url || "";
+        }
+      });
+      return images;
+    }
+  });
+
+  // Get hero image from first genre's sample image
+  const heroImage = genreImages && genres?.[0]?.genre_name ? genreImages[genres[0].genre_name] : "/placeholder.svg";
 
   const filteredGenres = useMemo(() => {
     if (!genres) return [];
@@ -95,7 +117,7 @@ const Musica = () => {
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
                       <img 
-                        src={genre.sample_image_url || genre.sample_image_standard_url || "/placeholder.svg"} 
+                        src={genreImages?.[genre.genre_name] || "/placeholder.svg"} 
                         alt={genre.genre_name} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                       />
