@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
 
-# Sitemap
-Sitemap: https://feelomove.com/sitemap.xml
+# Sitemap Index
+Sitemap: https://feelomove.com/sitemap_index.xml
 
 # Crawl-delay
 Crawl-delay: 1
@@ -14,7 +14,7 @@ Disallow: /api/private/
 # Allow all event, artist, and destination pages
 Allow: /producto/
 Allow: /artista/
-Allow: /eventos/
+Allow: /conciertos/
+Allow: /festivales/
 Allow: /destinos/
 Allow: /musica/
-Allow: /favoritos/

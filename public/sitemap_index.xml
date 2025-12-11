@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-pages.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-events.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-artists.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-destinations.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-genres.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-festivals.xml</loc>
+  </sitemap>
+</sitemapindex>
