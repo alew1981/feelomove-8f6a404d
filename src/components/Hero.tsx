@@ -1,30 +1,190 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Search } from "lucide-react";
-import heroImage from "@/assets/hero-festival.jpg";
+import { Search, MapPin, Music, User, Calendar, X, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
+
+interface SearchResult {
+  type: 'event' | 'artist' | 'destination' | 'genre';
+  name: string;
+  path: string;
+  subtitle?: string;
+  image?: string;
+}
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Close results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Search as user types
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (searchQuery.length < 2) {
+        setResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      const searchResults: SearchResult[] = [];
+      const normalizedQuery = normalizeSearch(searchQuery);
+
+      try {
+        // Search events (concerts + festivals)
+        const [concertsRes, festivalsRes, destinationsRes, artistsRes, genresRes] = await Promise.all([
+          supabase.from("mv_concerts_cards").select("id, name, slug, venue_city, image_standard_url, artist_name").limit(50),
+          supabase.from("mv_festivals_cards").select("id, name, slug, venue_city, image_standard_url, main_attraction").limit(50),
+          supabase.from("mv_destinations_cards").select("city_name, city_slug, sample_image_url").limit(50),
+          supabase.from("mv_attractions").select("attraction_id, attraction_name, attraction_slug, sample_image_url").limit(50),
+          supabase.from("mv_genres_cards").select("genre_name, genre_id").limit(50)
+        ]);
+
+        // Filter concerts
+        concertsRes.data?.forEach(event => {
+          if (matchesSearch(event.name || '', searchQuery) || 
+              matchesSearch(event.artist_name || '', searchQuery) ||
+              matchesSearch(event.venue_city || '', searchQuery)) {
+            searchResults.push({
+              type: 'event',
+              name: event.name || '',
+              path: `/producto/${event.slug}`,
+              subtitle: event.venue_city || '',
+              image: event.image_standard_url || ''
+            });
+          }
+        });
+
+        // Filter festivals
+        festivalsRes.data?.forEach(event => {
+          if (matchesSearch(event.name || '', searchQuery) ||
+              matchesSearch(event.main_attraction || '', searchQuery) ||
+              matchesSearch(event.venue_city || '', searchQuery)) {
+            searchResults.push({
+              type: 'event',
+              name: event.name || '',
+              path: `/producto/${event.slug}`,
+              subtitle: event.venue_city || '',
+              image: event.image_standard_url || ''
+            });
+          }
+        });
+
+        // Filter destinations
+        destinationsRes.data?.forEach(dest => {
+          if (matchesSearch(dest.city_name || '', searchQuery)) {
+            searchResults.push({
+              type: 'destination',
+              name: dest.city_name || '',
+              path: `/destinos/${dest.city_slug || encodeURIComponent(dest.city_name || '')}`,
+              image: dest.sample_image_url || ''
+            });
+          }
+        });
+
+        // Filter artists
+        artistsRes.data?.forEach(artist => {
+          if (matchesSearch(artist.attraction_name || '', searchQuery)) {
+            searchResults.push({
+              type: 'artist',
+              name: artist.attraction_name || '',
+              path: `/artista/${artist.attraction_slug}`,
+              image: artist.sample_image_url || ''
+            });
+          }
+        });
+
+        // Filter genres
+        genresRes.data?.forEach(genre => {
+          if (matchesSearch(genre.genre_name || '', searchQuery)) {
+            searchResults.push({
+              type: 'genre',
+              name: genre.genre_name || '',
+              path: `/musica/${encodeURIComponent(genre.genre_name || '')}`
+            });
+          }
+        });
+
+        // Month search (in Spanish)
+        const months = [
+          { name: 'enero', num: '01' }, { name: 'febrero', num: '02' }, { name: 'marzo', num: '03' },
+          { name: 'abril', num: '04' }, { name: 'mayo', num: '05' }, { name: 'junio', num: '06' },
+          { name: 'julio', num: '07' }, { name: 'agosto', num: '08' }, { name: 'septiembre', num: '09' },
+          { name: 'octubre', num: '10' }, { name: 'noviembre', num: '11' }, { name: 'diciembre', num: '12' }
+        ];
+        months.forEach(month => {
+          if (matchesSearch(month.name, searchQuery)) {
+            searchResults.push({
+              type: 'event',
+              name: `Eventos en ${month.name.charAt(0).toUpperCase() + month.name.slice(1)}`,
+              path: `/conciertos?month=${month.num}`
+            });
+          }
+        });
+
+        setResults(searchResults.slice(0, 8));
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(searchTimeout);
+  }, [searchQuery]);
 
   const handleSearch = () => {
     if (searchQuery) {
       navigate(`/eventos?search=${encodeURIComponent(searchQuery)}`);
+      setShowResults(false);
+    }
+  };
+
+  const handleResultClick = (path: string) => {
+    navigate(path);
+    setShowResults(false);
+    setSearchQuery("");
+  };
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'artist': return <User className="h-4 w-4 text-accent" />;
+      case 'destination': return <MapPin className="h-4 w-4 text-accent" />;
+      case 'genre': return <Music className="h-4 w-4 text-accent" />;
+      default: return <Calendar className="h-4 w-4 text-accent" />;
     }
   };
 
   return (
-    <section className="relative min-h-[700px] flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
+    <section className="relative min-h-[750px] flex items-center justify-center overflow-hidden">
+      {/* Video Background */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Festival atmosphere"
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
           className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#121212]/90 via-[#121212]/80 to-background" />
+          poster="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80"
+        >
+          <source src="https://cdn.coverr.co/videos/coverr-crowd-at-a-concert-6669/1080p.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
 
       {/* Content */}
@@ -32,56 +192,137 @@ const Hero = () => {
         <div className="animate-fade-in">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 text-white tracking-tight">
             TU ESPECTÁCULO,{" "}
-            <span className="text-[#00FF8F]">TU ESTANCIA</span>
+            <span className="text-accent">TU ESTANCIA</span>
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto font-medium">
             Ahorra en grande y quédate cerca: reserva tu próxima aventura hoy con Feelomove+
           </p>
         </div>
 
-        {/* Simplified Search Bar */}
-        <div className="max-w-3xl mx-auto mb-12 animate-fade-in" style={{ animationDelay: "150ms" }}>
+        {/* Improved Search Bar */}
+        <div 
+          ref={searchRef}
+          className="max-w-3xl mx-auto mb-16 animate-fade-in relative" 
+          style={{ animationDelay: "150ms" }}
+        >
           <div className="bg-white rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#121212]/60" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Buscar eventos, artistas o ciudades..."
+                placeholder="Buscar por evento, artista, destino, género o mes..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowResults(true);
+                }}
+                onFocus={() => setShowResults(true)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-12 h-16 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-[#121212] placeholder:text-[#121212]/50"
+                className="pl-12 pr-10 h-16 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-foreground placeholder:text-muted-foreground"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setResults([]);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <Button
               onClick={handleSearch}
-              className="h-16 px-12 bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
+              className="h-16 px-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
             >
               Buscar
             </Button>
           </div>
+
+          {/* Search Results Dropdown */}
+          {showResults && (searchQuery.length >= 2 || isSearching) && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-border overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+              {isSearching ? (
+                <div className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Buscando...</span>
+                </div>
+              ) : results.length > 0 ? (
+                <div className="py-2">
+                  {results.map((result, index) => (
+                    <button
+                      key={`${result.type}-${result.name}-${index}`}
+                      onClick={() => handleResultClick(result.path)}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors text-left"
+                    >
+                      {result.image ? (
+                        <img 
+                          src={result.image} 
+                          alt={result.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                          {getIcon(result.type)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{result.name}</p>
+                        {result.subtitle && (
+                          <p className="text-sm text-muted-foreground">{result.subtitle}</p>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground capitalize px-2 py-1 bg-muted rounded-full">
+                        {result.type === 'event' ? 'Evento' : 
+                         result.type === 'artist' ? 'Artista' :
+                         result.type === 'destination' ? 'Destino' : 'Género'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : searchQuery.length >= 2 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  No se encontraron resultados para "{searchQuery}"
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
 
-        {/* 3 Steps Storytelling */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-white animate-fade-in" style={{ animationDelay: "300ms" }}>
-          <div className="flex flex-col items-center gap-3 max-w-[200px]">
-            <div className="w-16 h-16 rounded-full bg-[#00FF8F] flex items-center justify-center text-[#121212] font-black text-2xl shadow-lg">
+        {/* Improved 3 Steps */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-4 text-white animate-fade-in" style={{ animationDelay: "300ms" }}>
+          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
+            <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-black text-xl shadow-lg flex-shrink-0">
               1
             </div>
-            <span className="font-bold text-base text-center uppercase tracking-wide">Busca tu evento</span>
+            <div className="text-left">
+              <span className="font-bold text-base block">Busca tu evento</span>
+              <span className="text-sm text-white/70">Encuentra tu concierto ideal</span>
+            </div>
           </div>
-          <div className="hidden md:block w-12 h-1 bg-[#00FF8F]/50 rounded-full" />
-          <div className="flex flex-col items-center gap-3 max-w-[200px]">
-            <div className="w-16 h-16 rounded-full bg-[#00FF8F] flex items-center justify-center text-[#121212] font-black text-2xl shadow-lg">
+          
+          <div className="hidden md:block w-8 h-0.5 bg-accent/50 rounded-full" />
+          
+          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
+            <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-black text-xl shadow-lg flex-shrink-0">
               2
             </div>
-            <span className="font-bold text-base text-center uppercase tracking-wide">Selecciona tus entradas y hotel</span>
+            <div className="text-left">
+              <span className="font-bold text-base block">Elige entradas + hotel</span>
+              <span className="text-sm text-white/70">Paquetes todo incluido</span>
+            </div>
           </div>
-          <div className="hidden md:block w-12 h-1 bg-[#00FF8F]/50 rounded-full" />
-          <div className="flex flex-col items-center gap-3 max-w-[200px]">
-            <div className="w-16 h-16 rounded-full bg-[#00FF8F] flex items-center justify-center text-[#121212] font-black text-2xl shadow-lg">
+          
+          <div className="hidden md:block w-8 h-0.5 bg-accent/50 rounded-full" />
+          
+          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
+            <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-black text-xl shadow-lg flex-shrink-0">
               3
             </div>
-            <span className="font-bold text-base text-center uppercase tracking-wide">Disfruta de la música</span>
+            <div className="text-left">
+              <span className="font-bold text-base block">Disfruta la música</span>
+              <span className="text-sm text-white/70">Vive la experiencia</span>
+            </div>
           </div>
         </div>
       </div>

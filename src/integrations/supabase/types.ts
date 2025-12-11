@@ -1102,7 +1102,6 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       refresh_all_event_views: { Args: never; Returns: undefined }
-      refresh_event_product_page_mv: { Args: never; Returns: undefined }
       refresh_events_cards: { Args: never; Returns: undefined }
       refresh_hotel_packages_view: { Args: never; Returns: undefined }
       show_limit: { Args: never; Returns: number }
