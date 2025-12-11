@@ -52,18 +52,22 @@ const Festivales = () => {
     }
   });
 
-  // Group events by festival (secondary_attraction_name)
+  // Group events by festival (secondary_attraction_name OR main_attraction if secondary is null)
   const festivalGroups = useMemo(() => {
     if (!events) return [];
     
     const groups: Record<string, FestivalGroup> = {};
     
     events.forEach(event => {
-      const festivalName = event.secondary_attraction_name;
+      // Use secondary_attraction_name, or fallback to main_attraction, or event name
+      const festivalName = event.secondary_attraction_name || event.main_attraction || event.name;
       if (!festivalName) return;
       
-      if (!groups[festivalName]) {
-        groups[festivalName] = {
+      // Create a unique key for grouping
+      const groupKey = festivalName.toLowerCase();
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
           name: festivalName,
           slug: encodeURIComponent(festivalName.toLowerCase().replace(/\s+/g, "-")),
           image: event.image_large_url || event.image_standard_url || "",
@@ -79,13 +83,16 @@ const Festivales = () => {
         };
       }
       
-      const group = groups[festivalName];
+      const group = groups[groupKey];
       group.eventCount++;
       
       // Track unique artists
       const artistsSet = new Set<string>();
       events
-        .filter(e => e.secondary_attraction_name === festivalName)
+        .filter(e => {
+          const eName = e.secondary_attraction_name || e.main_attraction || e.name;
+          return eName?.toLowerCase() === festivalName.toLowerCase();
+        })
         .forEach(e => {
           e.attraction_names?.forEach((a: string) => artistsSet.add(a));
         });
