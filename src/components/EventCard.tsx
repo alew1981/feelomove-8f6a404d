@@ -46,8 +46,8 @@ const EventCard = ({ event }: EventCardProps) => {
   const badges = event.badges || event.event_badges || [];
 
   // Handle null/undefined dates
-  const hasDate = event.event_date && event.event_date.length > 0;
-  const eventDate = hasDate ? parseISO(event.event_date!) : null;
+  const hasDate = Boolean(event.event_date && event.event_date.length > 0);
+  const eventDate = hasDate && event.event_date ? parseISO(event.event_date) : null;
   const dayNumber = eventDate ? format(eventDate, "dd") : '';
   const monthName = eventDate ? format(eventDate, "MMM", { locale: es }).toUpperCase() : '';
   const year = eventDate ? format(eventDate, "yyyy") : '';
