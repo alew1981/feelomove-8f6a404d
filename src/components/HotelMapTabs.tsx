@@ -54,16 +54,21 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
 
   return (
     <Tabs defaultValue="hotels" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
-        <TabsTrigger value="hotels" className="flex items-center gap-2 text-xs sm:text-sm">
-          <Building2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Hoteles Disponibles</span>
-          <span className="sm:hidden">Hoteles</span>
+      <TabsList className="grid w-full grid-cols-2 mb-4 h-12 sm:h-10 p-1 bg-muted/80">
+        <TabsTrigger 
+          value="hotels" 
+          className="flex items-center justify-center gap-2 text-sm sm:text-sm font-semibold h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-md transition-all"
+        >
+          <Building2 className="h-4 w-4 sm:h-4 sm:w-4" />
+          <span>Hoteles</span>
         </TabsTrigger>
-        <TabsTrigger value="map" className="flex items-center gap-2 text-xs sm:text-sm" disabled={!mapWidgetHtml}>
-          <MapPin className="h-4 w-4" />
-          <span className="hidden sm:inline">Mapa Hoteles</span>
-          <span className="sm:hidden">Mapa</span>
+        <TabsTrigger 
+          value="map" 
+          className="flex items-center justify-center gap-2 text-sm sm:text-sm font-semibold h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-md transition-all" 
+          disabled={!mapWidgetHtml}
+        >
+          <MapPin className="h-4 w-4 sm:h-4 sm:w-4" />
+          <span>Mapa</span>
         </TabsTrigger>
       </TabsList>
       
