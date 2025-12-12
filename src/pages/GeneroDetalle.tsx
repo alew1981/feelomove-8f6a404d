@@ -178,13 +178,13 @@ const GeneroDetalle = () => {
       <Navbar />
       <div className="container mx-auto px-4 py-8 mt-16">
         
-        {/* Hero Image */}
-        <PageHero title={genreName} imageUrl={heroImage} />
-        
         {/* Breadcrumbs */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Breadcrumbs />
         </div>
+        
+        {/* Hero Image */}
+        <PageHero title={genreName} imageUrl={heroImage} />
         
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8">

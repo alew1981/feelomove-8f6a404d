@@ -183,13 +183,13 @@ const Festivales = () => {
         <Navbar />
         <div className="container mx-auto px-4 py-8 mt-16">
           
-          {/* Hero Image */}
-          <PageHero title="Festivales" imageUrl={heroImage} />
-          
           {/* Breadcrumbs */}
-          <div className="mb-6">
+          <div className="mb-4">
             <Breadcrumbs />
           </div>
+          
+          {/* Hero Image */}
+          <PageHero title="Festivales" imageUrl={heroImage} />
           
           {/* Description */}
           <div className="prose prose-lg max-w-none mb-8">
