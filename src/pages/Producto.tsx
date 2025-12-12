@@ -7,6 +7,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import HotelCard from "@/components/HotelCard";
 import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
+import MobileCartBar from "@/components/MobileCartBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -479,59 +480,59 @@ const Producto = () => {
               {/* Ticket Cards */}
               {ticketPrices.length > 0 && (
                 <div>
-                  <h2 className="text-2xl font-bold mb-6">Entradas</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Entradas</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                     {displayedTickets.map((ticket: any, index: number) => {
                       const quantity = getTicketQuantity(ticket.type);
                       
                       return (
                         <Card key={index} className="border-2 overflow-hidden hover:border-accent transition-colors">
-                          <CardContent className="p-4">
+                          <CardContent className="p-3 sm:p-4">
                             {/* Ticket Header */}
-                            <div className="mb-3">
-                              <h3 className="font-bold text-sm line-clamp-2 min-h-[40px]">{ticket.type}</h3>
+                            <div className="mb-2 sm:mb-3">
+                              <h3 className="font-bold text-xs sm:text-sm line-clamp-2 min-h-[32px] sm:min-h-[40px]">{ticket.type}</h3>
                               {ticket.description && (
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2 hidden sm:block">
                                   {ticket.description}
                                 </p>
                               )}
                               {ticket.code && (
-                                <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground mt-2 inline-block">
+                                <span className="text-[9px] sm:text-[10px] bg-muted px-1.5 sm:px-2 py-0.5 rounded text-muted-foreground mt-1 sm:mt-2 inline-block">
                                   {ticket.code}
                                 </span>
                               )}
                             </div>
 
                             {/* Price */}
-                            <div className="text-center py-3 border-y border-border">
-                              <div className="text-2xl font-black text-foreground">
+                            <div className="text-center py-2 sm:py-3 border-y border-border">
+                              <div className="text-xl sm:text-2xl font-black text-foreground">
                                 €{ticket.price.toFixed(0)}
                               </div>
                               {ticket.fees > 0 && (
-                                <p className="text-[10px] text-muted-foreground">+ €{ticket.fees.toFixed(2)} gastos</p>
+                                <p className="text-[9px] sm:text-[10px] text-muted-foreground">+ €{ticket.fees.toFixed(2)} gastos</p>
                               )}
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className="flex items-center justify-between mt-3">
+                            <div className="flex items-center justify-between mt-2 sm:mt-3">
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-8 w-8 rounded-full border-2"
+                                className="h-9 w-9 sm:h-8 sm:w-8 rounded-full border-2"
                                 onClick={() => handleTicketQuantityChange(ticket.type, -1)}
                                 disabled={quantity === 0}
                               >
-                                <Minus className="h-3 w-3" />
+                                <Minus className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
                               <span className="text-lg font-bold">{quantity}</span>
                               <Button
                                 variant="default"
                                 size="icon"
-                                className="h-8 w-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
+                                className="h-9 w-9 sm:h-8 sm:w-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
                                 onClick={() => handleTicketQuantityChange(ticket.type, 1)}
                                 disabled={quantity >= 10}
                               >
-                                <Plus className="h-3 w-3" />
+                                <Plus className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
                             </div>
 
@@ -578,8 +579,8 @@ const Producto = () => {
               )}
             </div>
 
-            {/* Sidebar - Shopping Cart */}
-            <div className="lg:col-span-1">
+            {/* Sidebar - Shopping Cart (Hidden on mobile, replaced by MobileCartBar) */}
+            <div className="hidden lg:block lg:col-span-1">
               <Card className="sticky top-24 border-2">
                 <CardHeader className="bg-foreground text-background">
                   <CardTitle className="uppercase tracking-wide text-sm">
@@ -709,6 +710,16 @@ const Producto = () => {
           </div>
         </main>
 
+        {/* Mobile Cart Bar */}
+        <MobileCartBar 
+          eventUrl={(eventDetails as any).event_url}
+          hotelUrl={(eventDetails as any).destination_deeplink}
+          eventName={eventDetails.event_name || undefined}
+        />
+
+        {/* Add padding at bottom for mobile cart bar */}
+        <div className="h-20 lg:hidden" />
+        
         <Footer />
       </div>
     </>
