@@ -120,13 +120,13 @@ const FestivalDetalle = () => {
             Volver a Festivales
           </Link>
           
-          {/* Hero Image */}
-          <PageHero title={festivalData?.name || festivalName} imageUrl={heroImage} />
-          
           {/* Breadcrumbs */}
-          <div className="mb-6">
+          <div className="mb-4">
             <Breadcrumbs />
           </div>
+          
+          {/* Hero Image */}
+          <PageHero title={festivalData?.name || festivalName} imageUrl={heroImage} />
           
 
           {/* Tabs for Concerts and Transport */}

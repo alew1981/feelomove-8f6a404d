@@ -19,16 +19,16 @@ const Favoritos = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 mt-16">
+        {/* Breadcrumbs */}
+        <div className="mb-4">
+          <Breadcrumbs />
+        </div>
+        
         {/* Hero Image */}
         <PageHero 
           title="Mis Favoritos" 
           imageUrl={heroImage || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1920"} 
         />
-        
-        {/* Breadcrumbs */}
-        <div className="mb-6">
-          <Breadcrumbs />
-        </div>
         
         <div className="mb-8">
           <p className="text-muted-foreground">

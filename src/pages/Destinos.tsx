@@ -73,13 +73,13 @@ const Destinos = () => {
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">
         
-        {/* Hero Image */}
-        <PageHero title="Destinos" imageUrl={heroImage} />
-        
         {/* Breadcrumbs */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Breadcrumbs />
         </div>
+        
+        {/* Hero Image */}
+        <PageHero title="Destinos" imageUrl={heroImage} />
         
         {/* Description */}
         <p className="text-muted-foreground leading-relaxed mb-8">
