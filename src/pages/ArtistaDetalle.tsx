@@ -293,10 +293,18 @@ const ArtistaDetalle = () => {
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight">
                 {artistName}
               </h1>
-              <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
                 <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
                   {events?.length || 0} eventos
                 </span>
+                {artistGenre && (
+                  <Link
+                    to={`/musica/${genreSlug}`}
+                    className="bg-foreground text-background px-3 py-1 rounded-full text-sm font-bold hover:bg-foreground/80 transition-colors"
+                  >
+                    {artistGenre}
+                  </Link>
+                )}
                 {cities.length > 0 && (
                   <span className="text-muted-foreground text-sm">
                     en {cities.slice(0, 3).join(", ")}{cities.length > 3 ? ` +${cities.length - 3}` : ""}
@@ -471,7 +479,7 @@ const ArtistaDetalle = () => {
                 </div>
                 <Link
                   to="/destinos"
-                  className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors"
+                  className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                 >
                   Ver todos <ChevronRight className="h-4 w-4" />
                 </Link>
@@ -485,12 +493,12 @@ const ArtistaDetalle = () => {
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-transparent group-hover:ring-accent transition-all">
                         {city.image ? (
                           <img
                             src={city.image}
                             alt={city.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
