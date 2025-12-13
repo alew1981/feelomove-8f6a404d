@@ -503,7 +503,7 @@ const ArtistaDetalle = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                      <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
                         {city.count} evento{city.count > 1 ? 's' : ''}
                       </span>
                       <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
