@@ -183,19 +183,16 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-[750px] flex items-center justify-center overflow-hidden">
-      {/* Video Background - LCP optimized with WebP poster and fetchpriority */}
+      {/* Static Image Background - LCP optimized */}
       <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
+        <img
+          src={heroConcertImage}
+          alt="Festival concert"
           className="w-full h-full object-cover"
-          poster={heroConcertImage}
-        >
-          <source src="https://cdn.coverr.co/videos/coverr-crowd-at-a-concert-6669/1080p.mp4" type="video/mp4" />
-        </video>
+          loading="eager"
+          decoding="sync"
+          fetchPriority="high"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
 

@@ -7,17 +7,19 @@ interface NavLinkCompatProps extends Omit<NavLinkProps, "className"> {
   className?: string;
   activeClassName?: string;
   pendingClassName?: string;
+  onMouseEnter?: () => void;
 }
 
 const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
-  ({ className, activeClassName, pendingClassName, to, ...props }, ref) => {
+  ({ className, activeClassName, pendingClassName, to, onMouseEnter: externalOnMouseEnter, ...props }, ref) => {
     const { prefetch } = usePrefetch();
     
     const handleMouseEnter = useCallback(() => {
       if (typeof to === "string") {
         prefetch(to);
       }
-    }, [to, prefetch]);
+      externalOnMouseEnter?.();
+    }, [to, prefetch, externalOnMouseEnter]);
 
     return (
       <RouterNavLink
