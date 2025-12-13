@@ -429,14 +429,11 @@ const ArtistaDetalle = () => {
           {relatedArtists && relatedArtists.length > 0 && (
             <div className="mt-16 mb-12">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Music className="h-6 w-6 text-accent" />
-                  <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
-                </div>
+                <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
                 {genreSlug && (
                   <Link 
                     to={`/musica/${genreSlug}`}
-                    className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors"
+                    className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                   >
                     Ver todos <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -473,10 +470,7 @@ const ArtistaDetalle = () => {
           {citiesWithData.length > 0 && (
             <div className="mt-12 mb-12">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-6 w-6 text-accent" />
-                  <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
-                </div>
+                <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
                 <Link
                   to="/destinos"
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
