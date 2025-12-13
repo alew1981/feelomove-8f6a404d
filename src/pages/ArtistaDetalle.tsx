@@ -425,50 +425,9 @@ const ArtistaDetalle = () => {
             </>
           )}
 
-          {/* Related Artists Section */}
-          {relatedArtists && relatedArtists.length > 0 && (
-            <div className="mt-16 mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
-                {genreSlug && (
-                  <Link 
-                    to={`/musica/${genreSlug}`}
-                    className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
-                  >
-                    Ver todos <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {relatedArtists.map((artist: any, index: number) => (
-                  <Link
-                    key={artist.slug}
-                    to={`/artista/${artist.slug}`}
-                    className="group relative aspect-square rounded-xl overflow-hidden animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    {artist.image ? (
-                      <img
-                        src={artist.image}
-                        alt={artist.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="font-bold text-white text-lg line-clamp-2">{artist.name}</h3>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Destinations Section - Compact List with Images */}
           {citiesWithData.length > 0 && (
-            <div className="mt-12 mb-12">
+            <div className="mt-16 mb-12">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
                 <Link
@@ -507,6 +466,47 @@ const ArtistaDetalle = () => {
                         {city.count} evento{city.count > 1 ? 's' : ''}
                       </span>
                       <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Related Artists Section */}
+          {relatedArtists && relatedArtists.length > 0 && (
+            <div className="mt-12 mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
+                {genreSlug && (
+                  <Link 
+                    to={`/musica/${genreSlug}`}
+                    className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
+                  >
+                    Ver todos <ChevronRight className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {relatedArtists.map((artist: any, index: number) => (
+                  <Link
+                    key={artist.slug}
+                    to={`/artista/${artist.slug}`}
+                    className="group relative aspect-square rounded-xl overflow-hidden animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {artist.image ? (
+                      <img
+                        src={artist.image}
+                        alt={artist.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-bold text-white text-lg line-clamp-2">{artist.name}</h3>
                     </div>
                   </Link>
                 ))}
