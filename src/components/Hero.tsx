@@ -196,8 +196,6 @@ const Hero = () => {
         >
           <source src="https://cdn.coverr.co/videos/coverr-crowd-at-a-concert-6669/1080p.mp4" type="video/mp4" />
         </video>
-        {/* Preload the poster image for LCP */}
-        <link rel="preload" as="image" href={heroConcertImage} fetchPriority="high" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
 
