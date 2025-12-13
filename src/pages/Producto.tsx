@@ -492,16 +492,10 @@ const Producto = () => {
                             {/* Ticket Header */}
                             <div className="mb-2 sm:mb-3">
                               <h3 className="font-bold text-xs sm:text-sm line-clamp-2 min-h-[32px] sm:min-h-[40px]">{ticket.type}</h3>
-                              {ticket.description && (
-                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2 hidden sm:block">
-                                  {ticket.description}
-                                </p>
-                              )}
-                              {ticket.code && (
-                                <span className="text-[9px] sm:text-[10px] bg-muted px-1.5 sm:px-2 py-0.5 rounded text-muted-foreground mt-1 sm:mt-2 inline-block">
-                                  {ticket.code}
-                                </span>
-                              )}
+                              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {ticket.description || ticket.type}
+                                {ticket.code && <span className="text-muted-foreground/70"> ({ticket.code})</span>}
+                              </p>
                             </div>
 
                             {/* Price */}
@@ -536,15 +530,6 @@ const Producto = () => {
                                 <Plus className="h-4 w-4 sm:h-3 sm:w-3" />
                               </Button>
                             </div>
-
-                            {/* Total if selected */}
-                            {quantity > 0 && (
-                              <div className="mt-2 text-center">
-                                <span className="text-xs font-bold text-accent">
-                                  Total: €{((ticket.price + ticket.fees) * quantity).toFixed(2)}
-                                </span>
-                              </div>
-                            )}
                           </CardContent>
                         </Card>
                       );
