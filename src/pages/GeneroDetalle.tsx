@@ -207,6 +207,32 @@ const GeneroDetalle = () => {
     }))
   }), [genreName, genreParam, seoDescription, events]);
 
+  // BreadcrumbList JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Inicio",
+        "item": "https://feelomove.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Géneros",
+        "item": "https://feelomove.com/musica"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": genreName,
+        "item": `https://feelomove.com/musica/${genreParam}`
+      }
+    ]
+  };
+
   return (
     <>
       <SEOHead
@@ -218,6 +244,10 @@ const GeneroDetalle = () => {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
     <div className="min-h-screen bg-background">
       <Navbar />

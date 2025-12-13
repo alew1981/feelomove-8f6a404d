@@ -409,6 +409,32 @@ const Producto = () => {
     } : undefined
   };
 
+  // BreadcrumbList JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Inicio",
+        "item": "https://feelomove.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": eventDetails.is_festival ? "Festivales" : "Conciertos",
+        "item": eventDetails.is_festival ? "https://feelomove.com/festivales" : "https://feelomove.com/conciertos"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": eventDetails.event_name,
+        "item": `https://feelomove.com/producto/${eventDetails.event_slug}`
+      }
+    ]
+  };
+
   return (
     <>
       <SEOHead
@@ -423,6 +449,10 @@ const Producto = () => {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div className="min-h-screen bg-background">
         <Navbar />
