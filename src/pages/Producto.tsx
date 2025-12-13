@@ -495,6 +495,7 @@ const Producto = () => {
                       const quantity = getTicketQuantity(ticket.id);
                       const isSoldOut = ticket.availability === "none";
                       const isLimited = ticket.availability === "limited";
+                      const isVIP = /vip/i.test(ticket.type || '') || /vip/i.test(ticket.description || '') || /vip/i.test(ticket.code || '');
                       
                       return (
                         <Card 
@@ -511,6 +512,11 @@ const Producto = () => {
                             {/* Ticket Header with Availability */}
                             <div className="mb-2 sm:mb-3">
                               <div className="flex items-center justify-end gap-2 mb-1">
+                                {isVIP && (
+                                  <span className="text-[10px] font-bold text-purple-600 bg-purple-500/10 px-2 py-0.5 rounded">
+                                    VIP
+                                  </span>
+                                )}
                                 {isSoldOut ? (
                                   <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded">
                                     AGOTADO
