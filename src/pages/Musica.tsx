@@ -100,6 +100,10 @@ const Musica = () => {
         keywords="géneros música, rock españa, pop español, electrónica festivales"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Géneros" }
+        ]}
       />
       <div className="min-h-screen bg-background">
       <Navbar />

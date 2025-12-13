@@ -97,6 +97,10 @@ const Destinos = () => {
         keywords="destinos españa, eventos madrid, eventos barcelona, eventos valencia"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Destinos" }
+        ]}
       />
       <div className="min-h-screen bg-background">
       <Navbar />

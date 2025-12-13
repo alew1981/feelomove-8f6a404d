@@ -1,5 +1,10 @@
 import { Helmet } from "react-helmet-async";
 
+interface BreadcrumbItem {
+  name: string;
+  url?: string;
+}
+
 interface SEOHeadProps {
   title: string;
   description: string;
@@ -9,6 +14,7 @@ interface SEOHeadProps {
   keywords?: string;
   jsonLd?: object | object[];
   pageType?: "WebPage" | "ItemPage" | "CollectionPage" | "SearchResultsPage" | "AboutPage" | "ContactPage";
+  breadcrumbs?: BreadcrumbItem[];
 }
 
 // Organization schema - global for all pages
@@ -70,6 +76,22 @@ const siteNavigationSchema = {
   ]
 };
 
+// Generate BreadcrumbList schema from breadcrumbs array
+const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]) => {
+  if (!breadcrumbs || breadcrumbs.length === 0) return null;
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      ...(item.url && { "item": item.url.startsWith('http') ? item.url : `https://feelomove.com${item.url}` })
+    }))
+  };
+};
+
 export const SEOHead = ({ 
   title, 
   description, 
@@ -78,7 +100,8 @@ export const SEOHead = ({
   ogType = "website",
   keywords,
   jsonLd,
-  pageType = "WebPage"
+  pageType = "WebPage",
+  breadcrumbs
 }: SEOHeadProps) => {
   const fullTitle = `${title} | FEELOMOVE+`;
   const siteUrl = "https://feelomove.com";
@@ -107,11 +130,15 @@ export const SEOHead = ({
     "inLanguage": "es-ES"
   };
 
+  // Generate breadcrumb schema if provided
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs || []);
+
   // Combine all JSON-LD schemas
   const allSchemas = [
     organizationSchema,
     siteNavigationSchema,
     webPageSchema,
+    ...(breadcrumbSchema ? [breadcrumbSchema] : []),
     ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
   ];
 

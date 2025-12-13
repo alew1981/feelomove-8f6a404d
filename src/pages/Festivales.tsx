@@ -216,6 +216,10 @@ const Festivales = () => {
         keywords="festivales españa, festivales música, festivales verano, festivales madrid"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Festivales" }
+        ]}
       />
       
       <div className="min-h-screen bg-background">

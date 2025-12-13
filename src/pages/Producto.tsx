@@ -413,32 +413,6 @@ const Producto = () => {
     }))
   };
 
-  // BreadcrumbList JSON-LD
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Inicio",
-        "item": "https://feelomove.com"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": eventDetails.is_festival ? "Festivales" : "Conciertos",
-        "item": eventDetails.is_festival ? "https://feelomove.com/festivales" : "https://feelomove.com/conciertos"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": eventDetails.event_name,
-        "item": `https://feelomove.com/producto/${eventDetails.event_slug}`
-      }
-    ]
-  };
-
   return (
     <>
       <SEOHead
@@ -449,7 +423,13 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        jsonLd={[jsonLdData, breadcrumbJsonLd]}
+        jsonLd={jsonLdData}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: eventDetails.is_festival ? "Festivales" : "Conciertos", url: eventDetails.is_festival ? "/festivales" : "/conciertos" },
+          { name: eventDetails.venue_city || "", url: `/destinos/${(eventDetails.venue_city || "").toLowerCase().replace(/\s+/g, '-')}` },
+          { name: eventDetails.event_name || "" }
+        ]}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

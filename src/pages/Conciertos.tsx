@@ -166,6 +166,10 @@ const Conciertos = () => {
         keywords="conciertos españa, entradas conciertos, conciertos madrid, conciertos barcelona"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Conciertos" }
+        ]}
       />
       
       <div className="min-h-screen bg-background">
