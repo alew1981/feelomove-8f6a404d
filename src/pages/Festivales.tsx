@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -170,6 +171,43 @@ const Festivales = () => {
   // Get hero image from first festival
   const heroImage = festivalGroups[0]?.image || "/placeholder.svg";
 
+  // Generate JSON-LD for festivals list
+  const jsonLd = filteredFestivals.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Festivales en España",
+    "description": "Lista de festivales de música disponibles en España",
+    "numberOfItems": filteredFestivals.length,
+    "itemListElement": filteredFestivals.slice(0, 20).map((festival, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Festival",
+        "name": festival.name,
+        "startDate": festival.firstDate,
+        "endDate": festival.lastDate,
+        "url": `https://feelomove.com/festivales/${festival.slug}`,
+        "image": festival.image,
+        "location": {
+          "@type": "Place",
+          "name": festival.venue,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": festival.city
+          }
+        },
+        ...(festival.minPrice > 0 && {
+          "offers": {
+            "@type": "Offer",
+            "price": festival.minPrice,
+            "priceCurrency": "EUR",
+            "availability": "https://schema.org/InStock"
+          }
+        })
+      }
+    }))
+  } : null;
+
   return (
     <>
       <SEOHead
@@ -178,6 +216,13 @@ const Festivales = () => {
         canonical="/festivales"
         keywords="festivales españa, festivales música, festivales verano, festivales madrid"
       />
+      {jsonLd && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+          </script>
+        </Helmet>
+      )}
       
       <div className="min-h-screen bg-background">
         <Navbar />

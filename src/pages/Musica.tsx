@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -72,8 +73,36 @@ const Musica = () => {
     }
   }, [inView, displayedGenres.length, filteredGenres.length]);
 
+  // Generate JSON-LD for genres
+  const jsonLd = genres && genres.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Géneros Musicales en España",
+    "description": "Eventos por género musical en España",
+    "numberOfItems": genres.length,
+    "itemListElement": genres.slice(0, 20).map((genre: any, index: number) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "MusicGenre",
+        "name": genre.genre_name,
+        "url": `https://feelomove.com/musica/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`
+      }
+    }))
+  } : null;
+
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Géneros Musicales - Eventos por Estilo | FEELOMOVE+</title>
+        <meta name="description" content="Explora eventos por género musical en España. Rock, Pop, Electrónica, Jazz y más estilos musicales." />
+        {jsonLd && (
+          <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+          </script>
+        )}
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">
         
@@ -164,6 +193,7 @@ const Musica = () => {
       </main>
       <Footer />
     </div>
+    </>
   );
 };
 
