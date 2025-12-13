@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,7 +12,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, MapPin, Music, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { format } from "date-fns";
@@ -109,12 +109,77 @@ const ArtistaDetalle = () => {
   // Get hero image from first event
   const heroImage = (events?.[0] as any)?.image_large_url || (events?.[0] as any)?.image_standard_url;
 
-  // Extract unique cities for filters
+  // Get genre from first event
+  const artistGenre = (events?.[0] as any)?.genre || null;
+  const genreSlug = (events?.[0] as any)?.genre_slug || null;
+
+  // Extract unique cities for filters with event counts
   const cities = useMemo(() => {
     if (!events) return [];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
     return uniqueCities.sort() as string[];
   }, [events]);
+
+  // Cities with event counts and images for destination section
+  const citiesWithData = useMemo(() => {
+    if (!events) return [];
+    const cityMap = new Map<string, { count: number; image: string | null; slug: string }>();
+    
+    events.forEach((event: any) => {
+      const city = event.venue_city;
+      if (city) {
+        const existing = cityMap.get(city);
+        if (existing) {
+          existing.count++;
+        } else {
+          cityMap.set(city, {
+            count: 1,
+            image: event.image_standard_url || event.image_large_url,
+            slug: event.venue_city_slug || normalizeSearch(city).replace(/\s+/g, '-')
+          });
+        }
+      }
+    });
+    
+    return Array.from(cityMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.count - a.count);
+  }, [events]);
+
+  // Fetch related artists from the same genre
+  const { data: relatedArtists } = useQuery({
+    queryKey: ["related-artists", artistGenre, artistName],
+    queryFn: async () => {
+      if (!artistGenre) return [];
+      
+      const { data, error } = await supabase
+        .from("mv_concerts_cards")
+        .select("artist_id, artist_name, image_standard_url, genre, genre_slug")
+        .eq("genre", artistGenre)
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true })
+        .limit(100);
+      
+      if (error) throw error;
+      
+      // Group by artist and filter out current artist
+      const artistMap = new Map<string, any>();
+      (data || []).forEach((event: any) => {
+        if (event.artist_name && 
+            normalizeSearch(event.artist_name) !== normalizeSearch(artistName) &&
+            !artistMap.has(event.artist_name)) {
+          artistMap.set(event.artist_name, {
+            name: event.artist_name,
+            image: event.image_standard_url,
+            slug: generateSlug(event.artist_name)
+          });
+        }
+      });
+      
+      return Array.from(artistMap.values()).slice(0, 4);
+    },
+    enabled: !!artistGenre && !!artistName,
+  });
 
   const availableMonths = useMemo(() => {
     if (!events) return [];
@@ -350,6 +415,85 @@ const ArtistaDetalle = () => {
                 </div>
               )}
             </>
+          )}
+
+          {/* Related Artists Section */}
+          {relatedArtists && relatedArtists.length > 0 && (
+            <div className="mt-16 mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Music className="h-6 w-6 text-accent" />
+                  <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
+                </div>
+                {genreSlug && (
+                  <Link 
+                    to={`/musica/${genreSlug}`}
+                    className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors"
+                  >
+                    Ver todos <ChevronRight className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {relatedArtists.map((artist: any, index: number) => (
+                  <Link
+                    key={artist.slug}
+                    to={`/artista/${artist.slug}`}
+                    className="group relative aspect-square rounded-xl overflow-hidden animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {artist.image ? (
+                      <img
+                        src={artist.image}
+                        alt={artist.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-bold text-white text-lg line-clamp-2">{artist.name}</h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Destinations Section */}
+          {citiesWithData.length > 0 && (
+            <div className="mt-12 mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <MapPin className="h-6 w-6 text-accent" />
+                <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {citiesWithData.map((city, index) => (
+                  <Link
+                    key={city.name}
+                    to={`/destinos/${city.slug}`}
+                    className="group relative aspect-[4/3] rounded-xl overflow-hidden animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {city.image ? (
+                      <img
+                        src={city.image}
+                        alt={city.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-bold text-white text-lg">{city.name}</h3>
+                      <p className="text-white/80 text-sm">{city.count} evento{city.count > 1 ? 's' : ''}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           )}
         </div>
         <Footer />
