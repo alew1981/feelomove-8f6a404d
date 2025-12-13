@@ -105,17 +105,30 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
             </div>
           </>
         ) : hotelsListWidgetHtml ? (
-          <div className="rounded-xl overflow-hidden border-2 border-border">
-            <iframe
-              srcDoc={hotelsListWidgetHtml}
-              className="w-full min-h-[500px] sm:min-h-[600px] border-0"
-              title="Lista de hoteles"
-              sandbox="allow-scripts allow-same-origin"
-            />
+          <div className="space-y-4">
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-start gap-3">
+              <Building2 className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Buscar hoteles cercanos</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Encuentra alojamiento cerca del evento con disponibilidad y precios actualizados.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl overflow-hidden border-2 border-border shadow-lg">
+              <iframe
+                srcDoc={hotelsListWidgetHtml}
+                className="w-full min-h-[500px] sm:min-h-[600px] border-0"
+                title="Lista de hoteles"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No hay hoteles disponibles para este evento</p>
+          <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed border-border">
+            <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-muted-foreground font-medium">No hay hoteles disponibles para este evento</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">Los hoteles se añadirán próximamente</p>
           </div>
         )}
       </TabsContent>

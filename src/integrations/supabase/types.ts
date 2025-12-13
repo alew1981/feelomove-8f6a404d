@@ -1035,8 +1035,8 @@ export type Database = {
           id: string
           name: string
           venue_city: string
-          venue_latitude: string
-          venue_longitude: string
+          venue_latitude: number
+          venue_longitude: number
         }[]
       }
       get_facility_names_es: {
