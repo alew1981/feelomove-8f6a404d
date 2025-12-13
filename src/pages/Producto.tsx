@@ -371,10 +371,13 @@ const Producto = () => {
     "@context": "https://schema.org",
     "@type": eventDetails.is_festival ? "Festival" : "MusicEvent",
     "name": eventDetails.event_name,
+    "description": seoDescription,
     "startDate": eventDetails.event_date,
+    "endDate": eventDetails.event_date,
+    "eventStatus": eventDetails.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,
     "image": eventImage,
-    "description": seoDescription,
     "location": {
       "@type": "Place",
       "name": eventDetails.venue_name,
@@ -390,6 +393,14 @@ const Producto = () => {
         "longitude": eventDetails.venue_longitude
       } : undefined
     },
+    "organizer": (eventDetails as any).promoter_name ? {
+      "@type": "Organization",
+      "name": (eventDetails as any).promoter_name
+    } : {
+      "@type": "Organization",
+      "name": "FEELOMOVE+",
+      "url": "https://feelomove.com"
+    },
     "offers": ticketPrices.length > 0 ? {
       "@type": "AggregateOffer",
       "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,
@@ -397,16 +408,13 @@ const Producto = () => {
       "highPrice": ticketPrices[ticketPrices.length - 1]?.price || (eventDetails as any).price_min_incl_fees,
       "priceCurrency": "EUR",
       "availability": eventDetails.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
-      "offerCount": ticketPrices.length
+      "offerCount": ticketPrices.length,
+      "validFrom": new Date().toISOString()
     } : undefined,
     "performer": artistNames.map((name: string) => ({
       "@type": "MusicGroup",
       "name": name
-    })),
-    "organizer": (eventDetails as any).promoter_name ? {
-      "@type": "Organization",
-      "name": (eventDetails as any).promoter_name
-    } : undefined
+    }))
   };
 
   // BreadcrumbList JSON-LD
