@@ -33,30 +33,52 @@ const Musica = () => {
     },
   });
 
-  // Fetch sample images per genre from concerts
+  // Fetch sample images per genre from concerts AND festivals
   const { data: genreImages } = useQuery({
     queryKey: ["genreImages"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch from concerts
+      const { data: concertData } = await supabase
         .from("mv_concerts_cards")
         .select("genre, image_large_url, image_standard_url")
         .not("genre", "is", null)
         .not("image_large_url", "is", null);
       
-      if (error) throw error;
+      // Fetch from festivals
+      const { data: festivalData } = await supabase
+        .from("mv_festivals_cards")
+        .select("genre, image_large_url, image_standard_url")
+        .not("genre", "is", null)
+        .not("image_large_url", "is", null);
       
       const images: Record<string, string> = {};
-      data?.forEach((concert) => {
+      
+      // Add festival images first (so concerts can override if available)
+      festivalData?.forEach((event) => {
+        if (event.genre && !images[event.genre]) {
+          images[event.genre] = event.image_large_url || event.image_standard_url || "";
+        }
+      });
+      
+      // Add concert images
+      concertData?.forEach((concert) => {
         if (concert.genre && !images[concert.genre]) {
           images[concert.genre] = concert.image_large_url || concert.image_standard_url || "";
         }
       });
+      
       return images;
     }
   });
 
-  // Get hero image from first genre's sample image
-  const heroImage = genreImages && genres?.[0]?.genre_name ? genreImages[genres[0].genre_name] : "/placeholder.svg";
+  // Get hero image from first genre's sample image (prefer festival images for variety)
+  const heroImage = useMemo(() => {
+    if (genreImages && Object.keys(genreImages).length > 0) {
+      // Try to get Festival de Música image first, then any other genre
+      return genreImages['Festival de Música'] || genreImages['Pop/Rock'] || Object.values(genreImages)[0] || "/placeholder.svg";
+    }
+    return "/placeholder.svg";
+  }, [genreImages]);
 
   const filteredGenres = useMemo(() => {
     if (!genres) return [];

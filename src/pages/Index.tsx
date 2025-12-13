@@ -109,15 +109,27 @@ const Index = () => {
         .order('event_count', { ascending: false })
         .limit(4);
       
-      // Fetch sample images for each genre from concerts
+      // Fetch sample images for each genre from concerts OR festivals
       if (data && data.length > 0) {
         const genresWithImages = await Promise.all(
           data.map(async (genre: any) => {
-            const { data: eventData } = await supabase
+            // Try concerts first
+            let { data: eventData } = await supabase
               .from('mv_concerts_cards')
               .select('image_standard_url')
               .eq('genre', genre.genre_name)
               .limit(1);
+            
+            // If no concert found, try festivals
+            if (!eventData || eventData.length === 0) {
+              const { data: festivalData } = await supabase
+                .from('mv_festivals_cards')
+                .select('image_standard_url')
+                .eq('genre', genre.genre_name)
+                .limit(1);
+              eventData = festivalData;
+            }
+            
             return {
               ...genre,
               sample_image_url: eventData?.[0]?.image_standard_url || null
