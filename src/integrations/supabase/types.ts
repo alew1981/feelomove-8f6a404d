@@ -1043,6 +1043,10 @@ export type Database = {
         Args: { facility_id_array: number[] }
         Returns: string[]
       }
+      get_homepage_data: {
+        Args: { p_cities?: string[]; p_featured_ids?: string[] }
+        Returns: Json
+      }
       get_nearest_hotels: {
         Args: {
           p_city: string

@@ -11,203 +11,46 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
 
-// Featured event IDs for "Feelomove + love" section
-const FEATURED_EVENT_IDS = ['172524182', '35655583', '854574106', '2034594644'];
-
-// Featured cities
+// Featured cities for display order
 const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];
 
+// Type for homepage data from RPC
+interface HomepageData {
+  featured_events: any[];
+  city_events: Record<string, any[]>;
+  concerts: any[];
+  festivals: any[];
+  destinations: any[];
+  artists: any[];
+  genres: any[];
+}
+
 const Index = () => {
-  // Fetch "Feelomove + love" featured events by specific IDs
-  const { data: loveEvents, isLoading: isLoadingLove } = useQuery({
-    queryKey: ["homepage-love-events"],
+  // Single consolidated query using RPC function
+  const { data: homepageData, isLoading } = useQuery({
+    queryKey: ["homepage-data"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .in("id", FEATURED_EVENT_IDS);
-      if (error) throw error;
-      
-      // Also check festivals for these IDs
-      const { data: festivalData } = await supabase
-        .from("mv_festivals_cards")
-        .select("*")
-        .in("id", FEATURED_EVENT_IDS);
-      
-      const allEvents = [...(data || []), ...(festivalData || [])];
-      // Sort by the order of FEATURED_EVENT_IDS
-      return allEvents.sort((a, b) => {
-        const indexA = FEATURED_EVENT_IDS.indexOf(a.id);
-        const indexB = FEATURED_EVENT_IDS.indexOf(b.id);
-        return indexA - indexB;
-      });
-    }
+      const { data, error } = await supabase.rpc('get_homepage_data');
+      if (error) {
+        console.error('Homepage RPC error:', error);
+        throw error;
+      }
+      return data as unknown as HomepageData;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch events for each featured city
-  const { data: barcelonaEvents, isLoading: isLoadingBarcelona } = useQuery({
-    queryKey: ["homepage-barcelona"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .ilike("venue_city", "%Barcelona%")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const { data: madridEvents, isLoading: isLoadingMadrid } = useQuery({
-    queryKey: ["homepage-madrid"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .ilike("venue_city", "%Madrid%")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const { data: valenciaEvents, isLoading: isLoadingValencia } = useQuery({
-    queryKey: ["homepage-valencia"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .ilike("venue_city", "%Valencia%")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const { data: sevillaEvents, isLoading: isLoadingSevilla } = useQuery({
-    queryKey: ["homepage-sevilla"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .ilike("venue_city", "%Sevilla%")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch concerts from mv_concerts_cards
-  const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
-    queryKey: ["homepage-concerts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_concerts_cards")
-        .select("*")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch festivals from mv_festivals_cards
-  const { data: festivals, isLoading: isLoadingFestivals } = useQuery({
-    queryKey: ["homepage-festivals"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_festivals_cards")
-        .select("*")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch destinations from mv_destinations_cards
-  const { data: destinations, isLoading: isLoadingDestinations } = useQuery({
-    queryKey: ["homepage-destinations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_destinations_cards")
-        .select("*")
-        .order("event_count", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch artists from mv_attractions
-  const { data: artists, isLoading: isLoadingArtists } = useQuery({
-    queryKey: ["homepage-artists"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_attractions")
-        .select("*")
-        .order("event_count", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  // Fetch genres from mv_genres_cards with images from concerts
-  const { data: genres, isLoading: isLoadingGenres } = useQuery({
-    queryKey: ["homepage-genres-with-images"],
-    queryFn: async () => {
-      const { data: genreData, error } = await supabase
-        .from("mv_genres_cards")
-        .select("*")
-        .order("event_count", { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      
-      // Fetch sample images for each genre from concerts
-      const genresWithImages = await Promise.all(
-        (genreData || []).map(async (genre) => {
-          const { data: concertData } = await supabase
-            .from("mv_concerts_cards")
-            .select("image_standard_url")
-            .eq("genre", genre.genre_name)
-            .not("image_standard_url", "is", null)
-            .limit(1)
-            .single();
-          
-          return {
-            ...genre,
-            sample_image_url: concertData?.image_standard_url || null
-          };
-        })
-      );
-      
-      return genresWithImages;
-    }
-  });
-
-  const isLoading = isLoadingConcerts || isLoadingFestivals || isLoadingDestinations || isLoadingArtists || isLoadingGenres;
+  // Extract data from consolidated response
+  const loveEvents = homepageData?.featured_events || [];
+  const cityEvents = homepageData?.city_events || {};
+  const concerts = homepageData?.concerts || [];
+  const festivals = homepageData?.festivals || [];
+  const destinations = homepageData?.destinations || [];
+  const artists = homepageData?.artists || [];
+  const genres = homepageData?.genres || [];
 
   // Events with hotels - combine first 4 events
-  const eventsWithHotels = [...(concerts || []), ...(festivals || [])].slice(0, 4);
-
-  // City events mapping
-  const cityEvents = {
-    Barcelona: { events: barcelonaEvents, isLoading: isLoadingBarcelona },
-    Madrid: { events: madridEvents, isLoading: isLoadingMadrid },
-    Valencia: { events: valenciaEvents, isLoading: isLoadingValencia },
-    Sevilla: { events: sevillaEvents, isLoading: isLoadingSevilla }
-  };
+  const eventsWithHotels = [...concerts, ...festivals].slice(0, 4);
 
   // Generate JSON-LD for homepage
   const jsonLd = {
@@ -249,7 +92,7 @@ const Index = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoadingLove ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : loveEvents && loveEvents.length > 0 ? (
               loveEvents.map((event, index) => (
@@ -274,10 +117,10 @@ const Index = () => {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {cityEvents[city as keyof typeof cityEvents].isLoading ? (
+              {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
-              ) : cityEvents[city as keyof typeof cityEvents].events && cityEvents[city as keyof typeof cityEvents].events!.length > 0 ? (
-                cityEvents[city as keyof typeof cityEvents].events!.map((event) => (
+              ) : cityEvents[city] && cityEvents[city].length > 0 ? (
+                cityEvents[city].map((event: any) => (
                   <EventCard key={event.id} event={event} />
                 ))
               ) : (
@@ -299,10 +142,10 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoadingConcerts ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              concerts?.map((event) => (
+              concerts.map((event: any) => (
                 <EventCard key={event.id} event={event} />
               ))
             )}
@@ -321,10 +164,10 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoadingFestivals ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : festivals && festivals.length > 0 ? (
-              festivals.map((event) => (
+              festivals.map((event: any) => (
                 <EventCard key={event.id} event={event} />
               ))
             ) : (
@@ -348,7 +191,7 @@ const Index = () => {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              eventsWithHotels.map((event) => (
+              eventsWithHotels.map((event: any) => (
                 <EventCard key={event.id} event={event} />
               ))
             )}
@@ -364,12 +207,12 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoadingDestinations ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              destinations?.map((destination) => (
+              destinations.map((destination: any) => (
                 <Link
                   key={destination.city_name}
                   to={`/destinos/${encodeURIComponent(destination.city_name || '')}`}
@@ -380,6 +223,7 @@ const Index = () => {
                       <img
                         src={destination.sample_image_url || "/placeholder.svg"}
                         alt={destination.city_name || "Destino"}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -406,12 +250,12 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoadingArtists ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="h-64 animate-pulse bg-muted" />
               ))
             ) : (
-              artists?.map((artist) => (
+              artists.map((artist: any) => (
                 <Link
                   key={artist.attraction_id}
                   to={`/artista/${artist.attraction_slug}`}
@@ -422,6 +266,7 @@ const Index = () => {
                       <img
                         src={artist.sample_image_url || "/placeholder.svg"}
                         alt={artist.attraction_name || "Artista"}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -448,30 +293,33 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoadingGenres ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="h-64 animate-pulse bg-muted" />
+                <Card key={i} className="h-48 animate-pulse bg-muted" />
               ))
             ) : (
-              genres?.map((genre) => (
+              genres.map((genre: any) => (
                 <Link
-                  key={genre.genre_name}
+                  key={genre.genre_id}
                   to={`/musica/${encodeURIComponent(genre.genre_name || '')}`}
                   className="group block"
                 >
-                  <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
+                  <Card className="overflow-hidden h-48 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
                     <div className="relative h-full">
-                      <img
-                        src={genre.sample_image_url || "/placeholder.svg"}
-                        alt={genre.genre_name || "Género"}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                      {genre.sample_image_url ? (
+                        <img
+                          src={genre.sample_image_url}
+                          alt={genre.genre_name || "Género"}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-accent/20 via-accent/10 to-background" />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <h3 className="text-2xl font-bold text-white mb-2">{genre.genre_name}</h3>
-                        <Badge className="bg-accent text-accent-foreground">
-                          {genre.event_count} eventos
-                        </Badge>
+                        <h3 className="text-xl font-bold text-white mb-1">{genre.genre_name}</h3>
+                        <p className="text-white/80 text-sm">{genre.event_count} eventos</p>
                       </div>
                     </div>
                   </Card>
@@ -483,7 +331,7 @@ const Index = () => {
       </main>
 
       <Footer />
-    </div>
+      </div>
     </>
   );
 };
