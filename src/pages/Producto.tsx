@@ -288,8 +288,8 @@ const Producto = () => {
     }
   })();
 
-  const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 6);
-  const hasMoreTickets = ticketPrices.length > 6;
+  const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 8);
+  const hasMoreTickets = ticketPrices.length > 8;
 
   const handleTicketQuantityChange = (ticketType: string, change: number) => {
     const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
@@ -492,9 +492,8 @@ const Producto = () => {
                             {/* Ticket Header */}
                             <div className="mb-2 sm:mb-3">
                               <h3 className="font-bold text-xs sm:text-sm line-clamp-2 min-h-[32px] sm:min-h-[40px]">{ticket.type}</h3>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2">
+                              <p className="text-xs sm:text-sm font-semibold text-foreground/80 mt-1 line-clamp-2">
                                 {ticket.description || ticket.type}
-                                {ticket.code && <span className="text-muted-foreground/70"> ({ticket.code})</span>}
                               </p>
                             </div>
 
@@ -509,25 +508,25 @@ const Producto = () => {
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className="flex items-center justify-between mt-2 sm:mt-3">
+                            <div className="flex items-center justify-center gap-3 mt-3 bg-muted/50 rounded-full p-1.5">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 sm:h-8 sm:w-8 rounded-full border-2"
+                                className="h-10 w-10 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
                                 onClick={() => handleTicketQuantityChange(ticket.type, -1)}
                                 disabled={quantity === 0}
                               >
-                                <Minus className="h-4 w-4 sm:h-3 sm:w-3" />
+                                <Minus className="h-5 w-5" />
                               </Button>
-                              <span className="text-lg font-bold">{quantity}</span>
+                              <span className="w-10 text-center font-bold text-xl">{quantity}</span>
                               <Button
-                                variant="default"
+                                variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 sm:h-8 sm:w-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
+                                className="h-10 w-10 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
                                 onClick={() => handleTicketQuantityChange(ticket.type, 1)}
                                 disabled={quantity >= 10}
                               >
-                                <Plus className="h-4 w-4 sm:h-3 sm:w-3" />
+                                <Plus className="h-5 w-5" />
                               </Button>
                             </div>
                           </CardContent>
@@ -541,9 +540,9 @@ const Producto = () => {
                       <Button
                         variant="outline"
                         onClick={() => setShowAllTickets(!showAllTickets)}
-                        className="border-2 hover:border-accent hover:text-accent font-bold"
+                        className="border-2 hover:border-accent hover:text-accent font-bold px-8"
                       >
-                        {showAllTickets ? "Ver menos" : `Ver más (${ticketPrices.length - 6} más)`}
+                        {showAllTickets ? "Ver menos" : "Ver más"}
                       </Button>
                     </div>
                   )}
