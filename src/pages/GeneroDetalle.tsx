@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import PageHero from "@/components/PageHero";
+import { SEOHead } from "@/components/SEOHead";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 
@@ -173,7 +174,51 @@ const GeneroDetalle = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
+  // SEO description
+  const seoDescription = `Descubre los mejores conciertos y festivales de ${genreName}. ${events?.length || 0} eventos disponibles en España.`;
+
+  // Generate JSON-LD structured data for genre
+  const jsonLdData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `Conciertos de ${genreName}`,
+    "description": seoDescription,
+    "url": `https://feelomove.com/musica/${genreParam}`,
+    "numberOfItems": events?.length || 0,
+    "itemListElement": events?.slice(0, 10).map((event: any, index: number) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "MusicEvent",
+        "name": event.name,
+        "startDate": event.event_date,
+        "url": `https://feelomove.com/producto/${event.slug}`,
+        "image": event.image_large_url || event.image_standard_url,
+        "location": {
+          "@type": "Place",
+          "name": event.venue_name,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": event.venue_city,
+            "addressCountry": "ES"
+          }
+        }
+      }
+    }))
+  }), [genreName, genreParam, seoDescription, events]);
+
   return (
+    <>
+      <SEOHead
+        title={`${genreName} - Conciertos y Festivales | FEELOMOVE`}
+        description={seoDescription}
+        canonical={`https://feelomove.com/musica/${genreParam}`}
+      />
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+      />
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8 mt-16">
@@ -297,6 +342,7 @@ const GeneroDetalle = () => {
       </div>
       <Footer />
     </div>
+    </>
   );
 };
 

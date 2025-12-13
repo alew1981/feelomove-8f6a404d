@@ -366,6 +366,49 @@ const Producto = () => {
   // Get image - prioritize image_large_url
   const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
 
+  // Generate JSON-LD structured data for event
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": eventDetails.is_festival ? "Festival" : "MusicEvent",
+    "name": eventDetails.event_name,
+    "startDate": eventDetails.event_date,
+    "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,
+    "image": eventImage,
+    "description": seoDescription,
+    "location": {
+      "@type": "Place",
+      "name": eventDetails.venue_name,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": eventDetails.venue_city,
+        "addressCountry": "ES",
+        "streetAddress": eventDetails.venue_address || undefined
+      },
+      "geo": eventDetails.venue_latitude && eventDetails.venue_longitude ? {
+        "@type": "GeoCoordinates",
+        "latitude": eventDetails.venue_latitude,
+        "longitude": eventDetails.venue_longitude
+      } : undefined
+    },
+    "offers": ticketPrices.length > 0 ? {
+      "@type": "AggregateOffer",
+      "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,
+      "lowPrice": ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees,
+      "highPrice": ticketPrices[ticketPrices.length - 1]?.price || (eventDetails as any).price_min_incl_fees,
+      "priceCurrency": "EUR",
+      "availability": eventDetails.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+      "offerCount": ticketPrices.length
+    } : undefined,
+    "performer": artistNames.map((name: string) => ({
+      "@type": "MusicGroup",
+      "name": name
+    })),
+    "organizer": (eventDetails as any).promoter_name ? {
+      "@type": "Organization",
+      "name": (eventDetails as any).promoter_name
+    } : undefined
+  };
+
   return (
     <>
       <SEOHead
@@ -375,6 +418,11 @@ const Producto = () => {
         ogImage={eventImage}
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
+      />
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

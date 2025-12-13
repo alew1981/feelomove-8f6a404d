@@ -174,12 +174,47 @@ const DestinoDetalle = () => {
   const topArtists = artists.slice(0, 3).join(", ");
   const seoDescription = `Descubre los mejores conciertos y festivales en ${cityName}. Compra entradas + hotel para ${events?.length || 0} eventos en ${cityName}. Artistas: ${topArtists || "próximamente"}.`;
 
+  // Generate JSON-LD structured data for destination
+  const jsonLdData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `Conciertos y Festivales en ${cityName}`,
+    "description": seoDescription,
+    "url": `https://feelomove.com/destinos/${citySlug}`,
+    "numberOfItems": events?.length || 0,
+    "itemListElement": events?.slice(0, 10).map((event: any, index: number) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "MusicEvent",
+        "name": event.name,
+        "startDate": event.event_date,
+        "url": `https://feelomove.com/producto/${event.slug}`,
+        "image": event.image_large_url || event.image_standard_url,
+        "location": {
+          "@type": "Place",
+          "name": event.venue_name,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": cityName,
+            "addressCountry": "ES"
+          }
+        }
+      }
+    }))
+  }), [cityName, citySlug, seoDescription, events]);
+
   return (
     <>
       <SEOHead
         title={`Conciertos en ${cityName} - Entradas y Paquetes | FEELOMOVE`}
         description={seoDescription}
         canonical={`https://feelomove.com/destinos/${citySlug}`}
+      />
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

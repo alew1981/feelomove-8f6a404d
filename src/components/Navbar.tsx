@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Badge } from "./ui/badge";
+import feelomoveStayLogo from "@/assets/feelomove-stay-logo.jpg";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -60,21 +61,18 @@ const Navbar = () => {
             >
               Destinos
             </NavLink>
+            {/* Feelomove Stay Logo */}
             <a
               href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-foreground/80 hover:text-foreground transition-colors"
+              className="hover:opacity-80 transition-opacity"
             >
-              Hoteles
-            </a>
-            <a
-              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-            >
-              Apartamentos
+              <img 
+                src={feelomoveStayLogo} 
+                alt="Feelomove Stay - Hoteles y Apartamentos" 
+                className="h-8 w-auto"
+              />
             </a>
             
             {/* Search and Favorites Icons */}
@@ -159,23 +157,19 @@ const Navbar = () => {
             >
               Destinos
             </NavLink>
+            {/* Feelomove Stay Logo Mobile */}
             <a
               href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
+              className="block py-2"
               onClick={() => setIsMenuOpen(false)}
             >
-              Hoteles
-            </a>
-            <a
-              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Apartamentos
+              <img 
+                src={feelomoveStayLogo} 
+                alt="Feelomove Stay - Hoteles y Apartamentos" 
+                className="h-7 w-auto"
+              />
             </a>
             <div className="flex items-center gap-2 pt-2">
               <Button
