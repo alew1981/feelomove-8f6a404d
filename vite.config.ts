@@ -10,6 +10,31 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split heavy libraries into separate chunks
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip', '@radix-ui/react-tabs'],
+          'vendor-date': ['date-fns'],
+          'vendor-map': ['mapbox-gl'],
+          'vendor-charts': ['recharts'],
+        }
+      }
+    },
+    // Optimize chunk size
+    chunkSizeWarningLimit: 500,
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production',
+        drop_debugger: true
+      }
+    }
+  },
   plugins: [
     react(), 
     mode === "development" && componentTagger(),

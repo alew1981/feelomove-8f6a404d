@@ -7,7 +7,6 @@ import { format, differenceInDays, differenceInHours, differenceInMinutes, diffe
 import { es } from "date-fns/locale";
 import { useEffect, useState, memo } from "react";
 import { CategoryBadge } from "./CategoryBadge";
-import OptimizedImage from "./OptimizedImage";
 
 interface EventCardProps {
   event: {
@@ -115,18 +114,19 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
       <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
-            <div className="relative h-56 overflow-hidden">
-              {/* Background Image - Optimized with lazy loading and srcset */}
-              <OptimizedImage
+            <div className="relative h-56 overflow-hidden bg-muted">
+              {/* Background Image - Direct img for reliability */}
+              <img
                 src={imageUrl}
                 alt={eventName}
-                priority={priority}
-                className="absolute inset-0 w-full h-full"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                loading={priority ? "eager" : "lazy"}
+                decoding={priority ? "sync" : "async"}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                }}
               />
-              
-              {/* Hover scale effect overlay */}
-              <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-105" />
               
               {/* Minimal Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

@@ -1,17 +1,58 @@
 import { NavLink } from "./NavLink";
 import { Button } from "./ui/button";
 import { Menu, X, Search, Heart } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Badge } from "./ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+// Prefetch function for routes
+const prefetchRoute = async (queryClient: ReturnType<typeof useQueryClient>, route: string) => {
+  if (route === '/conciertos') {
+    queryClient.prefetchQuery({
+      queryKey: ['concerts-list'],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from('mv_concerts_cards')
+          .select('*')
+          .gte('event_date', new Date().toISOString())
+          .order('event_date', { ascending: true })
+          .limit(20);
+        return data || [];
+      },
+      staleTime: 5 * 60 * 1000
+    });
+  } else if (route === '/festivales') {
+    queryClient.prefetchQuery({
+      queryKey: ['festivals-list'],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from('mv_festivals_cards')
+          .select('*')
+          .gte('event_date', new Date().toISOString())
+          .order('event_date', { ascending: true })
+          .limit(20);
+        return data || [];
+      },
+      staleTime: 5 * 60 * 1000
+    });
+  }
+};
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { favorites } = useFavorites();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Prefetch on hover
+  const handleMouseEnter = useCallback((route: string) => {
+    prefetchRoute(queryClient, route);
+  }, [queryClient]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-background/80 backdrop-blur-lg border-b border-border">
@@ -29,6 +70,7 @@ const Navbar = () => {
               to="/conciertos"
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
+              onMouseEnter={() => handleMouseEnter('/conciertos')}
             >
               Conciertos
             </NavLink>
@@ -36,6 +78,7 @@ const Navbar = () => {
               to="/festivales"
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
+              onMouseEnter={() => handleMouseEnter('/festivales')}
             >
               Festivales
             </NavLink>
