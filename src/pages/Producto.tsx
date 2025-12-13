@@ -283,7 +283,13 @@ const Producto = () => {
         }
       });
       
-      return tickets.sort((a, b) => a.price - b.price);
+      // Sort by: 1. Available first (not sold out), 2. Then by price
+      return tickets.sort((a, b) => {
+        const aAvailable = a.availability !== "none" ? 0 : 1;
+        const bAvailable = b.availability !== "none" ? 0 : 1;
+        if (aAvailable !== bAvailable) return aAvailable - bAvailable;
+        return a.price - b.price;
+      });
     } catch (e) {
       console.error("Error parsing ticket_types:", e);
       return [];
@@ -502,14 +508,9 @@ const Producto = () => {
                           }`}
                         >
                           <CardContent className="p-3 sm:p-4 flex flex-col h-full">
-                            {/* Ticket Header with Code & Availability */}
+                            {/* Ticket Header with Availability */}
                             <div className="mb-2 sm:mb-3">
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                {ticket.code && (
-                                  <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                                    {ticket.code}
-                                  </span>
-                                )}
+                              <div className="flex items-center justify-end gap-2 mb-1">
                                 {isSoldOut ? (
                                   <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded">
                                     AGOTADO
