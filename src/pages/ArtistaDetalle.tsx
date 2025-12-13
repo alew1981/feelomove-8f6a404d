@@ -21,7 +21,12 @@ import { normalizeSearch } from "@/lib/searchUtils";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
-  return normalizeSearch(name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return normalizeSearch(name)
+    .replace(/&/g, '') // Remove ampersand
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '') // Remove special characters
+    .replace(/-+/g, '-') // Collapse multiple hyphens
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 };
 
 const ArtistaDetalle = () => {
