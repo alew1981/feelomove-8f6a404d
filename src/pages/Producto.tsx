@@ -264,12 +264,14 @@ const Producto = () => {
       if (!ticketData?.price_types || !Array.isArray(ticketData.price_types)) return [];
       
       // Flatten price_types -> price_levels into individual ticket options
-      const tickets: Array<{type: string; code: string; description: string; price: number; fees: number; availability: string}> = [];
+      const tickets: Array<{id: string; type: string; code: string; description: string; price: number; fees: number; availability: string}> = [];
       
       ticketData.price_types.forEach((priceType) => {
         if (priceType.price_levels && Array.isArray(priceType.price_levels)) {
-          priceType.price_levels.forEach((level) => {
+          priceType.price_levels.forEach((level, levelIndex) => {
+            const ticketId = `${priceType.code || 'ticket'}-${levelIndex}`;
             tickets.push({
+              id: ticketId,
               type: priceType.name || level.name || "Entrada General",
               code: priceType.code || "",
               description: priceType.description || "",
@@ -291,11 +293,11 @@ const Producto = () => {
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 8);
   const hasMoreTickets = ticketPrices.length > 8;
 
-  const handleTicketQuantityChange = (ticketType: string, change: number) => {
+  const handleTicketQuantityChange = (ticketId: string, change: number) => {
     const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
-    const ticketIndex = existingTickets.findIndex(t => t.type === ticketType);
+    const ticketIndex = existingTickets.findIndex(t => t.type === ticketId);
     
-    const ticketData = ticketPrices.find(t => t.type === ticketType);
+    const ticketData = ticketPrices.find(t => t.id === ticketId);
     if (!ticketData) return;
 
     let updatedTickets = [...existingTickets];
@@ -303,7 +305,7 @@ const Producto = () => {
     if (ticketIndex >= 0) {
       const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
       if (newQuantity === 0) {
-        updatedTickets = updatedTickets.filter(t => t.type !== ticketType);
+        updatedTickets = updatedTickets.filter(t => t.type !== ticketId);
       } else {
         updatedTickets[ticketIndex] = {
           ...updatedTickets[ticketIndex],
@@ -312,8 +314,8 @@ const Producto = () => {
       }
     } else if (change > 0) {
       updatedTickets.push({
-        type: ticketData.type,
-        description: ticketData.description,
+        type: ticketId,
+        description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
         price: ticketData.price,
         fees: ticketData.fees,
         quantity: 2
@@ -327,9 +329,9 @@ const Producto = () => {
     }
   };
 
-  const getTicketQuantity = (ticketType: string) => {
+  const getTicketQuantity = (ticketId: string) => {
     if (!cart || cart.event_id !== eventDetails.event_id) return 0;
-    const ticket = cart.tickets.find(t => t.type === ticketType);
+    const ticket = cart.tickets.find(t => t.type === ticketId);
     return ticket ? ticket.quantity : 0;
   };
 
@@ -484,37 +486,73 @@ const Producto = () => {
                   <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Entradas</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                     {displayedTickets.map((ticket: any, index: number) => {
-                      const quantity = getTicketQuantity(ticket.type);
+                      const quantity = getTicketQuantity(ticket.id);
+                      const isSoldOut = ticket.availability === "none";
+                      const isLimited = ticket.availability === "limited";
                       
                       return (
-                        <Card key={index} className="border-2 overflow-hidden hover:border-accent transition-colors">
-                          <CardContent className="p-3 sm:p-4">
-                            {/* Ticket Header */}
+                        <Card 
+                          key={ticket.id} 
+                          className={`border-2 overflow-hidden transition-all ${
+                            isSoldOut 
+                              ? 'opacity-60 border-muted' 
+                              : quantity > 0 
+                                ? 'border-accent shadow-lg shadow-accent/20' 
+                                : 'hover:border-accent/50'
+                          }`}
+                        >
+                          <CardContent className="p-3 sm:p-4 flex flex-col h-full">
+                            {/* Ticket Header with Code & Availability */}
                             <div className="mb-2 sm:mb-3">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                {ticket.code && (
+                                  <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                    {ticket.code}
+                                  </span>
+                                )}
+                                {isSoldOut ? (
+                                  <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded">
+                                    AGOTADO
+                                  </span>
+                                ) : isLimited ? (
+                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">
+                                    ÚLTIMAS
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
+                                    DISPONIBLE
+                                  </span>
+                                )}
+                              </div>
                               <h3 className="font-bold text-sm sm:text-base line-clamp-2 min-h-[40px] sm:min-h-[48px]">{ticket.type}</h3>
                               <p className="text-sm sm:text-base text-foreground/70 mt-1 line-clamp-2 min-h-[40px] sm:min-h-[48px]">
                                 {ticket.description || ticket.type}
                               </p>
                             </div>
 
-                            {/* Price */}
-                            <div className="text-center py-2 sm:py-3 border-y border-border">
-                              <div className="text-xl sm:text-2xl font-black text-foreground">
-                                €{ticket.price.toFixed(0)}
+                            {/* Price - Improved Design */}
+                            <div className="bg-gradient-to-br from-muted/80 to-muted/40 rounded-xl p-3 sm:p-4 text-center mb-3">
+                              <div className="flex items-baseline justify-center gap-1">
+                                <span className="text-2xl sm:text-3xl font-black text-foreground">
+                                  €{ticket.price.toFixed(0)}
+                                </span>
+                                <span className="text-xs text-muted-foreground">/entrada</span>
                               </div>
                               {ticket.fees > 0 && (
-                                <p className="text-[9px] sm:text-[10px] text-muted-foreground">+ €{ticket.fees.toFixed(2)} gastos</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                                  + €{ticket.fees.toFixed(2)} gastos de gestión
+                                </p>
                               )}
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className="flex items-center justify-center gap-3 mt-3 bg-muted/50 rounded-full p-1.5">
+                            <div className="flex items-center justify-center gap-3 mt-auto bg-muted/50 rounded-full p-1.5">
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-10 w-10 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
-                                onClick={() => handleTicketQuantityChange(ticket.type, -1)}
-                                disabled={quantity === 0}
+                                onClick={() => handleTicketQuantityChange(ticket.id, -1)}
+                                disabled={quantity === 0 || isSoldOut}
                               >
                                 <Minus className="h-5 w-5" />
                               </Button>
@@ -523,8 +561,8 @@ const Producto = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-10 w-10 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
-                                onClick={() => handleTicketQuantityChange(ticket.type, 1)}
-                                disabled={quantity >= 10}
+                                onClick={() => handleTicketQuantityChange(ticket.id, 1)}
+                                disabled={quantity >= 10 || isSoldOut}
                               >
                                 <Plus className="h-5 w-5" />
                               </Button>
