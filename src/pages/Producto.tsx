@@ -526,18 +526,17 @@ const Producto = () => {
                                 )}
                               </div>
                               
-                              <p className="text-sm sm:text-base text-foreground/70 mt-1 line-clamp-2 min-h-[40px] sm:min-h-[48px]">
+                              <p className="text-sm sm:text-base font-bold uppercase text-foreground mt-1 line-clamp-2 min-h-[40px] sm:min-h-[48px]">
                                 {ticket.description || ticket.type}
                               </p>
                             </div>
 
                             {/* Price - Improved Design */}
                             <div className="bg-gradient-to-br from-muted/80 to-muted/40 rounded-xl p-3 sm:p-4 text-center mb-3">
-                              <div className="flex items-baseline justify-center gap-1">
+                              <div className="flex items-baseline justify-center">
                                 <span className="text-2xl sm:text-3xl font-black text-foreground">
                                   €{ticket.price.toFixed(0)}
                                 </span>
-                                <span className="text-xs text-muted-foreground">/entrada</span>
                               </div>
                               {ticket.fees > 0 && (
                                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
