@@ -13,44 +13,103 @@ import { Heart } from "lucide-react";
 
 // Featured cities for display order
 const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];
-
-// Type for homepage data from RPC
-interface HomepageData {
-  featured_events: any[];
-  city_events: Record<string, any[]>;
-  concerts: any[];
-  festivals: any[];
-  destinations: any[];
-  artists: any[];
-  genres: any[];
-}
+const FEATURED_IDS = ['172524182', '35655583', '854574106', '2034594644'];
 
 const Index = () => {
-  // Single consolidated query using RPC function
-  const { data: homepageData, isLoading } = useQuery({
-    queryKey: ["homepage-data"],
+  // Fetch concerts
+  const { data: concerts = [], isLoading: loadingConcerts } = useQuery({
+    queryKey: ["home-concerts"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_homepage_data');
-      if (error) {
-        console.error('Homepage RPC error:', error);
-        throw error;
-      }
-      return data as unknown as HomepageData;
+      const { data } = await supabase
+        .from('mv_concerts_cards')
+        .select('*')
+        .gte('event_date', new Date().toISOString())
+        .order('event_date', { ascending: true })
+        .limit(8);
+      return data || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Extract data from consolidated response
-  const loveEvents = homepageData?.featured_events || [];
-  const cityEvents = homepageData?.city_events || {};
-  const concerts = homepageData?.concerts || [];
-  const festivals = homepageData?.festivals || [];
-  const destinations = homepageData?.destinations || [];
-  const artists = homepageData?.artists || [];
-  const genres = homepageData?.genres || [];
+  // Fetch festivals
+  const { data: festivals = [], isLoading: loadingFestivals } = useQuery({
+    queryKey: ["home-festivals"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mv_festivals_cards')
+        .select('*')
+        .gte('event_date', new Date().toISOString())
+        .order('event_date', { ascending: true })
+        .limit(8);
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // Events with hotels - combine first 4 events
-  const eventsWithHotels = [...concerts, ...festivals].slice(0, 4);
+  // Fetch destinations
+  const { data: destinations = [], isLoading: loadingDestinations } = useQuery({
+    queryKey: ["home-destinations"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mv_destinations_cards')
+        .select('*')
+        .order('event_count', { ascending: false })
+        .limit(4);
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch artists
+  const { data: artists = [], isLoading: loadingArtists } = useQuery({
+    queryKey: ["home-artists"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mv_attractions')
+        .select('*')
+        .order('event_count', { ascending: false })
+        .limit(4);
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch genres
+  const { data: genres = [], isLoading: loadingGenres } = useQuery({
+    queryKey: ["home-genres"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mv_genres_cards')
+        .select('*')
+        .order('event_count', { ascending: false })
+        .limit(4);
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = loadingConcerts || loadingFestivals;
+
+  // Featured events - combine and filter by IDs
+  const allEvents = [...concerts, ...festivals];
+  const loveEvents = FEATURED_IDS
+    .map(id => allEvents.find(e => e.id === id))
+    .filter(Boolean)
+    .slice(0, 4);
+  
+  // Fallback if featured events not found
+  const featuredEvents = loveEvents.length > 0 ? loveEvents : allEvents.slice(0, 4);
+
+  // City events
+  const cityEvents: Record<string, any[]> = {};
+  FEATURED_CITIES.forEach(city => {
+    cityEvents[city] = allEvents
+      .filter(e => e.venue_city?.toLowerCase() === city.toLowerCase())
+      .slice(0, 4);
+  });
+
+  // Events with hotels
+  const eventsWithHotels = allEvents.slice(0, 4);
 
   // Generate JSON-LD for homepage
   const jsonLd = {
@@ -94,8 +153,8 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
-            ) : loveEvents && loveEvents.length > 0 ? (
-              loveEvents.map((event, index) => (
+            ) : featuredEvents && featuredEvents.length > 0 ? (
+              featuredEvents.map((event: any, index: number) => (
                 <EventCard key={event.id} event={event} priority={index < 4} />
               ))
             ) : (
