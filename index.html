@@ -36,21 +36,41 @@
     <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg?v=2" />
     <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
     
-    <!-- Preconnect for performance -->
+    <!-- Preconnect for performance (top 4 most critical) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://wcyjuytpxxqailtixept.supabase.co">
-    <link rel="preconnect" href="https://api.mapbox.com">
-    <link rel="preconnect" href="https://s1.ticketm.net">
+    <link rel="preconnect" href="https://wcyjuytpxxqailtixept.supabase.co" crossorigin>
+    <link rel="preconnect" href="https://cdn.coverr.co" crossorigin>
+    <link rel="preconnect" href="https://s1.ticketm.net" crossorigin>
+    <link rel="dns-prefetch" href="https://api.mapbox.com">
     <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     <link rel="dns-prefetch" href="https://feelomove-.nuitee.link">
-    <link rel="dns-prefetch" href="https://cdn.coverr.co">
+    <link rel="dns-prefetch" href="https://images.unsplash.com">
+    <link rel="dns-prefetch" href="https://matomo.optimizar.info">
     
-    <!-- Preload critical LCP resources -->
-    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80" fetchpriority="high">
+    <!-- Preload critical fonts to avoid render-blocking -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"></noscript>
     
-    <!-- Fonts with display swap -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Critical font-face inline for faster LCP -->
+    <style>
+      @font-face {
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJfecg.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Poppins';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+    </style>
   </head>
 
   <body>
