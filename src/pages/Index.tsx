@@ -16,7 +16,32 @@ const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];
 const FEATURED_IDS = ['172524182', '35655583', '854574106', '2034594644'];
 
 const Index = () => {
-  // Fetch concerts
+  // Fetch featured events by specific IDs
+  const { data: featuredConcerts = [] } = useQuery({
+    queryKey: ["home-featured-concerts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mv_concerts_cards')
+        .select('*')
+        .in('id', FEATURED_IDS);
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: featuredFestivals = [] } = useQuery({
+    queryKey: ["home-featured-festivals"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('mv_festivals_cards')
+        .select('*')
+        .in('id', FEATURED_IDS);
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch concerts (increased limit for cities)
   const { data: concerts = [], isLoading: loadingConcerts } = useQuery({
     queryKey: ["home-concerts"],
     queryFn: async () => {
@@ -25,13 +50,13 @@ const Index = () => {
         .select('*')
         .gte('event_date', new Date().toISOString())
         .order('event_date', { ascending: true })
-        .limit(8);
+        .limit(50);
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch festivals
+  // Fetch festivals (increased limit)
   const { data: festivals = [], isLoading: loadingFestivals } = useQuery({
     queryKey: ["home-festivals"],
     queryFn: async () => {
@@ -40,7 +65,7 @@ const Index = () => {
         .select('*')
         .gte('event_date', new Date().toISOString())
         .order('event_date', { ascending: true })
-        .limit(8);
+        .limit(20);
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -90,15 +115,14 @@ const Index = () => {
 
   const isLoading = loadingConcerts || loadingFestivals;
 
-  // Featured events - combine and filter by IDs
+  // Featured events - combine featured queries and maintain order
+  const allFeatured = [...featuredConcerts, ...featuredFestivals];
+  const featuredEvents = FEATURED_IDS
+    .map(id => allFeatured.find(e => e.id === id))
+    .filter(Boolean);
+
+  // All events for city sections
   const allEvents = [...concerts, ...festivals];
-  const loveEvents = FEATURED_IDS
-    .map(id => allEvents.find(e => e.id === id))
-    .filter(Boolean)
-    .slice(0, 4);
-  
-  // Fallback if featured events not found
-  const featuredEvents = loveEvents.length > 0 ? loveEvents : allEvents.slice(0, 4);
 
   // City events
   const cityEvents: Record<string, any[]> = {};
@@ -163,6 +187,30 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Próximos Festivales - moved up */}
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Próximos Festivales</h2>
+              <p className="text-muted-foreground">Experiencias multi-día inolvidables</p>
+            </div>
+            <Link to="/festivales" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+              Ver todos →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
+            ) : festivals && festivals.length > 0 ? (
+              festivals.slice(0, 8).map((event: any) => (
+                <EventCard key={event.id} event={event} />
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-4">No hay festivales próximos</p>
+            )}
+          </div>
+        </section>
+
         {/* City-specific sections */}
         {FEATURED_CITIES.map((city) => (
           <section key={city}>
@@ -211,29 +259,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Próximos Festivales */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Próximos Festivales</h2>
-              <p className="text-muted-foreground">Experiencias multi-día inolvidables</p>
-            </div>
-            <Link to="/festivales" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
-              Ver todos →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
-            ) : festivals && festivals.length > 0 ? (
-              festivals.map((event: any) => (
-                <EventCard key={event.id} event={event} />
-              ))
-            ) : (
-              <p className="text-muted-foreground col-span-4">No hay festivales próximos</p>
-            )}
-          </div>
-        </section>
 
         {/* Eventos con Hotel */}
         <section>
