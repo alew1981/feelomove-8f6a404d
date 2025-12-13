@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Search, MapPin, Music, User, Calendar, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
+import heroConcertImage from "@/assets/hero-concert.webp";
 
 interface SearchResult {
   type: 'event' | 'artist' | 'destination' | 'genre';
@@ -182,7 +183,7 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-[750px] flex items-center justify-center overflow-hidden">
-      {/* Video Background - LCP optimized with preload */}
+      {/* Video Background - LCP optimized with WebP poster and fetchpriority */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
@@ -191,10 +192,12 @@ const Hero = () => {
           playsInline
           preload="auto"
           className="w-full h-full object-cover"
-          poster="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80"
+          poster={heroConcertImage}
         >
           <source src="https://cdn.coverr.co/videos/coverr-crowd-at-a-concert-6669/1080p.mp4" type="video/mp4" />
         </video>
+        {/* Preload the poster image for LCP */}
+        <link rel="preload" as="image" href={heroConcertImage} fetchPriority="high" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
 
