@@ -525,7 +525,7 @@ const Producto = () => {
                                   </span>
                                 )}
                               </div>
-                              <h3 className="font-bold text-sm sm:text-base line-clamp-2 min-h-[40px] sm:min-h-[48px]">{ticket.type}</h3>
+                              
                               <p className="text-sm sm:text-base text-foreground/70 mt-1 line-clamp-2 min-h-[40px] sm:min-h-[48px]">
                                 {ticket.description || ticket.type}
                               </p>
