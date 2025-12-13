@@ -444,15 +444,8 @@ const Producto = () => {
         ogImage={eventImage}
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
-      />
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        pageType="ItemPage"
+        jsonLd={[jsonLdData, breadcrumbJsonLd]}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

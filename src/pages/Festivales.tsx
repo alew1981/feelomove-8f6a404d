@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -215,14 +214,9 @@ const Festivales = () => {
         description="Descubre todos los festivales de música en España. Compra tus entradas y reserva hotel. Los mejores festivales de rock, electrónica, indie y más."
         canonical="/festivales"
         keywords="festivales españa, festivales música, festivales verano, festivales madrid"
+        pageType="CollectionPage"
+        jsonLd={jsonLd || undefined}
       />
-      {jsonLd && (
-        <Helmet>
-          <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-          </script>
-        </Helmet>
-      )}
       
       <div className="min-h-screen bg-background">
         <Navbar />

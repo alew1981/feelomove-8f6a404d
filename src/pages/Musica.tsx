@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import PageHero from "@/components/PageHero";
+import { SEOHead } from "@/components/SEOHead";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,15 +93,14 @@ const Musica = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Géneros Musicales - Eventos por Estilo | FEELOMOVE+</title>
-        <meta name="description" content="Explora eventos por género musical en España. Rock, Pop, Electrónica, Jazz y más estilos musicales." />
-        {jsonLd && (
-          <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-          </script>
-        )}
-      </Helmet>
+      <SEOHead
+        title="Géneros Musicales - Eventos por Estilo"
+        description="Explora eventos por género musical en España. Rock, Pop, Electrónica, Jazz y más estilos musicales."
+        canonical="/musica"
+        keywords="géneros música, rock españa, pop español, electrónica festivales"
+        pageType="CollectionPage"
+        jsonLd={jsonLd || undefined}
+      />
       <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">

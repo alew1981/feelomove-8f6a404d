@@ -333,18 +333,12 @@ const ArtistaDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${artistName} - Entradas y Paquetes | FEELOMOVE`}
+        title={`${artistName} - Entradas y Paquetes`}
         description={seoDescription}
-        canonical={`https://feelomove.com/artista/${artistSlug}`}
-      />
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        canonical={`/artista/${artistSlug}`}
+        ogImage={heroImage || undefined}
+        pageType="ItemPage"
+        jsonLd={[jsonLdData, breadcrumbJsonLd]}
       />
       <div className="min-h-screen bg-background">
         <Navbar />
