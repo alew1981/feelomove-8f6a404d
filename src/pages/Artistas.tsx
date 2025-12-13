@@ -96,6 +96,10 @@ const Artistas = () => {
         keywords="artistas españa, músicos conciertos, artistas festivales"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Artistas" }
+        ]}
       />
       <div className="min-h-screen bg-background">
       <Navbar />
