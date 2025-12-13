@@ -1,3 +1,5 @@
+import OptimizedImage from "./OptimizedImage";
+
 interface PageHeroProps {
   title: string;
   imageUrl?: string;
@@ -9,10 +11,11 @@ const PageHero = ({ title, imageUrl, className = "" }: PageHeroProps) => {
   
   return (
     <div className={`relative h-[200px] md:h-[280px] overflow-hidden rounded-xl mb-6 ${className}`}>
-      <img
+      <OptimizedImage
         src={imageUrl || defaultImage}
         alt={title}
-        className="w-full h-full object-cover"
+        priority={true}
+        className="w-full h-full"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       <div className="absolute bottom-6 left-6 right-6">

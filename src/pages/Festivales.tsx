@@ -335,6 +335,8 @@ const Festivales = () => {
                       <img 
                         src={festival.image || "/placeholder.svg"} 
                         alt={festival.name}
+                        loading={index < 4 ? "eager" : "lazy"}
+                        fetchPriority={index < 4 ? "high" : "auto"}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
