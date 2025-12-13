@@ -263,12 +263,58 @@ const ArtistaDetalle = () => {
   const firstCity = cities[0] || "España";
   const seoDescription = `Descubre todos los conciertos de ${artistName} en ${firstCity} y otras ciudades. Compra entradas + hotel para los próximos eventos de ${artistName} en España.`;
 
+  // Generate JSON-LD structured data for artist and events
+  const jsonLdData = useMemo(() => {
+    const artistSchema = {
+      "@context": "https://schema.org",
+      "@type": "MusicGroup",
+      "name": artistName,
+      "url": `https://feelomove.com/artista/${artistSlug}`,
+      "image": heroImage || undefined,
+      "genre": artistGenre || undefined,
+      "event": events?.slice(0, 10).map((event: any) => ({
+        "@type": "MusicEvent",
+        "name": event.name,
+        "startDate": event.event_date,
+        "url": `https://feelomove.com/producto/${event.slug}`,
+        "image": event.image_large_url || event.image_standard_url,
+        "location": {
+          "@type": "Place",
+          "name": event.venue_name,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": event.venue_city,
+            "addressCountry": "ES"
+          }
+        },
+        "offers": event.price_min_incl_fees ? {
+          "@type": "Offer",
+          "url": `https://feelomove.com/producto/${event.slug}`,
+          "price": event.price_min_incl_fees,
+          "priceCurrency": event.currency || "EUR",
+          "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock"
+        } : undefined,
+        "performer": {
+          "@type": "MusicGroup",
+          "name": artistName
+        }
+      }))
+    };
+
+    return artistSchema;
+  }, [artistName, artistSlug, heroImage, artistGenre, events]);
+
   return (
     <>
       <SEOHead
         title={`${artistName} - Entradas y Paquetes | FEELOMOVE`}
         description={seoDescription}
         canonical={`https://feelomove.com/artista/${artistSlug}`}
+      />
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
       />
       <div className="min-h-screen bg-background">
         <Navbar />
