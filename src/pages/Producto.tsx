@@ -355,7 +355,7 @@ const Producto = () => {
       checkin_date: (eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd"),
       checkout_date: (eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
     });
-    toast.success("Hotel añadido al carrito");
+    // Hotel añadido silenciosamente (sin toast confuso)
   };
 
   const isEventInCart = cart?.event_id === eventDetails.event_id;

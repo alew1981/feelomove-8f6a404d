@@ -74,13 +74,13 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
                 {cart.tickets.map((ticket, idx) => (
                   <div key={idx} className="bg-muted/50 rounded-lg p-3">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-sm">{ticket.type}</h3>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="flex-1 pr-2">
+                        <h3 className="font-bold text-sm uppercase line-clamp-2">{ticket.description || ticket.type}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
                           {ticket.quantity} x €{(ticket.price + ticket.fees).toFixed(2)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="font-bold text-sm">
                           €{((ticket.price + ticket.fees) * ticket.quantity).toFixed(2)}
                         </span>

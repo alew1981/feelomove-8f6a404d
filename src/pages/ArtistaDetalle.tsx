@@ -207,22 +207,46 @@ const ArtistaDetalle = () => {
       />
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 mt-16">
+        
+        {/* Hero Header - Full Width with Artist Image */}
+        <div className="relative w-full h-[300px] sm:h-[400px] overflow-hidden mt-16">
+          {heroImage ? (
+            <img
+              src={heroImage}
+              alt={artistName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-accent/20 to-background" />
+          )}
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           
+          {/* Artist Name */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+            <div className="container mx-auto">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight">
+                {artistName}
+              </h1>
+              <div className="flex items-center gap-4 mt-3">
+                <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
+                  {events?.length || 0} eventos
+                </span>
+                {cities.length > 0 && (
+                  <span className="text-muted-foreground text-sm">
+                    en {cities.slice(0, 3).join(", ")}{cities.length > 3 ? ` +${cities.length - 3}` : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="container mx-auto px-4 py-6">
           {/* Breadcrumbs */}
-          <div className="mb-4">
+          <div className="mb-6">
             <Breadcrumbs />
           </div>
-          
-          {/* Hero Image */}
-          <PageHero title={artistName} imageUrl={heroImage} />
-          
-          {/* SEO Text */}
-          <SEOText 
-            title={`Conciertos de ${artistName}`}
-            description={`Encuentra todos los próximos conciertos de ${artistName} en España. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles de ${artistName} en ciudades como ${cities.slice(0, 3).join(", ")}.`}
-            keywords={[`${artistName} españa`, `${artistName} conciertos`, `entradas ${artistName}`, ...cities.slice(0, 3).map(city => `${artistName} ${city}`)]}
-          />
 
         {/* Filters and Search */}
         <div className="mb-8 space-y-4">
