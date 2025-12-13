@@ -275,7 +275,11 @@ const ArtistaDetalle = () => {
       "event": events?.slice(0, 10).map((event: any) => ({
         "@type": "MusicEvent",
         "name": event.name,
+        "description": `Concierto de ${artistName} en ${event.venue_city}. Entradas disponibles.`,
         "startDate": event.event_date,
+        "endDate": event.event_date, // Same day event
+        "eventStatus": event.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
         "url": `https://feelomove.com/producto/${event.slug}`,
         "image": event.image_large_url || event.image_standard_url,
         "location": {
@@ -285,14 +289,27 @@ const ArtistaDetalle = () => {
             "@type": "PostalAddress",
             "addressLocality": event.venue_city,
             "addressCountry": "ES"
-          }
+          },
+          ...(event.venue_latitude && event.venue_longitude && {
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": event.venue_latitude,
+              "longitude": event.venue_longitude
+            }
+          })
+        },
+        "organizer": {
+          "@type": "Organization",
+          "name": "FEELOMOVE+",
+          "url": "https://feelomove.com"
         },
         "offers": event.price_min_incl_fees ? {
           "@type": "Offer",
           "url": `https://feelomove.com/producto/${event.slug}`,
           "price": event.price_min_incl_fees,
           "priceCurrency": event.currency || "EUR",
-          "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock"
+          "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+          "validFrom": new Date().toISOString()
         } : undefined,
         "performer": {
           "@type": "MusicGroup",
