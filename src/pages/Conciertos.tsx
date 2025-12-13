@@ -140,11 +140,10 @@ const Conciertos = () => {
             "addressCountry": "ES"
           }
         },
-        "organizer": {
+        "organizer": (event as any).promoter_name ? {
           "@type": "Organization",
-          "name": "FEELOMOVE+",
-          "url": "https://feelomove.com"
-        },
+          "name": (event as any).promoter_name
+        } : undefined,
         ...(event.price_min_incl_fees && {
           "offers": {
             "@type": "Offer",

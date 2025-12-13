@@ -396,11 +396,7 @@ const Producto = () => {
     "organizer": (eventDetails as any).promoter_name ? {
       "@type": "Organization",
       "name": (eventDetails as any).promoter_name
-    } : {
-      "@type": "Organization",
-      "name": "FEELOMOVE+",
-      "url": "https://feelomove.com"
-    },
+    } : undefined,
     "offers": ticketPrices.length > 0 ? {
       "@type": "AggregateOffer",
       "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,

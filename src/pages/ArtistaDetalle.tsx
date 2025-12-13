@@ -298,11 +298,10 @@ const ArtistaDetalle = () => {
             }
           })
         },
-        "organizer": {
+        "organizer": event.promoter_name ? {
           "@type": "Organization",
-          "name": "FEELOMOVE+",
-          "url": "https://feelomove.com"
-        },
+          "name": event.promoter_name
+        } : undefined,
         "offers": event.price_min_incl_fees ? {
           "@type": "Offer",
           "url": `https://feelomove.com/producto/${event.slug}`,
