@@ -111,10 +111,13 @@ const EventCard = ({ event }: EventCardProps) => {
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
             <div className="relative h-56 overflow-hidden">
-              {/* Background Image */}
+              {/* Background Image - LCP optimized */}
               <img
                 src={imageUrl}
                 alt={eventName}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               
