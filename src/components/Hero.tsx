@@ -182,13 +182,14 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-[750px] flex items-center justify-center overflow-hidden">
-      {/* Video Background */}
+      {/* Video Background - LCP optimized with preload */}
       <div className="absolute inset-0 z-0">
         <video
           autoPlay
           muted
           loop
           playsInline
+          preload="auto"
           className="w-full h-full object-cover"
           poster="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80"
         >
