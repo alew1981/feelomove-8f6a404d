@@ -252,8 +252,8 @@ const Index = () => {
             {isLoadingLove ? (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : loveEvents && loveEvents.length > 0 ? (
-              loveEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+              loveEvents.map((event, index) => (
+                <EventCard key={event.id} event={event} priority={index < 4} />
               ))
             ) : (
               Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)

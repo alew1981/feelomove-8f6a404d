@@ -78,8 +78,8 @@ const OptimizedImage = memo(({
         }
       },
       {
-        rootMargin: "200px", // Start loading 200px before visible
-        threshold: 0.01
+        rootMargin: "600px", // Start loading 600px before visible for smoother UX
+        threshold: 0
       }
     );
 
