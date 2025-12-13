@@ -25,9 +25,10 @@ interface HotelMapTabsProps {
   onAddHotel: (hotel: HotelData) => void;
   checkinDate?: string;
   checkoutDate?: string;
+  eventName?: string;
 }
 
-const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel, checkinDate, checkoutDate }: HotelMapTabsProps) => {
+const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel, checkinDate, checkoutDate, eventName }: HotelMapTabsProps) => {
   const [sortBy, setSortBy] = useState<string>("price-asc");
 
   const sortedHotels = useMemo(() => {
@@ -90,7 +91,7 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {sortedHotels.map((hotel) => (
                 <HotelCard 
                   key={hotel.hotel_id} 
@@ -98,6 +99,7 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
                   onAddHotel={onAddHotel}
                   checkinDate={checkinDate}
                   checkoutDate={checkoutDate}
+                  eventName={eventName}
                 />
               ))}
             </div>
