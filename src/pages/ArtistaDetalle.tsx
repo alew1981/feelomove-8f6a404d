@@ -461,12 +461,20 @@ const ArtistaDetalle = () => {
             </div>
           )}
 
-          {/* Destinations Section - Compact List with Icons */}
+          {/* Destinations Section - Compact List with Images */}
           {citiesWithData.length > 0 && (
             <div className="mt-12 mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <MapPin className="h-6 w-6 text-accent" />
-                <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-6 w-6 text-accent" />
+                  <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
+                </div>
+                <Link
+                  to="/destinos"
+                  className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors"
+                >
+                  Ver todos <ChevronRight className="h-4 w-4" />
+                </Link>
               </div>
               <div className="bg-card border border-border rounded-xl divide-y divide-border">
                 {citiesWithData.map((city, index) => (
@@ -477,8 +485,16 @@ const ArtistaDetalle = () => {
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                        <MapPin className="h-5 w-5 text-accent" />
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                        {city.image ? (
+                          <img
+                            src={city.image}
+                            alt={city.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
+                        )}
                       </div>
                       <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
                         {city.name}
