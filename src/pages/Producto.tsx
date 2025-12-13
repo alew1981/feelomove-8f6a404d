@@ -372,8 +372,11 @@ const Producto = () => {
         <Navbar />
 
         <main className="container mx-auto px-4 py-8 mt-20">
+          {/* Breadcrumbs above hero */}
+          <Breadcrumbs />
+          
           {/* Hero Section */}
-          <div className="relative rounded-2xl overflow-hidden mb-8">
+          <div className="relative rounded-2xl overflow-hidden mb-8 mt-4">
             {/* Background Image */}
             <div className="relative h-[380px] sm:h-[420px] md:h-[500px]">
               <img
@@ -472,11 +475,9 @@ const Producto = () => {
             </div>
           </div>
 
-          <Breadcrumbs />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="xl:col-span-2 space-y-8">
               {/* Ticket Cards */}
               {ticketPrices.length > 0 && (
                 <div>
@@ -574,13 +575,14 @@ const Producto = () => {
                     onAddHotel={handleAddHotel}
                     checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
                     checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
+                    eventName={eventDetails.event_name || undefined}
                   />
                 </div>
               )}
             </div>
 
-            {/* Sidebar - Shopping Cart (Hidden on mobile, replaced by MobileCartBar) */}
-            <div className="hidden lg:block lg:col-span-1">
+            {/* Sidebar - Shopping Cart (Hidden on mobile/tablet, replaced by MobileCartBar) */}
+            <div className="hidden xl:block xl:col-span-1">
               <Card className="sticky top-24 border-2">
                 <CardHeader className="bg-foreground text-background">
                   <CardTitle className="uppercase tracking-wide text-sm">
@@ -717,8 +719,8 @@ const Producto = () => {
           eventName={eventDetails.event_name || undefined}
         />
 
-        {/* Add padding at bottom for mobile cart bar */}
-        <div className="h-20 lg:hidden" />
+        {/* Add padding at bottom for mobile/tablet cart bar */}
+        <div className="h-20 xl:hidden" />
         
         <Footer />
       </div>

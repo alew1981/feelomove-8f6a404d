@@ -25,14 +25,14 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
       {/* Overlay when expanded */}
       {isExpanded && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 xl:hidden"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
       {/* Mobile Cart Bar */}
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 lg:hidden transition-all duration-300 ease-in-out",
+        "fixed bottom-0 left-0 right-0 z-50 xl:hidden transition-all duration-300 ease-in-out",
         isExpanded ? "h-auto max-h-[80vh]" : "h-auto"
       )}>
         <div className="bg-card border-t-2 border-accent shadow-2xl rounded-t-2xl overflow-hidden">
