@@ -68,38 +68,38 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-6">
             <NavLink
               to="/conciertos"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
+              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
+              activeClassName="text-foreground font-semibold nav-link-active"
               onMouseEnter={() => handleMouseEnter('/conciertos')}
             >
               Conciertos
             </NavLink>
             <NavLink
               to="/festivales"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
+              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
+              activeClassName="text-foreground font-semibold nav-link-active"
               onMouseEnter={() => handleMouseEnter('/festivales')}
             >
               Festivales
             </NavLink>
             <NavLink
               to="/artistas"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
+              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
+              activeClassName="text-foreground font-semibold nav-link-active"
             >
               Artistas
             </NavLink>
             <NavLink
               to="/musica"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
+              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
+              activeClassName="text-foreground font-semibold nav-link-active"
             >
               Género
             </NavLink>
             <NavLink
               to="/destinos"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
+              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
+              activeClassName="text-foreground font-semibold nav-link-active"
             >
               Destinos
             </NavLink>
@@ -121,7 +121,7 @@ const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsSearchOpen(true)}
-                className="relative"
+                className="relative ripple-effect"
               >
                 <Search className="h-5 w-5" />
               </Button>
@@ -129,7 +129,7 @@ const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/favoritos")}
-                className="relative"
+                className="relative ripple-effect"
               >
                 <Heart className="h-5 w-5" />
                 {favorites.length > 0 && (
@@ -146,7 +146,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden"
+            className="md:hidden transition-transform duration-200 active:scale-90"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -156,43 +156,43 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-4">
+          <div className="md:hidden py-4 space-y-4 mobile-menu-enter">
             <NavLink
               to="/conciertos"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
+              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
               Conciertos
             </NavLink>
             <NavLink
               to="/festivales"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
+              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
               Festivales
             </NavLink>
             <NavLink
               to="/artistas"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
+              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
               Artistas
             </NavLink>
             <NavLink
               to="/musica"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
+              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
               Género
             </NavLink>
             <NavLink
               to="/destinos"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
+              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
               Destinos
@@ -202,7 +202,7 @@ const Navbar = () => {
               href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
-              className="block py-2"
+              className="block py-2 pl-3"
               onClick={() => setIsMenuOpen(false)}
             >
               <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold px-3 py-1.5 text-sm">
@@ -217,7 +217,7 @@ const Navbar = () => {
                   setIsSearchOpen(true);
                   setIsMenuOpen(false);
                 }}
-                className="flex-1"
+                className="flex-1 ripple-effect"
               >
                 <Search className="h-4 w-4 mr-2" />
                 Buscar
@@ -229,7 +229,7 @@ const Navbar = () => {
                   navigate("/favoritos");
                   setIsMenuOpen(false);
                 }}
-                className="flex-1 relative"
+                className="flex-1 relative ripple-effect"
               >
                 <Heart className="h-4 w-4 mr-2" />
                 Favoritos

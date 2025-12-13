@@ -47,7 +47,7 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Loading fallback component
+// Loading fallback component with shimmer effect
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="space-y-4 w-full max-w-md px-4">
@@ -59,6 +59,16 @@ const PageLoader = () => (
   </div>
 );
 
+// Page wrapper with transition animation
+const PageWrapper = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return (
+    <div key={location.pathname} className="page-transition">
+      {children}
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -67,24 +77,26 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/destinos" element={<Destinos />} />
-            <Route path="/destinos/:destino" element={<DestinoDetalle />} />
-            <Route path="/musica" element={<Musica />} />
-            <Route path="/musica/:genero" element={<GeneroDetalle />} />
-            <Route path="/artistas" element={<Artistas />} />
-            <Route path="/artista/:slug" element={<ArtistaDetalle />} />
-            <Route path="/eventos" element={<Eventos />} />
-            <Route path="/conciertos" element={<Conciertos />} />
-            <Route path="/festivales" element={<Festivales />} />
-            <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
-            <Route path="/favoritos" element={<Favoritos />} />
-            <Route path="/producto/:slug" element={<Producto />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <PageWrapper>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/destinos" element={<Destinos />} />
+              <Route path="/destinos/:destino" element={<DestinoDetalle />} />
+              <Route path="/musica" element={<Musica />} />
+              <Route path="/musica/:genero" element={<GeneroDetalle />} />
+              <Route path="/artistas" element={<Artistas />} />
+              <Route path="/artista/:slug" element={<ArtistaDetalle />} />
+              <Route path="/eventos" element={<Eventos />} />
+              <Route path="/conciertos" element={<Conciertos />} />
+              <Route path="/festivales" element={<Festivales />} />
+              <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
+              <Route path="/favoritos" element={<Favoritos />} />
+              <Route path="/producto/:slug" element={<Producto />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </PageWrapper>
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>
