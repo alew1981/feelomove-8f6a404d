@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import PageHero from "@/components/PageHero";
+import { SEOHead } from "@/components/SEOHead";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -89,15 +89,14 @@ const Artistas = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Artistas - Conciertos y Festivales | FEELOMOVE+</title>
-        <meta name="description" content="Descubre artistas y músicos con conciertos y festivales en España. Encuentra eventos de tus artistas favoritos." />
-        {jsonLd && (
-          <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-          </script>
-        )}
-      </Helmet>
+      <SEOHead
+        title="Artistas - Conciertos y Festivales"
+        description="Descubre artistas y músicos con conciertos y festivales en España. Encuentra eventos de tus artistas favoritos."
+        canonical="/artistas"
+        keywords="artistas españa, músicos conciertos, artistas festivales"
+        pageType="CollectionPage"
+        jsonLd={jsonLd || undefined}
+      />
       <div className="min-h-screen bg-background">
       <Navbar />
       

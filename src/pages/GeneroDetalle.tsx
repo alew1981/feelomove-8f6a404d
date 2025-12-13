@@ -236,18 +236,11 @@ const GeneroDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${genreName} - Conciertos y Festivales | FEELOMOVE`}
+        title={`${genreName} - Conciertos y Festivales`}
         description={seoDescription}
-        canonical={`https://feelomove.com/musica/${genreParam}`}
-      />
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        canonical={`/musica/${genreParam}`}
+        pageType="CollectionPage"
+        jsonLd={[jsonLdData, breadcrumbJsonLd]}
       />
     <div className="min-h-screen bg-background">
       <Navbar />

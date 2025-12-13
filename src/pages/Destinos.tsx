@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import PageHero from "@/components/PageHero";
+import { SEOHead } from "@/components/SEOHead";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -90,15 +90,14 @@ const Destinos = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Destinos - Eventos por Ciudad | FEELOMOVE+</title>
-        <meta name="description" content="Explora eventos musicales en las mejores ciudades de España. Conciertos y festivales en Madrid, Barcelona, Valencia y más." />
-        {jsonLd && (
-          <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-          </script>
-        )}
-      </Helmet>
+      <SEOHead
+        title="Destinos - Eventos por Ciudad"
+        description="Explora eventos musicales en las mejores ciudades de España. Conciertos y festivales en Madrid, Barcelona, Valencia y más."
+        canonical="/destinos"
+        keywords="destinos españa, eventos madrid, eventos barcelona, eventos valencia"
+        pageType="CollectionPage"
+        jsonLd={jsonLd || undefined}
+      />
       <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">

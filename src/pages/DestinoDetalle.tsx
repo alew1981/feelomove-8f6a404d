@@ -233,18 +233,11 @@ const DestinoDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`Conciertos en ${cityName} - Entradas y Paquetes | FEELOMOVE`}
+        title={`Conciertos en ${cityName} - Entradas y Paquetes`}
         description={seoDescription}
-        canonical={`https://feelomove.com/destinos/${citySlug}`}
-      />
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        canonical={`/destinos/${citySlug}`}
+        pageType="CollectionPage"
+        jsonLd={[jsonLdData, breadcrumbJsonLd]}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

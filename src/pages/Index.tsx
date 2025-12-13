@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
@@ -225,13 +225,13 @@ const Index = () => {
 
   return (
     <>
-      <Helmet>
-        <title>FEELOMOVE+ | Conciertos, Festivales y Hoteles en España</title>
-        <meta name="description" content="Descubre los mejores conciertos y festivales en España. Compra entradas y reserva hotel en el mismo lugar." />
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLd)}
-        </script>
-      </Helmet>
+      <SEOHead
+        title="Conciertos, Festivales y Hoteles en España"
+        description="Descubre los mejores conciertos y festivales en España. Compra entradas y reserva hotel en el mismo lugar."
+        canonical="/"
+        keywords="conciertos españa, festivales españa, entradas conciertos, hoteles eventos"
+        jsonLd={jsonLd}
+      />
       <div className="min-h-screen bg-background">
         <Navbar />
         <Hero />

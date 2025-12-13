@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -155,14 +154,9 @@ const Conciertos = () => {
         description="Descubre todos los conciertos en España. Compra tus entradas y reserva hotel en el mismo lugar. Encuentra los mejores conciertos en Madrid, Barcelona, Valencia y más ciudades."
         canonical="/conciertos"
         keywords="conciertos españa, entradas conciertos, conciertos madrid, conciertos barcelona"
+        pageType="CollectionPage"
+        jsonLd={jsonLd || undefined}
       />
-      {jsonLd && (
-        <Helmet>
-          <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-          </script>
-        </Helmet>
-      )}
       
       <div className="min-h-screen bg-background">
         <Navbar />

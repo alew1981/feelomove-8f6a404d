@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -133,18 +132,13 @@ const FestivalDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${festivalData?.name || festivalName} - Todos los Conciertos | FEELOMOVE`}
+        title={`${festivalData?.name || festivalName} - Todos los Conciertos`}
         description={`Descubre todos los conciertos de ${festivalData?.name || festivalName}. ${festivalData?.eventCount || 0} eventos, ${festivalData?.artistCount || 0} artistas. Entradas desde €${festivalData?.minPrice || 0}.`}
         canonical={`/festivales/${festivalSlug}`}
         keywords={`${festivalName}, festival, conciertos, ${festivalData?.city || ""}`}
+        pageType="ItemPage"
+        jsonLd={jsonLd || undefined}
       />
-      {jsonLd && (
-        <Helmet>
-          <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-          </script>
-        </Helmet>
-      )}
       
       <div className="min-h-screen bg-background">
         <Navbar />
