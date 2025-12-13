@@ -461,34 +461,34 @@ const ArtistaDetalle = () => {
             </div>
           )}
 
-          {/* Destinations Section */}
+          {/* Destinations Section - Compact List with Icons */}
           {citiesWithData.length > 0 && (
             <div className="mt-12 mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <MapPin className="h-6 w-6 text-accent" />
                 <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-card border border-border rounded-xl divide-y divide-border">
                 {citiesWithData.map((city, index) => (
                   <Link
                     key={city.name}
                     to={`/destinos/${city.slug}`}
-                    className="group relative aspect-[4/3] rounded-xl overflow-hidden animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    className="flex items-center justify-between p-4 hover:bg-accent/5 transition-colors group animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    {city.image ? (
-                      <img
-                        src={city.image}
-                        alt={city.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="font-bold text-white text-lg">{city.name}</h3>
-                      <p className="text-white/80 text-sm">{city.count} evento{city.count > 1 ? 's' : ''}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                        <MapPin className="h-5 w-5 text-accent" />
+                      </div>
+                      <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
+                        {city.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                        {city.count} evento{city.count > 1 ? 's' : ''}
+                      </span>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
                     </div>
                   </Link>
                 ))}
