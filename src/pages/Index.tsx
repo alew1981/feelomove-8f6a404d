@@ -108,6 +108,24 @@ const Index = () => {
         .select('*')
         .order('event_count', { ascending: false })
         .limit(4);
+      
+      // Fetch sample images for each genre from concerts
+      if (data && data.length > 0) {
+        const genresWithImages = await Promise.all(
+          data.map(async (genre: any) => {
+            const { data: eventData } = await supabase
+              .from('mv_concerts_cards')
+              .select('image_standard_url')
+              .eq('genre', genre.genre_name)
+              .limit(1);
+            return {
+              ...genre,
+              sample_image_url: eventData?.[0]?.image_standard_url || null
+            };
+          })
+        );
+        return genresWithImages;
+      }
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -248,11 +266,11 @@ const Index = () => {
               Ver todos →
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
+              Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)
             ) : (
-              concerts.map((event: any) => (
+              concerts.slice(0, 6).map((event: any) => (
                 <EventCard key={event.id} event={event} />
               ))
             )}
