@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DestinationCardSkeleton } from "@/components/ui/skeleton-loader";
 import { useInView } from "react-intersection-observer";
 import { matchesSearch } from "@/lib/searchUtils";
 
@@ -175,7 +175,7 @@ const Destinos = () => {
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(6)].map((_, i) => <Card key={i} className="overflow-hidden"><Skeleton className="h-64 w-full" /></Card>)}
+            {[...Array(8)].map((_, i) => <DestinationCardSkeleton key={i} />)}
           </div>
         ) : filteredCities.length === 0 ? (
           <div className="text-center py-16"><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
