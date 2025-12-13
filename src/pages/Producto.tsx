@@ -513,20 +513,20 @@ const Producto = () => {
                             <div className="mb-2 sm:mb-3">
                               <div className="flex items-center justify-end gap-2 mb-1">
                                 {isVIP && (
-                                  <span className="text-[10px] font-bold text-purple-600 bg-purple-500/10 px-2 py-0.5 rounded">
+                                  <span className="text-[10px] font-bold text-white bg-foreground px-2 py-0.5 rounded">
                                     VIP
                                   </span>
                                 )}
                                 {isSoldOut ? (
-                                  <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded">
+                                  <span className="text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded border border-destructive/30">
                                     AGOTADO
                                   </span>
                                 ) : isLimited ? (
-                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">
+                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
                                     ÚLTIMAS
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
+                                  <span className="text-[10px] font-bold text-accent bg-accent/20 px-2 py-0.5 rounded border border-accent/40">
                                     DISPONIBLE
                                   </span>
                                 )}
