@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -66,8 +67,38 @@ const Artistas = () => {
     }
   }, [inView, displayedArtists.length, filteredArtists.length]);
 
+  // Generate JSON-LD for artists
+  const jsonLd = artists && artists.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Artistas con Eventos en España",
+    "description": "Artistas y músicos con conciertos y festivales en España",
+    "numberOfItems": artists.length,
+    "itemListElement": artists.slice(0, 20).map((artist: any, index: number) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "MusicGroup",
+        "name": artist.attraction_name,
+        "url": `https://feelomove.com/artista/${artist.attraction_slug}`,
+        "image": artist.sample_image_url || artist.sample_image_standard_url,
+        ...(artist.genres && artist.genres[0] && { "genre": artist.genres[0] })
+      }
+    }))
+  } : null;
+
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Artistas - Conciertos y Festivales | FEELOMOVE+</title>
+        <meta name="description" content="Descubre artistas y músicos con conciertos y festivales en España. Encuentra eventos de tus artistas favoritos." />
+        {jsonLd && (
+          <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+          </script>
+        )}
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 mt-16">
@@ -187,6 +218,7 @@ const Artistas = () => {
       </main>
       <Footer />
     </div>
+    </>
   );
 };
 

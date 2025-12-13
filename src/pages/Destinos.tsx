@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -68,8 +69,37 @@ const Destinos = () => {
     }
   }, [inView, displayedCities.length, filteredCities.length]);
 
+  // Generate JSON-LD for destinations
+  const jsonLd = cities && cities.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Destinos de Eventos en España",
+    "description": "Ciudades con eventos musicales en España",
+    "numberOfItems": cities.length,
+    "itemListElement": cities.slice(0, 20).map((city: any, index: number) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "City",
+        "name": city.city_name,
+        "url": `https://feelomove.com/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`,
+        "description": `${city.event_count} eventos musicales en ${city.city_name}`
+      }
+    }))
+  } : null;
+
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Destinos - Eventos por Ciudad | FEELOMOVE+</title>
+        <meta name="description" content="Explora eventos musicales en las mejores ciudades de España. Conciertos y festivales en Madrid, Barcelona, Valencia y más." />
+        {jsonLd && (
+          <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+          </script>
+        )}
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">
         
@@ -193,6 +223,7 @@ const Destinos = () => {
       </main>
       <Footer />
     </div>
+    </>
   );
 };
 

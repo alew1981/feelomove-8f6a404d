@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
@@ -208,10 +209,32 @@ const Index = () => {
     Sevilla: { events: sevillaEvents, isLoading: isLoadingSevilla }
   };
 
+  // Generate JSON-LD for homepage
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "FEELOMOVE+",
+    "url": "https://feelomove.com",
+    "description": "Descubre los mejores conciertos y festivales en España. Compra entradas y reserva hotel en el mismo lugar.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://feelomove.com/conciertos?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Hero />
+    <>
+      <Helmet>
+        <title>FEELOMOVE+ | Conciertos, Festivales y Hoteles en España</title>
+        <meta name="description" content="Descubre los mejores conciertos y festivales en España. Compra entradas y reserva hotel en el mismo lugar." />
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLd)}
+        </script>
+      </Helmet>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <Hero />
 
       <main className="container mx-auto px-4 py-12 space-y-16">
         {/* Feelomove + love - Featured Events */}
@@ -461,6 +484,7 @@ const Index = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 

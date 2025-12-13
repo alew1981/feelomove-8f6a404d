@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -111,6 +112,42 @@ const Conciertos = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
+  // Generate JSON-LD for concerts list
+  const jsonLd = events && events.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Conciertos en España",
+    "description": "Lista de conciertos disponibles en España",
+    "numberOfItems": events.length,
+    "itemListElement": events.slice(0, 20).map((event, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "MusicEvent",
+        "name": event.name,
+        "startDate": event.event_date,
+        "url": `https://feelomove.com/producto/${event.slug || event.id}`,
+        "image": event.image_large_url || event.image_standard_url,
+        "location": {
+          "@type": "Place",
+          "name": event.venue_name || "Venue",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": event.venue_city
+          }
+        },
+        ...(event.price_min_incl_fees && {
+          "offers": {
+            "@type": "Offer",
+            "price": event.price_min_incl_fees,
+            "priceCurrency": event.currency || "EUR",
+            "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock"
+          }
+        })
+      }
+    }))
+  } : null;
+
   return (
     <>
       <SEOHead
@@ -119,6 +156,13 @@ const Conciertos = () => {
         canonical="/conciertos"
         keywords="conciertos españa, entradas conciertos, conciertos madrid, conciertos barcelona"
       />
+      {jsonLd && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+          </script>
+        </Helmet>
+      )}
       
       <div className="min-h-screen bg-background">
         <Navbar />

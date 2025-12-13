@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -98,6 +99,37 @@ const FestivalDetalle = () => {
 
   const heroImage = festivalData?.image || "/placeholder.svg";
 
+  // Generate JSON-LD for festival detail
+  const jsonLd = festivalData ? {
+    "@context": "https://schema.org",
+    "@type": "Festival",
+    "name": festivalData.name,
+    "startDate": festivalData.firstDate,
+    "endDate": festivalData.lastDate,
+    "url": `https://feelomove.com/festivales/${festivalSlug}`,
+    "image": festivalData.image,
+    "location": {
+      "@type": "Place",
+      "name": festivalData.venue || festivalData.city,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": festivalData.city
+      }
+    },
+    ...(festivalData.minPrice > 0 && {
+      "offers": {
+        "@type": "Offer",
+        "price": festivalData.minPrice,
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      }
+    }),
+    "performer": concertEvents.slice(0, 10).map(event => ({
+      "@type": "MusicGroup",
+      "name": event.main_attraction || event.name
+    }))
+  } : null;
+
   return (
     <>
       <SEOHead
@@ -106,6 +138,13 @@ const FestivalDetalle = () => {
         canonical={`/festivales/${festivalSlug}`}
         keywords={`${festivalName}, festival, conciertos, ${festivalData?.city || ""}`}
       />
+      {jsonLd && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+          </script>
+        </Helmet>
+      )}
       
       <div className="min-h-screen bg-background">
         <Navbar />
