@@ -95,14 +95,16 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
     return () => clearInterval(interval);
   }, [event.event_date, showCountdown]);
 
-  // Determine badge
+  // Determine badge - show AGOTADO if sold_out OR seats_available is false
   let badgeVariant: "disponible" | "agotado" | undefined;
   let badgeText: string | undefined;
 
-  if (event.sold_out) {
+  const isEventSoldOut = event.sold_out === true || event.seats_available === false;
+
+  if (isEventSoldOut) {
     badgeVariant = "agotado";
     badgeText = "AGOTADO";
-  } else if (event.seats_available !== false) {
+  } else {
     badgeVariant = "disponible";
     badgeText = "DISPONIBLE";
   }
