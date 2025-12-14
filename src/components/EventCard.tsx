@@ -5,8 +5,9 @@ import { Button } from "./ui/button";
 import { MapPin } from "lucide-react";
 import { format, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useRef } from "react";
 import { CategoryBadge } from "./CategoryBadge";
+import { Skeleton } from "./ui/skeleton";
 
 interface EventCardProps {
   event: {
@@ -41,6 +42,37 @@ interface EventCardComponentProps extends EventCardProps {
 }
 
 const EventCard = memo(({ event, priority = false }: EventCardComponentProps) => {
+  // Lazy loading state
+  const [isInView, setIsInView] = useState(priority);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    if (priority) {
+      setIsInView(true);
+      return;
+    }
+
+    const element = cardRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.unobserve(element);
+          }
+        });
+      },
+      { rootMargin: '200px', threshold: 0 }
+    );
+
+    observer.observe(element);
+    return () => observer.unobserve(element);
+  }, [priority]);
+
   // Normalize field names (support both old and new views)
   const eventId = event.id || event.event_id;
   const eventName = event.name || event.event_name || '';
@@ -113,22 +145,33 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
 
   return (
     <Link to={eventUrl} className="group block">
-      <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
+      <Card ref={cardRef} className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
             <div className="relative h-56 overflow-hidden bg-muted">
-              {/* Background Image - Direct img for reliability */}
-              <img
-                src={imageUrl}
-                alt={eventName}
-                loading={priority ? "eager" : "lazy"}
-                decoding={priority ? "sync" : "async"}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                }}
-              />
+              {/* Background Image - Lazy loaded with IntersectionObserver */}
+              {isInView ? (
+                <>
+                  {!imageLoaded && (
+                    <Skeleton className="absolute inset-0 w-full h-full" />
+                  )}
+                  <img
+                    src={imageUrl}
+                    alt={eventName}
+                    loading={priority ? "eager" : "lazy"}
+                    decoding={priority ? "sync" : "async"}
+                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={() => setImageLoaded(true)}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder.svg";
+                      setImageLoaded(true);
+                    }}
+                  />
+                </>
+              ) : (
+                <Skeleton className="absolute inset-0 w-full h-full" />
+              )}
               
               {/* Minimal Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

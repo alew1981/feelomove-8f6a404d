@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>${BASE_URL}/musica</loc>
+    <loc>${BASE_URL}/generos</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -140,7 +140,7 @@ ${urlsXml}
       });
     }
 
-    // Artists Sitemap
+    // Artists Sitemap - using new URL structure /conciertos/:artist
     if (type === "artists") {
       const { data: artists, error } = await supabase
         .from("mv_attractions")
@@ -153,7 +153,7 @@ ${urlsXml}
       const urlsXml = (artists || [])
         .filter(a => a.attraction_slug)
         .map(a => `  <url>
-    <loc>${BASE_URL}/artista/${a.attraction_slug}</loc>
+    <loc>${BASE_URL}/conciertos/${a.attraction_slug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -200,7 +200,7 @@ ${urlsXml}
       });
     }
 
-    // Genres Sitemap
+    // Genres Sitemap - using new URL structure /generos/:genre
     if (type === "genres") {
       const { data: genres, error } = await supabase
         .from("mv_genres_cards")
@@ -212,12 +212,15 @@ ${urlsXml}
 
       const urlsXml = (genres || [])
         .filter(g => g.genre_name)
-        .map(g => `  <url>
-    <loc>${BASE_URL}/musica/${encodeURIComponent(g.genre_name)}</loc>
+        .map(g => {
+          const genreSlug = normalizeSlug(g.genre_name);
+          return `  <url>
+    <loc>${BASE_URL}/generos/${genreSlug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
-  </url>`)
+  </url>`;
+        })
         .join('\n');
 
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
