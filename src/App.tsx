@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import Index from "./pages/Index";
 import { Skeleton } from "@/components/ui/skeleton";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Lazy load all pages except Index for faster initial load
 const About = lazy(() => import("./pages/About"));
@@ -47,14 +48,42 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Loading fallback component with shimmer effect
+// Loading fallback component with shimmer effect - matches actual page structure
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="space-y-4 w-full max-w-md px-4">
-      <Skeleton className="h-8 w-3/4 mx-auto" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-      <Skeleton className="h-32 w-full" />
+  <div className="min-h-screen bg-background">
+    {/* Navbar skeleton */}
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16">
+      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+        <Skeleton className="h-8 w-32" />
+        <div className="hidden md:flex gap-6">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      </div>
+    </div>
+    
+    {/* Hero skeleton */}
+    <div className="pt-16">
+      <Skeleton className="h-64 w-full" />
+    </div>
+    
+    {/* Content skeleton */}
+    <div className="container mx-auto px-4 py-8">
+      <Skeleton className="h-8 w-48 mb-4" />
+      <Skeleton className="h-4 w-full max-w-2xl mb-8" />
+      
+      {/* Cards grid skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="space-y-3">
+            <Skeleton className="h-56 w-full rounded-lg" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -81,41 +110,43 @@ const RedirectArtista = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Suspense fallback={<PageLoader />}>
-          <PageWrapper>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/destinos" element={<Destinos />} />
-              <Route path="/destinos/:destino" element={<DestinoDetalle />} />
-              <Route path="/generos" element={<Generos />} />
-              <Route path="/generos/:genero" element={<GeneroDetalle />} />
-              <Route path="/artistas" element={<Artistas />} />
-              <Route path="/conciertos/:artistSlug" element={<ArtistaDetalle />} />
-              <Route path="/eventos" element={<Eventos />} />
-              <Route path="/conciertos" element={<Conciertos />} />
-              <Route path="/festivales" element={<Festivales />} />
-              <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
-              <Route path="/favoritos" element={<Favoritos />} />
-              <Route path="/producto/:slug" element={<Producto />} />
-              {/* Legacy URL redirects (301) */}
-              <Route path="/musica" element={<RedirectMusica />} />
-              <Route path="/musica/:genero" element={<RedirectMusicaGenero />} />
-              <Route path="/artista/:slug" element={<RedirectArtista />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </PageWrapper>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Suspense fallback={<PageLoader />}>
+            <PageWrapper>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/destinos" element={<Destinos />} />
+                <Route path="/destinos/:destino" element={<DestinoDetalle />} />
+                <Route path="/generos" element={<Generos />} />
+                <Route path="/generos/:genero" element={<GeneroDetalle />} />
+                <Route path="/artistas" element={<Artistas />} />
+                <Route path="/conciertos/:artistSlug" element={<ArtistaDetalle />} />
+                <Route path="/eventos" element={<Eventos />} />
+                <Route path="/conciertos" element={<Conciertos />} />
+                <Route path="/festivales" element={<Festivales />} />
+                <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
+                <Route path="/favoritos" element={<Favoritos />} />
+                <Route path="/producto/:slug" element={<Producto />} />
+                {/* Legacy URL redirects (301) */}
+                <Route path="/musica" element={<RedirectMusica />} />
+                <Route path="/musica/:genero" element={<RedirectMusicaGenero />} />
+                <Route path="/artista/:slug" element={<RedirectArtista />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </PageWrapper>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
