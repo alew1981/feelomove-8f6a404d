@@ -24,35 +24,51 @@ const Destinos = () => {
   const [displayCount, setDisplayCount] = useState<number>(30);
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  const { data: cities, isLoading } = useQuery({
+  const { data: cities, isLoading, error } = useQuery({
     queryKey: ["destinations"],
     queryFn: async () => {
       // Fetch destinations
-      const { data: destinations, error } = await supabase
+      const { data: destinations, error: destError } = await supabase
         .from("mv_destinations_cards")
         .select("*")
         .order("event_count", { ascending: false });
-      if (error) throw error;
+      if (destError) {
+        console.error("Error fetching destinations:", destError);
+        throw destError;
+      }
       
       // Fetch city images from lite_tbl_city_mapping
-      const { data: cityImages } = await supabase
-        .from("lite_tbl_city_mapping")
-        .select("ticketmaster_city, imagen_ciudad")
-        .not("imagen_ciudad", "is", null);
-      
-      // Create a map of city name to image
-      const cityImageMap = new Map<string, string>();
-      cityImages?.forEach((city) => {
-        if (city.ticketmaster_city && city.imagen_ciudad) {
-          cityImageMap.set(city.ticketmaster_city.toLowerCase(), city.imagen_ciudad);
+      try {
+        const { data: cityImages, error: imgError } = await supabase
+          .from("lite_tbl_city_mapping")
+          .select("ticketmaster_city, imagen_ciudad")
+          .not("imagen_ciudad", "is", null);
+        
+        if (imgError) {
+          console.error("Error fetching city images:", imgError);
+          // Continue without city images
+          return destinations || [];
         }
-      });
-      
-      // Merge city images into destinations
-      return (destinations || []).map((dest: any) => ({
-        ...dest,
-        ciudad_imagen: cityImageMap.get(dest.city_name?.toLowerCase()) || null
-      }));
+        
+        // Create a map of city name to image
+        const cityImageMap = new Map<string, string>();
+        if (cityImages && Array.isArray(cityImages)) {
+          cityImages.forEach((city) => {
+            if (city.ticketmaster_city && city.imagen_ciudad) {
+              cityImageMap.set(city.ticketmaster_city.toLowerCase(), city.imagen_ciudad);
+            }
+          });
+        }
+        
+        // Merge city images into destinations
+        return (destinations || []).map((dest: any) => ({
+          ...dest,
+          ciudad_imagen: dest.city_name ? cityImageMap.get(dest.city_name.toLowerCase()) || null : null
+        }));
+      } catch (e) {
+        console.error("Error processing city images:", e);
+        return destinations || [];
+      }
     },
   });
 
