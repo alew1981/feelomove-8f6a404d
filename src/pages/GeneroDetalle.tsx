@@ -30,18 +30,32 @@ const GeneroDetalle = () => {
     threshold: 0
   });
 
-  // Fetch genre info to get the correct name
+  // Fetch genre info to get the correct name - search by matching slug pattern
   const { data: genreInfo } = useQuery({
     queryKey: ["genre-info", genreParam],
     queryFn: async () => {
-      // Try by genre_name
-      const { data } = await supabase
+      // Fetch all genres and find match by normalized slug
+      const { data: allGenres } = await supabase
         .from("mv_genres_cards")
-        .select("genre_name, genre_id, event_count")
-        .eq("genre_name", genreParam)
-        .maybeSingle();
+        .select("genre_name, genre_id, event_count");
       
-      return data;
+      if (!allGenres) return null;
+      
+      // Normalize the URL param to match genre slugs
+      const normalizedParam = genreParam.toLowerCase().replace(/-/g, '');
+      
+      // Find genre where normalized name matches
+      const match = allGenres.find(g => {
+        const normalizedGenre = g.genre_name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, '');
+        return normalizedGenre === normalizedParam || 
+               g.genre_name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedParam;
+      });
+      
+      return match || null;
     },
     enabled: !!genreParam,
   });
