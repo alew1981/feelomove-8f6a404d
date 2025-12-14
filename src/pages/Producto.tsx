@@ -464,7 +464,7 @@ const Producto = () => {
                 )}
                 {!isEventAvailable && (
                   <Badge className="bg-destructive text-destructive-foreground font-black px-4 py-2 text-sm rounded-full">
-                    AGOTADO
+                    SOLD OUT
                   </Badge>
                 )}
               </div>
