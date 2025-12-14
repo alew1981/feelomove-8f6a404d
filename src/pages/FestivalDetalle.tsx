@@ -144,15 +144,6 @@ const FestivalDetalle = () => {
         <Navbar />
         <div className="container mx-auto px-4 py-8 mt-16">
           
-          {/* Back Link */}
-          <Link 
-            to="/festivales" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-[#00FF8F] transition-colors mb-6"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Volver a Festivales
-          </Link>
-          
           {/* Breadcrumbs */}
           <div className="mb-4">
             <Breadcrumbs />
@@ -160,6 +151,15 @@ const FestivalDetalle = () => {
           
           {/* Hero Image */}
           <PageHero title={festivalData?.name || festivalName} imageUrl={heroImage} />
+          
+          {/* Back Link */}
+          <Link 
+            to="/festivales" 
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-[#00FF8F] transition-colors my-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver a Festivales
+          </Link>
           
 
           {/* Tabs for Concerts and Transport */}
