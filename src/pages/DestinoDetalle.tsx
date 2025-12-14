@@ -238,6 +238,7 @@ const DestinoDetalle = () => {
         canonical={`/destinos/${citySlug}`}
         pageType="CollectionPage"
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
+        preloadImage={heroImage}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

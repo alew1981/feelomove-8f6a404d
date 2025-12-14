@@ -428,6 +428,7 @@ const Producto = () => {
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
         jsonLd={jsonLdData}
+        preloadImage={eventImage}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           { name: eventDetails.is_festival ? "Festivales" : "Conciertos", url: eventDetails.is_festival ? "/festivales" : "/conciertos" },
@@ -450,6 +451,9 @@ const Producto = () => {
                 src={eventImage}
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
+                fetchPriority="high"
+                loading="eager"
+                decoding="sync"
               />
               
               {/* Gradient Overlay */}

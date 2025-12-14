@@ -329,6 +329,7 @@ const ArtistaDetalle = () => {
         ogImage={heroImage || undefined}
         pageType="ItemPage"
         jsonLd={jsonLdData}
+        preloadImage={heroImage}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           { name: "Artistas", url: "/artistas" },

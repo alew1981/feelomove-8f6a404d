@@ -15,6 +15,7 @@ interface SEOHeadProps {
   jsonLd?: object | object[];
   pageType?: "WebPage" | "ItemPage" | "CollectionPage" | "SearchResultsPage" | "AboutPage" | "ContactPage";
   breadcrumbs?: BreadcrumbItem[];
+  preloadImage?: string; // LCP image URL for preloading
 }
 
 // Organization schema - global for all pages
@@ -101,7 +102,8 @@ export const SEOHead = ({
   keywords,
   jsonLd,
   pageType = "WebPage",
-  breadcrumbs
+  breadcrumbs,
+  preloadImage
 }: SEOHeadProps) => {
   const fullTitle = `${title} | FEELOMOVE+`;
   const siteUrl = "https://feelomove.com";
@@ -147,6 +149,11 @@ export const SEOHead = ({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
+      
+      {/* Preload LCP image for better performance */}
+      {preloadImage && (
+        <link rel="preload" as="image" href={preloadImage} fetchPriority="high" />
+      )}
       
       {/* Canonical URL */}
       {fullCanonical && <link rel="canonical" href={fullCanonical} />}

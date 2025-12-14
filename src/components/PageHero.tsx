@@ -40,6 +40,8 @@ const PageHero = ({ title, imageUrl, className = "" }: PageHeroProps) => {
         alt={title}
         className="w-full h-full object-cover parallax-bg"
         loading="eager"
+        decoding="sync"
+        fetchPriority="high"
         style={{ transform: `translateY(${scrollOffset}px) scale(1.1)` }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
