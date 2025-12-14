@@ -352,6 +352,9 @@ const ArtistaDetalle = () => {
               src={heroImage}
               alt={artistName}
               className="w-full h-full object-cover"
+              fetchPriority="high"
+              loading="eager"
+              decoding="sync"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-accent/20 to-background" />
