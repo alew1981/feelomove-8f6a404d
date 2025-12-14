@@ -148,7 +148,7 @@ const Breadcrumbs = () => {
               <ChevronRight className="h-4 w-4" />
               <Link
                 to={`/conciertos/${generateSlug(eventArtist)}`}
-                className="hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors hover:underline"
               >
                 {eventArtist}
               </Link>
