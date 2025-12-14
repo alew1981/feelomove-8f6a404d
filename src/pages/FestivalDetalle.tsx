@@ -138,6 +138,7 @@ const FestivalDetalle = () => {
         keywords={`${festivalName}, festival, conciertos, ${festivalData?.city || ""}`}
         pageType="ItemPage"
         jsonLd={jsonLd || undefined}
+        preloadImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
       />
       
       <div className="min-h-screen bg-background">
