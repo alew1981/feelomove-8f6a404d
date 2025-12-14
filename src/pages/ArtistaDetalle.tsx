@@ -30,8 +30,8 @@ const generateSlug = (name: string): string => {
 };
 
 const ArtistaDetalle = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const artistSlug = slug ? decodeURIComponent(slug) : "";
+  const { artistSlug: slugParam } = useParams<{ artistSlug: string }>();
+  const artistSlug = slugParam ? decodeURIComponent(slugParam) : "";
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -269,7 +269,7 @@ const ArtistaDetalle = () => {
       "@context": "https://schema.org",
       "@type": "MusicGroup",
       "name": artistName,
-      "url": `https://feelomove.com/artista/${artistSlug}`,
+      "url": `https://feelomove.com/conciertos/${artistSlug}`,
       "image": heroImage || undefined,
       "genre": artistGenre || undefined,
       "event": events?.slice(0, 10).map((event: any) => ({
@@ -325,7 +325,7 @@ const ArtistaDetalle = () => {
       <SEOHead
         title={`${artistName} - Entradas y Paquetes`}
         description={seoDescription}
-        canonical={`/artista/${artistSlug}`}
+        canonical={`/conciertos/${artistSlug}`}
         ogImage={heroImage || undefined}
         pageType="ItemPage"
         jsonLd={jsonLdData}
@@ -371,7 +371,7 @@ const ArtistaDetalle = () => {
                 </span>
                 {artistGenre && (
                   <Link
-                    to={`/musica/${genreSlug}`}
+                    to={`/generos/${genreSlug}`}
                     className="bg-foreground text-background px-3 py-1 rounded-full text-sm font-bold hover:bg-foreground/80 transition-colors"
                   >
                     {artistGenre}
@@ -548,7 +548,7 @@ const ArtistaDetalle = () => {
                 <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
                 {genreSlug && (
                   <Link 
-                    to={`/musica/${genreSlug}`}
+                    to={`/generos/${genreSlug}`}
                     className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                   >
                     Ver todos <ChevronRight className="h-4 w-4" />
@@ -559,7 +559,7 @@ const ArtistaDetalle = () => {
                 {relatedArtists.map((artist: any, index: number) => (
                   <Link
                     key={artist.slug}
-                    to={`/artista/${artist.slug}`}
+                    to={`/conciertos/${artist.slug}`}
                     className="group relative aspect-square rounded-xl overflow-hidden animate-fade-in"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >

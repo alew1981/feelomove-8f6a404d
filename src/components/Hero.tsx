@@ -113,7 +113,7 @@ const Hero = () => {
             searchResults.push({
               type: 'artist',
               name: artist.attraction_name || '',
-              path: `/artista/${artist.attraction_slug}`,
+              path: `/conciertos/${artist.attraction_slug}`,
               image: artist.sample_image_url || ''
             });
           }

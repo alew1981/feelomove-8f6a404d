@@ -33,8 +33,8 @@ const Breadcrumbs = () => {
     enabled: !!params.slug && pathnames[0] === "producto",
   });
 
-  // Get artist name from database for artist detail page
-  const artistSlug = pathnames[0] === "artista" && params.slug ? decodeURIComponent(params.slug) : null;
+  // Get artist name from database for artist detail page (now under /conciertos/:artistSlug)
+  const artistSlug = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug ? decodeURIComponent(params.artistSlug) : null;
   
   const { data: artistData } = useQuery({
     queryKey: ["artist-breadcrumb", artistSlug],
@@ -88,12 +88,11 @@ const Breadcrumbs = () => {
   const breadcrumbNames: Record<string, string> = {
     about: "Nosotros",
     destinos: "Destinos",
-    musica: "Música",
+    generos: "Géneros",
     eventos: "Eventos",
     conciertos: "Conciertos",
     festivales: "Festivales",
     artistas: "Artistas",
-    artista: "Artistas",
     producto: eventDetails?.event_name || "Evento",
   };
 
@@ -110,7 +109,7 @@ const Breadcrumbs = () => {
           <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span className="hidden sm:inline">Inicio</span>
         </Link>
-      {/* For product page: Inicio > Conciertos > Evento */}
+      {/* For product page: Inicio > Conciertos > Ciudad > Género > Artista > Evento */}
       {pathnames[0] === "producto" && eventDetails ? (
         <>
           <div className="flex items-center gap-2">
@@ -137,7 +136,7 @@ const Breadcrumbs = () => {
             <div className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4" />
               <Link
-                to={`/musica/${generateSlug(eventGenre)}`}
+                to={`/generos/${generateSlug(eventGenre)}`}
                 className="hover:text-foreground transition-colors"
               >
                 {eventGenre.split(' - ')[0]}
@@ -148,7 +147,7 @@ const Breadcrumbs = () => {
             <div className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4" />
               <Link
-                to={`/artista/${generateSlug(eventArtist)}`}
+                to={`/conciertos/${generateSlug(eventArtist)}`}
                 className="hover:text-foreground transition-colors"
               >
                 {eventArtist}
@@ -160,16 +159,16 @@ const Breadcrumbs = () => {
             <span className="text-foreground font-medium">{eventDetails.event_name}</span>
           </div>
         </>
-      ) : pathnames[0] === "musica" && genreFromPath ? (
-        /* Para página de género: Inicio > Música > Género */
+      ) : pathnames[0] === "generos" && genreFromPath ? (
+        /* Para página de género: Inicio > Géneros > Género */
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <Link
-              to="/musica"
+              to="/generos"
               className="hover:text-foreground transition-colors"
             >
-              Música
+              Géneros
             </Link>
           </div>
           <div className="flex items-center gap-2">
@@ -196,16 +195,16 @@ const Breadcrumbs = () => {
             </span>
           </div>
         </>
-      ) : pathnames[0] === "artista" && artistSlug ? (
-        /* Para página de artista: Inicio > Artistas > Nombre del artista */
+      ) : pathnames[0] === "conciertos" && artistSlug ? (
+        /* Para página de artista: Inicio > Conciertos > Nombre del artista */
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <Link
-              to="/artistas"
+              to="/conciertos"
               className="hover:text-foreground transition-colors"
             >
-              Artistas
+              Conciertos
             </Link>
           </div>
           <div className="flex items-center gap-2">
