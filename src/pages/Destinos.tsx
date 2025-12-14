@@ -221,11 +221,15 @@ const Destinos = () => {
               {displayedCities.map((city: any) => (
                 <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block">
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
-                    <div className="relative h-64 overflow-hidden">
+                    <div className="relative h-64 overflow-hidden bg-muted">
                       <img 
                         src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
-                        alt={city.city_name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                        alt={`Eventos en ${city.city_name}`} 
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg";
+                        }}
                       />
                       <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <Badge className="bg-accent text-accent-foreground hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
