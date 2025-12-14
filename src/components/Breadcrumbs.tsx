@@ -133,6 +133,17 @@ const Breadcrumbs = () => {
               </Link>
             </div>
           )}
+          {eventArtist && (
+            <div className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" />
+              <Link
+                to={`/artista/${generateSlug(eventArtist)}`}
+                className="hover:text-foreground transition-colors"
+              >
+                {eventArtist}
+              </Link>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground font-medium">{eventDetails.event_name}</span>
