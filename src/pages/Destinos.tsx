@@ -27,12 +27,32 @@ const Destinos = () => {
   const { data: cities, isLoading } = useQuery({
     queryKey: ["destinations"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch destinations
+      const { data: destinations, error } = await supabase
         .from("mv_destinations_cards")
         .select("*")
         .order("event_count", { ascending: false });
       if (error) throw error;
-      return data || [];
+      
+      // Fetch city images from lite_tbl_city_mapping
+      const { data: cityImages } = await supabase
+        .from("lite_tbl_city_mapping")
+        .select("ticketmaster_city, imagen_ciudad")
+        .not("imagen_ciudad", "is", null);
+      
+      // Create a map of city name to image
+      const cityImageMap = new Map<string, string>();
+      cityImages?.forEach((city) => {
+        if (city.ticketmaster_city && city.imagen_ciudad) {
+          cityImageMap.set(city.ticketmaster_city.toLowerCase(), city.imagen_ciudad);
+        }
+      });
+      
+      // Merge city images into destinations
+      return (destinations || []).map((dest: any) => ({
+        ...dest,
+        ciudad_imagen: cityImageMap.get(dest.city_name?.toLowerCase()) || null
+      }));
     },
   });
 
@@ -187,7 +207,7 @@ const Destinos = () => {
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
                       <img 
-                        src={city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
+                        src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
                         alt={city.city_name} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                       />
