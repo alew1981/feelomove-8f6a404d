@@ -3,17 +3,21 @@ import { ChevronRight, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
+import { usePrefetch } from "@/hooks/usePrefetch";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
   return normalizeSearch(name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 };
 
+const linkClass = "hover:text-foreground hover:underline transition-colors";
+
 const Breadcrumbs = () => {
   const location = useLocation();
   const params = useParams();
   const [searchParams] = useSearchParams();
   const pathnames = location.pathname.split("/").filter((x) => x);
+  const { prefetch } = usePrefetch();
 
   // Get event name and categories for product page using lovable_mv_event_product_page
   const { data: eventDetails } = useQuery({
@@ -116,7 +120,8 @@ const Breadcrumbs = () => {
             <ChevronRight className="h-4 w-4" />
             <Link
               to="/conciertos"
-              className="hover:text-foreground transition-colors"
+              className={linkClass}
+              onMouseEnter={() => prefetch('/conciertos')}
             >
               Conciertos
             </Link>
@@ -126,7 +131,8 @@ const Breadcrumbs = () => {
               <ChevronRight className="h-4 w-4" />
               <Link
                 to={`/destinos/${encodeURIComponent(eventCity.toLowerCase().replace(/\s+/g, '-'))}`}
-                className="hover:text-foreground transition-colors"
+                className={linkClass}
+                onMouseEnter={() => prefetch('/destinos')}
               >
                 {eventCity}
               </Link>
@@ -137,7 +143,8 @@ const Breadcrumbs = () => {
               <ChevronRight className="h-4 w-4" />
               <Link
                 to={`/generos/${generateSlug(eventGenre)}`}
-                className="hover:text-foreground transition-colors"
+                className={linkClass}
+                onMouseEnter={() => prefetch('/generos')}
               >
                 {eventGenre.split(' - ')[0]}
               </Link>
@@ -148,7 +155,8 @@ const Breadcrumbs = () => {
               <ChevronRight className="h-4 w-4" />
               <Link
                 to={`/conciertos/${generateSlug(eventArtist)}`}
-                className="hover:text-foreground transition-colors hover:underline"
+                className={linkClass}
+                onMouseEnter={() => prefetch('/conciertos')}
               >
                 {eventArtist}
               </Link>
@@ -166,7 +174,8 @@ const Breadcrumbs = () => {
             <ChevronRight className="h-4 w-4" />
             <Link
               to="/generos"
-              className="hover:text-foreground transition-colors"
+              className={linkClass}
+              onMouseEnter={() => prefetch('/generos')}
             >
               Géneros
             </Link>
@@ -183,7 +192,8 @@ const Breadcrumbs = () => {
             <ChevronRight className="h-4 w-4" />
             <Link
               to="/destinos"
-              className="hover:text-foreground transition-colors"
+              className={linkClass}
+              onMouseEnter={() => prefetch('/destinos')}
             >
               Destinos
             </Link>
@@ -202,7 +212,8 @@ const Breadcrumbs = () => {
             <ChevronRight className="h-4 w-4" />
             <Link
               to="/conciertos"
-              className="hover:text-foreground transition-colors"
+              className={linkClass}
+              onMouseEnter={() => prefetch('/conciertos')}
             >
               Conciertos
             </Link>
@@ -229,7 +240,8 @@ const Breadcrumbs = () => {
               ) : (
                 <Link
                   to={routeTo}
-                  className="hover:text-foreground transition-colors"
+                  className={linkClass}
+                  onMouseEnter={() => prefetch(routeTo)}
                 >
                   {displayName}
                 </Link>
