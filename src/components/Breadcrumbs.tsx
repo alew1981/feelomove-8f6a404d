@@ -140,7 +140,7 @@ const Breadcrumbs = () => {
                 to={`/musica/${generateSlug(eventGenre)}`}
                 className="hover:text-foreground transition-colors"
               >
-                {eventGenre}
+                {eventGenre.split(' - ')[0]}
               </Link>
             </div>
           )}

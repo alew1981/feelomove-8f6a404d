@@ -338,8 +338,15 @@ const ArtistaDetalle = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         
+        <div className="container mx-auto px-4 pt-8 mt-16">
+          {/* Breadcrumbs */}
+          <div className="mb-4">
+            <Breadcrumbs />
+          </div>
+        </div>
+        
         {/* Hero Header - Full Width with Artist Image */}
-        <div className="relative w-full h-[300px] sm:h-[400px] overflow-hidden mt-16">
+        <div className="relative w-full h-[300px] sm:h-[400px] overflow-hidden">
           {heroImage ? (
             <img
               src={heroImage}
@@ -381,10 +388,6 @@ const ArtistaDetalle = () => {
         </div>
         
         <div className="container mx-auto px-4 py-6">
-          {/* Breadcrumbs */}
-          <div className="mb-6">
-            <Breadcrumbs />
-          </div>
 
         {/* Filters and Search */}
         <div className="mb-8 space-y-4">
