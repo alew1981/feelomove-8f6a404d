@@ -80,7 +80,7 @@ const Artistas = () => {
       "item": {
         "@type": "MusicGroup",
         "name": artist.attraction_name,
-        "url": `https://feelomove.com/artista/${artist.attraction_slug}`,
+        "url": `https://feelomove.com/conciertos/${artist.attraction_slug}`,
         "image": artist.sample_image_url || artist.sample_image_standard_url,
         ...(artist.genres && artist.genres[0] && { "genre": artist.genres[0] })
       }
@@ -166,7 +166,7 @@ const Artistas = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedArtists.map((artist: any) => (
-                <Link to={`/artista/${artist.attraction_slug}`} key={artist.attraction_id} className="block">
+                <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block">
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
                       <img

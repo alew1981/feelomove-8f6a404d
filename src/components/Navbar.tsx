@@ -90,11 +90,11 @@ const Navbar = () => {
               Artistas
             </NavLink>
             <NavLink
-              to="/musica"
+              to="/generos"
               className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
               activeClassName="text-foreground font-semibold nav-link-active"
             >
-              Género
+              Géneros
             </NavLink>
             <NavLink
               to="/destinos"
@@ -182,12 +182,12 @@ const Navbar = () => {
               Artistas
             </NavLink>
             <NavLink
-              to="/musica"
+              to="/generos"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
               activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
-              Género
+              Géneros
             </NavLink>
             <NavLink
               to="/destinos"

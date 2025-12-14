@@ -222,7 +222,7 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       autocompleteSuggestions.push({
         type: 'artist',
         name: artist.attraction_name,
-        path: `/artista/${artist.attraction_slug}`,
+        path: `/conciertos/${artist.attraction_slug}`,
         id: artist.attraction_id,
         subtitle: `${artist.event_count} eventos`,
         icon: <User className="h-4 w-4" />
@@ -245,7 +245,7 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       autocompleteSuggestions.push({
         type: 'genre',
         name: genre.genre_name,
-        path: `/musica/${genreSlug}`,
+        path: `/generos/${genreSlug}`,
         id: String(genre.genre_id),
         subtitle: `${genre.event_count} eventos`,
         icon: <Disc className="h-4 w-4" />

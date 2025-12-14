@@ -41,7 +41,7 @@ const Footer = () => {
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/musica" className="hover:text-foreground transition-colors">
+                <NavLink to="/generos" className="hover:text-foreground transition-colors">
                   Géneros Musicales
                 </NavLink>
               </li>

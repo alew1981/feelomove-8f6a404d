@@ -372,7 +372,7 @@ const Index = () => {
               artists.map((artist: any) => (
                 <Link
                   key={artist.attraction_id}
-                  to={`/artista/${artist.attraction_slug}`}
+                  to={`/conciertos/${artist.attraction_slug}`}
                   className="group block"
                 >
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
@@ -402,7 +402,7 @@ const Index = () => {
         <section>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold">Géneros</h2>
-            <Link to="/musica" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <Link to="/generos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
               Ver todos →
             </Link>
           </div>
@@ -415,7 +415,7 @@ const Index = () => {
               genres.map((genre: any) => (
                 <Link
                   key={genre.genre_id}
-                  to={`/musica/${encodeURIComponent(genre.genre_name || '')}`}
+                  to={`/generos/${encodeURIComponent(genre.genre_name || '')}`}
                   className="group block"
                 >
                   <Card className="overflow-hidden h-48 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">

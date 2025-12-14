@@ -108,7 +108,7 @@ const Musica = () => {
       "item": {
         "@type": "MusicGenre",
         "name": genre.genre_name,
-        "url": `https://feelomove.com/musica/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`
+        "url": `https://feelomove.com/generos/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`
       }
     }))
   } : null;
@@ -118,7 +118,7 @@ const Musica = () => {
       <SEOHead
         title="Géneros Musicales - Eventos por Estilo"
         description="Explora eventos por género musical en España. Rock, Pop, Electrónica, Jazz y más estilos musicales."
-        canonical="/musica"
+        canonical="/generos"
         keywords="géneros música, rock españa, pop español, electrónica festivales"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
@@ -167,7 +167,7 @@ const Musica = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedGenres.map((genre: any) => (
-                <Link key={genre.genre_id} to={`/musica/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`} className="block">
+                <Link key={genre.genre_id} to={`/generos/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`} className="block">
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                     <div className="relative h-64 overflow-hidden">
                       <img 

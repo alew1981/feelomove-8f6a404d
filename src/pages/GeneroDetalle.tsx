@@ -183,7 +183,7 @@ const GeneroDetalle = () => {
     "@type": "ItemList",
     "name": `Conciertos de ${genreName}`,
     "description": seoDescription,
-    "url": `https://feelomove.com/musica/${genreParam}`,
+    "url": `https://feelomove.com/generos/${genreParam}`,
     "numberOfItems": events?.length || 0,
     "itemListElement": events?.slice(0, 10).map((event: any, index: number) => ({
       "@type": "ListItem",
@@ -222,13 +222,13 @@ const GeneroDetalle = () => {
         "@type": "ListItem",
         "position": 2,
         "name": "Géneros",
-        "item": "https://feelomove.com/musica"
+        "item": "https://feelomove.com/generos"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": genreName,
-        "item": `https://feelomove.com/musica/${genreParam}`
+        "item": `https://feelomove.com/generos/${genreParam}`
       }
     ]
   };
@@ -238,7 +238,7 @@ const GeneroDetalle = () => {
       <SEOHead
         title={`${genreName} - Conciertos y Festivales`}
         description={seoDescription}
-        canonical={`/musica/${genreParam}`}
+        canonical={`/generos/${genreParam}`}
         pageType="CollectionPage"
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
       />
