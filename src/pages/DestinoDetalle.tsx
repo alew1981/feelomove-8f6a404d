@@ -31,6 +31,26 @@ const DestinoDetalle = () => {
     threshold: 0
   });
 
+  // Fetch city image from lite_tbl_city_mapping
+  const { data: cityImage } = useQuery({
+    queryKey: ["city-image", citySlug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lite_tbl_city_mapping")
+        .select("ticketmaster_city, imagen_ciudad")
+        .not("imagen_ciudad", "is", null);
+      
+      if (!data) return null;
+      
+      // Find the city that matches the slug
+      const match = data.find(c => 
+        c.ticketmaster_city?.toLowerCase().replace(/\s+/g, '-') === citySlug.toLowerCase()
+      );
+      return match?.imagen_ciudad || null;
+    },
+    enabled: !!citySlug,
+  });
+
   // Fetch concerts for this city using venue_city_slug
   const { data: concerts, isLoading: isLoadingConcerts } = useQuery({
     queryKey: ["city-concerts", citySlug],
@@ -77,8 +97,8 @@ const DestinoDetalle = () => {
   // Get city name from first event or format from slug
   const cityName = events[0]?.venue_city || citySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   
-  // Get hero image from first event
-  const heroImage = events[0]?.image_large_url || events[0]?.image_standard_url;
+  // Get hero image - prefer city image, fallback to first event
+  const heroImage = cityImage || events[0]?.image_large_url || events[0]?.image_standard_url;
 
   // Extract unique genres and artists for filters
   const genres = useMemo(() => {
