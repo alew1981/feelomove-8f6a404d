@@ -298,6 +298,10 @@ const Producto = () => {
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 8);
   const hasMoreTickets = ticketPrices.length > 8;
+  
+  // Calculate real availability based on ticket data
+  const hasAvailableTickets = ticketPrices.some(ticket => ticket.availability !== "none");
+  const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
 
   const handleTicketQuantityChange = (ticketId: string, change: number) => {
     const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
@@ -453,19 +457,17 @@ const Producto = () => {
               
               {/* Availability Badge - Top Left */}
               <div className="absolute top-4 left-4">
-                {!eventDetails.sold_out && eventDetails.seats_available && (
+                {isEventAvailable && (
                   <Badge className="bg-accent text-accent-foreground font-black px-4 py-2 text-sm rounded-full">
                     DISPONIBLE
                   </Badge>
                 )}
-                {eventDetails.sold_out && (
+                {!isEventAvailable && (
                   <Badge className="bg-destructive text-destructive-foreground font-black px-4 py-2 text-sm rounded-full">
                     AGOTADO
                   </Badge>
                 )}
               </div>
-
-              {/* Countdown Badge + Urgency Badge - Top Right - Only show if less than 7 days */}
               {daysUntil >= 0 && daysUntil < 7 && (
                 <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-2">
                   {/* Urgency Badge */}
