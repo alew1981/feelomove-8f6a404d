@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, X, MapPin, Music } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DestinationCardSkeleton } from "@/components/ui/skeleton-loader";
 import { useInView } from "react-intersection-observer";
@@ -155,61 +155,75 @@ const Destinos = () => {
           Explora eventos musicales en las mejores ciudades de España.
         </p>
 
-        {/* Search and Filters - Unified Bar */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-3 p-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 shadow-sm">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar destino..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 h-12 bg-background border-0 rounded-xl focus-visible:ring-1 focus-visible:ring-accent"
-              />
-            </div>
-            
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3">
-              <Select value={filterCity} onValueChange={setFilterCity}>
-                <SelectTrigger className="h-12 min-w-[160px] bg-background border-0 rounded-xl">
-                  <SelectValue placeholder="Ciudad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las ciudades</SelectItem>
-                  {cityNames.map((city: string) => (
-                    <SelectItem key={city} value={city}>{city}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterGenre} onValueChange={setFilterGenre}>
-                <SelectTrigger className="h-12 min-w-[160px] bg-background border-0 rounded-xl">
-                  <SelectValue placeholder="Género" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los géneros</SelectItem>
-                  {genres.map((genre: string) => (
-                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {(searchQuery || filterCity !== "all" || filterGenre !== "all") && (
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setFilterCity("all");
-                    setFilterGenre("all");
-                  }}
-                  className="h-12 px-5 bg-background rounded-xl hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium"
-                >
-                  Limpiar
-                </button>
-              )}
-            </div>
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar destino..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 pr-12 h-14 text-base bg-card border-2 border-border rounded-full focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Filter Chips */}
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          {/* City Filter */}
+          <div className="relative">
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className={`h-10 px-4 rounded-full border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                <MapPin className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate max-w-[120px]">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
+                {cityNames.map((city: string) => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Genre Filter */}
+          <div className="relative">
+            <Select value={filterGenre} onValueChange={setFilterGenre}>
+              <SelectTrigger className={`h-10 px-4 rounded-full border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                <Music className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate max-w-[120px]">{filterGenre === "all" ? "Género" : filterGenre}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los géneros</SelectItem>
+                {genres.map((genre: string) => (
+                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Clear Filters */}
+          {(filterCity !== "all" || filterGenre !== "all") && (
+            <button
+              onClick={() => {
+                setFilterCity("all");
+                setFilterGenre("all");
+              }}
+              className="h-10 px-4 rounded-full border-2 border-destructive/50 text-destructive hover:bg-destructive/10 transition-colors text-sm font-medium flex items-center gap-2"
+            >
+              <X className="h-3 w-3" />
+              Limpiar
+            </button>
+          )}
         </div>
 
         {isLoading ? (
