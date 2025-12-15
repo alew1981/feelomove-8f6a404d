@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, X, MapPin, Music } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DestinationCardSkeleton } from "@/components/ui/skeleton-loader";
 import { useInView } from "react-intersection-observer";
@@ -21,6 +21,8 @@ const Destinos = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
+  const [filterArtist, setFilterArtist] = useState<string>("all");
+  const [filterMonth, setFilterMonth] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState<number>(30);
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
@@ -75,7 +77,7 @@ const Destinos = () => {
   // Get hero image from first city
   const heroImage = cities?.[0]?.sample_image_url || cities?.[0]?.sample_image_standard_url;
 
-  // Extract unique cities and genres for filters
+  // Extract unique cities, genres, artists, and months for filters
   const cityNames = useMemo(() => {
     if (!cities) return [];
     return [...new Set(cities.map((c: any) => c.city_name).filter(Boolean))].sort() as string[];
@@ -86,6 +88,27 @@ const Destinos = () => {
     const allGenres = cities.flatMap((c: any) => c.genres || []).filter(Boolean);
     return [...new Set(allGenres)].sort() as string[];
   }, [cities]);
+
+  const artists = useMemo(() => {
+    if (!cities) return [];
+    const allArtists = cities.flatMap((c: any) => c.top_artists || []).filter(Boolean);
+    return [...new Set(allArtists)].sort() as string[];
+  }, [cities]);
+
+  const months = [
+    { value: "01", label: "Enero" },
+    { value: "02", label: "Febrero" },
+    { value: "03", label: "Marzo" },
+    { value: "04", label: "Abril" },
+    { value: "05", label: "Mayo" },
+    { value: "06", label: "Junio" },
+    { value: "07", label: "Julio" },
+    { value: "08", label: "Agosto" },
+    { value: "09", label: "Septiembre" },
+    { value: "10", label: "Octubre" },
+    { value: "11", label: "Noviembre" },
+    { value: "12", label: "Diciembre" },
+  ];
 
   const filteredCities = useMemo(() => {
     if (!cities) return [];
@@ -164,7 +187,7 @@ const Destinos = () => {
               placeholder="Buscar destino..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-12 h-14 text-base bg-card border-2 border-border rounded-full focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
+              className="pl-12 pr-12 h-14 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
             />
             {searchQuery && (
               <button
@@ -180,45 +203,67 @@ const Destinos = () => {
         {/* Filter Chips */}
         <div className="flex flex-wrap items-center gap-2 mb-8">
           {/* City Filter */}
-          <div className="relative">
-            <Select value={filterCity} onValueChange={setFilterCity}>
-              <SelectTrigger className={`h-10 px-4 rounded-full border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <MapPin className="h-4 w-4 mr-2 shrink-0" />
-                <span className="truncate max-w-[120px]">{filterCity === "all" ? "Ciudad" : filterCity}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
-                {cityNames.map((city: string) => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filterCity} onValueChange={setFilterCity}>
+            <SelectTrigger className={`h-10 px-4 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+              <span className="truncate max-w-[120px]">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las ciudades</SelectItem>
+              {cityNames.map((city: string) => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Genre Filter */}
-          <div className="relative">
-            <Select value={filterGenre} onValueChange={setFilterGenre}>
-              <SelectTrigger className={`h-10 px-4 rounded-full border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <Music className="h-4 w-4 mr-2 shrink-0" />
-                <span className="truncate max-w-[120px]">{filterGenre === "all" ? "Género" : filterGenre}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los géneros</SelectItem>
-                {genres.map((genre: string) => (
-                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filterGenre} onValueChange={setFilterGenre}>
+            <SelectTrigger className={`h-10 px-4 rounded-lg border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+              <span className="truncate max-w-[120px]">{filterGenre === "all" ? "Género" : filterGenre}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los géneros</SelectItem>
+              {genres.map((genre: string) => (
+                <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Artist Filter */}
+          <Select value={filterArtist} onValueChange={setFilterArtist}>
+            <SelectTrigger className={`h-10 px-4 rounded-lg border-2 transition-all ${filterArtist !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+              <span className="truncate max-w-[120px]">{filterArtist === "all" ? "Artista" : filterArtist}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los artistas</SelectItem>
+              {artists.map((artist: string) => (
+                <SelectItem key={artist} value={artist}>{artist}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Month Filter */}
+          <Select value={filterMonth} onValueChange={setFilterMonth}>
+            <SelectTrigger className={`h-10 px-4 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+              <span className="truncate max-w-[120px]">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los meses</SelectItem>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Clear Filters */}
-          {(filterCity !== "all" || filterGenre !== "all") && (
+          {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all") && (
             <button
               onClick={() => {
                 setFilterCity("all");
                 setFilterGenre("all");
+                setFilterArtist("all");
+                setFilterMonth("all");
               }}
-              className="h-10 px-4 rounded-full border-2 border-destructive/50 text-destructive hover:bg-destructive/10 transition-colors text-sm font-medium flex items-center gap-2"
+              className="h-10 px-4 rounded-lg border-2 border-destructive/50 text-destructive hover:bg-destructive/10 transition-colors text-sm font-medium flex items-center gap-2"
             >
               <X className="h-3 w-3" />
               Limpiar
