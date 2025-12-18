@@ -1,4 +1,56 @@
 {
+  "redirects": [
+    {
+      "source": "/events/:id",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/product/:slug/feed/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/product/:slug/",
+      "destination": "/producto/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/product/:slug",
+      "destination": "/producto/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/attractions",
+      "destination": "/artistas",
+      "statusCode": 301
+    },
+    {
+      "source": "/user-profile/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/musica",
+      "destination": "/generos",
+      "statusCode": 301
+    },
+    {
+      "source": "/musica/:genero",
+      "destination": "/generos/:genero",
+      "statusCode": 301
+    },
+    {
+      "source": "/artista/:slug",
+      "destination": "/conciertos/:slug",
+      "statusCode": 301
+    }
+  ],
   "headers": [
     {
       "source": "/assets/:path*",
