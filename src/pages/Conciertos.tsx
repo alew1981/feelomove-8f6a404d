@@ -10,16 +10,31 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 
+const months = [
+  { value: "01", label: "Enero" },
+  { value: "02", label: "Febrero" },
+  { value: "03", label: "Marzo" },
+  { value: "04", label: "Abril" },
+  { value: "05", label: "Mayo" },
+  { value: "06", label: "Junio" },
+  { value: "07", label: "Julio" },
+  { value: "08", label: "Agosto" },
+  { value: "09", label: "Septiembre" },
+  { value: "10", label: "Octubre" },
+  { value: "11", label: "Noviembre" },
+  { value: "12", label: "Diciembre" },
+];
+
 const Conciertos = () => {
-  const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
-  
+  const [filterMonth, setFilterMonth] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -43,11 +58,17 @@ const Conciertos = () => {
   // Get first event image for hero
   const heroImage = events?.[0]?.image_large_url || events?.[0]?.image_standard_url;
 
-  // Extract unique cities and artists
+  // Extract unique cities, genres, and artists
   const cities = useMemo(() => {
     if (!events) return [];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
     return uniqueCities.sort() as string[];
+  }, [events]);
+
+  const genres = useMemo(() => {
+    if (!events) return [];
+    const uniqueGenres = [...new Set(events.map(e => e.genre).filter(Boolean))];
+    return uniqueGenres.sort() as string[];
   }, [events]);
 
   const artists = useMemo(() => {
@@ -75,29 +96,30 @@ const Conciertos = () => {
       filtered = filtered.filter(event => event.venue_city === filterCity);
     }
 
+    // Apply genre filter
+    if (filterGenre !== "all") {
+      filtered = filtered.filter(event => event.genre === filterGenre);
+    }
+
     // Apply artist filter
     if (filterArtist !== "all") {
       filtered = filtered.filter(event => event.artist_name === filterArtist);
     }
 
-    // Apply sorting
-    switch (sortBy) {
-      case "date-asc":
-        filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
-        break;
-      case "date-desc":
-        filtered.sort((a, b) => new Date(b.event_date || 0).getTime() - new Date(a.event_date || 0).getTime());
-        break;
-      case "price-asc":
-        filtered.sort((a, b) => (a.price_min_incl_fees || 0) - (b.price_min_incl_fees || 0));
-        break;
-      case "price-desc":
-        filtered.sort((a, b) => (b.price_min_incl_fees || 0) - (a.price_min_incl_fees || 0));
-        break;
+    // Apply month filter
+    if (filterMonth !== "all") {
+      filtered = filtered.filter(event => {
+        if (!event.event_date) return false;
+        const eventMonth = new Date(event.event_date).toISOString().slice(5, 7);
+        return eventMonth === filterMonth;
+      });
     }
+
+    // Sort by date ascending by default
+    filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterArtist, sortBy]);
+  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonth]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -192,37 +214,33 @@ const Conciertos = () => {
             </p>
           </div>
 
-          {/* Filters and Search */}
-          <div className="mb-8 space-y-4">
+          {/* Search and Filters */}
+          <div className="space-y-3 mb-8">
             {/* Search Bar */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar conciertos, ciudades o artistas..."
+                placeholder="Buscar conciertos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
+                className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </div>
 
-            {/* Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
-                  <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
-                  <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
-                  <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
-                </SelectContent>
-              </Select>
-
+            {/* Filters Row - ciudad, genero, artista, mes */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <Select value={filterCity} onValueChange={setFilterCity}>
-                <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Todas las ciudades" />
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las ciudades</SelectItem>
@@ -232,9 +250,21 @@ const Conciertos = () => {
                 </SelectContent>
               </Select>
 
+              <Select value={filterGenre} onValueChange={setFilterGenre}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterGenre === "all" ? "Género" : filterGenre}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los géneros</SelectItem>
+                  {genres.map(genre => (
+                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={filterArtist} onValueChange={setFilterArtist}>
-                <SelectTrigger className="h-11 border-2">
-                  <SelectValue placeholder="Todos los artistas" />
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterArtist !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterArtist === "all" ? "Artista" : filterArtist}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los artistas</SelectItem>
@@ -244,18 +274,34 @@ const Conciertos = () => {
                 </SelectContent>
               </Select>
 
-              <button
-                onClick={() => {
-                  setSortBy("date-asc");
-                  setFilterCity("all");
-                  setFilterArtist("all");
-                  setSearchQuery("");
-                }}
-                className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
-              >
-                Limpiar filtros
-              </button>
+              <Select value={filterMonth} onValueChange={setFilterMonth}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los meses</SelectItem>
+                  {months.map((month) => (
+                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all") && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    setFilterCity("all");
+                    setFilterGenre("all");
+                    setFilterArtist("all");
+                    setFilterMonth("all");
+                  }}
+                  className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Events Grid */}

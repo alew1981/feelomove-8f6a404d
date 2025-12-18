@@ -161,6 +161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      lite_tbl_genres: {
+        Row: {
+          created_at: string | null
+          genre_id: number
+          genre_name: string
+          image_genres: string | null
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          genre_id: number
+          genre_name: string
+          image_genres?: string | null
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          genre_id?: number
+          genre_name?: string
+          image_genres?: string | null
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       lite_tbl_hotels: {
         Row: {
           active: boolean | null
@@ -289,6 +316,7 @@ export type Database = {
           event_type: string | null
           external_url: boolean | null
           has_hotel_prices: boolean | null
+          has_real_availability: boolean | null
           hotel_prices_fetched_at: string | null
           id: string
           image_large_height: number | null
@@ -299,6 +327,7 @@ export type Database = {
           image_standard_width: number | null
           is_festival: boolean | null
           is_package: boolean | null
+          is_transport: boolean | null
           local_event_date: string | null
           minimum_age_required: number | null
           name: string
@@ -360,6 +389,7 @@ export type Database = {
           event_type?: string | null
           external_url?: boolean | null
           has_hotel_prices?: boolean | null
+          has_real_availability?: boolean | null
           hotel_prices_fetched_at?: string | null
           id: string
           image_large_height?: number | null
@@ -370,6 +400,7 @@ export type Database = {
           image_standard_width?: number | null
           is_festival?: boolean | null
           is_package?: boolean | null
+          is_transport?: boolean | null
           local_event_date?: string | null
           minimum_age_required?: number | null
           name: string
@@ -431,6 +462,7 @@ export type Database = {
           event_type?: string | null
           external_url?: boolean | null
           has_hotel_prices?: boolean | null
+          has_real_availability?: boolean | null
           hotel_prices_fetched_at?: string | null
           id?: string
           image_large_height?: number | null
@@ -441,6 +473,7 @@ export type Database = {
           image_standard_width?: number | null
           is_festival?: boolean | null
           is_package?: boolean | null
+          is_transport?: boolean | null
           local_event_date?: string | null
           minimum_age_required?: number | null
           name?: string
@@ -557,6 +590,7 @@ export type Database = {
           event_url: string | null
           event_year: number | null
           has_5_star_hotels: boolean | null
+          has_real_availability: boolean | null
           has_vip_tickets: boolean | null
           hotels_list_widget_html: string | null
           hotels_prices_aggregated_jsonb: Json | null
@@ -567,6 +601,7 @@ export type Database = {
           is_festival: boolean | null
           is_last_minute: boolean | null
           is_package: boolean | null
+          is_transport: boolean | null
           is_weekend: boolean | null
           low_availability: boolean | null
           map_widget_html: string | null
@@ -733,8 +768,7 @@ export type Database = {
           first_event_date: string | null
           genre_id: number | null
           genre_name: string | null
-          genre_name_fallback: string | null
-          genre_name_long: string | null
+          image_genres: string | null
           last_event_date: string | null
         }
         Relationships: []
@@ -896,6 +930,10 @@ export type Database = {
           checkout_date: string
           nights: number
         }[]
+      }
+      calculate_real_availability: {
+        Args: { fallback_available: boolean; ticket_data: Json }
+        Returns: boolean
       }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
@@ -1694,6 +1732,7 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      trigger_ticketmaster_sync: { Args: never; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }
       updategeometrysrid: {
