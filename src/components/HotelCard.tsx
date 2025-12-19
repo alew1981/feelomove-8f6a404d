@@ -137,7 +137,8 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
               {rawDescription}
               <button
                 onClick={() => setShowFullDescription(false)}
-                className="text-accent font-normal text-xs ml-1 hover:underline whitespace-nowrap"
+                className="text-primary font-medium text-xs ml-1 hover:underline whitespace-nowrap"
+                aria-label="Ver menos descripción del hotel"
               >
                 ver menos
               </button>
@@ -148,7 +149,8 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
               {rawDescription.length > 100 && (
                 <button
                   onClick={() => setShowFullDescription(true)}
-                  className="text-accent font-normal text-xs ml-1 hover:underline whitespace-nowrap"
+                  className="text-primary font-medium text-xs ml-1 hover:underline whitespace-nowrap"
+                  aria-label="Ver más descripción del hotel"
                 >
                   ver más
                 </button>
