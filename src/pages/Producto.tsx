@@ -583,11 +583,11 @@ const Producto = () => {
                                     AGOTADO
                                   </span>
                                 ) : isLimited ? (
-                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
+                                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
                                     ÚLTIMAS
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] font-bold text-accent bg-accent/20 px-2 py-0.5 rounded border border-accent/40">
+                                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
                                     DISPONIBLE
                                   </span>
                                 )}
@@ -620,16 +620,18 @@ const Producto = () => {
                                 className="h-10 w-10 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
                                 onClick={() => handleTicketQuantityChange(ticket.id, -1)}
                                 disabled={quantity === 0 || isSoldOut}
+                                aria-label={`Reducir cantidad de ${ticket.type}`}
                               >
                                 <Minus className="h-5 w-5" />
                               </Button>
-                              <span className="w-10 text-center font-bold text-xl">{quantity}</span>
+                              <span className="w-10 text-center font-bold text-xl" aria-live="polite" aria-label={`Cantidad: ${quantity}`}>{quantity}</span>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-10 w-10 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
                                 onClick={() => handleTicketQuantityChange(ticket.id, 1)}
                                 disabled={quantity >= 10 || isSoldOut}
+                                aria-label={`Aumentar cantidad de ${ticket.type}`}
                               >
                                 <Plus className="h-5 w-5" />
                               </Button>
