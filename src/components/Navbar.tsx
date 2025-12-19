@@ -71,7 +71,7 @@ const Navbar = () => {
             </NavLink>
             {/* Hoteles Badge */}
             <a
-              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
+              href="https://feelomove-com.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:opacity-80 transition-opacity"
@@ -165,7 +165,7 @@ const Navbar = () => {
             </NavLink>
             {/* Hoteles Badge Mobile */}
             <a
-              href="https://feelomove-.nuitee.link/?language=es&currency=EUR"
+              href="https://feelomove-com.nuitee.link/?language=es&currency=EUR"
               target="_blank"
               rel="noopener noreferrer"
               className="block py-2 pl-3"
