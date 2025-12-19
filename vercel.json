@@ -49,6 +49,16 @@
       "source": "/artista/:slug",
       "destination": "/conciertos/:slug",
       "statusCode": 301
+    },
+    {
+      "source": "/conciertos/:slug/:city",
+      "destination": "/conciertos/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/festivales/:slug/:city",
+      "destination": "/festivales/:slug",
+      "statusCode": 301
     }
   ],
   "headers": [

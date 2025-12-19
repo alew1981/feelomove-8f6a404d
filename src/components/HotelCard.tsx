@@ -89,11 +89,15 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
       )}
 
       {/* Hotel Image */}
-      <div className="h-[200px] overflow-hidden rounded-t-lg">
+      <div className="h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <img
           src={hotel.hotel_main_photo || "/placeholder.svg"}
           alt={hotel.hotel_name}
           className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
+          width={350}
+          height={200}
         />
       </div>
 
