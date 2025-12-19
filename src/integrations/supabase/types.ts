@@ -1149,6 +1149,7 @@ export type Database = {
       refresh_all_event_views: { Args: never; Returns: undefined }
       refresh_events_cards: { Args: never; Returns: undefined }
       refresh_hotel_packages_view: { Args: never; Returns: undefined }
+      refresh_product_page_view: { Args: never; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       st_3dclosestpoint: {
