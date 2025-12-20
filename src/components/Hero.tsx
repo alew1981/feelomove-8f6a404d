@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Search, MapPin, Music, User, Calendar, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
+import { getEventUrl } from "@/lib/eventUtils";
 import heroConcertImage from "@/assets/hero-concert.webp";
 
 interface SearchResult {
@@ -65,7 +66,7 @@ const Hero = () => {
           }
         });
 
-        // Filter concerts
+        // Filter concerts (is_festival = false)
         concertsRes.data?.forEach(event => {
           if (matchesSearch(event.name || '', searchQuery) || 
               matchesSearch(event.artist_name || '', searchQuery) ||
@@ -73,14 +74,14 @@ const Hero = () => {
             searchResults.push({
               type: 'event',
               name: event.name || '',
-              path: `/producto/${event.slug}`,
+              path: getEventUrl(event.slug || '', false),
               subtitle: event.venue_city || '',
               image: event.image_standard_url || ''
             });
           }
         });
 
-        // Filter festivals
+        // Filter festivals (is_festival = true)
         festivalsRes.data?.forEach(event => {
           if (matchesSearch(event.name || '', searchQuery) ||
               matchesSearch(event.main_attraction || '', searchQuery) ||
@@ -88,7 +89,7 @@ const Hero = () => {
             searchResults.push({
               type: 'event',
               name: event.name || '',
-              path: `/producto/${event.slug}`,
+              path: getEventUrl(event.slug || '', true),
               subtitle: event.venue_city || '',
               image: event.image_standard_url || ''
             });

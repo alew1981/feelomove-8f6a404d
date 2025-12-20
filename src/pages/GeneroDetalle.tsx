@@ -206,7 +206,7 @@ const GeneroDetalle = () => {
         "@type": "MusicEvent",
         "name": event.name,
         "startDate": event.event_date,
-        "url": `https://feelomove.com/producto/${event.slug}`,
+        "url": `https://feelomove.com/concierto/${event.slug}`,
         "image": event.image_large_url || event.image_standard_url,
         "location": {
           "@type": "Place",

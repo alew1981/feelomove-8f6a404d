@@ -280,7 +280,7 @@ const ArtistaDetalle = () => {
         "endDate": event.event_date, // Same day event
         "eventStatus": event.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "url": `https://feelomove.com/producto/${event.slug}`,
+        "url": `https://feelomove.com/concierto/${event.slug}`,
         "image": event.image_large_url || event.image_standard_url,
         "location": {
           "@type": "Place",
@@ -304,7 +304,7 @@ const ArtistaDetalle = () => {
         } : undefined,
         "offers": event.price_min_incl_fees ? {
           "@type": "Offer",
-          "url": `https://feelomove.com/producto/${event.slug}`,
+          "url": `https://feelomove.com/concierto/${event.slug}`,
           "price": event.price_min_incl_fees,
           "priceCurrency": event.currency || "EUR",
           "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",

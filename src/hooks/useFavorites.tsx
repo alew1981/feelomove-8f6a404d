@@ -7,6 +7,7 @@ export interface FavoriteEvent {
   event_date: string;
   venue_city: string;
   image_url?: string;
+  is_festival?: boolean | null;
 }
 
 export const useFavorites = () => {

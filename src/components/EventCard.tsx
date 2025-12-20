@@ -8,6 +8,7 @@ import { es } from "date-fns/locale";
 import { useEffect, useState, memo, useRef } from "react";
 import { CategoryBadge } from "./CategoryBadge";
 import { Skeleton } from "./ui/skeleton";
+import { getEventUrl } from "@/lib/eventUtils";
 
 interface EventCardProps {
   event: {
@@ -34,6 +35,7 @@ interface EventCardProps {
     seats_available?: boolean;
     badges?: string[];
     event_badges?: string[];
+    is_festival?: boolean | null;
   };
 }
 
@@ -141,7 +143,7 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
     badgeText = "DISPONIBLE";
   }
 
-  const eventUrl = `/producto/${eventSlug}`;
+  const eventUrl = getEventUrl(eventSlug || '', event.is_festival);
 
   return (
     <Link to={eventUrl} className="group block">

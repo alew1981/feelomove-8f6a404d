@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Heart } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { getEventUrl } from "@/lib/eventUtils";
 
 const Favoritos = () => {
   const { favorites, removeFavorite } = useFavorites();
@@ -92,7 +93,7 @@ const Favoritos = () => {
                     </div>
                   </div>
                   <Button asChild className="w-full">
-                    <Link to={`/producto/${favorite.event_slug}`}>
+                    <Link to={getEventUrl(favorite.event_slug, favorite.is_festival)}>
                       Ver Detalles
                     </Link>
                   </Button>
