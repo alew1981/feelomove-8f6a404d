@@ -157,31 +157,31 @@
   "rewrites": [
     {
       "source": "/sitemap_index.xml",
-      "destination": "/sitemap_index.xml"
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index"
     },
     {
       "source": "/sitemap-pages.xml",
-      "destination": "/sitemap-pages.xml"
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=pages"
     },
     {
-      "source": "/sitemap-events.xml",
-      "destination": "/sitemap-events.xml"
-    },
-    {
-      "source": "/sitemap-artists.xml",
-      "destination": "/sitemap-artists.xml"
-    },
-    {
-      "source": "/sitemap-destinations.xml",
-      "destination": "/sitemap-destinations.xml"
-    },
-    {
-      "source": "/sitemap-genres.xml",
-      "destination": "/sitemap-genres.xml"
+      "source": "/sitemap-concerts.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=concerts"
     },
     {
       "source": "/sitemap-festivals.xml",
-      "destination": "/sitemap-festivals.xml"
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=festivals"
+    },
+    {
+      "source": "/sitemap-artists.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=artists"
+    },
+    {
+      "source": "/sitemap-destinations.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations"
+    },
+    {
+      "source": "/sitemap-genres.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=genres"
     },
     {
       "source": "/robots.txt",

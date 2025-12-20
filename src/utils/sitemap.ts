@@ -45,6 +45,7 @@ export const generateSitemap = async (): Promise<string> => {
 
     events.forEach((event) => {
       // Add event URLs with correct path based on type
+      // Use /concierto/ for concerts and /festival/ for festivals
       if (event.event_slug && !seenSlugs.has(event.event_slug)) {
         seenSlugs.add(event.event_slug);
         const eventPath = event.is_festival ? 'festival' : 'concierto';
