@@ -42,7 +42,11 @@ Deno.serve(async (req) => {
     <lastmod>${today}</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${BASE_URL}/sitemap-events.xml</loc>
+    <loc>${BASE_URL}/sitemap-concerts.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${BASE_URL}/sitemap-festivals.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
   <sitemap>
@@ -55,10 +59,6 @@ Deno.serve(async (req) => {
   </sitemap>
   <sitemap>
     <loc>${BASE_URL}/sitemap-genres.xml</loc>
-    <lastmod>${today}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${BASE_URL}/sitemap-festivals.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
 </sitemapindex>`;
@@ -109,9 +109,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Events Sitemap
-    if (type === "events") {
-      const { data: events, error } = await supabase
+    // Concerts Sitemap (only concerts, using /concierto/)
+    if (type === "concerts") {
+      const { data: concerts, error } = await supabase
         .from("mv_concerts_cards")
         .select("slug, event_date")
         .gte("event_date", new Date().toISOString())
@@ -120,10 +120,10 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      const urlsXml = (events || [])
+      const urlsXml = (concerts || [])
         .filter(e => e.slug)
         .map(e => `  <url>
-    <loc>${BASE_URL}/producto/${e.slug}</loc>
+    <loc>${BASE_URL}/concierto/${e.slug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -140,7 +140,7 @@ ${urlsXml}
       });
     }
 
-    // Artists Sitemap - using new URL structure /conciertos/:artist
+    // Artists Sitemap - using URL structure /conciertos/:artist
     if (type === "artists") {
       const { data: artists, error } = await supabase
         .from("mv_attractions")
@@ -200,7 +200,7 @@ ${urlsXml}
       });
     }
 
-    // Genres Sitemap - using new URL structure /generos/:genre
+    // Genres Sitemap - using URL structure /generos/:genre
     if (type === "genres") {
       const { data: genres, error } = await supabase
         .from("mv_genres_cards")
@@ -233,44 +233,43 @@ ${urlsXml}
       });
     }
 
-    // Festivals Sitemap
+    // Festivals Sitemap (festival pages + individual festival events using /festival/)
     if (type === "festivals") {
       const { data: festivals, error } = await supabase
         .from("mv_festivals_cards")
-        .select("slug, event_date, secondary_attraction_name")
+        .select("slug, event_date, canonical_slug")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(2000);
 
       if (error) throw error;
 
-      // Get unique festival slugs
-      const festivalSlugs = new Set<string>();
+      // Get unique festival page slugs
+      const festivalPageSlugs = new Set<string>();
       const urlsArr: string[] = [];
 
       (festivals || []).forEach(f => {
-        // Individual festival events
-        if (f.slug) {
-          urlsArr.push(`  <url>
-    <loc>${BASE_URL}/producto/${f.slug}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>`);
-        }
-        
-        // Festival group pages
-        if (f.secondary_attraction_name) {
-          const festivalSlug = normalizeSlug(f.secondary_attraction_name);
-          if (!festivalSlugs.has(festivalSlug)) {
-            festivalSlugs.add(festivalSlug);
+        // Festival group pages (using /festivales/)
+        if (f.canonical_slug) {
+          if (!festivalPageSlugs.has(f.canonical_slug)) {
+            festivalPageSlugs.add(f.canonical_slug);
             urlsArr.push(`  <url>
-    <loc>${BASE_URL}/festivales/${festivalSlug}</loc>
+    <loc>${BASE_URL}/festivales/${f.canonical_slug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`);
           }
+        }
+        
+        // Individual festival events (using /festival/)
+        if (f.slug) {
+          urlsArr.push(`  <url>
+    <loc>${BASE_URL}/festival/${f.slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`);
         }
       });
 
