@@ -1,4 +1,11 @@
 /**
+ * Genera la URL correcta para un evento según su tipo
+ */
+export const getEventUrl = (slug: string, isFestival?: boolean | null): string => {
+  return `/${isFestival ? 'festival' : 'concierto'}/${slug}`;
+};
+
+/**
  * Detecta si un evento es concierto o festival basado en badges
  */
 export const getEventCategory = (badges?: string[]): 'concert' | 'festival' | null => {

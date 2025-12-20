@@ -24,6 +24,10 @@ const Producto = lazy(() => import("./pages/Producto"));
 const Favoritos = lazy(() => import("./pages/Favoritos"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Lazy load redirect components
+const RedirectProducto = lazy(() => import("./components/RedirectProducto"));
+const RedirectEvento = lazy(() => import("./components/RedirectEvento"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -120,6 +124,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <PageWrapper>
               <Routes>
+                {/* Static routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/destinos" element={<Destinos />} />
@@ -133,11 +138,18 @@ const App = () => (
                 <Route path="/festivales" element={<Festivales />} />
                 <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
                 <Route path="/favoritos" element={<Favoritos />} />
-                <Route path="/producto/:slug" element={<Producto />} />
+                
+                {/* New SEO-friendly event routes */}
+                <Route path="/concierto/:slug" element={<Producto />} />
+                <Route path="/festival/:slug" element={<Producto />} />
+                
                 {/* Legacy URL redirects (301) */}
+                <Route path="/producto/:slug" element={<RedirectProducto />} />
+                <Route path="/evento/:slug" element={<RedirectEvento />} />
                 <Route path="/musica" element={<RedirectMusica />} />
                 <Route path="/musica/:genero" element={<RedirectMusicaGenero />} />
                 <Route path="/artista/:slug" element={<RedirectArtista />} />
+                
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

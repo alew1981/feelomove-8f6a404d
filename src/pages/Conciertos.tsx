@@ -151,7 +151,7 @@ const Conciertos = () => {
         "endDate": event.event_date,
         "eventStatus": event.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "url": `https://feelomove.com/producto/${event.slug || event.id}`,
+        "url": `https://feelomove.com/concierto/${event.slug || event.id}`,
         "image": event.image_large_url || event.image_standard_url,
         "location": {
           "@type": "Place",

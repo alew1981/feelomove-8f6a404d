@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { handleLegacyRedirect } from "@/utils/redirects";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
+import { getEventUrl } from "@/lib/eventUtils";
 
 interface PriceLevel {
   id: number;
@@ -65,8 +66,13 @@ interface HotelData {
 const Producto = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } = useCart();
+  
+  // Detect route type for canonical URL
+  const isConcierto = location.pathname.startsWith('/concierto/');
+  const isFestivalRoute = location.pathname.startsWith('/festival/');
   
   const [showAllTickets, setShowAllTickets] = useState(false);
 
@@ -371,6 +377,10 @@ const Producto = () => {
   const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
 
   // Generate JSON-LD structured data for event
+  // Build canonical URL based on event type
+  const canonicalUrl = getEventUrl(eventDetails.event_slug || '', eventDetails.is_festival);
+  const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
+
   const jsonLdData = {
     "@context": "https://schema.org",
     "@type": eventDetails.is_festival ? "Festival" : "MusicEvent",
@@ -380,7 +390,7 @@ const Producto = () => {
     "endDate": eventDetails.event_date,
     "eventStatus": eventDetails.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-    "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,
+    "url": absoluteUrl,
     "image": eventImage,
     "location": {
       "@type": "Place",
@@ -403,7 +413,7 @@ const Producto = () => {
     } : undefined,
     "offers": ticketPrices.length > 0 ? {
       "@type": "AggregateOffer",
-      "url": `https://feelomove.com/producto/${eventDetails.event_slug}`,
+      "url": absoluteUrl,
       "lowPrice": ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees,
       "highPrice": ticketPrices[ticketPrices.length - 1]?.price || (eventDetails as any).price_min_incl_fees,
       "priceCurrency": "EUR",
@@ -422,7 +432,7 @@ const Producto = () => {
       <SEOHead
         title={`${eventDetails.event_name} - Entradas y Hotel`}
         description={seoDescription}
-        canonical={`/producto/${eventDetails.event_slug}`}
+        canonical={canonicalUrl}
         ogImage={eventImage}
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}

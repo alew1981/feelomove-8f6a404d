@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { matchesSearch } from "@/lib/searchUtils";
+import { getEventUrl } from "@/lib/eventUtils";
 import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
@@ -252,14 +253,27 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       });
     });
     
-    searchResults.events?.slice(0, 4).forEach(event => {
+    // Concerts (is_festival = false)
+    searchResults.events?.filter(e => !e.is_festival).slice(0, 2).forEach(event => {
       autocompleteSuggestions.push({
         type: 'event',
         name: event.name,
-        path: `/producto/${event.slug}`,
+        path: getEventUrl(event.slug, false),
         id: event.id,
         subtitle: `${event.venue_city} · ${new Date(event.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`,
         icon: <Music className="h-4 w-4" />
+      });
+    });
+    
+    // Festivals (is_festival = true)
+    searchResults.events?.filter(e => e.is_festival).slice(0, 2).forEach(event => {
+      autocompleteSuggestions.push({
+        type: 'event',
+        name: event.name,
+        path: getEventUrl(event.slug, true),
+        id: event.id,
+        subtitle: `${event.venue_city} · ${new Date(event.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`,
+        icon: <Sparkles className="h-4 w-4" />
       });
     });
   }

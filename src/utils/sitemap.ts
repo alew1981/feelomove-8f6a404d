@@ -32,7 +32,7 @@ export const generateSitemap = async (): Promise<string> => {
   // Fetch events
   const { data: events } = await supabase
     .from("lovable_mv_event_product_page")
-    .select("event_slug, event_date, primary_attraction_name, venue_city, primary_subcategory_name")
+    .select("event_slug, event_date, primary_attraction_name, venue_city, primary_subcategory_name, is_festival")
     .gte("event_date", new Date().toISOString())
     .order("event_date", { ascending: true })
     .limit(1000);
@@ -44,11 +44,12 @@ export const generateSitemap = async (): Promise<string> => {
     const genres = new Set<string>();
 
     events.forEach((event) => {
-      // Add event URLs
+      // Add event URLs with correct path based on type
       if (event.event_slug && !seenSlugs.has(event.event_slug)) {
         seenSlugs.add(event.event_slug);
+        const eventPath = event.is_festival ? 'festival' : 'concierto';
         urls.push({
-          loc: `${baseUrl}/producto/${event.event_slug}`,
+          loc: `${baseUrl}/${eventPath}/${event.event_slug}`,
           lastmod: new Date().toISOString(),
           changefreq: 'daily',
           priority: 0.8
