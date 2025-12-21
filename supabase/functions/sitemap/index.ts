@@ -109,12 +109,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Concerts Sitemap (only concerts, using /concierto/)
+    // Concerts Sitemap (only concerts, using /concierto/, excluding VIP variants)
     if (type === "concerts") {
       const { data: concerts, error } = await supabase
-        .from("mv_concerts_cards")
+        .from("tm_tbl_events")
         .select("slug, event_date")
+        .eq("event_type", "concert")
+        .eq("cancelled", false)
         .gte("event_date", new Date().toISOString())
+        .not("slug", "like", "%-paquetes-vip%")
+        .not("slug", "like", "%-vip%")
         .order("event_date", { ascending: true })
         .limit(5000);
 
@@ -122,12 +126,15 @@ Deno.serve(async (req) => {
 
       const urlsXml = (concerts || [])
         .filter(e => e.slug)
-        .map(e => `  <url>
+        .map(e => {
+          const lastmod = e.event_date ? e.event_date.split('T')[0] : today;
+          return `  <url>
     <loc>${BASE_URL}/concierto/${e.slug}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>`)
+  </url>`;
+        })
         .join('\n');
 
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -233,40 +240,55 @@ ${urlsXml}
       });
     }
 
-    // Festivals Sitemap (festival pages + individual festival events using /festival/)
+    // Festivals Sitemap (festival pages + individual festival events using /festival/, excluding VIP variants)
     if (type === "festivals") {
-      const { data: festivals, error } = await supabase
+      // Get festival page slugs
+      const { data: festivalPages, error: pagesError } = await supabase
         .from("mv_festivals_cards")
-        .select("slug, event_date, canonical_slug")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true })
+        .select("canonical_slug")
+        .not("canonical_slug", "is", null)
+        .order("canonical_slug", { ascending: true })
         .limit(2000);
 
-      if (error) throw error;
+      if (pagesError) throw pagesError;
+
+      // Get individual festival events (excluding VIP variants)
+      const { data: festivalEvents, error: eventsError } = await supabase
+        .from("tm_tbl_events")
+        .select("slug, event_date")
+        .eq("event_type", "festival")
+        .eq("cancelled", false)
+        .gte("event_date", new Date().toISOString())
+        .not("slug", "like", "%-paquetes-vip%")
+        .not("slug", "like", "%-vip%")
+        .order("event_date", { ascending: true })
+        .limit(5000);
+
+      if (eventsError) throw eventsError;
 
       // Get unique festival page slugs
       const festivalPageSlugs = new Set<string>();
       const urlsArr: string[] = [];
 
-      (festivals || []).forEach(f => {
-        // Festival group pages (using /festivales/)
-        if (f.canonical_slug) {
-          if (!festivalPageSlugs.has(f.canonical_slug)) {
-            festivalPageSlugs.add(f.canonical_slug);
-            urlsArr.push(`  <url>
+      // Add festival group pages (using /festivales/)
+      (festivalPages || []).forEach(f => {
+        if (f.canonical_slug && !festivalPageSlugs.has(f.canonical_slug)) {
+          festivalPageSlugs.add(f.canonical_slug);
+          urlsArr.push(`  <url>
     <loc>${BASE_URL}/festivales/${f.canonical_slug}</loc>
-    <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`);
-          }
         }
-        
-        // Individual festival events (using /festival/)
+      });
+
+      // Add individual festival events (using /festival/)
+      (festivalEvents || []).forEach(f => {
         if (f.slug) {
+          const lastmod = f.event_date ? f.event_date.split('T')[0] : today;
           urlsArr.push(`  <url>
     <loc>${BASE_URL}/festival/${f.slug}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>`);

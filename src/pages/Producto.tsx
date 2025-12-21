@@ -129,7 +129,7 @@ const Producto = () => {
       return [];
     }
     
-    return aggregatedHotels.slice(0, 10).map((hotel: any) => {
+    return aggregatedHotels.slice(0, 12).map((hotel: any) => {
       // Calculate distance in km (data comes as distance_meters)
       const distanceMeters = hotel.distance_meters || 0;
       const distanceKm = distanceMeters > 0 ? distanceMeters / 1000 : (hotel.distance_km || 0);
@@ -376,9 +376,16 @@ const Producto = () => {
   // Get image - prioritize image_large_url
   const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
 
-  // Generate JSON-LD structured data for event
-  // Build canonical URL based on event type
-  const canonicalUrl = getEventUrl(eventDetails.event_slug || '', eventDetails.is_festival);
+  // Detect VIP variant and build canonical URL
+  const currentSlug = eventDetails.event_slug || '';
+  const isVipVariant = currentSlug.includes('-paquetes-vip') || currentSlug.includes('-vip');
+  const canonicalSlug = isVipVariant 
+    ? currentSlug.replace(/-paquetes-vip|-vip/g, '') 
+    : currentSlug;
+  
+  // Build canonical URL - for VIP variants, point to base event; otherwise, point to self
+  const eventType = eventDetails.is_festival ? 'festival' : 'concierto';
+  const canonicalUrl = `/${eventType}/${canonicalSlug}`;
   const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
 
   const jsonLdData = {
