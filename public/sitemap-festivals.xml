@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- This is a placeholder - the dynamic sitemap is served from the edge function -->
-  <!-- Access via: https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=festivals -->
+  <!-- This sitemap is dynamically generated at build time -->
+  <!-- Section 1: Festival listing pages -->
+  <!-- Query: SELECT canonical_slug FROM mv_festivals_cards -->
+  <!-- URL format: https://feelomove.com/festivales/{canonical_slug} -->
+  
+  <!-- Section 2: Individual festival events -->
+  <!-- Query: SELECT slug, event_date FROM tm_tbl_events WHERE event_type='festival' AND cancelled=false AND event_date >= now() -->
+  <!-- URL format: https://feelomove.com/festival/{slug} -->
 </urlset>
