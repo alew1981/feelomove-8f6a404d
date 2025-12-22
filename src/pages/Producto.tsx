@@ -352,7 +352,7 @@ const Producto = () => {
   };
 
   const handleAddHotel = (hotel: any) => {
-    const nights = (eventDetails as any).package_nights || 2;
+    const nights = (eventDetails as any).package_nights || 1;
     const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
     addHotel(eventDetails.event_id!, {
       hotel_id: hotel.hotel_id,
