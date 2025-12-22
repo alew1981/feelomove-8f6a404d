@@ -2,19 +2,27 @@ User-agent: *
 Allow: /
 
 # Sitemap Index
-Sitemap: https://feelomove.com/sitemap_index.xml
+Sitemap: https://feelomove.com/sitemap.xml
 
-# Crawl-delay
-Crawl-delay: 1
+# Bloquear parámetros de tracking
+Disallow: /*?utm_
+Disallow: /*?fbclid=
+Disallow: /*&utm_
+Disallow: /*&fbclid=
 
-# Disallow admin/private areas (if any in future)
+# Bloquear áreas privadas
 Disallow: /admin/
 Disallow: /api/private/
 
-# Allow all event, artist, and destination pages
-Allow: /producto/
-Allow: /artista/
+# Permitir todas las páginas de eventos
+Allow: /concierto/
+Allow: /festival/
 Allow: /conciertos/
 Allow: /festivales/
 Allow: /destinos/
-Allow: /musica/
+Allow: /generos/
+
+# Permitir crawling de JavaScript y CSS
+User-agent: Googlebot
+Allow: /*.js
+Allow: /*.css
