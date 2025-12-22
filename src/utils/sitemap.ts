@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../integrations/supabase/types';
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 
 interface SitemapUrl {
@@ -254,32 +254,34 @@ export const generateSitemap = async (): Promise<string> => {
 </sitemapindex>`;
 
   // ========================================
-  // 8. WRITE ALL FILES TO PUBLIC FOLDER
+  // 8. WRITE ALL FILES TO PUBLIC + DIST FOLDERS
+  //    (CRITICAL: if we only write to /public in closeBundle,
+  //    Vite has already copied publicDir into dist)
   // ========================================
+  const writeSitemapsToDir = (dir: string) => {
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+    writeFileSync(resolve(dir, 'sitemap-concerts.xml'), concertsSitemapXml);
+    writeFileSync(resolve(dir, 'sitemap-festivals.xml'), festivalsSitemapXml);
+    writeFileSync(resolve(dir, 'sitemap-artists.xml'), artistsSitemapXml);
+    writeFileSync(resolve(dir, 'sitemap-destinations.xml'), destinationsSitemapXml);
+    writeFileSync(resolve(dir, 'sitemap-genres.xml'), genresSitemapXml);
+    writeFileSync(resolve(dir, 'sitemap-pages.xml'), pagesSitemapXml);
+    writeFileSync(resolve(dir, 'sitemap_index.xml'), sitemapIndex);
+  };
+
   try {
     const publicDir = resolve(process.cwd(), 'public');
-    
-    writeFileSync(resolve(publicDir, 'sitemap-concerts.xml'), concertsSitemapXml);
-    console.log('✅ Written sitemap-concerts.xml');
-    
-    writeFileSync(resolve(publicDir, 'sitemap-festivals.xml'), festivalsSitemapXml);
-    console.log('✅ Written sitemap-festivals.xml');
-    
-    writeFileSync(resolve(publicDir, 'sitemap-artists.xml'), artistsSitemapXml);
-    console.log('✅ Written sitemap-artists.xml');
-    
-    writeFileSync(resolve(publicDir, 'sitemap-destinations.xml'), destinationsSitemapXml);
-    console.log('✅ Written sitemap-destinations.xml');
-    
-    writeFileSync(resolve(publicDir, 'sitemap-genres.xml'), genresSitemapXml);
-    console.log('✅ Written sitemap-genres.xml');
-    
-    writeFileSync(resolve(publicDir, 'sitemap-pages.xml'), pagesSitemapXml);
-    console.log('✅ Written sitemap-pages.xml');
-    
-    writeFileSync(resolve(publicDir, 'sitemap_index.xml'), sitemapIndex);
-    console.log('✅ Written sitemap_index.xml');
-    
+    const distDir = resolve(process.cwd(), 'dist');
+
+    console.log('Writing sitemaps to public/...');
+    writeSitemapsToDir(publicDir);
+    console.log('✅ Written sitemaps to public');
+
+    console.log('Writing sitemaps to dist/...');
+    writeSitemapsToDir(distDir);
+    console.log('✅ Written sitemaps to dist');
+
     console.log('✅ All sitemaps generated successfully!');
   } catch (error) {
     console.error('Error writing sitemap files:', error);
