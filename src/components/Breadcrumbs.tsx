@@ -19,25 +19,31 @@ const Breadcrumbs = () => {
   const pathnames = location.pathname.split("/").filter((x) => x);
   const { prefetch } = usePrefetch();
 
+  // Detect if we're on a product page (/concierto/:slug or /festival/:slug)
+  const isProductPage = pathnames[0] === "concierto" || pathnames[0] === "festival";
+  const productSlug = isProductPage ? params.slug : null;
+  const isFestivalProduct = pathnames[0] === "festival";
+
   // Get event name and categories for product page using lovable_mv_event_product_page
   const { data: eventDetails } = useQuery({
-    queryKey: ["event-breadcrumb", params.slug],
+    queryKey: ["event-breadcrumb", productSlug],
     queryFn: async () => {
-      if (!params.slug) return null;
+      if (!productSlug) return null;
       
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page")
-        .select("event_name, primary_subcategory_name, attraction_names, venue_city")
-        .eq("event_slug", params.slug)
+        .select("event_name, primary_subcategory_name, attraction_names, venue_city, is_festival")
+        .eq("event_slug", productSlug)
         .maybeSingle();
       
       if (error) return null;
       return data;
     },
-    enabled: !!params.slug && pathnames[0] === "producto",
+    enabled: !!productSlug,
   });
 
   // Get artist name from database for artist detail page (now under /conciertos/:artistSlug)
+  // Only when it's /conciertos/:artistSlug (NOT /conciertos alone)
   const artistSlug = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug ? decodeURIComponent(params.artistSlug) : null;
   
   const { data: artistData } = useQuery({
@@ -95,9 +101,10 @@ const Breadcrumbs = () => {
     generos: "Géneros",
     eventos: "Eventos",
     conciertos: "Conciertos",
+    concierto: "Concierto",
     festivales: "Festivales",
+    festival: "Festival",
     artistas: "Artistas",
-    producto: eventDetails?.event_name || "Evento",
   };
 
   // Obtener el nombre del género desde la URL si existe
@@ -113,17 +120,18 @@ const Breadcrumbs = () => {
           <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span className="hidden sm:inline">Inicio</span>
         </Link>
-      {/* For product page: Inicio > Conciertos > Ciudad > Género > Artista > Evento */}
-      {pathnames[0] === "producto" && eventDetails ? (
+
+      {/* For product page (/concierto/:slug or /festival/:slug): Inicio > Conciertos/Festivales > Ciudad > Género > Artista > Evento */}
+      {isProductPage && eventDetails ? (
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
             <Link
-              to="/conciertos"
+              to={isFestivalProduct ? "/festivales" : "/conciertos"}
               className={linkClass}
-              onMouseEnter={() => prefetch('/conciertos')}
+              onMouseEnter={() => prefetch(isFestivalProduct ? '/festivales' : '/conciertos')}
             >
-              Conciertos
+              {isFestivalProduct ? "Festivales" : "Conciertos"}
             </Link>
           </div>
           {eventCity && (
@@ -156,7 +164,7 @@ const Breadcrumbs = () => {
               <Link
                 to={`/conciertos/${generateSlug(eventArtist)}`}
                 className={linkClass}
-                onMouseEnter={() => prefetch('/conciertos')}
+                onMouseEnter={() => prefetch(`/conciertos/${generateSlug(eventArtist)}`)}
               >
                 {eventArtist}
               </Link>

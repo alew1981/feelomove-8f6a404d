@@ -150,6 +150,9 @@ const App = () => (
                 <Route path="/musica/:genero" element={<RedirectMusicaGenero />} />
                 <Route path="/artista/:slug" element={<RedirectArtista />} />
                 
+                {/* Dedicated 404 route for tracking */}
+                <Route path="/404" element={<NotFound />} />
+                
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
