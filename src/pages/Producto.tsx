@@ -167,7 +167,20 @@ const Producto = () => {
     return <ProductoSkeleton />;
   }
 
+  // Redirect to 404 when event not found
+  useEffect(() => {
+    if (isError && error instanceof Error && error.message === "Evento no encontrado") {
+      navigate("/404", { replace: true });
+    }
+  }, [isError, error, navigate]);
+
   if (isError) {
+    // If "Evento no encontrado", redirect handled by useEffect above
+    if (error instanceof Error && error.message === "Evento no encontrado") {
+      return <ProductoSkeleton />;
+    }
+    
+    // Other errors: show error UI
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
