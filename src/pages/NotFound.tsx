@@ -15,7 +15,30 @@ const NotFound = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    const fullUrl = window.location.href;
+    const referrer = document.referrer || "direct";
+    
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    
+    // Push to dataLayer for Google Analytics / GTM
+    if (typeof window !== "undefined" && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: "page_not_found",
+        page_path: location.pathname,
+        page_url: fullUrl,
+        page_referrer: referrer,
+        page_title: "404 - Página no encontrada"
+      });
+    }
+    
+    // Also log to console in development for debugging
+    if (process.env.NODE_ENV === "development") {
+      console.log("404 Analytics Event:", {
+        path: location.pathname,
+        url: fullUrl,
+        referrer: referrer
+      });
+    }
   }, [location.pathname]);
 
   // Fetch suggested concerts
