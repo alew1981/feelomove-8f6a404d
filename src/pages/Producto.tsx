@@ -61,6 +61,8 @@ interface HotelData {
   checkin_date?: string;
   checkout_date?: string;
   nights?: number;
+  hotel_address?: string;
+  hotel_city?: string;
 }
 
 const Producto = () => {
@@ -149,6 +151,8 @@ const Producto = () => {
         checkin_date: hotel.checkin_date,
         checkout_date: hotel.checkout_date,
         nights: hotel.nights || 1,
+        hotel_address: hotel.address || hotel.hotel_address || "",
+        hotel_city: hotel.city || hotel.hotel_city || "",
       };
     });
   })();

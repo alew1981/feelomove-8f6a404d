@@ -31,7 +31,8 @@ const generateSlug = (name: string): string => {
 
 const ArtistaDetalle = () => {
   const { artistSlug: slugParam } = useParams<{ artistSlug: string }>();
-  const artistSlug = slugParam ? decodeURIComponent(slugParam) : "";
+  // Normalize slug: decode URI and collapse multiple dashes into one
+  const artistSlug = slugParam ? decodeURIComponent(slugParam).replace(/-+/g, '-') : "";
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
