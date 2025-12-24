@@ -815,12 +815,12 @@ const Producto = () => {
                       <div className="pt-4 border-t-2 space-y-3">
                         <div className="text-center">
                           <p className="text-sm text-muted-foreground mb-1">Total por persona</p>
-                          <span className="text-3xl font-black text-accent">€{pricePerPerson.toFixed(2)}</span>
+                          <span className="text-3xl font-black text-foreground">€{pricePerPerson.toFixed(2)}</span>
                         </div>
                         
                         <div className="flex items-center justify-between pt-2">
                           <span className="text-sm text-muted-foreground">Total ({totalPersons} personas)</span>
-                          <span className="text-base font-bold">€{totalPrice.toFixed(2)}</span>
+                          <span className="text-base font-bold text-green-600">€{totalPrice.toFixed(2)}</span>
                         </div>
                       </div>
                     </>
