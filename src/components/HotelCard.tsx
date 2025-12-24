@@ -174,7 +174,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
             className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-sm px-3 py-1.5 rounded"
             onClick={() => onAddHotel(hotel)}
           >
-            Reservar hotel
+            Añadir a la cesta
           </Button>
         </div>
       </div>
