@@ -163,16 +163,16 @@ const Producto = () => {
     }
   }, [eventDetails, cart, clearCart]);
 
-  if (isLoading) {
-    return <ProductoSkeleton />;
-  }
-
-  // Redirect to 404 when event not found
+  // Redirect to 404 when event not found - MUST be before any conditional returns
   useEffect(() => {
     if (isError && error instanceof Error && error.message === "Evento no encontrado") {
       navigate("/404", { replace: true });
     }
   }, [isError, error, navigate]);
+
+  if (isLoading) {
+    return <ProductoSkeleton />;
+  }
 
   if (isError) {
     // If "Evento no encontrado", redirect handled by useEffect above
