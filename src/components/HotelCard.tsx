@@ -16,6 +16,8 @@ interface HotelCardProps {
     selling_price: number;
     distance_km: number;
     facility_names_es?: string[];
+    hotel_address?: string;
+    hotel_city?: string;
   };
   onAddHotel: (hotel: any) => void;
   checkinDate?: string;
@@ -111,9 +113,16 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
         )}
 
         {/* Hotel Name */}
-        <h3 className="text-xl font-bold text-foreground leading-tight mb-2 line-clamp-2 min-h-[2.4em]">
+        <h3 className="text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2 min-h-[2.4em]">
           {hotel.hotel_name}
         </h3>
+
+        {/* Hotel Address and City */}
+        {(hotel.hotel_address || hotel.hotel_city) && (
+          <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
+            {hotel.hotel_address}{hotel.hotel_address && hotel.hotel_city && ", "}{hotel.hotel_city}
+          </p>
+        )}
 
         {/* Distance to Event */}
         {distanceText && (
