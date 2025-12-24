@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -31,8 +31,17 @@ const generateSlug = (name: string): string => {
 
 const ArtistaDetalle = () => {
   const { artistSlug: slugParam } = useParams<{ artistSlug: string }>();
+  const navigate = useNavigate();
   // Normalize slug: decode URI and collapse multiple dashes into one
-  const artistSlug = slugParam ? decodeURIComponent(slugParam).replace(/-+/g, '-') : "";
+  const rawSlug = slugParam ? decodeURIComponent(slugParam) : "";
+  const artistSlug = rawSlug.replace(/-+/g, '-');
+  
+  // Redirect to normalized URL if slug has double dashes
+  useEffect(() => {
+    if (rawSlug !== artistSlug && artistSlug) {
+      navigate(`/conciertos/${artistSlug}`, { replace: true });
+    }
+  }, [rawSlug, artistSlug, navigate]);
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
