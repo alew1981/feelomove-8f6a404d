@@ -127,12 +127,12 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
                 {/* Summary */}
                 <div className="pt-3 border-t space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total ({totalTickets} personas)</span>
-                    <span className="font-bold">€{totalPrice.toFixed(2)}</span>
+                    <span className="text-muted-foreground">Por persona</span>
+                    <span className="font-bold text-foreground">€{pricePerPerson.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Por persona</span>
-                    <span className="font-black text-accent text-lg">€{pricePerPerson.toFixed(2)}</span>
+                    <span className="text-muted-foreground text-sm">Total ({totalTickets} personas)</span>
+                    <span className="font-black text-green-600 text-lg">€{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
 

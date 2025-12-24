@@ -44,18 +44,20 @@ const Breadcrumbs = () => {
 
   // Get artist name from database for artist detail page (now under /conciertos/:artistSlug)
   // Only when it's /conciertos/:artistSlug (NOT /conciertos alone)
-  const artistSlug = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug ? decodeURIComponent(params.artistSlug) : null;
+  const artistSlugRaw = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug ? decodeURIComponent(params.artistSlug) : null;
+  // Normalize artist slug: replace multiple dashes with single dash for DB lookup
+  const artistSlug = artistSlugRaw ? artistSlugRaw.toLowerCase().replace(/-+/g, '-') : null;
   
   const { data: artistData } = useQuery({
     queryKey: ["artist-breadcrumb", artistSlug],
     queryFn: async () => {
       if (!artistSlug) return null;
       
-      // Query attractions view directly using the slug
+      // Query attractions view directly using the normalized slug
       const { data, error } = await supabase
         .from("mv_attractions")
         .select("attraction_name")
-        .eq("attraction_slug", artistSlug.toLowerCase())
+        .eq("attraction_slug", artistSlug)
         .maybeSingle();
       
       if (error || !data) return null;
