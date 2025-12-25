@@ -493,61 +493,72 @@ const Producto = () => {
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               
-              {/* Left Side - Badges stacked vertically */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                {/* Availability Badge */}
-                {isEventAvailable && (
-                  <Badge className="bg-accent text-accent-foreground font-black px-4 py-2 text-sm rounded-full w-fit">
-                    DISPONIBLE
-                  </Badge>
-                )}
-                {!isEventAvailable && (
-                  <Badge className="bg-destructive text-destructive-foreground font-black px-4 py-2 text-sm rounded-full w-fit">
-                    SOLD OUT
-                  </Badge>
-                )}
-                
-                {/* Date Card - Below availability badge */}
-                <div className="bg-card rounded-xl shadow-lg p-2 md:p-3 min-w-[100px] md:min-w-[130px]">
+              {/* Left Side - Date Card only (bigger) */}
+              <div className="absolute top-4 left-4">
+                <div className="bg-card rounded-xl shadow-lg p-3 md:p-4 min-w-[120px] md:min-w-[150px]">
                   <div className="text-center">
-                    <p className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                       {format(eventDate, "MMM", { locale: es })}
                     </p>
-                    <p className="text-2xl md:text-4xl font-black text-foreground leading-none my-0.5 md:my-1">
+                    <p className="text-3xl md:text-5xl font-black text-foreground leading-none my-1 md:my-2">
                       {format(eventDate, "dd")}
                     </p>
-                    <p className="text-xs md:text-sm font-medium text-muted-foreground">
+                    <p className="text-sm md:text-base font-medium text-muted-foreground">
                       {format(eventDate, "yyyy")}
                     </p>
-                    <div className="border-t border-border mt-2 pt-2 md:mt-3 md:pt-3">
-                      <p className="text-base md:text-xl font-bold text-foreground">{formattedTime}h</p>
+                    <div className="border-t border-border mt-3 pt-3 md:mt-4 md:pt-4">
+                      <p className="text-lg md:text-2xl font-bold text-foreground">{formattedTime}h</p>
                       <div className="flex items-center justify-center gap-1 mt-1 text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        <span className="text-[10px] md:text-xs">{eventDetails.venue_city}</span>
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span className="text-xs md:text-sm">{eventDetails.venue_city}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Right Side - Event Image and Info */}
+              {/* Right Side - Badges, Event Image and Info */}
               <div className="absolute right-4 bottom-4 flex flex-col items-end gap-3">
-                {/* Urgency Badge - Above event image */}
-                {daysUntil >= 0 && daysUntil < 7 && (
-                  <div className="flex flex-col items-end gap-2">
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs md:text-sm animate-pulse">
+                {/* Badges above event image */}
+                <div className="flex flex-wrap justify-end gap-2 max-w-[200px] md:max-w-[280px]">
+                  {/* Genre Badge */}
+                  {eventDetails.primary_category_name && (
+                    <Badge className="bg-white/90 text-foreground font-semibold px-3 py-1 text-xs rounded-full">
+                      {eventDetails.primary_category_name}
+                    </Badge>
+                  )}
+                  
+                  {/* Availability Badge */}
+                  {isEventAvailable && (
+                    <Badge className="bg-accent text-accent-foreground font-black px-3 py-1 text-xs rounded-full">
+                      DISPONIBLE
+                    </Badge>
+                  )}
+                  {!isEventAvailable && (
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs rounded-full">
+                      SOLD OUT
+                    </Badge>
+                  )}
+                  
+                  {/* Urgency Badge */}
+                  {daysUntil >= 0 && daysUntil < 7 && (
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs animate-pulse rounded-full">
                       ¡ÚLTIMA SEMANA!
                     </Badge>
-                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
-                      <div className="text-center">
-                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
-                      </div>
-                      <span className="text-lg md:text-2xl text-accent font-bold">:</span>
-                      <div className="text-center">
-                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
-                      </div>
+                  )}
+                </div>
+                
+                {/* Countdown timer if last week */}
+                {daysUntil >= 0 && daysUntil < 7 && (
+                  <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
+                    <div className="text-center">
+                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
+                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
+                    </div>
+                    <span className="text-lg md:text-2xl text-accent font-bold">:</span>
+                    <div className="text-center">
+                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
+                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
                     </div>
                   </div>
                 )}
