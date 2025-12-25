@@ -480,7 +480,7 @@ const Producto = () => {
           {/* Hero Section */}
           <div className="relative rounded-2xl overflow-hidden mb-8 mt-4">
             {/* Background Image */}
-            <div className="relative h-[200px] sm:h-[220px] md:h-[260px]">
+            <div className="relative h-[320px] sm:h-[380px] md:h-[420px]">
               <img
                 src={eventImage}
                 alt={eventDetails.event_name || "Evento"}
@@ -491,7 +491,7 @@ const Producto = () => {
               />
               
               {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               
               {/* Left Side - Badges stacked vertically */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -530,62 +530,60 @@ const Producto = () => {
                 </div>
               </div>
               
-              {/* Right Side - Event Image overlapping */}
-              <div className="absolute right-4 -bottom-16 md:-bottom-20 z-10">
+              {/* Right Side - Event Image and Info */}
+              <div className="absolute right-4 bottom-4 flex flex-col items-end gap-3">
+                {/* Urgency Badge - Above event image */}
+                {daysUntil >= 0 && daysUntil < 7 && (
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs md:text-sm animate-pulse">
+                      ¡ÚLTIMA SEMANA!
+                    </Badge>
+                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
+                      <div className="text-center">
+                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
+                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
+                      </div>
+                      <span className="text-lg md:text-2xl text-accent font-bold">:</span>
+                      <div className="text-center">
+                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
+                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Event Image */}
                 <img
                   src={(eventDetails as any).image_large_url || eventImage}
                   alt={eventDetails.event_name || "Evento"}
                   className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover rounded-xl shadow-2xl border-4 border-background"
                 />
-              </div>
-              
-              {/* Urgency Badge - Top Right */}
-              {daysUntil >= 0 && daysUntil < 7 && (
-                <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-2">
-                  <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs md:text-sm animate-pulse">
-                    ¡ÚLTIMA SEMANA!
-                  </Badge>
-                  <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
-                    <div className="text-center">
-                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
-                    </div>
-                    <span className="text-lg md:text-2xl text-accent font-bold">:</span>
-                    <div className="text-center">
-                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
-                    </div>
+                
+                {/* Event Name and Venue below image */}
+                <div className="text-right max-w-[200px] md:max-w-[280px]">
+                  <div className="flex items-center justify-end gap-2">
+                    <h1 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight line-clamp-2">
+                      {eventDetails.event_name}
+                    </h1>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0"
+                      onClick={() => toggleFavorite({
+                        event_id: eventDetails.event_id!,
+                        event_name: eventDetails.event_name || '',
+                        event_slug: eventDetails.event_slug || '',
+                        event_date: eventDetails.event_date || '',
+                        venue_city: eventDetails.venue_city || '',
+                        image_url: eventImage
+                      })}
+                    >
+                      <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                    </Button>
                   </div>
+                  <p className="text-xs md:text-sm text-white/80 mt-1">{eventDetails.venue_name}</p>
                 </div>
-              )}
-
-            </div>
-          </div>
-          
-          {/* Event Name Section - Below hero with space for overlapping image */}
-          <div className="relative mt-4 mb-6 pr-[170px] md:pr-[250px]">
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-foreground leading-tight">
-                  {eventDetails.event_name}
-                </h1>
-                <p className="text-sm md:text-base text-muted-foreground mt-1">{eventDetails.venue_name}</p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-muted hover:bg-muted/80 flex-shrink-0"
-                onClick={() => toggleFavorite({
-                  event_id: eventDetails.event_id!,
-                  event_name: eventDetails.event_name || '',
-                  event_slug: eventDetails.event_slug || '',
-                  event_date: eventDetails.event_date || '',
-                  venue_city: eventDetails.venue_city || '',
-                  image_url: eventImage
-                })}
-              >
-                <Heart className={`h-5 w-5 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
-              </Button>
             </div>
           </div>
 
