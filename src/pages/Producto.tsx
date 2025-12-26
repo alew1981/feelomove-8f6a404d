@@ -493,8 +493,8 @@ const Producto = () => {
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               
-              {/* Left Side - Date Card with Venue (bigger) */}
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+              {/* Left Side - Date Card with Venue (aligned with event image) */}
+              <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4">
                 <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
                     <p className="text-sm sm:text-base font-bold text-muted-foreground uppercase tracking-wider">
