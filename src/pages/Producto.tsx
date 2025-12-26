@@ -480,7 +480,7 @@ const Producto = () => {
           {/* Hero Section */}
           <div className="relative rounded-2xl overflow-hidden mb-8 mt-4">
             {/* Background Image */}
-            <div className="relative h-[320px] sm:h-[380px] md:h-[420px]">
+            <div className="relative h-[280px] sm:h-[340px] md:h-[420px]">
               <img
                 src={eventImage}
                 alt={eventDetails.event_name || "Evento"}
@@ -493,27 +493,27 @@ const Producto = () => {
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               
-              {/* Left Side - Date Card with Venue */}
-              <div className="absolute top-4 left-4">
-                <div className="bg-card rounded-xl shadow-lg p-3 md:p-4 min-w-[120px] md:min-w-[150px]">
+              {/* Left Side - Date Card with Venue (bigger) */}
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+                <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
-                    <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-sm sm:text-base font-bold text-muted-foreground uppercase tracking-wider">
                       {format(eventDate, "MMM", { locale: es })}
                     </p>
-                    <p className="text-3xl md:text-5xl font-black text-foreground leading-none my-1 md:my-2">
+                    <p className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground leading-none my-1 sm:my-2">
                       {format(eventDate, "dd")}
                     </p>
-                    <p className="text-sm md:text-base font-medium text-muted-foreground">
+                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
                       {format(eventDate, "yyyy")}
                     </p>
-                    <div className="border-t border-border mt-3 pt-3 md:mt-4 md:pt-4">
-                      <p className="text-lg md:text-2xl font-bold text-foreground">{formattedTime}h</p>
-                      <div className="flex flex-col items-center gap-0.5 mt-1 text-muted-foreground">
+                    <div className="border-t border-border mt-3 pt-3 sm:mt-4 sm:pt-4">
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formattedTime}h</p>
+                      <div className="flex flex-col items-center gap-1 mt-2 text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          <span className="text-xs md:text-sm font-semibold">{eventDetails.venue_city}</span>
+                          <MapPin className="h-4 w-4" />
+                          <span className="text-sm sm:text-base font-bold">{eventDetails.venue_city}</span>
                         </div>
-                        <span className="text-[10px] md:text-xs text-muted-foreground/80 line-clamp-1">{eventDetails.venue_name}</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-2 text-center max-w-[120px] sm:max-w-[140px]">{eventDetails.venue_name}</span>
                       </div>
                     </div>
                   </div>
@@ -521,15 +521,15 @@ const Producto = () => {
               </div>
               
               {/* Center - Event Name with Favorite */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[60%] md:max-w-[50%]">
+              <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%]">
                 <div className="flex items-center justify-center gap-2 md:gap-3">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
+                  <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
                     {eventDetails.event_name}
                   </h1>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0 backdrop-blur-sm"
+                    className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0 backdrop-blur-sm"
                     onClick={() => toggleFavorite({
                       event_id: eventDetails.event_id!,
                       event_name: eventDetails.event_name || '',
@@ -539,71 +539,72 @@ const Producto = () => {
                       image_url: eventImage
                     })}
                   >
-                    <Heart className={`h-5 w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                    <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
                 </div>
               </div>
               
               {/* Right Side - Badges and Event Image */}
-              <div className="absolute right-4 top-4 bottom-4 flex flex-col items-end justify-between">
-                {/* Badges above event image */}
-                <div className="flex flex-wrap justify-end gap-2 max-w-[180px] md:max-w-[250px]">
+              <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 flex flex-col items-end justify-between">
+                {/* Badges in single row */}
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap">
                   {/* Genre Badge */}
                   {eventDetails.primary_category_name && (
-                    <Badge className="bg-white text-foreground font-semibold px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
+                    <Badge className="bg-white text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
                       {eventDetails.primary_category_name}
                     </Badge>
                   )}
                   
                   {/* Subgenre Badge */}
                   {eventDetails.primary_subcategory_name && (
-                    <Badge className="bg-white/90 text-foreground font-medium px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
+                    <Badge className="bg-white/90 text-foreground font-medium px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
                       {eventDetails.primary_subcategory_name}
                     </Badge>
                   )}
                   
                   {/* Availability Badge */}
-                  {isEventAvailable && (
-                    <Badge className="bg-accent text-accent-foreground font-black px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
+                  {isEventAvailable ? (
+                    <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
                       DISPONIBLE
                     </Badge>
-                  )}
-                  {!isEventAvailable && (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
+                  ) : (
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
                       SOLD OUT
                     </Badge>
                   )}
                   
                   {/* Urgency Badge */}
                   {daysUntil >= 0 && daysUntil < 7 && (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1.5 text-xs md:text-sm animate-pulse rounded-full shadow-md">
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs animate-pulse rounded-full shadow-md whitespace-nowrap">
                       ¡ÚLTIMA SEMANA!
                     </Badge>
                   )}
                 </div>
                 
-                {/* Event Image */}
+                {/* Event Image with hover zoom */}
                 <div className="flex flex-col items-end gap-2">
                   {/* Countdown timer if last week */}
                   {daysUntil >= 0 && daysUntil < 7 && (
-                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
+                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-2 border-accent">
                       <div className="text-center">
-                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
+                        <span className="text-base sm:text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
+                        <p className="text-[7px] sm:text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
                       </div>
-                      <span className="text-lg md:text-2xl text-accent font-bold">:</span>
+                      <span className="text-base sm:text-lg md:text-2xl text-accent font-bold">:</span>
                       <div className="text-center">
-                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
+                        <span className="text-base sm:text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
+                        <p className="text-[7px] sm:text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
                       </div>
                     </div>
                   )}
                   
-                  <img
-                    src={(eventDetails as any).image_large_url || eventImage}
-                    alt={eventDetails.event_name || "Evento"}
-                    className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover rounded-xl shadow-2xl border-4 border-background"
-                  />
+                  <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-background group">
+                    <img
+                      src={(eventDetails as any).image_large_url || eventImage}
+                      alt={eventDetails.event_name || "Evento"}
+                      className="w-[100px] h-[133px] sm:w-[150px] sm:h-[200px] md:w-[225px] md:h-[305px] object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
