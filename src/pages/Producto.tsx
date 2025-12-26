@@ -493,7 +493,7 @@ const Producto = () => {
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               
-              {/* Left Side - Date Card only (bigger) */}
+              {/* Left Side - Date Card with Venue */}
               <div className="absolute top-4 left-4">
                 <div className="bg-card rounded-xl shadow-lg p-3 md:p-4 min-w-[120px] md:min-w-[150px]">
                   <div className="text-center">
@@ -508,91 +508,102 @@ const Producto = () => {
                     </p>
                     <div className="border-t border-border mt-3 pt-3 md:mt-4 md:pt-4">
                       <p className="text-lg md:text-2xl font-bold text-foreground">{formattedTime}h</p>
-                      <div className="flex items-center justify-center gap-1 mt-1 text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span className="text-xs md:text-sm">{eventDetails.venue_city}</span>
+                      <div className="flex flex-col items-center gap-0.5 mt-1 text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span className="text-xs md:text-sm font-semibold">{eventDetails.venue_city}</span>
+                        </div>
+                        <span className="text-[10px] md:text-xs text-muted-foreground/80 line-clamp-1">{eventDetails.venue_name}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Right Side - Badges, Event Image and Info */}
-              <div className="absolute right-4 bottom-4 flex flex-col items-end gap-3">
+              {/* Center - Event Name with Favorite */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[60%] md:max-w-[50%]">
+                <div className="flex items-center justify-center gap-2 md:gap-3">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
+                    {eventDetails.event_name}
+                  </h1>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0 backdrop-blur-sm"
+                    onClick={() => toggleFavorite({
+                      event_id: eventDetails.event_id!,
+                      event_name: eventDetails.event_name || '',
+                      event_slug: eventDetails.event_slug || '',
+                      event_date: eventDetails.event_date || '',
+                      venue_city: eventDetails.venue_city || '',
+                      image_url: eventImage
+                    })}
+                  >
+                    <Heart className={`h-5 w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Right Side - Badges and Event Image */}
+              <div className="absolute right-4 top-4 bottom-4 flex flex-col items-end justify-between">
                 {/* Badges above event image */}
-                <div className="flex flex-wrap justify-end gap-2 max-w-[200px] md:max-w-[280px]">
+                <div className="flex flex-wrap justify-end gap-2 max-w-[180px] md:max-w-[250px]">
                   {/* Genre Badge */}
                   {eventDetails.primary_category_name && (
-                    <Badge className="bg-white/90 text-foreground font-semibold px-3 py-1 text-xs rounded-full">
+                    <Badge className="bg-white text-foreground font-semibold px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
                       {eventDetails.primary_category_name}
+                    </Badge>
+                  )}
+                  
+                  {/* Subgenre Badge */}
+                  {eventDetails.primary_subcategory_name && (
+                    <Badge className="bg-white/90 text-foreground font-medium px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
+                      {eventDetails.primary_subcategory_name}
                     </Badge>
                   )}
                   
                   {/* Availability Badge */}
                   {isEventAvailable && (
-                    <Badge className="bg-accent text-accent-foreground font-black px-3 py-1 text-xs rounded-full">
+                    <Badge className="bg-accent text-accent-foreground font-black px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
                       DISPONIBLE
                     </Badge>
                   )}
                   {!isEventAvailable && (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs rounded-full">
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1.5 text-xs md:text-sm rounded-full shadow-md">
                       SOLD OUT
                     </Badge>
                   )}
                   
                   {/* Urgency Badge */}
                   {daysUntil >= 0 && daysUntil < 7 && (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1 text-xs animate-pulse rounded-full">
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-3 py-1.5 text-xs md:text-sm animate-pulse rounded-full shadow-md">
                       ¡ÚLTIMA SEMANA!
                     </Badge>
                   )}
                 </div>
                 
-                {/* Countdown timer if last week */}
-                {daysUntil >= 0 && daysUntil < 7 && (
-                  <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
-                    <div className="text-center">
-                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
-                    </div>
-                    <span className="text-lg md:text-2xl text-accent font-bold">:</span>
-                    <div className="text-center">
-                      <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                      <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
-                    </div>
-                  </div>
-                )}
-                
                 {/* Event Image */}
-                <img
-                  src={(eventDetails as any).image_large_url || eventImage}
-                  alt={eventDetails.event_name || "Evento"}
-                  className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover rounded-xl shadow-2xl border-4 border-background"
-                />
-                
-                {/* Event Name and Venue below image */}
-                <div className="text-right max-w-[200px] md:max-w-[280px]">
-                  <div className="flex items-center justify-end gap-2">
-                    <h1 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight line-clamp-2">
-                      {eventDetails.event_name}
-                    </h1>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0"
-                      onClick={() => toggleFavorite({
-                        event_id: eventDetails.event_id!,
-                        event_name: eventDetails.event_name || '',
-                        event_slug: eventDetails.event_slug || '',
-                        event_date: eventDetails.event_date || '',
-                        venue_city: eventDetails.venue_city || '',
-                        image_url: eventImage
-                      })}
-                    >
-                      <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
-                    </Button>
-                  </div>
-                  <p className="text-xs md:text-sm text-white/80 mt-1">{eventDetails.venue_name}</p>
+                <div className="flex flex-col items-end gap-2">
+                  {/* Countdown timer if last week */}
+                  {daysUntil >= 0 && daysUntil < 7 && (
+                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3 border-2 border-accent">
+                      <div className="text-center">
+                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
+                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
+                      </div>
+                      <span className="text-lg md:text-2xl text-accent font-bold">:</span>
+                      <div className="text-center">
+                        <span className="text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
+                        <p className="text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <img
+                    src={(eventDetails as any).image_large_url || eventImage}
+                    alt={eventDetails.event_name || "Evento"}
+                    className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover rounded-xl shadow-2xl border-4 border-background"
+                  />
                 </div>
               </div>
             </div>
