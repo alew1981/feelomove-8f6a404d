@@ -15,26 +15,39 @@ import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 
-const months = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
-];
+// Generate month-year options dynamically from available events
+const getMonthYearOptions = (events: any[]) => {
+  if (!events || events.length === 0) return [];
+  
+  const monthYearSet = new Set<string>();
+  events.forEach(event => {
+    if (event.event_date) {
+      const date = new Date(event.event_date);
+      const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthYearSet.add(monthYear);
+    }
+  });
+  
+  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  
+  return Array.from(monthYearSet)
+    .sort()
+    .map(my => {
+      const [year, month] = my.split('-');
+      const monthName = monthNames[parseInt(month) - 1];
+      return {
+        value: my,
+        label: `${monthName} - ${year}`
+      };
+    });
+};
 
 const Conciertos = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
-  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
+  const [filterRecent, setFilterRecent] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -77,6 +90,9 @@ const Conciertos = () => {
     return uniqueArtists.sort() as string[];
   }, [events]);
 
+  // Get month-year options from events
+  const monthYearOptions = useMemo(() => getMonthYearOptions(events || []), [events]);
+
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
     if (!events) return [];
@@ -106,12 +122,28 @@ const Conciertos = () => {
       filtered = filtered.filter(event => event.artist_name === filterArtist);
     }
 
-    // Apply month filter
-    if (filterMonth !== "all") {
+    // Apply month-year filter
+    if (filterMonthYear !== "all") {
       filtered = filtered.filter(event => {
         if (!event.event_date) return false;
-        const eventMonth = new Date(event.event_date).toISOString().slice(5, 7);
-        return eventMonth === filterMonth;
+        const date = new Date(event.event_date);
+        const eventMonthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        return eventMonthYear === filterMonthYear;
+      });
+    }
+
+    // Apply recent filter (events created/updated in last 7 days)
+    if (filterRecent === "recent") {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      // Since we don't have created_at, we'll sort by upcoming soon as "new"
+      // This filters to show events happening in the next 30 days
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      filtered = filtered.filter(event => {
+        if (!event.event_date) return false;
+        const eventDate = new Date(event.event_date);
+        return eventDate <= thirtyDaysFromNow;
       });
     }
 
@@ -119,7 +151,7 @@ const Conciertos = () => {
     filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonth]);
+  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -236,8 +268,8 @@ const Conciertos = () => {
               )}
             </div>
 
-            {/* Filters Row - ciudad, genero, artista, mes */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* Filters Row - ciudad, genero, artista, mes, próximos */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
@@ -274,27 +306,38 @@ const Conciertos = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterMonth} onValueChange={setFilterMonth}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
+              <Select value={filterMonthYear} onValueChange={setFilterMonthYear}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonthYear !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterMonthYear === "all" ? "Mes" : monthYearOptions.find(m => m.value === filterMonthYear)?.label}</span>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-60">
                   <SelectItem value="all">Todos los meses</SelectItem>
-                  {months.map((month) => (
+                  {monthYearOptions.map((month) => (
                     <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={filterRecent} onValueChange={setFilterRecent}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : "Próximos 30 días"}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="recent">🔥 Próximos 30 días</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all") && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterRecent !== "all") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
                     setFilterCity("all");
                     setFilterGenre("all");
                     setFilterArtist("all");
-                    setFilterMonth("all");
+                    setFilterMonthYear("all");
+                    setFilterRecent("all");
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
