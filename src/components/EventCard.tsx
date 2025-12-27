@@ -82,6 +82,9 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
   const imageUrl = event.image_large_url || event.event_image_large || event.image_standard_url || event.event_image_standard || "/placeholder.svg";
   const price = event.price_min_incl_fees ?? event.ticket_price_min ?? event.ticket_cheapest_price ?? 0;
   const badges = event.badges || event.event_badges || [];
+  
+  // Detect if event has VIP tickets based on badges or name
+  const hasVIP = badges.some((b: string) => /vip/i.test(b)) || /vip/i.test(eventName);
 
   // Handle null/undefined dates
   const hasDate = Boolean(event.event_date && event.event_date.length > 0);
@@ -212,8 +215,13 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
                 </div>
               )}
 
-              {/* Countdown Timer - Top Right */}
+              {/* VIP Badge and Countdown Timer - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+                {hasVIP && (
+                  <div className="bg-foreground text-background text-[10px] font-bold px-2.5 py-1 rounded shadow-lg">
+                    VIP
+                  </div>
+                )}
                 {showCountdown && (
                   <div className="bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border border-accent/30">
                     <div className="flex gap-2 text-accent font-['Poppins'] text-center">
