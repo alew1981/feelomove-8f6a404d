@@ -34,6 +34,15 @@ const GeneroDetalle = () => {
   const { data: genreInfo } = useQuery({
     queryKey: ["genre-info", genreParam],
     queryFn: async () => {
+      // First try exact match (URL might contain the exact genre name)
+      const { data: exactMatch } = await supabase
+        .from("mv_genres_cards")
+        .select("genre_name, genre_id, event_count")
+        .eq("genre_name", genreParam)
+        .maybeSingle();
+      
+      if (exactMatch) return exactMatch;
+      
       // Fetch all genres and find match by normalized slug
       const { data: allGenres } = await supabase
         .from("mv_genres_cards")
@@ -42,7 +51,11 @@ const GeneroDetalle = () => {
       if (!allGenres) return null;
       
       // Normalize the URL param to match genre slugs
-      const normalizedParam = genreParam.toLowerCase().replace(/-/g, '');
+      const normalizedParam = genreParam
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
       
       // Find genre where normalized name matches
       const match = allGenres.find(g => {
@@ -51,8 +64,7 @@ const GeneroDetalle = () => {
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
           .replace(/[^a-z0-9]/g, '');
-        return normalizedGenre === normalizedParam || 
-               g.genre_name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedParam;
+        return normalizedGenre === normalizedParam;
       });
       
       return match || null;
