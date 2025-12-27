@@ -547,7 +547,21 @@ const Producto = () => {
               {/* Right Side - Badges and Event Image */}
               <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 flex flex-col items-end justify-between">
                 {/* Badges in single row */}
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end max-w-[200px] sm:max-w-none">
+                  {/* Day of Week Badge */}
+                  {eventDetails.day_of_week && (
+                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                      {eventDetails.day_of_week}
+                    </Badge>
+                  )}
+                  
+                  {/* Season Badge */}
+                  {(eventDetails as any).event_season && (
+                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap capitalize">
+                      {(eventDetails as any).event_season}
+                    </Badge>
+                  )}
+                  
                   {/* Genre Badge */}
                   {eventDetails.primary_category_name && (
                     <Badge className="bg-white text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
@@ -562,7 +576,14 @@ const Producto = () => {
                     </Badge>
                   )}
                   
-                  {/* Availability Badge */}
+                  {/* VIP Tickets Badge */}
+                  {(eventDetails as any).has_vip_tickets && (
+                    <Badge className="bg-foreground text-background font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                      VIP
+                    </Badge>
+                  )}
+                  
+                  {/* Availability Badge - based on real ticket availability */}
                   {isEventAvailable ? (
                     <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
                       DISPONIBLE
@@ -613,12 +634,12 @@ const Producto = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="xl:col-span-2 space-y-8">
-              {/* Ticket Cards */}
+              {/* Ticket Cards - List Format */}
               {ticketPrices.length > 0 && (
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Entradas</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-                    {displayedTickets.map((ticket: any, index: number) => {
+                  <div className="flex flex-col gap-3">
+                    {displayedTickets.map((ticket: any) => {
                       const quantity = getTicketQuantity(ticket.id);
                       const isSoldOut = ticket.availability === "none";
                       const isLimited = ticket.availability === "limited";
@@ -635,72 +656,71 @@ const Producto = () => {
                                 : 'hover:border-accent/50'
                           }`}
                         >
-                          <CardContent className="p-3 sm:p-4 flex flex-col h-full">
-                            {/* Ticket Header with Availability */}
-                            <div className="mb-2 sm:mb-3">
-                              <div className="flex items-center justify-end gap-2 mb-1">
-                                {isVIP && (
-                                  <span className="text-[10px] font-bold text-white bg-foreground px-2 py-0.5 rounded">
-                                    VIP
-                                  </span>
-                                )}
-                                {isSoldOut ? (
-                                  <span className="text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded border border-destructive/30">
-                                    AGOTADO
-                                  </span>
-                                ) : isLimited ? (
-                                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
-                                    ÚLTIMAS
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
-                                    DISPONIBLE
-                                  </span>
-                                )}
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex items-center justify-between gap-4">
+                              {/* Left: Ticket info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  {isVIP && (
+                                    <span className="text-[10px] font-bold text-white bg-foreground px-2 py-0.5 rounded">
+                                      VIP
+                                    </span>
+                                  )}
+                                  {isSoldOut ? (
+                                    <span className="text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded border border-destructive/30">
+                                      AGOTADO
+                                    </span>
+                                  ) : isLimited ? (
+                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
+                                      ÚLTIMAS
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
+                                      DISPONIBLE
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm sm:text-base font-bold uppercase text-foreground truncate">
+                                  {ticket.description || ticket.type}
+                                </p>
                               </div>
-                              
-                              <p className="text-sm sm:text-base font-bold uppercase text-foreground mt-1 line-clamp-2 min-h-[40px] sm:min-h-[48px]">
-                                {ticket.description || ticket.type}
-                              </p>
-                            </div>
 
-                            {/* Price - Improved Design */}
-                            <div className="bg-gradient-to-br from-muted/80 to-muted/40 rounded-xl p-3 sm:p-4 text-center mb-3">
-                              <div className="flex items-baseline justify-center">
-                                <span className="text-2xl sm:text-3xl font-black text-foreground">
+                              {/* Center: Price */}
+                              <div className="text-center px-4 flex-shrink-0">
+                                <span className="text-xl sm:text-2xl font-black text-foreground">
                                   €{ticket.price.toFixed(0)}
                                 </span>
+                                {ticket.fees > 0 && (
+                                  <p className="text-[10px] text-muted-foreground">
+                                    + €{ticket.fees.toFixed(2)} gastos
+                                  </p>
+                                )}
                               </div>
-                              {ticket.fees > 0 && (
-                                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                                  + €{ticket.fees.toFixed(2)} gastos de gestión
-                                </p>
-                              )}
-                            </div>
 
-                            {/* Quantity Selector */}
-                            <div className="flex items-center justify-center gap-3 mt-auto bg-muted/50 rounded-full p-1.5">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
-                                onClick={() => handleTicketQuantityChange(ticket.id, -1)}
-                                disabled={quantity === 0 || isSoldOut}
-                                aria-label={`Reducir cantidad de ${ticket.type}`}
-                              >
-                                <Minus className="h-5 w-5" />
-                              </Button>
-                              <span className="w-10 text-center font-bold text-xl" aria-live="polite" aria-label={`Cantidad: ${quantity}`}>{quantity}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
-                                onClick={() => handleTicketQuantityChange(ticket.id, 1)}
-                                disabled={quantity >= 10 || isSoldOut}
-                                aria-label={`Aumentar cantidad de ${ticket.type}`}
-                              >
-                                <Plus className="h-5 w-5" />
-                              </Button>
+                              {/* Right: Quantity Selector */}
+                              <div className="flex items-center gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
+                                  onClick={() => handleTicketQuantityChange(ticket.id, -1)}
+                                  disabled={quantity === 0 || isSoldOut}
+                                  aria-label={`Reducir cantidad de ${ticket.type}`}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="w-8 text-center font-bold text-lg">{quantity}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
+                                  onClick={() => handleTicketQuantityChange(ticket.id, 1)}
+                                  disabled={quantity >= 10 || isSoldOut}
+                                  aria-label={`Aumentar cantidad de ${ticket.type}`}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -715,7 +735,7 @@ const Producto = () => {
                         onClick={() => setShowAllTickets(!showAllTickets)}
                         className="border-2 hover:border-accent hover:text-accent font-bold px-8"
                       >
-                        {showAllTickets ? "Ver menos" : "Ver más"}
+                        {showAllTickets ? "Ver menos" : `Ver ${ticketPrices.length - 8} más`}
                       </Button>
                     </div>
                   )}
