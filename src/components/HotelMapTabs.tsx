@@ -77,18 +77,17 @@ const HotelMapTabs = ({ hotels, mapWidgetHtml, hotelsListWidgetHtml, onAddHotel,
         {hotels.length > 0 ? (
           <>
             {/* Sorting dropdown - improved visibility */}
-            <div className="flex items-center justify-between mb-4 gap-3">
-              <span className="text-sm font-medium text-muted-foreground">Ordenar hoteles:</span>
+            <div className="flex items-center justify-end mb-4">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-56 sm:w-64 h-10 sm:h-11 text-sm sm:text-base border-2 border-border bg-card font-medium shadow-sm">
+                <SelectTrigger className="w-full sm:w-80 md:w-96 h-11 sm:h-12 text-sm sm:text-base border-2 border-border bg-card font-medium shadow-sm">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-2">
-                  <SelectItem value="price-asc" className="text-sm sm:text-base py-2.5">💰 Precio (menor a mayor)</SelectItem>
-                  <SelectItem value="price-desc" className="text-sm sm:text-base py-2.5">💎 Precio (mayor a menor)</SelectItem>
-                  <SelectItem value="distance-asc" className="text-sm sm:text-base py-2.5">📍 Distancia (más cercano)</SelectItem>
-                  <SelectItem value="rating-desc" className="text-sm sm:text-base py-2.5">⭐ Valoración (mejor)</SelectItem>
-                  <SelectItem value="stars-desc" className="text-sm sm:text-base py-2.5">🏨 Estrellas (más)</SelectItem>
+                <SelectContent className="bg-card border-2 w-full min-w-[320px]">
+                  <SelectItem value="price-asc" className="text-sm sm:text-base py-3">Precio (menor a mayor)</SelectItem>
+                  <SelectItem value="price-desc" className="text-sm sm:text-base py-3">Precio (mayor a menor)</SelectItem>
+                  <SelectItem value="distance-asc" className="text-sm sm:text-base py-3">Distancia (más cercano)</SelectItem>
+                  <SelectItem value="rating-desc" className="text-sm sm:text-base py-3">Valoración (mejor puntuada)</SelectItem>
+                  <SelectItem value="stars-desc" className="text-sm sm:text-base py-3">Estrellas (más estrellas)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

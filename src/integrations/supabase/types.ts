@@ -325,7 +325,6 @@ export type Database = {
           image_standard_height: number | null
           image_standard_url: string | null
           image_standard_width: number | null
-          is_festival: boolean | null
           is_package: boolean | null
           is_transport: boolean | null
           local_event_date: string | null
@@ -344,14 +343,6 @@ export type Database = {
           primary_category_name: string | null
           primary_subcategory_id: number | null
           primary_subcategory_name: string | null
-          promoter_address_line_1: string | null
-          promoter_city: string | null
-          promoter_code: string | null
-          promoter_country: string | null
-          promoter_id: string | null
-          promoter_name: string | null
-          promoter_postal_code: string | null
-          promoter_state: string | null
           rescheduled: boolean | null
           schedule_status: string | null
           seatmap_interactive_detailed: boolean | null
@@ -398,7 +389,6 @@ export type Database = {
           image_standard_height?: number | null
           image_standard_url?: string | null
           image_standard_width?: number | null
-          is_festival?: boolean | null
           is_package?: boolean | null
           is_transport?: boolean | null
           local_event_date?: string | null
@@ -417,14 +407,6 @@ export type Database = {
           primary_category_name?: string | null
           primary_subcategory_id?: number | null
           primary_subcategory_name?: string | null
-          promoter_address_line_1?: string | null
-          promoter_city?: string | null
-          promoter_code?: string | null
-          promoter_country?: string | null
-          promoter_id?: string | null
-          promoter_name?: string | null
-          promoter_postal_code?: string | null
-          promoter_state?: string | null
           rescheduled?: boolean | null
           schedule_status?: string | null
           seatmap_interactive_detailed?: boolean | null
@@ -471,7 +453,6 @@ export type Database = {
           image_standard_height?: number | null
           image_standard_url?: string | null
           image_standard_width?: number | null
-          is_festival?: boolean | null
           is_package?: boolean | null
           is_transport?: boolean | null
           local_event_date?: string | null
@@ -490,14 +471,6 @@ export type Database = {
           primary_category_name?: string | null
           primary_subcategory_id?: number | null
           primary_subcategory_name?: string | null
-          promoter_address_line_1?: string | null
-          promoter_city?: string | null
-          promoter_code?: string | null
-          promoter_country?: string | null
-          promoter_id?: string | null
-          promoter_name?: string | null
-          promoter_postal_code?: string | null
-          promoter_state?: string | null
           rescheduled?: boolean | null
           schedule_status?: string | null
           seatmap_interactive_detailed?: boolean | null
@@ -598,7 +571,6 @@ export type Database = {
           image_large_url: string | null
           image_standard_url: string | null
           is_coming_soon: boolean | null
-          is_festival: boolean | null
           is_last_minute: boolean | null
           is_package: boolean | null
           is_transport: boolean | null
@@ -615,7 +587,6 @@ export type Database = {
           primary_attraction_name: string | null
           primary_category_name: string | null
           primary_subcategory_name: string | null
-          promoter_name: string | null
           rescheduled: boolean | null
           schedule_status: string | null
           seats_available: boolean | null
