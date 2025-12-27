@@ -15,7 +15,7 @@ export const handleLegacyRedirect = async (
     
     let query = supabase
       .from("lovable_mv_event_product_page")
-      .select("event_slug, is_festival")
+      .select("event_slug, event_type")
       .limit(1);
     
     if (isNumericId) {
@@ -25,11 +25,12 @@ export const handleLegacyRedirect = async (
       query = query.eq("event_name", decodeURIComponent(idOrName));
     }
     
-    const { data, error } = await query.single();
+    const { data, error } = await query.maybeSingle();
     
     if (!error && data?.event_slug) {
       // Redirect to the new SEO-friendly URL
-      const newPath = data.is_festival 
+      const isFestival = data.event_type === 'festival';
+      const newPath = isFestival 
         ? `/festival/${data.event_slug}` 
         : `/concierto/${data.event_slug}`;
       navigate(newPath, { replace: true });
