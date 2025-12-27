@@ -322,6 +322,13 @@ const Producto = () => {
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 8);
   const hasMoreTickets = ticketPrices.length > 8;
   
+  // Calculate if event has VIP tickets from ticket data (more reliable than has_vip_tickets field)
+  const hasVipTickets = ticketPrices.some(ticket => 
+    /vip/i.test(ticket.type || '') || 
+    /vip/i.test(ticket.description || '') || 
+    /vip/i.test(ticket.code || '')
+  ) || (eventDetails as any).has_vip_tickets;
+  
   // Calculate real availability based on ticket data
   const hasAvailableTickets = ticketPrices.some(ticket => ticket.availability !== "none");
   const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
@@ -576,8 +583,8 @@ const Producto = () => {
                     </Badge>
                   )}
                   
-                  {/* VIP Tickets Badge */}
-                  {(eventDetails as any).has_vip_tickets && (
+                  {/* VIP Tickets Badge - calculated from ticket data */}
+                  {hasVipTickets && (
                     <Badge className="bg-foreground text-background font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
                       VIP
                     </Badge>

@@ -48,6 +48,7 @@ const Conciertos = () => {
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
   const [filterRecent, setFilterRecent] = useState<string>("all");
+  const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
   
@@ -146,12 +147,22 @@ const Conciertos = () => {
         return eventDate <= thirtyDaysFromNow;
       });
     }
+    
+    // Apply VIP filter (check badges for VIP or name contains VIP)
+    if (filterVip === "vip") {
+      filtered = filtered.filter(event => {
+        const badges = event.badges || [];
+        const hasVipBadge = badges.some((b: string) => /vip/i.test(b));
+        const hasVipInName = /vip/i.test(event.name || '');
+        return hasVipBadge || hasVipInName;
+      });
+    }
 
     // Sort by date ascending by default
     filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent]);
+  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent, filterVip]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -268,8 +279,8 @@ const Conciertos = () => {
               )}
             </div>
 
-            {/* Filters Row - ciudad, genero, artista, mes, próximos */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {/* Filters Row - ciudad, genero, artista, mes, próximos, VIP */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
@@ -320,16 +331,26 @@ const Conciertos = () => {
 
               <Select value={filterRecent} onValueChange={setFilterRecent}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : "Próximos 30 días"}</span>
+                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : "30 días"}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="recent">🔥 Próximos 30 días</SelectItem>
+                  <SelectItem value="recent">Próximos 30 días</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterVip} onValueChange={setFilterVip}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterVip !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterVip === "all" ? "Tipo" : "VIP"}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="vip">Solo VIP</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterRecent !== "all") && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterRecent !== "all" || filterVip !== "all") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
@@ -338,6 +359,7 @@ const Conciertos = () => {
                     setFilterArtist("all");
                     setFilterMonthYear("all");
                     setFilterRecent("all");
+                    setFilterVip("all");
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
