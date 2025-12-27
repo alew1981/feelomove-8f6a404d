@@ -126,90 +126,81 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       
       const dateEnd = getDateFilter();
       const now = new Date().toISOString();
+      const searchPattern = `%${debouncedTerm}%`;
       
       let concerts: any[] = [];
       let festivals: any[] = [];
       
       if (filters.eventType === 'all' || filters.eventType === 'concerts') {
+        // Use server-side ILIKE search for better results
         let query = supabase
           .from("mv_concerts_cards")
           .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, artist_name, price_min_incl_fees")
           .gte("event_date", now)
           .gte("price_min_incl_fees", filters.priceRange[0])
           .lte("price_min_incl_fees", filters.priceRange[1])
+          .or(`name.ilike.${searchPattern},venue_city.ilike.${searchPattern},artist_name.ilike.${searchPattern}`)
           .order("event_date", { ascending: true })
-          .limit(50);
+          .limit(10);
         
         if (dateEnd) {
           query = query.lte("event_date", dateEnd);
         }
         
         const { data } = await query;
-        concerts = (data || []).filter(item => 
-          matchesSearch(item.name, debouncedTerm) ||
-          matchesSearch(item.venue_city, debouncedTerm) ||
-          matchesSearch(item.artist_name, debouncedTerm)
-        ).slice(0, 6);
+        concerts = data || [];
       }
       
       if (filters.eventType === 'all' || filters.eventType === 'festivals') {
         let query = supabase
           .from("mv_festivals_cards")
-          .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, main_attraction, price_min_incl_fees")
+          .select("id, name, slug, event_date, venue_city, venue_name, image_standard_url, main_attraction, price_min_incl_fees, is_festival")
           .gte("event_date", now)
           .gte("price_min_incl_fees", filters.priceRange[0])
           .lte("price_min_incl_fees", filters.priceRange[1])
+          .or(`name.ilike.${searchPattern},venue_city.ilike.${searchPattern},main_attraction.ilike.${searchPattern}`)
           .order("event_date", { ascending: true })
-          .limit(50);
+          .limit(10);
         
         if (dateEnd) {
           query = query.lte("event_date", dateEnd);
         }
         
         const { data } = await query;
-        festivals = (data || []).filter(item =>
-          matchesSearch(item.name, debouncedTerm) ||
-          matchesSearch(item.venue_city, debouncedTerm) ||
-          matchesSearch(item.main_attraction, debouncedTerm)
-        ).slice(0, 6);
+        // Mark festivals with is_festival = true
+        festivals = (data || []).map((f: any) => ({ ...f, is_festival: true }));
       }
 
-      const { data: allDestinations } = await supabase
+      // Use server-side ILIKE for destinations
+      const { data: destinations } = await supabase
         .from("mv_destinations_cards")
         .select("city_name, city_slug, event_count, sample_image_url")
-        .limit(50);
-      
-      const destinations = (allDestinations || []).filter(dest =>
-        matchesSearch(dest.city_name, debouncedTerm)
-      ).slice(0, 3);
+        .ilike("city_name", searchPattern)
+        .limit(5);
 
-      const { data: allArtists } = await supabase
+      // Use server-side ILIKE for artists
+      const { data: artists } = await supabase
         .from("mv_attractions")
         .select("attraction_id, attraction_name, attraction_slug, event_count, sample_image_url")
-        .limit(100);
-      
-      const artists = (allArtists || []).filter(artist =>
-        matchesSearch(artist.attraction_name, debouncedTerm)
-      ).slice(0, 3);
+        .ilike("attraction_name", searchPattern)
+        .limit(5);
 
-      const { data: allGenres } = await supabase
+      // Use server-side ILIKE for genres
+      const { data: genres } = await supabase
         .from("mv_genres_cards")
         .select("genre_name, genre_id, event_count")
-        .limit(50);
-      
-      const genres = (allGenres || []).filter(genre =>
-        matchesSearch(genre.genre_name, debouncedTerm)
-      ).slice(0, 3);
+        .ilike("genre_name", searchPattern)
+        .limit(5);
       
       const events = [...concerts, ...festivals]
         .sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime())
-        .slice(0, 6);
+        .slice(0, 8);
       
       return { 
         events, 
-        destinations, 
-        artists, 
-        genres 
+        destinations: destinations || [], 
+        artists: artists || [], 
+        genres: genres || []
       };
     },
     enabled: debouncedTerm.length >= 1,
