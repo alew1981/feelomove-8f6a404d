@@ -32,7 +32,7 @@ const Breadcrumbs = () => {
       
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page")
-        .select("event_name, primary_subcategory_name, attraction_names, venue_city, is_festival")
+        .select("event_name, primary_subcategory_name, attraction_names, venue_city, event_type")
         .eq("event_slug", productSlug)
         .maybeSingle();
       

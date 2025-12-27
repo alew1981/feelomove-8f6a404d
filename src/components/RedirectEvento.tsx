@@ -35,7 +35,7 @@ const RedirectEvento = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("is_festival, slug")
+        .select("event_type, slug")
         .eq("slug", slug)
         .maybeSingle();
       
@@ -47,7 +47,8 @@ const RedirectEvento = () => {
 
   useEffect(() => {
     if (eventData) {
-      const newPath = eventData.is_festival 
+      const isFestival = eventData.event_type === 'festival';
+      const newPath = isFestival 
         ? `/festival/${eventData.slug}` 
         : `/concierto/${eventData.slug}`;
       navigate(newPath, { replace: true });
