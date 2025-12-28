@@ -132,7 +132,8 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
     return () => clearInterval(interval);
   }, [event.event_date, showCountdown]);
 
-  // Determine badge - show SOLD OUT if sold_out OR seats_available is false
+  // Determine badge - show SOLD OUT if sold_out OR seats_available is explicitly false
+  // seats_available = false means actually sold out; seats_available = undefined/null means we don't know
   let badgeVariant: "disponible" | "agotado" | undefined;
   let badgeText: string | undefined;
 
@@ -141,10 +142,12 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
   if (isEventSoldOut) {
     badgeVariant = "agotado";
     badgeText = "SOLD OUT";
-  } else {
+  } else if (event.seats_available === true) {
+    // Only show DISPONIBLE when we know for sure there are seats
     badgeVariant = "disponible";
     badgeText = "DISPONIBLE";
   }
+  // If seats_available is null/undefined, don't show any availability badge
 
   const eventUrl = getEventUrl(eventSlug || '', event.is_festival);
 

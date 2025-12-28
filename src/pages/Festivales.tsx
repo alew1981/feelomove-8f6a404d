@@ -53,6 +53,7 @@ const Festivales = () => {
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [filterSort, setFilterSort] = useState<string>("proximos");
 
   // Fetch festivales using mv_festivals_cards
   const { data: events, isLoading } = useQuery({
@@ -197,11 +198,18 @@ const Festivales = () => {
       });
     }
     
-    // Sort by date ascending by default
-    filtered.sort((a, b) => new Date(a.firstDate).getTime() - new Date(b.firstDate).getTime());
+    // Sort based on filter selection
+    if (filterSort === "recientes") {
+      // Sort by name descending as a proxy for "recently added"
+      // (Ideally would use created_at but grouping doesn't preserve that)
+      filtered.sort((a, b) => b.name.localeCompare(a.name));
+    } else {
+      // Sort by date ascending by default
+      filtered.sort((a, b) => new Date(a.firstDate).getTime() - new Date(b.firstDate).getTime());
+    }
     
     return filtered;
-  }, [festivalGroups, events, searchQuery, filterCity, filterGenre, filterArtist, filterMonth]);
+  }, [festivalGroups, events, searchQuery, filterCity, filterGenre, filterArtist, filterMonth, filterSort]);
 
   // Get hero image from first festival
   const heroImage = festivalGroups[0]?.image || "/placeholder.svg";
@@ -300,8 +308,18 @@ const Festivales = () => {
               )}
             </div>
 
-            {/* Filters Row - ciudad, genero, artista, mes */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* Filters Row - ciudad, genero, artista, mes, orden */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <Select value={filterSort} onValueChange={setFilterSort}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterSort === "proximos" ? "Próximos" : "Recientes"}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="proximos">Próximos</SelectItem>
+                  <SelectItem value="recientes">Añadidos recientemente</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
@@ -351,7 +369,7 @@ const Festivales = () => {
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all") && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all" || filterSort !== "proximos") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
@@ -359,6 +377,7 @@ const Festivales = () => {
                     setFilterGenre("all");
                     setFilterArtist("all");
                     setFilterMonth("all");
+                    setFilterSort("proximos");
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
