@@ -1040,17 +1040,6 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       get_event_badges: { Args: { event_id: string }; Returns: string[] }
-      get_events_needing_prices: {
-        Args: { p_limit?: number }
-        Returns: {
-          event_date: string
-          id: string
-          name: string
-          venue_city: string
-          venue_latitude: number
-          venue_longitude: number
-        }[]
-      }
       get_facility_names_es: {
         Args: { facility_id_array: number[] }
         Returns: string[]

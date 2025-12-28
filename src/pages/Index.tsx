@@ -154,12 +154,22 @@ const Index = () => {
   // All events for city sections
   const allEvents = [...concerts, ...festivals];
 
-  // City events
+  // City events - ensure minimum of 4 events for Valencia and Sevilla
   const cityEvents: Record<string, any[]> = {};
   FEATURED_CITIES.forEach(city => {
-    cityEvents[city] = allEvents
+    const cityEventsList = allEvents
       .filter(e => e.venue_city?.toLowerCase() === city.toLowerCase())
       .slice(0, 4);
+    
+    // If Valencia or Sevilla have fewer than 4 events, fill with other upcoming events
+    if ((city === 'Valencia' || city === 'Sevilla') && cityEventsList.length < 4) {
+      const remaining = allEvents
+        .filter(e => !cityEventsList.includes(e))
+        .slice(0, 4 - cityEventsList.length);
+      cityEvents[city] = [...cityEventsList, ...remaining];
+    } else {
+      cityEvents[city] = cityEventsList;
+    }
   });
 
   // Events with hotels
