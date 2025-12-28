@@ -527,12 +527,9 @@ const Producto = () => {
                 </div>
               </div>
               
-              {/* Center - Event Name with Favorite */}
+              {/* Center - Event Name with Favorite above */}
               <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%]">
-                <div className="flex items-center justify-center gap-2 md:gap-3">
-                  <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
-                    {eventDetails.event_name}
-                  </h1>
+                <div className="flex flex-col items-center gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -548,55 +545,58 @@ const Producto = () => {
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
+                  <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
+                    {eventDetails.event_name}
+                  </h1>
                 </div>
               </div>
               
               {/* Right Side - Badges and Event Image */}
               <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 flex flex-col items-end justify-between">
-                {/* Badges in single row */}
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end max-w-[200px] sm:max-w-none">
+                {/* Badges - responsive layout */}
+                <div className="flex items-start gap-1 sm:gap-1.5 flex-wrap justify-end max-w-[140px] sm:max-w-[280px] md:max-w-none">
                   {/* Day of Week Badge */}
                   {eventDetails.day_of_week && (
-                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       {eventDetails.day_of_week}
                     </Badge>
                   )}
                   
                   {/* Season Badge */}
                   {(eventDetails as any).event_season && (
-                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap capitalize">
+                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       {(eventDetails as any).event_season}
                     </Badge>
                   )}
                   
                   {/* Genre Badge */}
                   {eventDetails.primary_category_name && (
-                    <Badge className="bg-white text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                    <Badge className="bg-white text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       {eventDetails.primary_category_name}
                     </Badge>
                   )}
                   
                   {/* Subgenre Badge */}
                   {eventDetails.primary_subcategory_name && (
-                    <Badge className="bg-white/90 text-foreground font-medium px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                    <Badge className="bg-white/90 text-foreground font-medium px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       {eventDetails.primary_subcategory_name}
                     </Badge>
                   )}
                   
                   {/* VIP Tickets Badge - calculated from ticket data */}
                   {hasVipTickets && (
-                    <Badge className="bg-foreground text-background font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                    <Badge className="bg-foreground text-background font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       VIP
                     </Badge>
                   )}
                   
                   {/* Availability Badge - based on real ticket availability */}
                   {isEventAvailable ? (
-                    <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                    <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       DISPONIBLE
                     </Badge>
                   ) : (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap">
+                    <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
                       SOLD OUT
                     </Badge>
                   )}

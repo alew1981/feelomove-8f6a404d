@@ -133,18 +133,21 @@ const Conciertos = () => {
       });
     }
 
-    // Apply recent filter (events created/updated in last 7 days)
+    // Apply recent filter (events in next 30 days or recently added)
     if (filterRecent === "recent") {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      // Since we don't have created_at, we'll sort by upcoming soon as "new"
-      // This filters to show events happening in the next 30 days
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       filtered = filtered.filter(event => {
         if (!event.event_date) return false;
         const eventDate = new Date(event.event_date);
         return eventDate <= thirtyDaysFromNow;
+      });
+    } else if (filterRecent === "added") {
+      // Sort by recently added (we'll reverse the order to show most recent first)
+      // Since we don't have created_at, we'll sort by id descending as a proxy
+      filtered = [...filtered].sort((a, b) => {
+        // Compare IDs as strings - higher IDs are typically newer
+        return String(b.id).localeCompare(String(a.id));
       });
     }
     
@@ -158,8 +161,10 @@ const Conciertos = () => {
       });
     }
 
-    // Sort by date ascending by default
-    filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
+    // Sort by date ascending by default (unless already sorted by recently added)
+    if (filterRecent !== "added") {
+      filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
+    }
     
     return filtered;
   }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent, filterVip]);
@@ -331,11 +336,12 @@ const Conciertos = () => {
 
               <Select value={filterRecent} onValueChange={setFilterRecent}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : "30 días"}</span>
+                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : filterRecent === "recent" ? "30 días" : "Recientes"}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="recent">Próximos 30 días</SelectItem>
+                  <SelectItem value="added">Añadidos recientemente</SelectItem>
                 </SelectContent>
               </Select>
 

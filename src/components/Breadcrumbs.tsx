@@ -113,13 +113,13 @@ const Breadcrumbs = () => {
   const genreFromPath = params.genero ? decodeURIComponent(params.genero) : null;
 
   return (
-    <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
-      <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-max">
+    <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6 pb-2">
+      <div className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
         <Link
           to="/"
-          className="flex items-center gap-1 hover:text-foreground transition-colors flex-shrink-0"
+          className="flex items-center gap-0.5 sm:gap-1 hover:text-foreground transition-colors flex-shrink-0"
         >
-          <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Home className="h-3 w-3 sm:h-4 sm:w-4" />
           <span className="hidden sm:inline">Inicio</span>
         </Link>
 
