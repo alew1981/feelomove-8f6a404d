@@ -8,6 +8,7 @@ import HotelCard from "@/components/HotelCard";
 import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
+import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -553,61 +554,8 @@ const Producto = () => {
               
               {/* Right Side - Badges and Event Image */}
               <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 flex flex-col items-end justify-between">
-                {/* Badges - responsive layout */}
-                <div className="flex items-start gap-1 sm:gap-1.5 flex-wrap justify-end max-w-[140px] sm:max-w-[280px] md:max-w-none">
-                  {/* Day of Week Badge */}
-                  {eventDetails.day_of_week && (
-                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      {eventDetails.day_of_week}
-                    </Badge>
-                  )}
-                  
-                  {/* Season Badge */}
-                  {(eventDetails as any).event_season && (
-                    <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      {(eventDetails as any).event_season}
-                    </Badge>
-                  )}
-                  
-                  {/* Genre Badge */}
-                  {eventDetails.primary_category_name && (
-                    <Badge className="bg-white text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      {eventDetails.primary_category_name}
-                    </Badge>
-                  )}
-                  
-                  {/* Subgenre Badge */}
-                  {eventDetails.primary_subcategory_name && (
-                    <Badge className="bg-white/90 text-foreground font-medium px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      {eventDetails.primary_subcategory_name}
-                    </Badge>
-                  )}
-                  
-                  {/* VIP Tickets Badge - calculated from ticket data */}
-                  {hasVipTickets && (
-                    <Badge className="bg-foreground text-background font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      VIP
-                    </Badge>
-                  )}
-                  
-                  {/* Availability Badge - based on real ticket availability */}
-                  {isEventAvailable ? (
-                    <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      DISPONIBLE
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-                      SOLD OUT
-                    </Badge>
-                  )}
-                  
-                  {/* Urgency Badge */}
-                  {daysUntil >= 0 && daysUntil < 7 && (
-                    <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs animate-pulse rounded-full shadow-md whitespace-nowrap">
-                      ¡ÚLTIMA SEMANA!
-                    </Badge>
-                  )}
-                </div>
+                {/* Badges - collapsible on mobile */}
+                <CollapsibleBadges eventDetails={eventDetails} hasVipTickets={hasVipTickets} isEventAvailable={isEventAvailable} daysUntil={daysUntil} />
                 
                 {/* Event Image with hover zoom */}
                 <div className="flex flex-col items-end gap-2">
