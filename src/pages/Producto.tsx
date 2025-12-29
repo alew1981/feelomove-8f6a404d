@@ -79,14 +79,21 @@ const Producto = () => {
   
   const [showAllTickets, setShowAllTickets] = useState(false);
 
-  // Fetch event details from lovable_mv_event_product_page
+  // Fetch event details from specific views based on route type
   const { data: eventData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["event-product-page", slug],
+    queryKey: ["event-product-page", slug, isFestivalRoute],
     queryFn: async () => {
       if (!slug) throw new Error("No se proporcionó el identificador del evento");
       
+      // Use specific view based on route type
+      const viewName = isFestivalRoute 
+        ? "lovable_mv_event_product_page_festivales" 
+        : isConcierto 
+          ? "lovable_mv_event_product_page_conciertos"
+          : "lovable_mv_event_product_page"; // Fallback for legacy routes
+      
       const { data, error } = await supabase
-        .from("lovable_mv_event_product_page")
+        .from(viewName)
         .select("*")
         .eq("event_slug", slug);
       

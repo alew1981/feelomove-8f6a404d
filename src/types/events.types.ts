@@ -117,7 +117,120 @@ export interface TicketType {
   total: number;
 }
 
-export interface EventProductPage {
+// Base interface for common event product page fields
+export interface BaseEventProductPage {
+  is_festival: boolean;
+  event_id: string;
+  event_slug: string;
+  event_name: string;
+  event_type: 'concert' | 'festival';
+  event_date: string;
+  timezone: string;
+  day_of_week: string;
+  event_url: string;
+  venue_id: string;
+  venue_name: string;
+  venue_city: string;
+  venue_address: string;
+  venue_postal_code: string;
+  venue_country: string;
+  venue_latitude: number;
+  venue_longitude: number;
+  primary_attraction_id: string;
+  primary_attraction_name: string;
+  secondary_attraction_id: string | null;
+  secondary_attraction_name: string | null;
+  attraction_ids: string[];
+  attraction_names: string[];
+  primary_category_name: string;
+  primary_subcategory_name: string;
+  image_large_url: string;
+  image_standard_url: string;
+  cancelled: boolean;
+  sold_out: boolean;
+  rescheduled: boolean;
+  schedule_status: string;
+  seats_available: boolean;
+  has_real_availability: boolean;
+  is_transport: boolean;
+  is_package: boolean;
+  ticket_types: unknown;
+  event_currency: string;
+  price_min_incl_fees: number | null;
+  ticket_price_min: number | null;
+  has_vip_tickets: boolean;
+  low_availability: boolean;
+  days_until_event: number;
+  is_last_minute: boolean;
+  is_coming_soon: boolean;
+  is_weekend: boolean;
+  event_day_name_es: string;
+  event_month_name_es: string;
+  event_year: number;
+  event_season: string;
+  created_at: string;
+  updated_at: string;
+  on_sale_date: string;
+  off_sale_date: string;
+  minimum_age_required: number | null;
+  seo_title: string;
+  meta_description: string;
+  seo_keywords: string[];
+  destination_deeplink: string | null;
+  hotels_list_widget_html: string | null;
+  map_widget_html: string | null;
+  hotels_prices_aggregated_jsonb: unknown | null;
+  total_hotels_available: number;
+  min_hotel_price: number | null;
+  avg_hotel_distance_meters: number | null;
+  hotels_with_high_rating: number;
+  has_5_star_hotels: boolean;
+}
+
+// Concert-specific product page (no additional fields beyond base)
+export interface ConcertProductPage extends BaseEventProductPage {
+  event_type: 'concert';
+}
+
+// Festival-specific product page with additional fields
+export interface FestivalProductPage extends BaseEventProductPage {
+  event_type: 'festival';
+  // Festival-specific fields from lovable_mv_event_product_page_festivales
+  festival_start_date: string;
+  festival_end_date: string;
+  festival_duration_days: number;
+  festival_lineup_artists: string[];
+  festival_lineup_artist_ids: string[];
+  festival_headliners: string[] | null;
+  festival_total_artists: number;
+  festival_stages: string[] | null;
+  festival_total_stages: number | null;
+  festival_transport_event_ids: string[] | null;
+  festival_has_official_transport: boolean;
+  festival_available_transport_options: number;
+  festival_camping_available: boolean;
+  has_festival_pass: boolean;
+  has_daily_tickets: boolean;
+  has_camping_tickets: boolean;
+  has_parking_tickets: boolean;
+  festival_manually_edited: boolean;
+  festival_last_manual_edit_at: string | null;
+}
+
+// Union type for any event product page
+export type EventProductPage = ConcertProductPage | FestivalProductPage;
+
+// Type guards
+export function isFestivalProductPage(event: EventProductPage): event is FestivalProductPage {
+  return event.event_type === 'festival';
+}
+
+export function isConcertProductPage(event: EventProductPage): event is ConcertProductPage {
+  return event.event_type === 'concert';
+}
+
+// Legacy interface (for backward compatibility with lovable_mv_event_product_page)
+export interface LegacyEventProductPage {
   event_id: string;
   event_slug: string;
   event_name: string;
