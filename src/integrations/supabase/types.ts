@@ -111,6 +111,20 @@ export type Database = {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page_conciertos"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page_festivales"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "mv_concerts_cards"
             referencedColumns: ["id"]
           },
@@ -497,6 +511,112 @@ export type Database = {
         }
         Relationships: []
       }
+      tm_tbl_festival_details: {
+        Row: {
+          camping_available: boolean | null
+          created_at: string | null
+          end_date: string
+          festival_event_id: string
+          festival_stages: string[] | null
+          has_official_transport: boolean | null
+          headliners: string[] | null
+          last_manual_edit_at: string | null
+          lineup_artist_ids: string[] | null
+          lineup_artists: string[] | null
+          manually_edited: boolean | null
+          start_date: string
+          transport_event_ids: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          camping_available?: boolean | null
+          created_at?: string | null
+          end_date: string
+          festival_event_id: string
+          festival_stages?: string[] | null
+          has_official_transport?: boolean | null
+          headliners?: string[] | null
+          last_manual_edit_at?: string | null
+          lineup_artist_ids?: string[] | null
+          lineup_artists?: string[] | null
+          manually_edited?: boolean | null
+          start_date: string
+          transport_event_ids?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          camping_available?: boolean | null
+          created_at?: string | null
+          end_date?: string
+          festival_event_id?: string
+          festival_stages?: string[] | null
+          has_official_transport?: boolean | null
+          headliners?: string[] | null
+          last_manual_edit_at?: string | null
+          lineup_artist_ids?: string[] | null
+          lineup_artists?: string[] | null
+          manually_edited?: boolean | null
+          start_date?: string
+          transport_event_ids?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "lovable_mv_event_product_page_conciertos"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "lovable_mv_event_product_page_festivales"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "mv_concerts_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "mv_festivals_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "tm_tbl_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      total_events: {
+        Row: {
+          count: number | null
+        }
+        Insert: {
+          count?: number | null
+        }
+        Update: {
+          count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       geography_columns: {
@@ -563,6 +683,167 @@ export type Database = {
           event_url: string | null
           event_year: number | null
           has_5_star_hotels: boolean | null
+          has_real_availability: boolean | null
+          has_vip_tickets: boolean | null
+          hotels_list_widget_html: string | null
+          hotels_prices_aggregated_jsonb: Json | null
+          hotels_with_high_rating: number | null
+          image_large_url: string | null
+          image_standard_url: string | null
+          is_coming_soon: boolean | null
+          is_last_minute: boolean | null
+          is_package: boolean | null
+          is_transport: boolean | null
+          is_weekend: boolean | null
+          low_availability: boolean | null
+          map_widget_html: string | null
+          meta_description: string | null
+          min_hotel_price: number | null
+          minimum_age_required: number | null
+          off_sale_date: string | null
+          on_sale_date: string | null
+          price_min_incl_fees: number | null
+          primary_attraction_id: string | null
+          primary_attraction_name: string | null
+          primary_category_name: string | null
+          primary_subcategory_name: string | null
+          rescheduled: boolean | null
+          schedule_status: string | null
+          seats_available: boolean | null
+          secondary_attraction_id: string | null
+          secondary_attraction_name: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          sold_out: boolean | null
+          ticket_price_min: number | null
+          ticket_types: Json | null
+          timezone: string | null
+          total_hotels_available: number | null
+          updated_at: string | null
+          venue_address: string | null
+          venue_city: string | null
+          venue_country: string | null
+          venue_id: string | null
+          venue_latitude: number | null
+          venue_longitude: number | null
+          venue_name: string | null
+          venue_postal_code: string | null
+          venue_url: string | null
+        }
+        Relationships: []
+      }
+      lovable_mv_event_product_page_conciertos: {
+        Row: {
+          attraction_ids: string[] | null
+          attraction_names: string[] | null
+          avg_hotel_distance_meters: number | null
+          cancelled: boolean | null
+          created_at: string | null
+          day_of_week: string | null
+          days_until_event: number | null
+          destination_deeplink: string | null
+          event_currency: string | null
+          event_date: string | null
+          event_day_name_es: string | null
+          event_id: string | null
+          event_month_name_es: string | null
+          event_name: string | null
+          event_season: string | null
+          event_slug: string | null
+          event_type: string | null
+          event_url: string | null
+          event_year: number | null
+          has_5_star_hotels: boolean | null
+          has_real_availability: boolean | null
+          has_vip_tickets: boolean | null
+          hotels_list_widget_html: string | null
+          hotels_prices_aggregated_jsonb: Json | null
+          hotels_with_high_rating: number | null
+          image_large_url: string | null
+          image_standard_url: string | null
+          is_coming_soon: boolean | null
+          is_last_minute: boolean | null
+          is_package: boolean | null
+          is_transport: boolean | null
+          is_weekend: boolean | null
+          low_availability: boolean | null
+          map_widget_html: string | null
+          meta_description: string | null
+          min_hotel_price: number | null
+          minimum_age_required: number | null
+          off_sale_date: string | null
+          on_sale_date: string | null
+          price_min_incl_fees: number | null
+          primary_attraction_id: string | null
+          primary_attraction_name: string | null
+          primary_category_name: string | null
+          primary_subcategory_name: string | null
+          rescheduled: boolean | null
+          schedule_status: string | null
+          seats_available: boolean | null
+          secondary_attraction_id: string | null
+          secondary_attraction_name: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          sold_out: boolean | null
+          ticket_price_min: number | null
+          ticket_types: Json | null
+          timezone: string | null
+          total_hotels_available: number | null
+          updated_at: string | null
+          venue_address: string | null
+          venue_city: string | null
+          venue_country: string | null
+          venue_id: string | null
+          venue_latitude: number | null
+          venue_longitude: number | null
+          venue_name: string | null
+          venue_postal_code: string | null
+          venue_url: string | null
+        }
+        Relationships: []
+      }
+      lovable_mv_event_product_page_festivales: {
+        Row: {
+          attraction_ids: string[] | null
+          attraction_names: string[] | null
+          avg_hotel_distance_meters: number | null
+          cancelled: boolean | null
+          created_at: string | null
+          day_of_week: string | null
+          days_until_event: number | null
+          destination_deeplink: string | null
+          event_currency: string | null
+          event_date: string | null
+          event_day_name_es: string | null
+          event_id: string | null
+          event_month_name_es: string | null
+          event_name: string | null
+          event_season: string | null
+          event_slug: string | null
+          event_type: string | null
+          event_url: string | null
+          event_year: number | null
+          festival_available_transport_options: number | null
+          festival_camping_available: boolean | null
+          festival_duration_days: number | null
+          festival_end_date: string | null
+          festival_has_official_transport: boolean | null
+          festival_headliners: string[] | null
+          festival_last_manual_edit_at: string | null
+          festival_lineup_artist_ids: string[] | null
+          festival_lineup_artists: string[] | null
+          festival_manually_edited: boolean | null
+          festival_stages: string[] | null
+          festival_start_date: string | null
+          festival_total_artists: number | null
+          festival_total_stages: number | null
+          festival_transport_event_ids: string[] | null
+          has_5_star_hotels: boolean | null
+          has_camping_tickets: boolean | null
+          has_daily_tickets: boolean | null
+          has_festival_pass: boolean | null
+          has_parking_tickets: boolean | null
           has_real_availability: boolean | null
           has_vip_tickets: boolean | null
           hotels_list_widget_html: string | null
