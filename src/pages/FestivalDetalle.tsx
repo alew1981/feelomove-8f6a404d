@@ -11,10 +11,11 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { SEOHead } from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, ArrowLeft, Bus, Play, Music, Users, Tent, Ticket } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, Bus, Play, Music, Users } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { formatFestivalDateRange, getFestivalDurationText, formatHeadliners } from "@/lib/festivalUtils";
+import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festivalUtils";
+import { FestivalServices } from "@/components/FestivalServices";
 
 const FestivalDetalle = () => {
   const { festivalSlug } = useParams<{ festivalSlug: string }>();
@@ -105,10 +106,13 @@ const FestivalDetalle = () => {
       headliners,
       lineupArtists: uniqueArtists,
       stages: firstEvent.festival_stages || [],
+      totalStages: firstEvent.festival_total_stages,
       hasCamping: firstEvent.festival_camping_available || false,
       hasTransport: firstEvent.festival_has_official_transport || false,
       hasFestivalPass: firstEvent.has_festival_pass || false,
       hasDailyTickets: firstEvent.has_daily_tickets || false,
+      hasCampingTickets: firstEvent.has_camping_tickets || false,
+      hasParkingTickets: firstEvent.has_parking_tickets || false,
     };
   }, [events, concertEvents, transportEvents]);
 
@@ -216,31 +220,19 @@ const FestivalDetalle = () => {
                     {festivalData.eventCount} EVENTOS
                   </Badge>
                 )}
-                {festivalData.hasCamping && (
-                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/30 gap-1">
-                    <Tent className="h-3 w-3" />
-                    CAMPING
-                  </Badge>
-                )}
-                {festivalData.hasTransport && (
-                  <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/30 gap-1">
-                    <Bus className="h-3 w-3" />
-                    TRANSPORTE
-                  </Badge>
-                )}
-                {festivalData.hasFestivalPass && (
-                  <Badge className="bg-green-500/10 text-green-500 border-green-500/30 gap-1">
-                    <Ticket className="h-3 w-3" />
-                    ABONOS
-                  </Badge>
-                )}
-                {festivalData.hasDailyTickets && (
-                  <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/30 gap-1">
-                    <Calendar className="h-3 w-3" />
-                    ENTRADAS DIARIAS
-                  </Badge>
-                )}
               </div>
+
+              {/* Services using reusable component */}
+              <FestivalServices
+                campingAvailable={festivalData.hasCamping}
+                hasOfficialTransport={festivalData.hasTransport}
+                hasFestivalPass={festivalData.hasFestivalPass}
+                hasDailyTickets={festivalData.hasDailyTickets}
+                hasCampingTickets={festivalData.hasCampingTickets}
+                hasParkingTickets={festivalData.hasParkingTickets}
+                totalStages={festivalData.totalStages}
+                variant="full"
+              />
 
               {/* Headliners */}
               {festivalData.headliners && festivalData.headliners.length > 0 && (

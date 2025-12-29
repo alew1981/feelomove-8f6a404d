@@ -1,21 +1,20 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, Calendar, MapPin, Users, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import FestivalCard from "@/components/FestivalCard";
+import { FestivalProductPage } from "@/types/events.types";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -32,187 +31,106 @@ const months = [
   { value: "12", label: "Diciembre" },
 ];
 
-interface FestivalGroup {
-  name: string;
-  slug: string;
-  image: string;
-  city: string;
-  venue: string;
-  eventCount: number;
-  artistCount: number;
-  minPrice: number;
-  maxPrice: number;
-  firstDate: string;
-  lastDate: string;
-  genre: string;
-}
-
 const Festivales = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
-  const [filterArtist, setFilterArtist] = useState<string>("all");
+  const [filterHeadliner, setFilterHeadliner] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterSort, setFilterSort] = useState<string>("proximos");
 
-  // Fetch festivales using mv_festivals_cards
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["festivales"],
+  // Fetch festivals using the new dedicated festivals view
+  const { data: festivals, isLoading } = useQuery({
+    queryKey: ["festivales-list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mv_festivals_cards")
+        .from("lovable_mv_event_product_page_festivales")
         .select("*")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
+        .gte("festival_start_date", new Date().toISOString().split('T')[0])
+        .order("festival_start_date", { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as FestivalProductPage[];
     }
   });
 
-  // Group events by festival (secondary_attraction_name OR main_attraction if secondary is null)
-  const festivalGroups = useMemo(() => {
-    if (!events) return [];
-    
-    const groups: Record<string, FestivalGroup> = {};
-    
-    events.forEach(event => {
-      // Use secondary_attraction_name, or fallback to main_attraction, or event name
-      const festivalName = event.secondary_attraction_name || event.main_attraction || event.name;
-      if (!festivalName) return;
-      
-      // Create a unique key for grouping
-      const groupKey = festivalName.toLowerCase();
-      
-      if (!groups[groupKey]) {
-        groups[groupKey] = {
-          name: festivalName,
-          slug: encodeURIComponent(festivalName.toLowerCase().replace(/\s+/g, "-")),
-          image: event.image_large_url || event.image_standard_url || "",
-          city: event.venue_city || "",
-          venue: event.venue_name || "",
-          eventCount: 0,
-          artistCount: 0,
-          minPrice: Infinity,
-          maxPrice: 0,
-          firstDate: event.event_date || "",
-          lastDate: event.event_date || "",
-          genre: event.genre || "",
-        };
-      }
-      
-      const group = groups[groupKey];
-      group.eventCount++;
-      
-      // Track unique artists
-      const artistsSet = new Set<string>();
-      events
-        .filter(e => {
-          const eName = e.secondary_attraction_name || e.main_attraction || e.name;
-          return eName?.toLowerCase() === festivalName.toLowerCase();
-        })
-        .forEach(e => {
-          e.attraction_names?.forEach((a: string) => artistsSet.add(a));
-        });
-      group.artistCount = artistsSet.size;
-      
-      // Update price range
-      const eventMinPrice = Number(event.price_min_incl_fees) || 0;
-      const eventMaxPrice = Number(event.price_max_incl_fees) || 0;
-      if (eventMinPrice > 0 && eventMinPrice < group.minPrice) {
-        group.minPrice = eventMinPrice;
-      }
-      if (eventMaxPrice > group.maxPrice) {
-        group.maxPrice = eventMaxPrice;
-      }
-      
-      // Update date range
-      if (event.event_date && event.event_date > group.lastDate) {
-        group.lastDate = event.event_date;
-      }
-    });
-    
-    // Convert to array and fix infinite minPrice
-    return Object.values(groups).map(g => ({
-      ...g,
-      minPrice: g.minPrice === Infinity ? 0 : g.minPrice,
-    }));
-  }, [events]);
-
-  // Get unique cities, genres, and artists
+  // Get unique cities, genres, and headliners for filters
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(festivalGroups.map(f => f.city).filter(Boolean))];
-    return uniqueCities.sort();
-  }, [festivalGroups]);
+    if (!festivals) return [];
+    const uniqueCities = [...new Set(festivals.map(f => f.venue_city).filter(Boolean))];
+    return uniqueCities.sort() as string[];
+  }, [festivals]);
 
   const genres = useMemo(() => {
-    const uniqueGenres = [...new Set(festivalGroups.map(f => f.genre).filter(Boolean))];
-    return uniqueGenres.sort();
-  }, [festivalGroups]);
+    if (!festivals) return [];
+    const uniqueGenres = [...new Set(festivals.map(f => f.primary_subcategory_name).filter(Boolean))];
+    return uniqueGenres.sort() as string[];
+  }, [festivals]);
 
-  const artists = useMemo(() => {
-    if (!events) return [];
-    const allArtists = events.flatMap(e => e.attraction_names || []).filter(Boolean);
-    return [...new Set(allArtists)].sort() as string[];
-  }, [events]);
+  const headliners = useMemo(() => {
+    if (!festivals) return [];
+    const allHeadliners = festivals.flatMap(f => f.festival_headliners || []).filter(Boolean);
+    return [...new Set(allHeadliners)].sort() as string[];
+  }, [festivals]);
 
   // Filter and sort festivals
   const filteredFestivals = useMemo(() => {
-    let filtered = [...festivalGroups];
+    if (!festivals) return [];
+    
+    let filtered = [...festivals];
     
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(festival => 
-        matchesSearch(festival.name, searchQuery) ||
-        matchesSearch(festival.city, searchQuery) ||
-        matchesSearch(festival.venue, searchQuery)
+        matchesSearch(festival.event_name, searchQuery) ||
+        matchesSearch(festival.venue_city, searchQuery) ||
+        matchesSearch(festival.venue_name, searchQuery) ||
+        (festival.festival_headliners || []).some(h => matchesSearch(h, searchQuery))
       );
     }
     
     // Apply city filter
     if (filterCity !== "all") {
-      filtered = filtered.filter(festival => festival.city === filterCity);
+      filtered = filtered.filter(festival => festival.venue_city === filterCity);
     }
 
     // Apply genre filter
     if (filterGenre !== "all") {
-      filtered = filtered.filter(festival => festival.genre === filterGenre);
+      filtered = filtered.filter(festival => festival.primary_subcategory_name === filterGenre);
     }
 
-    // Apply artist filter (check against original events)
-    if (filterArtist !== "all") {
-      const festivalNamesWithArtist = events
-        ?.filter(e => e.attraction_names?.includes(filterArtist))
-        .map(e => (e.secondary_attraction_name || e.main_attraction || e.name)?.toLowerCase());
+    // Apply headliner filter
+    if (filterHeadliner !== "all") {
       filtered = filtered.filter(festival => 
-        festivalNamesWithArtist?.includes(festival.name.toLowerCase())
+        festival.festival_headliners?.includes(filterHeadliner)
       );
     }
 
     // Apply month filter
     if (filterMonth !== "all") {
       filtered = filtered.filter(festival => {
-        if (!festival.firstDate) return false;
-        const eventMonth = new Date(festival.firstDate).toISOString().slice(5, 7);
+        if (!festival.festival_start_date) return false;
+        const eventMonth = new Date(festival.festival_start_date).toISOString().slice(5, 7);
         return eventMonth === filterMonth;
       });
     }
     
     // Sort based on filter selection
     if (filterSort === "recientes") {
-      // Sort by name descending as a proxy for "recently added"
-      // (Ideally would use created_at but grouping doesn't preserve that)
-      filtered.sort((a, b) => b.name.localeCompare(a.name));
+      // Sort by created_at descending for recently added
+      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } else {
-      // Sort by date ascending by default
-      filtered.sort((a, b) => new Date(a.firstDate).getTime() - new Date(b.firstDate).getTime());
+      // Sort by festival start date ascending by default
+      filtered.sort((a, b) => 
+        new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
+      );
     }
     
     return filtered;
-  }, [festivalGroups, events, searchQuery, filterCity, filterGenre, filterArtist, filterMonth, filterSort]);
+  }, [festivals, searchQuery, filterCity, filterGenre, filterHeadliner, filterMonth, filterSort]);
 
   // Get hero image from first festival
-  const heroImage = festivalGroups[0]?.image || "/placeholder.svg";
+  const heroImage = festivals?.[0]?.image_large_url || "/placeholder.svg";
 
   // Generate JSON-LD for festivals list
   const jsonLd = filteredFestivals.length > 0 ? {
@@ -226,23 +144,23 @@ const Festivales = () => {
       "position": index + 1,
       "item": {
         "@type": "Festival",
-        "name": festival.name,
-        "startDate": festival.firstDate,
-        "endDate": festival.lastDate,
-        "url": `https://feelomove.com/festivales/${festival.slug}`,
-        "image": festival.image,
+        "name": festival.event_name,
+        "startDate": festival.festival_start_date,
+        "endDate": festival.festival_end_date,
+        "url": `https://feelomove.com/festival/${festival.event_slug}`,
+        "image": festival.image_large_url,
         "location": {
           "@type": "Place",
-          "name": festival.venue,
+          "name": festival.venue_name,
           "address": {
             "@type": "PostalAddress",
-            "addressLocality": festival.city
+            "addressLocality": festival.venue_city
           }
         },
-        ...(festival.minPrice > 0 && {
+        ...(festival.price_min_incl_fees && festival.price_min_incl_fees > 0 && {
           "offers": {
             "@type": "Offer",
-            "price": festival.minPrice,
+            "price": festival.price_min_incl_fees,
             "priceCurrency": "EUR",
             "availability": "https://schema.org/InStock"
           }
@@ -308,7 +226,7 @@ const Festivales = () => {
               )}
             </div>
 
-            {/* Filters Row - ciudad, genero, artista, mes, orden */}
+            {/* Filters Row - orden, ciudad, genero, headliner, mes */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
@@ -344,14 +262,14 @@ const Festivales = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterArtist} onValueChange={setFilterArtist}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterArtist !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterArtist === "all" ? "Artista" : filterArtist}</span>
+              <Select value={filterHeadliner} onValueChange={setFilterHeadliner}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterHeadliner !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <span className="truncate text-sm">{filterHeadliner === "all" ? "Headliner" : filterHeadliner}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los artistas</SelectItem>
-                  {artists.map(artist => (
-                    <SelectItem key={artist} value={artist}>{artist}</SelectItem>
+                  <SelectItem value="all">Todos los headliners</SelectItem>
+                  {headliners.map(headliner => (
+                    <SelectItem key={headliner} value={headliner}>{headliner}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -369,13 +287,13 @@ const Festivales = () => {
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all" || filterSort !== "proximos") && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterHeadliner !== "all" || filterMonth !== "all" || filterSort !== "proximos") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
                     setFilterCity("all");
                     setFilterGenre("all");
-                    setFilterArtist("all");
+                    setFilterHeadliner("all");
                     setFilterMonth("all");
                     setFilterSort("proximos");
                   }}
@@ -402,80 +320,11 @@ const Festivales = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFestivals.map((festival, index) => (
-                <Link 
-                  key={festival.name} 
-                  to={`/festivales/${festival.slug}`}
-                  className="block"
-                >
-                  <Card 
-                    className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 hover:border-[#00FF8F]/50 h-full"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="relative h-48 overflow-hidden">
-                      <img 
-                        src={festival.image || "/placeholder.svg"} 
-                        alt={festival.name}
-                        loading={index < 4 ? "eager" : "lazy"}
-                        fetchPriority={index < 4 ? "high" : "auto"}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                      
-                      {/* Badges */}
-                      <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-                        <Badge className="bg-[#00FF8F] text-black font-semibold">
-                          {festival.eventCount} {festival.eventCount === 1 ? 'concierto' : 'conciertos'}
-                        </Badge>
-                      </div>
-                      
-                      {/* Price Badge */}
-                      <div className="absolute top-3 right-3">
-                        <Badge variant="secondary" className="bg-black/70 text-white">
-                          Desde €{festival.minPrice.toFixed(0)}
-                        </Badge>
-                      </div>
-                      
-                      {/* Festival Name */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-xl font-bold text-white font-['Poppins'] line-clamp-2">
-                          {festival.name}
-                        </h3>
-                      </div>
-                    </div>
-                    
-                    <CardContent className="p-4 space-y-3">
-                      {/* Info Row */}
-                      <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {festival.city}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          {festival.artistCount} artistas
-                        </span>
-                      </div>
-                      
-                      {/* Date Range */}
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-[#00FF8F]" />
-                        <span className="font-medium">
-                          {festival.firstDate && format(new Date(festival.firstDate), "d MMM", { locale: es })}
-                          {festival.lastDate && festival.firstDate !== festival.lastDate && 
-                            ` - ${format(new Date(festival.lastDate), "d MMM yyyy", { locale: es })}`
-                          }
-                        </span>
-                      </div>
-                      
-                      {/* Genre Badge */}
-                      {festival.genre && (
-                        <Badge variant="outline" className="text-xs">
-                          {festival.genre}
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
+                <FestivalCard 
+                  key={festival.event_id} 
+                  festival={festival}
+                  priority={index < 4}
+                />
               ))}
             </div>
           )}
