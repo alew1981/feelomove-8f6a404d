@@ -119,7 +119,7 @@ export interface TicketType {
 
 // Base interface for common event product page fields
 export interface BaseEventProductPage {
-  is_festival: boolean;
+  is_festival?: boolean;
   event_id: string;
   event_slug: string;
   event_name: string;
