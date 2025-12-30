@@ -33,20 +33,20 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <NavLink
-              to="/conciertos"
-              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
-              activeClassName="text-foreground font-semibold nav-link-active"
-              onMouseEnter={() => handleMouseEnter('/conciertos')}
-            >
-              Conciertos
-            </NavLink>
-            <NavLink
               to="/festivales"
               className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
               activeClassName="text-foreground font-semibold nav-link-active"
               onMouseEnter={() => handleMouseEnter('/festivales')}
             >
               Festivales
+            </NavLink>
+            <NavLink
+              to="/conciertos"
+              className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
+              activeClassName="text-foreground font-semibold nav-link-active"
+              onMouseEnter={() => handleMouseEnter('/conciertos')}
+            >
+              Conciertos
             </NavLink>
             <NavLink
               to="/artistas"
@@ -124,20 +124,20 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4 mobile-menu-enter">
             <NavLink
-              to="/conciertos"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
-              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Conciertos
-            </NavLink>
-            <NavLink
               to="/festivales"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
               activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
             >
               Festivales
+            </NavLink>
+            <NavLink
+              to="/conciertos"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
+              activeClassName="text-foreground font-semibold border-l-2 !border-accent"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Conciertos
             </NavLink>
             <NavLink
               to="/artistas"
