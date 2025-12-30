@@ -7,14 +7,18 @@ import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronDown, ChevronUp, Tent, Bus, Calendar } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import FestivalCard from "@/components/FestivalCard";
 import { FestivalProductPage } from "@/types/events.types";
+import { Link } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -31,13 +35,28 @@ const months = [
   { value: "12", label: "Diciembre" },
 ];
 
+// Interface for grouped parent festivals
+interface ParentFestival {
+  secondary_attraction_id: string;
+  secondary_attraction_name: string;
+  venue_city: string;
+  event_count: number;
+  events: FestivalProductPage[];
+  image_large_url: string;
+  min_start_date: string;
+  max_end_date: string;
+}
+
 const Festivales = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
-  const [filterHeadliner, setFilterHeadliner] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterSort, setFilterSort] = useState<string>("proximos");
+  const [filterDuration, setFilterDuration] = useState<string>("all");
+  const [filterCamping, setFilterCamping] = useState<boolean>(false);
+  const [filterTransport, setFilterTransport] = useState<boolean>(false);
+  const [expandedFestivals, setExpandedFestivals] = useState<Set<string>>(new Set());
 
   // Fetch festivals using the new dedicated festivals view
   const { data: festivals, isLoading } = useQuery({
@@ -54,7 +73,64 @@ const Festivales = () => {
     }
   });
 
-  // Get unique cities, genres, and headliners for filters
+  // Group festivals by parent festival (secondary_attraction_id)
+  const groupedFestivals = useMemo(() => {
+    if (!festivals) return { parentFestivals: [] as ParentFestival[], standaloneFestivals: [] as FestivalProductPage[] };
+    
+    const parentMap = new Map<string, FestivalProductPage[]>();
+    const standalone: FestivalProductPage[] = [];
+    
+    festivals.forEach(festival => {
+      const parentId = festival.secondary_attraction_id;
+      const parentName = festival.secondary_attraction_name;
+      
+      // If has a parent festival (secondary_attraction), group it
+      if (parentId && parentName && parentName !== festival.primary_attraction_name) {
+        const existing = parentMap.get(parentId) || [];
+        existing.push(festival);
+        parentMap.set(parentId, existing);
+      } else {
+        // Standalone festival
+        standalone.push(festival);
+      }
+    });
+    
+    // Convert map to array of parent festivals
+    const parentFestivals: ParentFestival[] = [];
+    parentMap.forEach((events, parentId) => {
+      if (events.length > 0) {
+        // Sort events by date
+        events.sort((a, b) => 
+          new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
+        );
+        
+        const firstEvent = events[0];
+        const minDate = events.reduce((min, e) => 
+          e.festival_start_date < min ? e.festival_start_date : min, 
+          events[0].festival_start_date
+        );
+        const maxDate = events.reduce((max, e) => 
+          e.festival_end_date > max ? e.festival_end_date : max, 
+          events[0].festival_end_date
+        );
+        
+        parentFestivals.push({
+          secondary_attraction_id: parentId,
+          secondary_attraction_name: firstEvent.secondary_attraction_name || "Festival",
+          venue_city: firstEvent.venue_city,
+          event_count: events.length,
+          events,
+          image_large_url: firstEvent.image_large_url,
+          min_start_date: minDate,
+          max_end_date: maxDate
+        });
+      }
+    });
+    
+    return { parentFestivals, standaloneFestivals: standalone };
+  }, [festivals]);
+
+  // Get unique cities and genres for filters
   const cities = useMemo(() => {
     if (!festivals) return [];
     const uniqueCities = [...new Set(festivals.map(f => f.venue_city).filter(Boolean))];
@@ -67,79 +143,113 @@ const Festivales = () => {
     return uniqueGenres.sort() as string[];
   }, [festivals]);
 
-  const headliners = useMemo(() => {
-    if (!festivals) return [];
-    const allHeadliners = festivals.flatMap(f => f.festival_headliners || []).filter(Boolean);
-    return [...new Set(allHeadliners)].sort() as string[];
-  }, [festivals]);
-
-  // Filter and sort festivals
-  const filteredFestivals = useMemo(() => {
-    if (!festivals) return [];
+  // Filter parent festivals and standalone festivals
+  const filteredData = useMemo(() => {
+    const { parentFestivals, standaloneFestivals } = groupedFestivals;
     
-    let filtered = [...festivals];
-    
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(festival => 
-        matchesSearch(festival.event_name, searchQuery) ||
-        matchesSearch(festival.venue_city, searchQuery) ||
-        matchesSearch(festival.venue_name, searchQuery) ||
-        (festival.festival_headliners || []).some(h => matchesSearch(h, searchQuery))
-      );
-    }
-    
-    // Apply city filter
-    if (filterCity !== "all") {
-      filtered = filtered.filter(festival => festival.venue_city === filterCity);
-    }
-
-    // Apply genre filter
-    if (filterGenre !== "all") {
-      filtered = filtered.filter(festival => festival.primary_subcategory_name === filterGenre);
-    }
-
-    // Apply headliner filter
-    if (filterHeadliner !== "all") {
-      filtered = filtered.filter(festival => 
-        festival.festival_headliners?.includes(filterHeadliner)
-      );
-    }
-
-    // Apply month filter
-    if (filterMonth !== "all") {
-      filtered = filtered.filter(festival => {
+    // Filter function for individual festivals
+    const matchesFestival = (festival: FestivalProductPage) => {
+      // Search filter
+      if (searchQuery) {
+        const matchesName = matchesSearch(festival.event_name, searchQuery) ||
+          matchesSearch(festival.venue_city, searchQuery) ||
+          matchesSearch(festival.venue_name, searchQuery) ||
+          matchesSearch(festival.secondary_attraction_name || '', searchQuery) ||
+          (festival.festival_lineup_artists || []).some(h => matchesSearch(h, searchQuery));
+        if (!matchesName) return false;
+      }
+      
+      // City filter
+      if (filterCity !== "all" && festival.venue_city !== filterCity) return false;
+      
+      // Genre filter
+      if (filterGenre !== "all" && festival.primary_subcategory_name !== filterGenre) return false;
+      
+      // Month filter
+      if (filterMonth !== "all") {
         if (!festival.festival_start_date) return false;
         const eventMonth = new Date(festival.festival_start_date).toISOString().slice(5, 7);
-        return eventMonth === filterMonth;
-      });
-    }
+        if (eventMonth !== filterMonth) return false;
+      }
+      
+      // Duration filter
+      if (filterDuration !== "all") {
+        const days = festival.festival_duration_days || 1;
+        if (filterDuration === "1" && days !== 1) return false;
+        if (filterDuration === "2-3" && (days < 2 || days > 3)) return false;
+        if (filterDuration === "4+" && days < 4) return false;
+      }
+      
+      // Camping filter
+      if (filterCamping && !festival.festival_camping_available) return false;
+      
+      // Transport filter
+      if (filterTransport && !festival.festival_has_official_transport) return false;
+      
+      return true;
+    };
     
-    // Sort based on filter selection
+    // Filter standalone festivals
+    let filteredStandalone = standaloneFestivals.filter(matchesFestival);
+    
+    // Filter parent festivals (keep if any child matches)
+    let filteredParents = parentFestivals.filter(parent => 
+      parent.events.some(matchesFestival)
+    ).map(parent => ({
+      ...parent,
+      events: parent.events.filter(matchesFestival)
+    }));
+    
+    // Sort
     if (filterSort === "recientes") {
-      // Sort by created_at descending for recently added
-      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      filteredStandalone.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      filteredParents.sort((a, b) => {
+        const aLatest = Math.max(...a.events.map(e => new Date(e.created_at).getTime()));
+        const bLatest = Math.max(...b.events.map(e => new Date(e.created_at).getTime()));
+        return bLatest - aLatest;
+      });
     } else {
-      // Sort by festival start date ascending by default
-      filtered.sort((a, b) => 
+      filteredStandalone.sort((a, b) => 
         new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
+      );
+      filteredParents.sort((a, b) => 
+        new Date(a.min_start_date).getTime() - new Date(b.min_start_date).getTime()
       );
     }
     
-    return filtered;
-  }, [festivals, searchQuery, filterCity, filterGenre, filterHeadliner, filterMonth, filterSort]);
+    return { parentFestivals: filteredParents, standaloneFestivals: filteredStandalone };
+  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration, filterCamping, filterTransport]);
+
+  const toggleExpanded = (id: string) => {
+    setExpandedFestivals(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // Get hero image from first festival
   const heroImage = festivals?.[0]?.image_large_url || "/placeholder.svg";
 
+  // Total count
+  const totalCount = filteredData.parentFestivals.reduce((sum, p) => sum + p.event_count, 0) + filteredData.standaloneFestivals.length;
+
+  // Check if any advanced filter is active
+  const hasAdvancedFilters = filterDuration !== "all" || filterCamping || filterTransport;
+
   // Generate JSON-LD for festivals list
-  const jsonLd = filteredFestivals.length > 0 ? {
+  const allFilteredFestivals = [...filteredData.standaloneFestivals, ...filteredData.parentFestivals.flatMap(p => p.events)];
+  const jsonLd = allFilteredFestivals.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": "Festivales en España",
     "description": "Lista de festivales de música disponibles en España",
-    "numberOfItems": filteredFestivals.length,
-    "itemListElement": filteredFestivals.slice(0, 20).map((festival, index) => ({
+    "numberOfItems": allFilteredFestivals.length,
+    "itemListElement": allFilteredFestivals.slice(0, 20).map((festival, index) => ({
       "@type": "ListItem",
       "position": index + 1,
       "item": {
@@ -226,7 +336,7 @@ const Festivales = () => {
               )}
             </div>
 
-            {/* Filters Row - orden, ciudad, genero, headliner, mes */}
+            {/* Basic Filters Row */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
@@ -262,15 +372,18 @@ const Festivales = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterHeadliner} onValueChange={setFilterHeadliner}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterHeadliner !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterHeadliner === "all" ? "Headliner" : filterHeadliner}</span>
+              <Select value={filterDuration} onValueChange={setFilterDuration}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterDuration !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+                  <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+                  <span className="truncate text-sm">
+                    {filterDuration === "all" ? "Duración" : filterDuration === "1" ? "1 día" : filterDuration === "2-3" ? "2-3 días" : "4+ días"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los headliners</SelectItem>
-                  {headliners.map(headliner => (
-                    <SelectItem key={headliner} value={headliner}>{headliner}</SelectItem>
-                  ))}
+                  <SelectItem value="all">Cualquier duración</SelectItem>
+                  <SelectItem value="1">1 día</SelectItem>
+                  <SelectItem value="2-3">2-3 días</SelectItem>
+                  <SelectItem value="4+">4 o más días</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -287,15 +400,44 @@ const Festivales = () => {
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterHeadliner !== "all" || filterMonth !== "all" || filterSort !== "proximos") && (
+            {/* Advanced Filters Row - Camping & Transport toggles */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="camping-filter"
+                  checked={filterCamping}
+                  onCheckedChange={setFilterCamping}
+                />
+                <Label htmlFor="camping-filter" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                  <Tent className="h-4 w-4" />
+                  Con camping
+                </Label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="transport-filter"
+                  checked={filterTransport}
+                  onCheckedChange={setFilterTransport}
+                />
+                <Label htmlFor="transport-filter" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                  <Bus className="h-4 w-4" />
+                  Con transporte oficial
+                </Label>
+              </div>
+            </div>
+
+            {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterSort !== "proximos" || hasAdvancedFilters) && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
                     setFilterCity("all");
                     setFilterGenre("all");
-                    setFilterHeadliner("all");
                     setFilterMonth("all");
                     setFilterSort("proximos");
+                    setFilterDuration("all");
+                    setFilterCamping(false);
+                    setFilterTransport(false);
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
@@ -305,6 +447,13 @@ const Festivales = () => {
             )}
           </div>
 
+          {/* Results count */}
+          {!isLoading && (
+            <p className="text-sm text-muted-foreground mb-4">
+              {totalCount} {totalCount === 1 ? 'festival encontrado' : 'festivales encontrados'}
+            </p>
+          )}
+
           {/* Festival Cards Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -312,20 +461,81 @@ const Festivales = () => {
                 <FestivalCardSkeleton key={i} />
               ))}
             </div>
-          ) : filteredFestivals.length === 0 ? (
+          ) : totalCount === 0 ? (
             <div className="text-center py-16">
               <p className="text-xl text-muted-foreground mb-4">No se encontraron festivales</p>
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFestivals.map((festival, index) => (
-                <FestivalCard 
-                  key={festival.event_id} 
-                  festival={festival}
-                  priority={index < 4}
-                />
-              ))}
+            <div className="space-y-8">
+              {/* Parent Festivals (grouped) */}
+              {filteredData.parentFestivals.map((parent) => {
+                const isExpanded = expandedFestivals.has(parent.secondary_attraction_id);
+                const displayEvents = isExpanded ? parent.events : parent.events.slice(0, 3);
+                
+                return (
+                  <div key={parent.secondary_attraction_id} className="border-2 border-accent/20 rounded-xl p-4 bg-card/50">
+                    {/* Parent Festival Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={parent.image_large_url || "/placeholder.svg"} 
+                          alt={parent.secondary_attraction_name}
+                          className="w-16 h-16 rounded-lg object-cover"
+                        />
+                        <div>
+                          <h2 className="text-xl font-bold">{parent.secondary_attraction_name}</h2>
+                          <p className="text-sm text-muted-foreground">
+                            {parent.venue_city} · {parent.event_count} {parent.event_count === 1 ? 'evento' : 'eventos'}
+                          </p>
+                        </div>
+                      </div>
+                      {parent.events.length > 3 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => toggleExpanded(parent.secondary_attraction_id)}
+                          className="gap-1"
+                        >
+                          {isExpanded ? (
+                            <>
+                              Ver menos <ChevronUp className="h-4 w-4" />
+                            </>
+                          ) : (
+                            <>
+                              Ver todos ({parent.event_count}) <ChevronDown className="h-4 w-4" />
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {/* Events Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {displayEvents.map((festival, index) => (
+                        <FestivalCard 
+                          key={festival.event_id} 
+                          festival={festival}
+                          priority={index < 2}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Standalone Festivals */}
+              {filteredData.standaloneFestivals.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredData.standaloneFestivals.map((festival, index) => (
+                    <FestivalCard 
+                      key={festival.event_id} 
+                      festival={festival}
+                      priority={index < 4}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
