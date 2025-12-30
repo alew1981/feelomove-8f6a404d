@@ -277,6 +277,11 @@ const Producto = () => {
   
   const artistNames = eventDetails.attraction_names || [];
   const mainArtist = artistNames[0] || eventDetails.event_name;
+  
+  // Festival lineup artists - use festival_lineup_artists from the festival view
+  const festivalLineupArtists = isFestivalRoute && (eventDetails as any).festival_lineup_artists 
+    ? (eventDetails as any).festival_lineup_artists as string[]
+    : [];
 
   // Generate SEO description
   const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
@@ -553,10 +558,10 @@ const Producto = () => {
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
-                  {/* Lineup for festivals - show above event name */}
-                  {isFestivalRoute && artistNames.length > 0 && (
+                  {/* Lineup for festivals - show above event name using festival_lineup_artists */}
+                  {isFestivalRoute && festivalLineupArtists.length > 0 && (
                     <p className="text-sm sm:text-base md:text-lg text-white/90 font-medium drop-shadow-md line-clamp-2">
-                      {artistNames.slice(0, 5).join(' • ')}{artistNames.length > 5 ? ` y ${artistNames.length - 5} más` : ''}
+                      {festivalLineupArtists.slice(0, 5).join(' • ')}{festivalLineupArtists.length > 5 ? ` y ${festivalLineupArtists.length - 5} más` : ''}
                     </p>
                   )}
                   <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">

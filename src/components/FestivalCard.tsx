@@ -139,10 +139,10 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
 
             {/* Date Card - Absolute positioned on the left - Only show if we have a date */}
             {hasDate && (
-              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
-                <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
+              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ minWidth: '90px' }}>
+                <div className="text-center px-3 py-2 bg-gradient-to-b from-gray-50 to-white">
                   <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
-                  <div className="text-2xl font-black text-gray-900 leading-none my-1">{dayDisplay}</div>
+                  <div className="text-2xl font-black text-gray-900 leading-none my-1 whitespace-nowrap">{dayDisplay}</div>
                   <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
                   {/* Time */}
                   {time && <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>}
