@@ -535,7 +535,7 @@ const Producto = () => {
                 </div>
               </div>
               
-              {/* Center - Event Name with Favorite above */}
+              {/* Center - Event Name with Lineup (for festivals) and Favorite above */}
               <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%]">
                 <div className="flex flex-col items-center gap-2">
                   <Button
@@ -553,6 +553,12 @@ const Producto = () => {
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
+                  {/* Lineup for festivals - show above event name */}
+                  {isFestivalRoute && artistNames.length > 0 && (
+                    <p className="text-sm sm:text-base md:text-lg text-white/90 font-medium drop-shadow-md line-clamp-2">
+                      {artistNames.slice(0, 5).join(' • ')}{artistNames.length > 5 ? ` y ${artistNames.length - 5} más` : ''}
+                    </p>
+                  )}
                   <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
                     {eventDetails.event_name}
                   </h1>

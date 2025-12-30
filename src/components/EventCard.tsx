@@ -274,9 +274,8 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
             {/* Bottom Section with Button */}
             <div className="bg-background px-4 pb-4 flex justify-center items-center">
               <Button variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 py-3 h-auto transition-all duration-300">
-                <span>Entradas</span>
+                <span>Ver entradas</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                <span>Desde {Number(price).toFixed(0)}€</span>
               </Button>
             </div>
           </div>

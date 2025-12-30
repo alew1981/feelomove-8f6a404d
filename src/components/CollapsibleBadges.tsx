@@ -96,27 +96,28 @@ const CollapsibleBadges = ({
     });
   }
 
-  // Genre
-  if (eventDetails.primary_category_name) {
+  // Category/Genre Badge - only show if NOT a festival (festivals show subcategory instead)
+  // Avoid duplicate badges like "Festivales" + "Festival de música"
+  const isFestival = eventDetails.primary_category_name?.toLowerCase().includes('festival');
+  
+  if (eventDetails.primary_subcategory_name) {
+    badges.push({
+      key: "subgenre",
+      priority: 6,
+      content: (
+        <Badge className="bg-white/90 text-foreground font-medium px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
+          {eventDetails.primary_subcategory_name}
+        </Badge>
+      )
+    });
+  } else if (eventDetails.primary_category_name && !isFestival) {
+    // Only show category if no subcategory and not a festival
     badges.push({
       key: "genre",
       priority: 6,
       content: (
         <Badge className="bg-white text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
           {eventDetails.primary_category_name}
-        </Badge>
-      )
-    });
-  }
-
-  // Subgenre
-  if (eventDetails.primary_subcategory_name) {
-    badges.push({
-      key: "subgenre",
-      priority: 7,
-      content: (
-        <Badge className="bg-white/90 text-foreground font-medium px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-          {eventDetails.primary_subcategory_name}
         </Badge>
       )
     });
