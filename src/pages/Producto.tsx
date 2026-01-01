@@ -558,11 +558,23 @@ const Producto = () => {
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
-                  {/* Lineup for festivals - show above event name using festival_lineup_artists */}
+                  {/* Lineup for festivals - prominent display above event name */}
                   {isFestivalRoute && festivalLineupArtists.length > 0 && (
-                    <p className="text-sm sm:text-base md:text-lg text-white/90 font-medium drop-shadow-md line-clamp-2">
-                      {festivalLineupArtists.slice(0, 5).join(' • ')}{festivalLineupArtists.length > 5 ? ` y ${festivalLineupArtists.length - 5} más` : ''}
-                    </p>
+                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full">
+                      {festivalLineupArtists.slice(0, 6).map((artist, idx) => (
+                        <span 
+                          key={idx} 
+                          className="text-xs sm:text-sm md:text-base text-white/90 font-semibold drop-shadow-md px-2 py-0.5 bg-white/10 backdrop-blur-sm rounded-full"
+                        >
+                          {artist}
+                        </span>
+                      ))}
+                      {festivalLineupArtists.length > 6 && (
+                        <span className="text-xs sm:text-sm md:text-base text-white/70 font-medium drop-shadow-md px-2 py-0.5 bg-white/10 backdrop-blur-sm rounded-full">
+                          +{festivalLineupArtists.length - 6} más
+                        </span>
+                      )}
+                    </div>
                   )}
                   <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
                     {eventDetails.event_name}
