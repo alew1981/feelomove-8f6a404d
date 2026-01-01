@@ -24,21 +24,21 @@ const FestivalDetalle = () => {
   const festivalName = decodeURIComponent(festivalSlug || "").replace(/-/g, " ");
 
   // Fetch all events for this festival using the festivals-specific view
+  // Festival is identified by primary_attraction_name (the festival brand)
   const { data: events, isLoading } = useQuery({
     queryKey: ["festival-events", festivalSlug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page_festivales")
         .select("*")
-        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       
-      // Filter by secondary_attraction_name OR primary_attraction_name OR event_name (case-insensitive)
+      // Filter by primary_attraction_name (festival brand) - case insensitive
       return (data || []).filter(e => {
-        const eName = (e.secondary_attraction_name || e.primary_attraction_name || e.event_name || "").toLowerCase();
-        return eName === festivalName.toLowerCase();
+        const primaryName = (e.primary_attraction_name || "").toLowerCase();
+        return primaryName === festivalName.toLowerCase();
       });
     },
     enabled: !!festivalSlug,
@@ -70,6 +70,7 @@ const FestivalDetalle = () => {
   }, [events]);
 
   // Get festival metadata (using the new festival-specific fields when available)
+  // Festival name is primary_attraction_name (the festival brand)
   const festivalData = useMemo(() => {
     if (!events || events.length === 0) return null;
     
@@ -77,19 +78,26 @@ const FestivalDetalle = () => {
     const firstEvent = allEvents[0];
     const lastEvent = allEvents[allEvents.length - 1];
     
-    // Use festival-specific fields if available
-    const festivalStartDate = firstEvent.festival_start_date || firstEvent.event_date;
-    const festivalEndDate = firstEvent.festival_end_date || lastEvent.event_date;
+    // Helper to check placeholder dates
+    const isPlaceholder = (d: string | null | undefined) => !d || d.startsWith('9999');
+    
+    // Use festival-specific fields if available, handle placeholder dates
+    const rawStartDate = firstEvent.festival_start_date || firstEvent.event_date;
+    const rawEndDate = firstEvent.festival_end_date || lastEvent.event_date;
+    const festivalStartDate = isPlaceholder(rawStartDate) ? null : rawStartDate;
+    const festivalEndDate = isPlaceholder(rawEndDate) ? null : rawEndDate;
     const festivalDuration = firstEvent.festival_duration_days || 1;
     const headliners = firstEvent.festival_headliners || [];
     const lineupArtists = firstEvent.festival_lineup_artists || concertEvents.flatMap(e => e.attraction_names || []);
     const uniqueArtists = [...new Set(lineupArtists)];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
-    const minPrice = Math.min(...allEvents.map(e => Number(e.price_min_incl_fees) || 0).filter(p => p > 0));
-    const maxPrice = Math.max(...allEvents.map(e => Number(e.price_min_incl_fees) || 0));
+    const validPrices = allEvents.map(e => Number(e.price_min_incl_fees) || 0).filter(p => p > 0);
+    const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+    const maxPrice = validPrices.length > 0 ? Math.max(...validPrices) : 0;
     
     return {
-      name: firstEvent.secondary_attraction_name || firstEvent.primary_attraction_name || firstEvent.event_name,
+      // Use primary_attraction_name as the festival brand name
+      name: firstEvent.primary_attraction_name || firstEvent.event_name,
       image: firstEvent.image_large_url || firstEvent.image_standard_url,
       venue: firstEvent.venue_name,
       city: firstEvent.venue_city,
@@ -99,6 +107,7 @@ const FestivalDetalle = () => {
       transportCount: transportEvents.length,
       firstDate: festivalStartDate,
       lastDate: festivalEndDate,
+      hasValidDates: festivalStartDate !== null && festivalEndDate !== null,
       durationDays: festivalDuration,
       minPrice,
       maxPrice,
@@ -189,12 +198,16 @@ const FestivalDetalle = () => {
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-accent" />
-                  <span className="font-medium text-foreground">
-                    {festivalData.durationDays > 1 
-                      ? formatFestivalDateRange(festivalData.firstDate, festivalData.lastDate)
-                      : format(new Date(festivalData.firstDate), "d MMMM yyyy", { locale: es })}
-                  </span>
-                  {festivalData.durationDays > 1 && (
+                  {festivalData.hasValidDates ? (
+                    <span className="font-medium text-foreground">
+                      {festivalData.durationDays > 1 
+                        ? formatFestivalDateRange(festivalData.firstDate!, festivalData.lastDate!)
+                        : format(new Date(festivalData.firstDate!), "d MMMM yyyy", { locale: es })}
+                    </span>
+                  ) : (
+                    <span className="font-medium text-muted-foreground italic">Fechas por confirmar</span>
+                  )}
+                  {festivalData.hasValidDates && festivalData.durationDays > 1 && (
                     <Badge variant="secondary" className="text-xs">
                       {getFestivalDurationText(festivalData.durationDays)}
                     </Badge>

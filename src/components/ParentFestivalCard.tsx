@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Music } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface ParentFestival {
-  secondary_attraction_id: string;
-  secondary_attraction_name: string;
+  primary_attraction_id: string;
+  primary_attraction_name: string;
   venue_city: string;
   event_count: number;
   image_large_url: string;
@@ -22,25 +22,44 @@ interface ParentFestivalCardProps {
   priority?: boolean;
 }
 
+// Helper to check if date is a placeholder (9999-12-31)
+const isPlaceholderDate = (dateStr: string | null | undefined): boolean => {
+  if (!dateStr) return true;
+  return dateStr.startsWith('9999');
+};
+
 const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardProps) => {
   // Generate slug from festival name
   const festivalSlug = encodeURIComponent(
-    festival.secondary_attraction_name.toLowerCase().replace(/\s+/g, '-')
+    festival.primary_attraction_name.toLowerCase().replace(/\s+/g, '-')
   );
   
-  // Format date range
-  const startDate = new Date(festival.min_start_date);
-  const endDate = new Date(festival.max_end_date);
-  const isSameMonth = startDate.getMonth() === endDate.getMonth();
-  const isSameYear = startDate.getFullYear() === endDate.getFullYear();
+  // Check for placeholder dates
+  const isStartPlaceholder = isPlaceholderDate(festival.min_start_date);
+  const isEndPlaceholder = isPlaceholderDate(festival.max_end_date);
+  const hasValidDates = !isStartPlaceholder && !isEndPlaceholder;
   
+  // Format date range
   let dateDisplay: string;
-  if (isSameMonth && isSameYear) {
-    dateDisplay = `${format(startDate, "d", { locale: es })}-${format(endDate, "d MMM yyyy", { locale: es })}`;
-  } else if (isSameYear) {
-    dateDisplay = `${format(startDate, "d MMM", { locale: es })} - ${format(endDate, "d MMM yyyy", { locale: es })}`;
+  
+  if (!hasValidDates) {
+    dateDisplay = "Fechas por confirmar";
   } else {
-    dateDisplay = `${format(startDate, "d MMM yyyy", { locale: es })} - ${format(endDate, "d MMM yyyy", { locale: es })}`;
+    const startDate = parseISO(festival.min_start_date);
+    const endDate = parseISO(festival.max_end_date);
+    const isSameMonth = startDate.getMonth() === endDate.getMonth();
+    const isSameYear = startDate.getFullYear() === endDate.getFullYear();
+    const isSameDay = startDate.getDate() === endDate.getDate() && isSameMonth && isSameYear;
+    
+    if (isSameDay) {
+      dateDisplay = format(startDate, "d MMM yyyy", { locale: es });
+    } else if (isSameMonth && isSameYear) {
+      dateDisplay = `${format(startDate, "d", { locale: es })}-${format(endDate, "d MMM yyyy", { locale: es })}`;
+    } else if (isSameYear) {
+      dateDisplay = `${format(startDate, "d MMM", { locale: es })} - ${format(endDate, "d MMM yyyy", { locale: es })}`;
+    } else {
+      dateDisplay = `${format(startDate, "d MMM yyyy", { locale: es })} - ${format(endDate, "d MMM yyyy", { locale: es })}`;
+    }
   }
 
   return (
@@ -50,7 +69,7 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
         <div className="relative aspect-[16/9] overflow-hidden">
           <img
             src={festival.image_large_url || "/placeholder.svg"}
-            alt={festival.secondary_attraction_name}
+            alt={festival.primary_attraction_name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading={priority ? "eager" : "lazy"}
           />
@@ -69,7 +88,7 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
           {/* Festival Name on Image */}
           <div className="absolute bottom-3 left-3 right-3">
             <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-lg line-clamp-2">
-              {festival.secondary_attraction_name}
+              {festival.primary_attraction_name}
             </h3>
           </div>
         </div>
@@ -80,7 +99,9 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-accent" />
-              <span className="font-medium text-foreground">{dateDisplay}</span>
+              <span className={`font-medium ${hasValidDates ? 'text-foreground' : 'text-muted-foreground italic'}`}>
+                {dateDisplay}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4 text-accent" />
