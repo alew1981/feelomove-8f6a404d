@@ -33,10 +33,10 @@ const months = [
   { value: "12", label: "Diciembre" },
 ];
 
-// Interface for grouped parent festivals
+// Interface for grouped parent festivals - uses primary_attraction as festival identity
 interface ParentFestival {
-  secondary_attraction_id: string;
-  secondary_attraction_name: string;
+  primary_attraction_id: string;
+  primary_attraction_name: string;
   venue_city: string;
   event_count: number;
   events: FestivalProductPage[];
@@ -63,7 +63,6 @@ const Festivales = () => {
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page_festivales")
         .select("*")
-        .gte("festival_start_date", new Date().toISOString().split('T')[0])
         .order("festival_start_date", { ascending: true });
       
       if (error) throw error;
@@ -71,54 +70,78 @@ const Festivales = () => {
     }
   });
 
-  // Group festivals by parent festival (secondary_attraction_id)
+  // Group festivals by parent festival (primary_attraction_id is the festival brand)
+  // Events with secondary_attraction_name = artist name are individual day entries
   const groupedFestivals = useMemo(() => {
     if (!festivals) return { parentFestivals: [] as ParentFestival[], standaloneFestivals: [] as FestivalProductPage[] };
+    
+    // Filter out past events and placeholder dates for display
+    const validFestivals = festivals.filter(f => {
+      const dateStr = f.festival_start_date || f.event_date;
+      if (!dateStr || dateStr.startsWith('9999')) return true; // Keep TBC dates
+      return new Date(dateStr) >= new Date();
+    });
     
     const parentMap = new Map<string, FestivalProductPage[]>();
     const standalone: FestivalProductPage[] = [];
     
-    festivals.forEach(festival => {
-      const parentId = festival.secondary_attraction_id;
-      const parentName = festival.secondary_attraction_name;
+    validFestivals.forEach(festival => {
+      const primaryId = festival.primary_attraction_id;
+      const primaryName = festival.primary_attraction_name;
+      const secondaryName = festival.secondary_attraction_name;
       
-      // If has a parent festival (secondary_attraction), group it
-      if (parentId && parentName && parentName !== festival.primary_attraction_name) {
-        const existing = parentMap.get(parentId) || [];
+      // If has different secondary_attraction (artist), this is part of a parent festival
+      // Group by primary_attraction_id (the festival brand)
+      if (primaryId && primaryName && secondaryName && secondaryName !== primaryName) {
+        const existing = parentMap.get(primaryId) || [];
         existing.push(festival);
-        parentMap.set(parentId, existing);
+        parentMap.set(primaryId, existing);
       } else {
-        // Standalone festival
+        // Standalone festival (no artist split, or same primary/secondary)
         standalone.push(festival);
       }
     });
     
     // Convert map to array of parent festivals
     const parentFestivals: ParentFestival[] = [];
-    parentMap.forEach((events, parentId) => {
+    parentMap.forEach((events, primaryId) => {
       if (events.length > 0) {
-        // Sort events by date
-        events.sort((a, b) => 
-          new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
-        );
+        // Sort events by date, handling placeholder dates
+        events.sort((a, b) => {
+          const dateA = a.festival_start_date || a.event_date || '9999-12-31';
+          const dateB = b.festival_start_date || b.event_date || '9999-12-31';
+          return new Date(dateA).getTime() - new Date(dateB).getTime();
+        });
         
         const firstEvent = events[0];
-        const minDate = events.reduce((min, e) => 
-          e.festival_start_date < min ? e.festival_start_date : min, 
-          events[0].festival_start_date
-        );
-        const maxDate = events.reduce((max, e) => 
-          e.festival_end_date > max ? e.festival_end_date : max, 
-          events[0].festival_end_date
-        );
+        
+        // Find min/max dates, excluding placeholder dates
+        const validDates = events.filter(e => {
+          const d = e.festival_start_date || e.event_date;
+          return d && !d.startsWith('9999');
+        });
+        
+        const minDate = validDates.length > 0 
+          ? validDates.reduce((min, e) => {
+              const d = e.festival_start_date || e.event_date || '';
+              return d < min ? d : min;
+            }, validDates[0].festival_start_date || validDates[0].event_date || '')
+          : '9999-12-31';
+          
+        const maxDate = validDates.length > 0
+          ? validDates.reduce((max, e) => {
+              const d = e.festival_end_date || e.event_date || '';
+              return d > max ? d : max;
+            }, validDates[0].festival_end_date || validDates[0].event_date || '')
+          : '9999-12-31';
         
         // Count unique artists across all events
         const allArtists = events.flatMap(e => e.festival_lineup_artists || []);
         const uniqueArtists = [...new Set(allArtists)];
         
         parentFestivals.push({
-          secondary_attraction_id: parentId,
-          secondary_attraction_name: firstEvent.secondary_attraction_name || "Festival",
+          primary_attraction_id: primaryId,
+          primary_attraction_name: firstEvent.primary_attraction_name || "Festival",
           venue_city: firstEvent.venue_city,
           event_count: events.length,
           events,
@@ -462,7 +485,7 @@ const Festivales = () => {
               {/* Parent Festivals - show as cards linking to detail page */}
               {filteredData.parentFestivals.map((parent, index) => (
                 <ParentFestivalCard 
-                  key={parent.secondary_attraction_id} 
+                  key={parent.primary_attraction_id} 
                   festival={parent}
                   priority={index < 4}
                 />

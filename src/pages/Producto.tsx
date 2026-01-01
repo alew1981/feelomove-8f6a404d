@@ -266,14 +266,19 @@ const Producto = () => {
     );
   }
 
-  const eventDate = eventDetails.event_date ? new Date(eventDetails.event_date) : new Date();
-  const formattedTime = format(eventDate, "HH:mm");
-  const monthYear = format(eventDate, "MMMM yyyy", { locale: es });
+  // Helper to check placeholder dates
+  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
   
-  // Calculate countdown
+  const rawEventDate = eventDetails.event_date;
+  const hasValidDate = !isPlaceholderDate(rawEventDate);
+  const eventDate = hasValidDate && rawEventDate ? new Date(rawEventDate) : new Date();
+  const formattedTime = hasValidDate ? format(eventDate, "HH:mm") : null;
+  const monthYear = hasValidDate ? format(eventDate, "MMMM yyyy", { locale: es }) : "Fecha por confirmar";
+  
+  // Calculate countdown only if valid date
   const now = new Date();
-  const daysUntil = differenceInDays(eventDate, now);
-  const hoursUntil = differenceInHours(eventDate, now) % 24;
+  const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
+  const hoursUntil = hasValidDate ? differenceInHours(eventDate, now) % 24 : 0;
   
   const artistNames = eventDetails.attraction_names || [];
   const mainArtist = artistNames[0] || eventDetails.event_name;
@@ -282,6 +287,17 @@ const Producto = () => {
   const festivalLineupArtists = isFestivalRoute && (eventDetails as any).festival_lineup_artists 
     ? (eventDetails as any).festival_lineup_artists as string[]
     : [];
+  
+  // Display logic for festivals based on primary/secondary attraction
+  // Case A: Full festival pass (secondary = null or same as primary)
+  // Case B: Artist-specific entry (secondary = different artist name)
+  const primaryAttraction = (eventDetails as any).primary_attraction_name as string | null;
+  const secondaryAttraction = (eventDetails as any).secondary_attraction_name as string | null;
+  const isArtistEntry = isFestivalRoute && secondaryAttraction && secondaryAttraction !== primaryAttraction;
+  
+  // For display purposes
+  const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
+  const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
 
   // Generate SEO description
   const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
@@ -576,9 +592,15 @@ const Producto = () => {
                       )}
                     </div>
                   )}
+                  {/* Title and optional subtitle for artist entries */}
                   <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
-                    {eventDetails.event_name}
+                    {displayTitle}
                   </h1>
+                  {displaySubtitle && (
+                    <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium drop-shadow-md">
+                      {displaySubtitle}
+                    </p>
+                  )}
                 </div>
               </div>
               
