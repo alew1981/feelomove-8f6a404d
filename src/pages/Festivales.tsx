@@ -7,15 +7,13 @@ import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X, ChevronDown, ChevronUp, Tent, Bus, Calendar } from "lucide-react";
+import { Search, X, Tent, Bus, Calendar } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
 import FestivalCard from "@/components/FestivalCard";
+import ParentFestivalCard from "@/components/ParentFestivalCard";
 import { FestivalProductPage } from "@/types/events.types";
-import { Link } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -45,6 +43,7 @@ interface ParentFestival {
   image_large_url: string;
   min_start_date: string;
   max_end_date: string;
+  total_artists: number;
 }
 
 const Festivales = () => {
@@ -56,7 +55,6 @@ const Festivales = () => {
   const [filterDuration, setFilterDuration] = useState<string>("all");
   const [filterCamping, setFilterCamping] = useState<boolean>(false);
   const [filterTransport, setFilterTransport] = useState<boolean>(false);
-  const [expandedFestivals, setExpandedFestivals] = useState<Set<string>>(new Set());
 
   // Fetch festivals using the new dedicated festivals view
   const { data: festivals, isLoading } = useQuery({
@@ -114,6 +112,10 @@ const Festivales = () => {
           events[0].festival_end_date
         );
         
+        // Count unique artists across all events
+        const allArtists = events.flatMap(e => e.festival_lineup_artists || []);
+        const uniqueArtists = [...new Set(allArtists)];
+        
         parentFestivals.push({
           secondary_attraction_id: parentId,
           secondary_attraction_name: firstEvent.secondary_attraction_name || "Festival",
@@ -122,7 +124,8 @@ const Festivales = () => {
           events,
           image_large_url: firstEvent.image_large_url,
           min_start_date: minDate,
-          max_end_date: maxDate
+          max_end_date: maxDate,
+          total_artists: uniqueArtists.length
         });
       }
     });
@@ -220,23 +223,11 @@ const Festivales = () => {
     return { parentFestivals: filteredParents, standaloneFestivals: filteredStandalone };
   }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration, filterCamping, filterTransport]);
 
-  const toggleExpanded = (id: string) => {
-    setExpandedFestivals(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
   // Get hero image from first festival
   const heroImage = festivals?.[0]?.image_large_url || "/placeholder.svg";
 
-  // Total count
-  const totalCount = filteredData.parentFestivals.reduce((sum, p) => sum + p.event_count, 0) + filteredData.standaloneFestivals.length;
+  // Total count - count parent festivals as 1 festival each, plus standalone
+  const totalCount = filteredData.parentFestivals.length + filteredData.standaloneFestivals.length;
 
   // Check if any advanced filter is active
   const hasAdvancedFilters = filterDuration !== "all" || filterCamping || filterTransport;
@@ -467,75 +458,24 @@ const Festivales = () => {
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <div className="space-y-8">
-              {/* Parent Festivals (grouped) */}
-              {filteredData.parentFestivals.map((parent) => {
-                const isExpanded = expandedFestivals.has(parent.secondary_attraction_id);
-                const displayEvents = isExpanded ? parent.events : parent.events.slice(0, 3);
-                
-                return (
-                  <div key={parent.secondary_attraction_id} className="border-2 border-accent/20 rounded-xl p-4 bg-card/50">
-                    {/* Parent Festival Header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={parent.image_large_url || "/placeholder.svg"} 
-                          alt={parent.secondary_attraction_name}
-                          className="w-16 h-16 rounded-lg object-cover"
-                        />
-                        <div>
-                          <h2 className="text-xl font-bold">{parent.secondary_attraction_name}</h2>
-                          <p className="text-sm text-muted-foreground">
-                            {parent.venue_city} · {parent.event_count} {parent.event_count === 1 ? 'evento' : 'eventos'}
-                          </p>
-                        </div>
-                      </div>
-                      {parent.events.length > 3 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => toggleExpanded(parent.secondary_attraction_id)}
-                          className="gap-1"
-                        >
-                          {isExpanded ? (
-                            <>
-                              Ver menos <ChevronUp className="h-4 w-4" />
-                            </>
-                          ) : (
-                            <>
-                              Ver todos ({parent.event_count}) <ChevronDown className="h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {/* Events Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {displayEvents.map((festival, index) => (
-                        <FestivalCard 
-                          key={festival.event_id} 
-                          festival={festival}
-                          priority={index < 2}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Parent Festivals - show as cards linking to detail page */}
+              {filteredData.parentFestivals.map((parent, index) => (
+                <ParentFestivalCard 
+                  key={parent.secondary_attraction_id} 
+                  festival={parent}
+                  priority={index < 4}
+                />
+              ))}
 
               {/* Standalone Festivals */}
-              {filteredData.standaloneFestivals.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredData.standaloneFestivals.map((festival, index) => (
-                    <FestivalCard 
-                      key={festival.event_id} 
-                      festival={festival}
-                      priority={index < 4}
-                    />
-                  ))}
-                </div>
-              )}
+              {filteredData.standaloneFestivals.map((festival, index) => (
+                <FestivalCard 
+                  key={festival.event_id} 
+                  festival={festival}
+                  priority={index < 4}
+                />
+              ))}
             </div>
           )}
         </div>
