@@ -18,31 +18,61 @@ import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festival
 import { FestivalServices } from "@/components/FestivalServices";
 import { FestivalProductPage } from "@/types/events.types";
 
-// Keywords that identify a festival name
-const FESTIVAL_KEYWORDS = ['Festival', 'Concert Music', 'Starlite', 'Fest', 'Sonar', 'Primavera', 'BBK Live', 'Mad Cool', 'Arenal', 'Medusa', 'Weekend'];
+// Keywords that identify a festival name (case-insensitive)
+const FESTIVAL_KEYWORDS = [
+  'Festival', 'Concert Music', 'Starlite', 'Fest', 'Sonar', 'Primavera', 
+  'BBK Live', 'Mad Cool', 'Arenal', 'Medusa', 'Weekend', 'Viña Rock',
+  'Cruïlla', 'Rototom', 'Monegros', 'FIB', 'Low Festival', 'Dreambeach',
+  'A Summer Story', 'Reggaeton Beach', 'Abono'
+];
 
 // Helper to check if a string contains festival keywords
 const containsFestivalKeyword = (name: string | null | undefined): boolean => {
   if (!name) return false;
+  const lowerName = name.toLowerCase();
   return FESTIVAL_KEYWORDS.some(keyword => 
-    name.toLowerCase().includes(keyword.toLowerCase())
+    lowerName.includes(keyword.toLowerCase())
   );
 };
 
-// Get the corrected festival name (apply swap logic if needed)
+// Get the corrected festival name (apply forced re-mapping logic)
 const getFestivalNombre = (event: FestivalProductPage): string => {
   const primaryName = event.primary_attraction_name || '';
   const secondaryName = event.secondary_attraction_name || '';
   const eventName = event.event_name || '';
+  const venueName = event.venue_name || '';
   
-  const primaryIsFestival = containsFestivalKeyword(primaryName) || containsFestivalKeyword(eventName);
+  const primaryIsFestival = containsFestivalKeyword(primaryName);
   const secondaryIsFestival = containsFestivalKeyword(secondaryName);
+  const venueIsFestival = containsFestivalKeyword(venueName);
+  const eventIsFestival = containsFestivalKeyword(eventName);
   
-  // Swap if secondary contains festival keyword but primary doesn't
-  if (!primaryIsFestival && secondaryIsFestival) {
+  // Case 1: Secondary is festival, Primary is artist (INVERTED DATA)
+  if (secondaryIsFestival && !primaryIsFestival) {
     return secondaryName;
   }
-  
+  // Case 2: Venue name is the festival
+  if (venueIsFestival && !primaryIsFestival && !secondaryIsFestival) {
+    return venueName;
+  }
+  // Case 3: Event name contains festival but primary is artist
+  if (eventIsFestival && !primaryIsFestival) {
+    const eventLower = eventName.toLowerCase();
+    for (const keyword of FESTIVAL_KEYWORDS) {
+      if (eventLower.includes(keyword.toLowerCase())) {
+        const keywordIndex = eventLower.indexOf(keyword.toLowerCase());
+        const afterKeyword = eventName.substring(keywordIndex);
+        const endMatch = afterKeyword.match(/^[^-–—\n]+/);
+        return endMatch ? endMatch[0].trim() : eventName;
+      }
+    }
+    return eventName;
+  }
+  // Case 4: Normal - primary is festival
+  if (primaryIsFestival) {
+    return primaryName;
+  }
+  // Case 5: Fallback
   return primaryName || eventName;
 };
 

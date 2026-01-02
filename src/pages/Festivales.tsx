@@ -68,54 +68,149 @@ interface ConsolidatedArtistEntry {
   max_price: number | null;
 }
 
-// Keywords that identify a festival name
-const FESTIVAL_KEYWORDS = ['Festival', 'Concert Music', 'Starlite', 'Fest', 'Sonar', 'Primavera', 'BBK Live', 'Mad Cool', 'Arenal', 'Medusa', 'Weekend'];
+// Keywords that identify a festival name (case-insensitive)
+const FESTIVAL_KEYWORDS = [
+  'Festival', 'Concert Music', 'Starlite', 'Fest', 'Sonar', 'Primavera', 
+  'BBK Live', 'Mad Cool', 'Arenal', 'Medusa', 'Weekend', 'Viña Rock',
+  'Cruïlla', 'Rototom', 'Monegros', 'FIB', 'Low Festival', 'Dreambeach',
+  'A Summer Story', 'Reggaeton Beach', 'Abono'
+];
 
 // Helper to check if a string contains festival keywords
 const containsFestivalKeyword = (name: string | null | undefined): boolean => {
   if (!name) return false;
+  const lowerName = name.toLowerCase();
   return FESTIVAL_KEYWORDS.some(keyword => 
-    name.toLowerCase().includes(keyword.toLowerCase())
+    lowerName.includes(keyword.toLowerCase())
   );
 };
 
-// Normalize festival data: apply swap logic and determine tipo_producto
+// Helper to extract clean artist name from event_name
+// e.g., "Lola Índigo - Concert Music Festival" → "Lola Índigo"
+const extractArtistFromEventName = (eventName: string, festivalName: string): string => {
+  if (!eventName || !festivalName) return eventName;
+  
+  // Common separators: " - ", " en ", " at "
+  const separators = [' - ', ' – ', ' — ', ' en ', ' at '];
+  
+  for (const sep of separators) {
+    if (eventName.includes(sep)) {
+      const parts = eventName.split(sep);
+      // Find the part that's NOT the festival name
+      for (const part of parts) {
+        const trimmedPart = part.trim();
+        if (!containsFestivalKeyword(trimmedPart) && 
+            trimmedPart.toLowerCase() !== festivalName.toLowerCase()) {
+          return trimmedPart;
+        }
+      }
+    }
+  }
+  
+  // Try removing the festival name directly
+  const festivalLower = festivalName.toLowerCase();
+  const eventLower = eventName.toLowerCase();
+  if (eventLower.includes(festivalLower)) {
+    const cleaned = eventName
+      .replace(new RegExp(festivalName, 'gi'), '')
+      .replace(/[-–—]/g, '')
+      .trim();
+    if (cleaned && cleaned.length > 2) return cleaned;
+  }
+  
+  return eventName;
+};
+
+// Normalize festival data: apply forced re-mapping logic
 const normalizeFestival = (festival: FestivalProductPage): NormalizedFestival => {
   const primaryName = festival.primary_attraction_name || '';
   const secondaryName = festival.secondary_attraction_name || '';
   const eventName = festival.event_name || '';
+  const venueName = festival.venue_name || '';
   
-  // Determine if we need to swap names
-  // Swap if secondary contains festival keyword but primary doesn't
-  const primaryIsFestival = containsFestivalKeyword(primaryName) || containsFestivalKeyword(eventName);
+  // Step 1: Find the festival name from ALL possible fields
+  // Priority: Check primary, secondary, venue_name, event_name
+  let festival_nombre: string = '';
+  let artista_nombre: string | null = null;
+  
+  const primaryIsFestival = containsFestivalKeyword(primaryName);
   const secondaryIsFestival = containsFestivalKeyword(secondaryName);
+  const venueIsFestival = containsFestivalKeyword(venueName);
+  const eventIsFestival = containsFestivalKeyword(eventName);
   
-  let festival_nombre: string;
-  let artista_nombre: string | null;
-  
-  if (!primaryIsFestival && secondaryIsFestival) {
-    // Swap: secondary is actually the festival, primary is the artist
+  // Case 1: Secondary is festival, Primary is artist (INVERTED DATA)
+  // e.g., primary="Lola Indigo", secondary="Concert Music Festival"
+  if (secondaryIsFestival && !primaryIsFestival) {
     festival_nombre = secondaryName;
     artista_nombre = primaryName || null;
-  } else {
-    // Normal case: primary is festival, secondary is artist (if exists)
+  }
+  // Case 2: Venue name is the festival (common pattern)
+  // e.g., venue_name="Concert Music Festival", primary="Lola Indigo"
+  else if (venueIsFestival && !primaryIsFestival && !secondaryIsFestival) {
+    festival_nombre = venueName;
+    artista_nombre = primaryName || secondaryName || null;
+  }
+  // Case 3: Event name contains festival but primary is artist
+  // e.g., event_name="Lola Índigo - Concert Music Festival", primary="Lola Indigo"
+  else if (eventIsFestival && !primaryIsFestival) {
+    // Extract festival from event_name
+    const eventLower = eventName.toLowerCase();
+    for (const keyword of FESTIVAL_KEYWORDS) {
+      if (eventLower.includes(keyword.toLowerCase())) {
+        // Find the full festival name in event_name
+        const keywordIndex = eventLower.indexOf(keyword.toLowerCase());
+        // Get text from keyword to end or separator
+        const afterKeyword = eventName.substring(keywordIndex);
+        const endMatch = afterKeyword.match(/^[^-–—\n]+/);
+        festival_nombre = endMatch ? endMatch[0].trim() : eventName;
+        artista_nombre = primaryName || null;
+        break;
+      }
+    }
+    if (!festival_nombre) {
+      festival_nombre = eventName;
+    }
+  }
+  // Case 4: Normal case - primary is festival
+  else if (primaryIsFestival) {
+    festival_nombre = primaryName;
+    artista_nombre = secondaryName && secondaryName !== primaryName ? secondaryName : null;
+  }
+  // Case 5: Fallback - use event_name as festival
+  else {
     festival_nombre = primaryName || eventName;
     artista_nombre = secondaryName && secondaryName !== primaryName ? secondaryName : null;
   }
   
-  // Determine tipo_producto based on has_festival_pass and has_daily_tickets
-  // Also consider if there's a secondary attraction (artist)
+  // Step 2: Clean up artist name from event_name if needed
+  if (artista_nombre && festival_nombre) {
+    artista_nombre = extractArtistFromEventName(artista_nombre, festival_nombre);
+  }
+  
+  // Step 3: Classify tipo_producto based on event_name content
   let tipo_producto: 'ABONO / GENERAL' | 'ENTRADA DE DÍA';
   
-  if (festival.has_daily_tickets && artista_nombre) {
-    // Has daily tickets AND has an artist = ENTRADA DE DÍA
-    tipo_producto = 'ENTRADA DE DÍA';
-  } else if (festival.has_festival_pass || !artista_nombre) {
-    // Has festival pass OR no specific artist = ABONO / GENERAL
+  const eventNameLower = eventName.toLowerCase();
+  const isAbonoByName = eventNameLower.includes('abono') || 
+                        eventNameLower.includes('pase') ||
+                        eventNameLower.includes('pass') ||
+                        eventNameLower.includes('parking') ||
+                        eventNameLower.includes('camping');
+  
+  // If event_name only contains festival name (no artist) → ABONO
+  // If event_name contains an artist name → ENTRADA DE DÍA
+  if (isAbonoByName || !artista_nombre) {
     tipo_producto = 'ABONO / GENERAL';
   } else {
-    // Default: if has artist, it's day entry; otherwise general
-    tipo_producto = artista_nombre ? 'ENTRADA DE DÍA' : 'ABONO / GENERAL';
+    tipo_producto = 'ENTRADA DE DÍA';
+  }
+  
+  // Also check the flags from the database
+  if (festival.has_festival_pass && !artista_nombre) {
+    tipo_producto = 'ABONO / GENERAL';
+  }
+  if (festival.has_daily_tickets && artista_nombre) {
+    tipo_producto = 'ENTRADA DE DÍA';
   }
   
   return {
@@ -161,11 +256,12 @@ const Festivales = () => {
       return new Date(dateStr) >= new Date();
     }).map(normalizeFestival);
     
-    // Group by festival_nombre (the corrected festival name)
+    // Group by festival_nombre + venue_city (to separate same festival in different cities)
     const festivalMap = new Map<string, NormalizedFestival[]>();
     
     validFestivals.forEach(festival => {
-      const key = festival.festival_nombre;
+      // Create a composite key: festival name + city for proper grouping
+      const key = `${festival.festival_nombre}_${festival.venue_city || 'unknown'}`;
       const existing = festivalMap.get(key) || [];
       existing.push(festival);
       festivalMap.set(key, existing);
