@@ -7,7 +7,7 @@ import { es } from "date-fns/locale";
 
 interface ParentFestival {
   primary_attraction_id: string;
-  primary_attraction_name: string;
+  festival_nombre: string;
   venue_city: string;
   event_count: number;
   image_large_url: string;
@@ -31,7 +31,7 @@ const isPlaceholderDate = (dateStr: string | null | undefined): boolean => {
 const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardProps) => {
   // Generate slug from festival name
   const festivalSlug = encodeURIComponent(
-    festival.primary_attraction_name.toLowerCase().replace(/\s+/g, '-')
+    festival.festival_nombre.toLowerCase().replace(/\s+/g, '-')
   );
   
   // Check for placeholder dates
@@ -69,7 +69,7 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
         <div className="relative aspect-[16/9] overflow-hidden">
           <img
             src={festival.image_large_url || "/placeholder.svg"}
-            alt={festival.primary_attraction_name}
+            alt={festival.festival_nombre}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading={priority ? "eager" : "lazy"}
           />
@@ -88,7 +88,7 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
           {/* Festival Name on Image */}
           <div className="absolute bottom-3 left-3 right-3">
             <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-lg line-clamp-2">
-              {festival.primary_attraction_name}
+              {festival.festival_nombre}
             </h3>
           </div>
         </div>
