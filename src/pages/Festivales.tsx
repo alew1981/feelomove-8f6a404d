@@ -33,18 +33,98 @@ const months = [
   { value: "12", label: "Diciembre" },
 ];
 
+// Interface for normalized festival event with corrected names
+interface NormalizedFestival extends FestivalProductPage {
+  festival_nombre: string;  // Always the festival brand
+  artista_nombre: string | null;  // Artist if it's a day entry
+  tipo_producto: 'ABONO / GENERAL' | 'ENTRADA DE DÍA';
+}
+
 // Interface for grouped parent festivals - uses primary_attraction as festival identity
 interface ParentFestival {
   primary_attraction_id: string;
-  primary_attraction_name: string;
+  festival_nombre: string;
   venue_city: string;
   event_count: number;
-  events: FestivalProductPage[];
+  events: NormalizedFestival[];
+  abonos: NormalizedFestival[];  // Festival passes, parking, services
+  entradas_dia: NormalizedFestival[];  // Individual artist entries
   image_large_url: string;
   min_start_date: string;
   max_end_date: string;
   total_artists: number;
 }
+
+// Interface for consolidated artist entries (same artist + date = same concert with different prices)
+interface ConsolidatedArtistEntry {
+  artista_nombre: string;
+  festival_nombre: string;
+  event_date: string;
+  events: NormalizedFestival[];  // All price options for this concert
+  image_large_url: string;
+  venue_city: string;
+  venue_name: string;
+  min_price: number | null;
+  max_price: number | null;
+}
+
+// Keywords that identify a festival name
+const FESTIVAL_KEYWORDS = ['Festival', 'Concert Music', 'Starlite', 'Fest', 'Sonar', 'Primavera', 'BBK Live', 'Mad Cool', 'Arenal', 'Medusa', 'Weekend'];
+
+// Helper to check if a string contains festival keywords
+const containsFestivalKeyword = (name: string | null | undefined): boolean => {
+  if (!name) return false;
+  return FESTIVAL_KEYWORDS.some(keyword => 
+    name.toLowerCase().includes(keyword.toLowerCase())
+  );
+};
+
+// Normalize festival data: apply swap logic and determine tipo_producto
+const normalizeFestival = (festival: FestivalProductPage): NormalizedFestival => {
+  const primaryName = festival.primary_attraction_name || '';
+  const secondaryName = festival.secondary_attraction_name || '';
+  const eventName = festival.event_name || '';
+  
+  // Determine if we need to swap names
+  // Swap if secondary contains festival keyword but primary doesn't
+  const primaryIsFestival = containsFestivalKeyword(primaryName) || containsFestivalKeyword(eventName);
+  const secondaryIsFestival = containsFestivalKeyword(secondaryName);
+  
+  let festival_nombre: string;
+  let artista_nombre: string | null;
+  
+  if (!primaryIsFestival && secondaryIsFestival) {
+    // Swap: secondary is actually the festival, primary is the artist
+    festival_nombre = secondaryName;
+    artista_nombre = primaryName || null;
+  } else {
+    // Normal case: primary is festival, secondary is artist (if exists)
+    festival_nombre = primaryName || eventName;
+    artista_nombre = secondaryName && secondaryName !== primaryName ? secondaryName : null;
+  }
+  
+  // Determine tipo_producto based on has_festival_pass and has_daily_tickets
+  // Also consider if there's a secondary attraction (artist)
+  let tipo_producto: 'ABONO / GENERAL' | 'ENTRADA DE DÍA';
+  
+  if (festival.has_daily_tickets && artista_nombre) {
+    // Has daily tickets AND has an artist = ENTRADA DE DÍA
+    tipo_producto = 'ENTRADA DE DÍA';
+  } else if (festival.has_festival_pass || !artista_nombre) {
+    // Has festival pass OR no specific artist = ABONO / GENERAL
+    tipo_producto = 'ABONO / GENERAL';
+  } else {
+    // Default: if has artist, it's day entry; otherwise general
+    tipo_producto = artista_nombre ? 'ENTRADA DE DÍA' : 'ABONO / GENERAL';
+  }
+  
+  return {
+    ...festival,
+    festival_nombre,
+    artista_nombre,
+    tipo_producto
+  };
+};
 
 const Festivales = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -70,50 +150,58 @@ const Festivales = () => {
     }
   });
 
-  // Group festivals by parent festival (primary_attraction_id is the festival brand)
-  // Events with secondary_attraction_name = artist name are individual day entries
+  // Normalize and group festivals
   const groupedFestivals = useMemo(() => {
-    if (!festivals) return { parentFestivals: [] as ParentFestival[], standaloneFestivals: [] as FestivalProductPage[] };
+    if (!festivals) return { parentFestivals: [] as ParentFestival[], standaloneFestivals: [] as NormalizedFestival[] };
     
-    // Filter out past events and placeholder dates for display
+    // Filter out past events and normalize all festivals
     const validFestivals = festivals.filter(f => {
       const dateStr = f.festival_start_date || f.event_date;
       if (!dateStr || dateStr.startsWith('9999')) return true; // Keep TBC dates
       return new Date(dateStr) >= new Date();
-    });
+    }).map(normalizeFestival);
     
-    const parentMap = new Map<string, FestivalProductPage[]>();
-    const standalone: FestivalProductPage[] = [];
+    // Group by festival_nombre (the corrected festival name)
+    const festivalMap = new Map<string, NormalizedFestival[]>();
     
     validFestivals.forEach(festival => {
-      const primaryId = festival.primary_attraction_id;
-      const primaryName = festival.primary_attraction_name;
-      const secondaryName = festival.secondary_attraction_name;
-      
-      // If has different secondary_attraction (artist), this is part of a parent festival
-      // Group by primary_attraction_id (the festival brand)
-      if (primaryId && primaryName && secondaryName && secondaryName !== primaryName) {
-        const existing = parentMap.get(primaryId) || [];
-        existing.push(festival);
-        parentMap.set(primaryId, existing);
-      } else {
-        // Standalone festival (no artist split, or same primary/secondary)
-        standalone.push(festival);
-      }
+      const key = festival.festival_nombre;
+      const existing = festivalMap.get(key) || [];
+      existing.push(festival);
+      festivalMap.set(key, existing);
     });
     
-    // Convert map to array of parent festivals
     const parentFestivals: ParentFestival[] = [];
-    parentMap.forEach((events, primaryId) => {
-      if (events.length > 0) {
-        // Sort events by date, handling placeholder dates
-        events.sort((a, b) => {
-          const dateA = a.festival_start_date || a.event_date || '9999-12-31';
-          const dateB = b.festival_start_date || b.event_date || '9999-12-31';
-          return new Date(dateA).getTime() - new Date(dateB).getTime();
-        });
-        
-        const firstEvent = events[0];
+    const standalone: NormalizedFestival[] = [];
+    
+    festivalMap.forEach((events, festivalName) => {
+      // Separate by tipo_producto
+      const abonos = events.filter(e => e.tipo_producto === 'ABONO / GENERAL');
+      const entradasDia = events.filter(e => e.tipo_producto === 'ENTRADA DE DÍA');
+      
+      // Consolidate artists: group entries with same artista_nombre + event_date
+      const consolidatedEntradasDia: NormalizedFestival[] = [];
+      const artistDateMap = new Map<string, NormalizedFestival[]>();
+      
+      entradasDia.forEach(entry => {
+        const key = `${entry.artista_nombre || ''}_${entry.event_date}`;
+        const existing = artistDateMap.get(key) || [];
+        existing.push(entry);
+        artistDateMap.set(key, existing);
+      });
+      
+      // Take only the first entry for each artist+date combination (others are price options)
+      artistDateMap.forEach((entries) => {
+        if (entries.length > 0) {
+          // Sort by price to get the cheapest option first
+          entries.sort((a, b) => (a.price_min_incl_fees || 0) - (b.price_min_incl_fees || 0));
+          consolidatedEntradasDia.push(entries[0]);
+        }
+      });
+      
+      // If festival has multiple events (abonos OR day entries), it's a parent festival
+      if (events.length > 1 || entradasDia.length > 0) {
+        const firstEvent = abonos[0] || events[0];
         
         // Find min/max dates, excluding placeholder dates
         const validDates = events.filter(e => {
@@ -137,19 +225,25 @@ const Festivales = () => {
         
         // Count unique artists across all events
         const allArtists = events.flatMap(e => e.festival_lineup_artists || []);
-        const uniqueArtists = [...new Set(allArtists)];
+        const artistFromEntries = consolidatedEntradasDia.map(e => e.artista_nombre).filter(Boolean);
+        const uniqueArtists = [...new Set([...allArtists, ...artistFromEntries])];
         
         parentFestivals.push({
-          primary_attraction_id: primaryId,
-          primary_attraction_name: firstEvent.primary_attraction_name || "Festival",
+          primary_attraction_id: firstEvent.primary_attraction_id,
+          festival_nombre: festivalName,
           venue_city: firstEvent.venue_city,
-          event_count: events.length,
+          event_count: abonos.length + consolidatedEntradasDia.length,
           events,
+          abonos,
+          entradas_dia: consolidatedEntradasDia,
           image_large_url: firstEvent.image_large_url,
           min_start_date: minDate,
           max_end_date: maxDate,
           total_artists: uniqueArtists.length
         });
+      } else {
+        // Single event standalone festival
+        standalone.push(...events);
       }
     });
     

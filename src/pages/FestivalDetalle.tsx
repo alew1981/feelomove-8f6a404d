@@ -16,6 +16,35 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festivalUtils";
 import { FestivalServices } from "@/components/FestivalServices";
+import { FestivalProductPage } from "@/types/events.types";
+
+// Keywords that identify a festival name
+const FESTIVAL_KEYWORDS = ['Festival', 'Concert Music', 'Starlite', 'Fest', 'Sonar', 'Primavera', 'BBK Live', 'Mad Cool', 'Arenal', 'Medusa', 'Weekend'];
+
+// Helper to check if a string contains festival keywords
+const containsFestivalKeyword = (name: string | null | undefined): boolean => {
+  if (!name) return false;
+  return FESTIVAL_KEYWORDS.some(keyword => 
+    name.toLowerCase().includes(keyword.toLowerCase())
+  );
+};
+
+// Get the corrected festival name (apply swap logic if needed)
+const getFestivalNombre = (event: FestivalProductPage): string => {
+  const primaryName = event.primary_attraction_name || '';
+  const secondaryName = event.secondary_attraction_name || '';
+  const eventName = event.event_name || '';
+  
+  const primaryIsFestival = containsFestivalKeyword(primaryName) || containsFestivalKeyword(eventName);
+  const secondaryIsFestival = containsFestivalKeyword(secondaryName);
+  
+  // Swap if secondary contains festival keyword but primary doesn't
+  if (!primaryIsFestival && secondaryIsFestival) {
+    return secondaryName;
+  }
+  
+  return primaryName || eventName;
+};
 
 const FestivalDetalle = () => {
   const { festivalSlug } = useParams<{ festivalSlug: string }>();
@@ -24,7 +53,6 @@ const FestivalDetalle = () => {
   const festivalName = decodeURIComponent(festivalSlug || "").replace(/-/g, " ");
 
   // Fetch all events for this festival using the festivals-specific view
-  // Festival is identified by primary_attraction_name (the festival brand)
   const { data: events, isLoading } = useQuery({
     queryKey: ["festival-events", festivalSlug],
     queryFn: async () => {
@@ -35,11 +63,11 @@ const FestivalDetalle = () => {
       
       if (error) throw error;
       
-      // Filter by primary_attraction_name (festival brand) - case insensitive
+      // Filter by corrected festival name (festival_nombre) - case insensitive
       return (data || []).filter(e => {
-        const primaryName = (e.primary_attraction_name || "").toLowerCase();
-        return primaryName === festivalName.toLowerCase();
-      });
+        const correctedName = getFestivalNombre(e as FestivalProductPage);
+        return correctedName.toLowerCase() === festivalName.toLowerCase();
+      }) as FestivalProductPage[];
     },
     enabled: !!festivalSlug,
   });
@@ -69,14 +97,16 @@ const FestivalDetalle = () => {
     return { concertEvents: concerts, transportEvents: transport };
   }, [events]);
 
-  // Get festival metadata (using the new festival-specific fields when available)
-  // Festival name is primary_attraction_name (the festival brand)
+  // Get festival metadata (using the corrected festival name and festival-specific fields)
   const festivalData = useMemo(() => {
     if (!events || events.length === 0) return null;
     
     const allEvents = concertEvents.length > 0 ? concertEvents : events;
     const firstEvent = allEvents[0];
     const lastEvent = allEvents[allEvents.length - 1];
+    
+    // Get corrected festival name
+    const correctedFestivalName = getFestivalNombre(firstEvent);
     
     // Helper to check placeholder dates
     const isPlaceholder = (d: string | null | undefined) => !d || d.startsWith('9999');
@@ -96,8 +126,8 @@ const FestivalDetalle = () => {
     const maxPrice = validPrices.length > 0 ? Math.max(...validPrices) : 0;
     
     return {
-      // Use primary_attraction_name as the festival brand name
-      name: firstEvent.primary_attraction_name || firstEvent.event_name,
+      // Use corrected festival name
+      name: correctedFestivalName,
       image: firstEvent.image_large_url || firstEvent.image_standard_url,
       venue: firstEvent.venue_name,
       city: firstEvent.venue_city,
