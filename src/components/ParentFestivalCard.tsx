@@ -29,9 +29,9 @@ const isPlaceholderDate = (dateStr: string | null | undefined): boolean => {
 };
 
 const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardProps) => {
-  // Generate slug from festival name
+  // Generate slug from festival name + city (matching the grouping key format)
   const festivalSlug = encodeURIComponent(
-    festival.festival_nombre.toLowerCase().replace(/\s+/g, '-')
+    `${festival.festival_nombre.toLowerCase().replace(/\s+/g, '-')}_${(festival.venue_city || 'unknown').toLowerCase().replace(/\s+/g, '-')}`
   );
   
   // Check for placeholder dates

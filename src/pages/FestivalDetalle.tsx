@@ -79,8 +79,11 @@ const getFestivalNombre = (event: FestivalProductPage): string => {
 const FestivalDetalle = () => {
   const { festivalSlug } = useParams<{ festivalSlug: string }>();
   
-  // Decode the festival name from slug
-  const festivalName = decodeURIComponent(festivalSlug || "").replace(/-/g, " ");
+  // Decode the festival name and city from slug (format: festival-name_city-name)
+  const decodedSlug = decodeURIComponent(festivalSlug || "");
+  const slugParts = decodedSlug.split('_');
+  const festivalName = slugParts[0]?.replace(/-/g, " ") || "";
+  const cityName = slugParts[1]?.replace(/-/g, " ") || "";
 
   // Fetch all events for this festival using the festivals-specific view
   const { data: events, isLoading } = useQuery({
@@ -93,10 +96,13 @@ const FestivalDetalle = () => {
       
       if (error) throw error;
       
-      // Filter by corrected festival name (festival_nombre) - case insensitive
+      // Filter by corrected festival name AND city (both case insensitive)
       return (data || []).filter(e => {
         const correctedName = getFestivalNombre(e as FestivalProductPage);
-        return correctedName.toLowerCase() === festivalName.toLowerCase();
+        const eventCity = e.venue_city || '';
+        const nameMatches = correctedName.toLowerCase() === festivalName.toLowerCase();
+        const cityMatches = !cityName || eventCity.toLowerCase() === cityName.toLowerCase();
+        return nameMatches && cityMatches;
       }) as FestivalProductPage[];
     },
     enabled: !!festivalSlug,
