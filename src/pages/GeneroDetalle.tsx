@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -15,9 +15,18 @@ import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 
+// Keywords that should redirect to /festivales
+const FESTIVAL_GENRE_KEYWORDS = ['festival-de-musica', 'festival de musica', 'festivales'];
+
 const GeneroDetalle = () => {
   const { genero } = useParams<{ genero: string }>();
   const genreParam = genero ? decodeURIComponent(genero) : "";
+  
+  // Check if this genre should redirect to /festivales
+  const normalizedGenre = genreParam.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+  if (FESTIVAL_GENRE_KEYWORDS.some(k => normalizedGenre.includes(k.replace(/\s+/g, '-')))) {
+    return <Navigate to="/festivales" replace />;
+  }
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");

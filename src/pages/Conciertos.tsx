@@ -54,7 +54,7 @@ const Conciertos = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch conciertos using mv_concerts_cards
+  // Fetch conciertos using mv_concerts_cards (excluding transport services)
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
@@ -65,7 +65,17 @@ const Conciertos = () => {
         .order("event_date", { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      
+      // Filter out transport services (bus, shuttle, etc.)
+      const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
+      const normalizeText = (text: string) => 
+        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+      
+      return (data || []).filter(event => {
+        const name = normalizeText(event.name || "");
+        const artist = normalizeText(event.artist_name || "");
+        return !transportKeywords.some(kw => name.includes(kw) || artist.includes(kw));
+      });
     }
   });
 
