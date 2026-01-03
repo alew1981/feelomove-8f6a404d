@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
-import PageHero from "@/components/PageHero";
+import FestivalHero from "@/components/FestivalHero";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { SEOHead } from "@/components/SEOHead";
@@ -245,8 +245,21 @@ const FestivalDetalle = () => {
             <Breadcrumbs />
           </div>
           
-          {/* Hero Image */}
-          <PageHero title={festivalData?.name || festivalName} imageUrl={heroImage} />
+          {/* Festival Hero with dates, lineup, countdown */}
+          <FestivalHero 
+            title={festivalData?.name || festivalName}
+            imageUrl={heroImage}
+            eventDate={festivalData?.firstDate}
+            endDate={festivalData?.lastDate}
+            durationDays={festivalData?.durationDays}
+            city={festivalData?.city || undefined}
+            venue={festivalData?.venue || undefined}
+            genre={festivalData?.genre || undefined}
+            headliners={festivalData?.headliners || []}
+            eventId={events?.[0]?.event_id || undefined}
+            eventSlug={festivalSlug}
+            isFestival={true}
+          />
           
           {/* Back Link */}
           <Link 
@@ -257,51 +270,9 @@ const FestivalDetalle = () => {
             Volver a Festivales
           </Link>
           
-          {/* Festival Info Section */}
+          {/* Services Section - Compact */}
           {festivalData && (
-            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6 space-y-4">
-              {/* Date and Location */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-accent" />
-                  {festivalData.hasValidDates ? (
-                    <span className="font-medium text-foreground">
-                      {festivalData.durationDays > 1 
-                        ? formatFestivalDateRange(festivalData.firstDate!, festivalData.lastDate!)
-                        : format(new Date(festivalData.firstDate!), "d MMMM yyyy", { locale: es })}
-                    </span>
-                  ) : (
-                    <span className="font-medium text-muted-foreground italic">Fechas por confirmar</span>
-                  )}
-                  {festivalData.hasValidDates && festivalData.durationDays > 1 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {getFestivalDurationText(festivalData.durationDays)}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-accent" />
-                  <span>{festivalData.venue || festivalData.city}</span>
-                </div>
-              </div>
-
-              {/* Stats Badges */}
-              <div className="flex flex-wrap gap-2">
-                {festivalData.artistCount > 0 && (
-                  <Badge className="bg-accent/10 text-accent border-accent/30 gap-1">
-                    <Users className="h-3 w-3" />
-                    {festivalData.artistCount} ARTISTAS
-                  </Badge>
-                )}
-                {festivalData.eventCount > 0 && (
-                  <Badge className="bg-primary/10 text-primary border-primary/30 gap-1">
-                    <Music className="h-3 w-3" />
-                    {festivalData.eventCount} EVENTOS
-                  </Badge>
-                )}
-              </div>
-
-              {/* Services using reusable component */}
+            <div className="mb-6">
               <FestivalServices
                 campingAvailable={festivalData.hasCamping}
                 hasOfficialTransport={festivalData.hasTransport}
@@ -310,38 +281,16 @@ const FestivalDetalle = () => {
                 hasCampingTickets={festivalData.hasCampingTickets}
                 hasParkingTickets={festivalData.hasParkingTickets}
                 totalStages={festivalData.totalStages}
-                variant="full"
+                variant="badge"
               />
-
-              {/* Headliners */}
-              {festivalData.headliners && festivalData.headliners.length > 0 && (
-                <div className="pt-2 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-2">CABEZAS DE CARTEL</p>
-                  <div className="flex flex-wrap gap-2">
-                    {festivalData.headliners.slice(0, 6).map((artist: string) => (
-                      <Badge key={artist} variant="outline" className="text-sm font-medium">
-                        {artist}
-                      </Badge>
-                    ))}
-                    {festivalData.headliners.length > 6 && (
-                      <Badge variant="outline" className="text-sm text-muted-foreground">
-                        +{festivalData.headliners.length - 6} más
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Price Range */}
               {festivalData.minPrice > 0 && (
-                <div className="pt-2 border-t border-border">
-                  <p className="text-muted-foreground text-sm">
-                    Entradas desde <span className="text-accent font-bold text-lg">€{Math.round(festivalData.minPrice)}</span>
-                    {festivalData.maxPrice > festivalData.minPrice && (
-                      <span className="text-muted-foreground"> - €{Math.round(festivalData.maxPrice)}</span>
-                    )}
-                  </p>
-                </div>
+                <p className="text-muted-foreground text-sm mt-3">
+                  Entradas desde <span className="text-accent font-bold text-lg">€{Math.round(festivalData.minPrice)}</span>
+                  {festivalData.maxPrice > festivalData.minPrice && (
+                    <span className="text-muted-foreground"> - €{Math.round(festivalData.maxPrice)}</span>
+                  )}
+                </p>
               )}
             </div>
           )}
