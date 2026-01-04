@@ -36,6 +36,7 @@ interface EventCardProps {
     badges?: string[];
     event_badges?: string[];
     is_festival?: boolean | null;
+    event_type?: string | null;
   };
 }
 
@@ -149,7 +150,9 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
   }
   // If seats_available is null/undefined, don't show any availability badge
 
-  const eventUrl = getEventUrl(eventSlug || '', event.is_festival);
+  // Determine if it's a festival based on is_festival OR event_type
+  const isFestival = event.is_festival === true || event.event_type === 'festival';
+  const eventUrl = getEventUrl(eventSlug || '', isFestival);
 
   return (
     <Link to={eventUrl} className="group block">
