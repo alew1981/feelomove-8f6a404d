@@ -1,6 +1,21 @@
 {
   "redirects": [
     {
+      "source": "/concierto/servicio-de-autobus-dani-fernandez-concert-music-festival-chiclana-de-la-frontera",
+      "destination": "/concierto/dani-fernandez-concert-music-festival-chiclana",
+      "permanent": true
+    },
+    {
+      "source": "/concierto/servicio-de-autobus-guitarricadelafuente-concert-music-festival-chiclana-de-la-frontera",
+      "destination": "/concierto/guitarricadelafuente-concert-music-festival-chiclana",
+      "permanent": true
+    },
+    {
+      "source": "/concierto/servicio-de-autobus-sanguijuelas-del-guadiana-barry-b-cmf26-chiclana-de-la-frontera",
+      "destination": "/concierto/sanguijuelas-del-guadiana-barry-b-cmf26-chiclana",
+      "permanent": true
+    },
+    {
       "source": "/events/:id",
       "destination": "/",
       "statusCode": 301
