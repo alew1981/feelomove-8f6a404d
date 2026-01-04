@@ -153,6 +153,13 @@ export type Database = {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "mv_events_schema_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "mv_festivals_cards"
             referencedColumns: ["id"]
           },
@@ -614,6 +621,13 @@ export type Database = {
             foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
             columns: ["festival_event_id"]
             isOneToOne: true
+            referencedRelation: "mv_events_schema_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
             referencedRelation: "mv_festivals_cards"
             referencedColumns: ["id"]
           },
@@ -996,6 +1010,15 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_events_schema_org: {
+        Row: {
+          event_type: string | null
+          id: string | null
+          schema_org_json: Json | null
+          slug: string | null
+        }
+        Relationships: []
+      }
       mv_festivals_cards: {
         Row: {
           artist_count: number | null
@@ -1242,6 +1265,7 @@ export type Database = {
       earth: { Args: never; Returns: number }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      generate_event_schema_org: { Args: { p_event_id: string }; Returns: Json }
       generate_seo_slug: { Args: { text_input: string }; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
