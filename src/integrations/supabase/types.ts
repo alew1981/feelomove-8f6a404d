@@ -1320,6 +1320,14 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_all_site_urls: {
+        Args: never
+        Returns: {
+          last_modified: string
+          url: string
+          url_type: string
+        }[]
+      }
       get_event_badges: { Args: { event_id: string }; Returns: string[] }
       get_facility_names_es: {
         Args: { facility_id_array: number[] }
