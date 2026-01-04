@@ -37,14 +37,20 @@ interface EventCardProps {
     event_badges?: string[];
     is_festival?: boolean | null;
     event_type?: string | null;
+    // Festival parent info for "day entry" events
+    primary_attraction_name?: string | null;
+    secondary_attraction_name?: string | null;
   };
+  // Optional: name of parent festival to show as badge (for artist day entries)
+  festivalName?: string;
 }
 
 interface EventCardComponentProps extends EventCardProps {
   priority?: boolean; // For LCP optimization - first 4 cards should have priority
+  festivalName?: string; // Name of parent festival to show as badge
 }
 
-const EventCard = memo(({ event, priority = false }: EventCardComponentProps) => {
+const EventCard = memo(({ event, priority = false, festivalName }: EventCardComponentProps) => {
   // Lazy loading state
   const [isInView, setIsInView] = useState(priority);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -153,6 +159,16 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
   // Determine if it's a festival based on is_festival OR event_type
   const isFestival = event.is_festival === true || event.event_type === 'festival';
   const eventUrl = getEventUrl(eventSlug || '', isFestival);
+  
+  // Determine festival badge name: passed prop or detect from event data
+  // If secondary_attraction_name exists and differs from primary, it's likely a festival day entry
+  const festivalBadgeName = festivalName || (
+    event.secondary_attraction_name && 
+    event.primary_attraction_name && 
+    event.secondary_attraction_name !== event.primary_attraction_name
+      ? event.primary_attraction_name
+      : null
+  );
 
   return (
     <Link to={eventUrl} className="group block">
@@ -192,6 +208,15 @@ const EventCard = memo(({ event, priority = false }: EventCardComponentProps) =>
                 <div className="absolute left-2 top-0.5 z-20">
                   <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
                     {badgeText}
+                  </Badge>
+                </div>
+              )}
+              
+              {/* Festival Badge - Top Right (when this is a day entry for a festival) */}
+              {festivalBadgeName && (
+                <div className="absolute right-2 top-2 z-20">
+                  <Badge variant="secondary" className="text-[9px] font-bold bg-black/70 text-white border-0 px-2 py-0.5 max-w-[120px] truncate">
+                    {festivalBadgeName}
                   </Badge>
                 </div>
               )}
