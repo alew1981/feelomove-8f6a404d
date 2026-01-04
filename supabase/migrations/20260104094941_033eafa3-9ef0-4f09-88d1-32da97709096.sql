@@ -1,0 +1,7 @@
+-- Refresh the materialized views to propagate slug changes
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_concerts_cards;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_festivals_cards;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_attractions;
+REFRESH MATERIALIZED VIEW CONCURRENTLY lovable_mv_event_product_page;
+REFRESH MATERIALIZED VIEW CONCURRENTLY lovable_mv_event_product_page_conciertos;
+REFRESH MATERIALIZED VIEW CONCURRENTLY lovable_mv_event_product_page_festivales;
