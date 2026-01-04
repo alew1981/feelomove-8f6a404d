@@ -105,17 +105,34 @@ const Producto = () => {
         throw new Error(`Error al cargar el evento: ${error.message}`);
       }
       
-      // If no event found with slug, try legacy redirect
-      if ((!data || data.length === 0) && slug) {
-        const redirected = await handleLegacyRedirect(slug, navigate);
-        if (redirected) return null;
-        throw new Error("Evento no encontrado");
+      // Event found - return it
+      if (data && data.length > 0) {
+        return data;
       }
       
-      return data;
+      // No event found - try the general view as fallback before giving up
+      if (viewName !== "lovable_mv_event_product_page") {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("lovable_mv_event_product_page")
+          .select("*")
+          .eq("event_slug", slug);
+        
+        if (!fallbackError && fallbackData && fallbackData.length > 0) {
+          return fallbackData;
+        }
+      }
+      
+      // Still not found - try legacy redirect
+      if (slug) {
+        const redirected = await handleLegacyRedirect(slug, navigate);
+        if (redirected) return null;
+      }
+      
+      throw new Error("Evento no encontrado");
     },
-    retry: 2,
-    retryDelay: 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * (attemptIndex + 1), 3000),
+    staleTime: 30000, // Cache for 30 seconds to prevent refetching on navigation
   });
 
 
