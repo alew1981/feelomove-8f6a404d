@@ -15,6 +15,7 @@ import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
 
 // Keywords that should redirect to /festivales
 const FESTIVAL_GENRE_KEYWORDS = ['festival-de-musica', 'festival de musica', 'festivales'];
@@ -400,6 +401,8 @@ const GeneroDetalle = () => {
                 </div>
               </div>
             )}
+            {/* Related Links for SEO */}
+            <RelatedLinks slug={genreParam} type="genre" />
           </>
         )}
       </div>

@@ -25,6 +25,7 @@ import { handleLegacyRedirect } from "@/utils/redirects";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
+import { RelatedLinks } from "@/components/RelatedLinks";
 
 interface PriceLevel {
   id: number;
@@ -913,6 +914,11 @@ const Producto = () => {
 
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
+        
+        {/* Related Links for SEO */}
+        <div className="container mx-auto px-4 pb-8">
+          <RelatedLinks slug={slug || ''} type="event" />
+        </div>
         
         <Footer />
       </div>

@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
@@ -604,6 +605,9 @@ const ArtistaDetalle = () => {
               </div>
             </div>
           )}
+          
+          {/* Related Links for SEO */}
+          <RelatedLinks slug={artistSlug} type="artist" />
         </div>
         <Footer />
       </div>

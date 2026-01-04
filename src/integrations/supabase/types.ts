@@ -1170,6 +1170,15 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_internal_links: {
+        Row: {
+          related_links: Json | null
+          source_id: string | null
+          source_slug: string | null
+          source_type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _postgis_deprecate: {
