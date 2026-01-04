@@ -153,6 +153,13 @@ export type Database = {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "mv_events_meta_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "mv_events_schema_org"
             referencedColumns: ["id"]
           },
@@ -621,6 +628,13 @@ export type Database = {
             foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
             columns: ["festival_event_id"]
             isOneToOne: true
+            referencedRelation: "mv_events_meta_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
             referencedRelation: "mv_events_schema_org"
             referencedColumns: ["id"]
           },
@@ -1007,6 +1021,31 @@ export type Database = {
           top_artists: string[] | null
           top_genres_json: Json | null
           top_venues_json: Json | null
+        }
+        Relationships: []
+      }
+      mv_events_meta_tags: {
+        Row: {
+          additional_metadata: Json | null
+          canonical_url: string | null
+          event_date: string | null
+          event_type: string | null
+          id: string | null
+          meta_description: string | null
+          meta_keywords: string[] | null
+          name: string | null
+          og_description: string | null
+          og_image: string | null
+          og_locale: string | null
+          og_site_name: string | null
+          og_title: string | null
+          og_type: string | null
+          og_url: string | null
+          slug: string | null
+          twitter_card: string | null
+          twitter_description: string | null
+          twitter_image: string | null
+          twitter_title: string | null
         }
         Relationships: []
       }
