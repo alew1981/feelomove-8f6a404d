@@ -15,10 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
+import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 
 const DestinoDetalle = () => {
   const { destino } = useParams<{ destino: string }>();
   const citySlug = destino ? decodeURIComponent(destino) : "";
+  
+  // Fetch SEO content from materialized view
+  const { seoContent } = useAggregationSEO(citySlug, 'city');
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -270,13 +274,13 @@ const DestinoDetalle = () => {
           </div>
           
           {/* Hero Image */}
-          <PageHero title={cityName} imageUrl={heroImage} />
+          <PageHero title={seoContent?.h1Content || cityName} imageUrl={heroImage} />
           
           {/* SEO Text */}
           <SEOText 
-            title={`Eventos en ${cityName}`}
-            description={`Encuentra todos los próximos conciertos y festivales en ${cityName}. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles${topArtists ? ` con artistas como ${topArtists}` : ''}.`}
-            keywords={[`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]}
+            title={seoContent?.h1Content || `Eventos en ${cityName}`}
+            description={seoContent?.introText || `Encuentra todos los próximos conciertos y festivales en ${cityName}. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles${topArtists ? ` con artistas como ${topArtists}` : ''}.`}
+            keywords={seoContent?.metaKeywords || [`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]}
           />
 
         {/* Filters and Search */}
