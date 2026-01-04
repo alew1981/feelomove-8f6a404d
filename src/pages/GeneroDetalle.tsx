@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
+import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 
 // Keywords that should redirect to /festivales
 const FESTIVAL_GENRE_KEYWORDS = ['festival-de-musica', 'festival de musica', 'festivales'];
@@ -27,6 +28,9 @@ const GeneroDetalle = () => {
   if (FESTIVAL_GENRE_KEYWORDS.some(k => normalizedGenre.includes(k.replace(/\s+/g, '-')))) {
     return <Navigate to="/festivales" replace />;
   }
+  
+  // Fetch SEO content from materialized view
+  const { seoContent } = useAggregationSEO(genreParam, 'genre');
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -288,11 +292,11 @@ const GeneroDetalle = () => {
         </div>
         
         {/* Hero Image */}
-        <PageHero title={genreName} imageUrl={heroImage} />
+        <PageHero title={seoContent?.h1Content || genreName} imageUrl={heroImage} />
         
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8">
-          Descubre los mejores eventos de {genreName}
+          {seoContent?.introText || `Descubre los mejores eventos de ${genreName}`}
         </p>
 
         {/* Filters and Search */}

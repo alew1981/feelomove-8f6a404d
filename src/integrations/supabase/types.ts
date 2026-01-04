@@ -942,6 +942,27 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_artists_seo_content: {
+        Row: {
+          artist_id: string | null
+          artist_name: string | null
+          artist_slug: string | null
+          cities_count: number | null
+          cities_list: string | null
+          h1_content: string | null
+          intro_text: string | null
+          last_event_date: string | null
+          main_genre: string | null
+          meta_keywords: string[] | null
+          min_price: number | null
+          next_event_date: string | null
+          og_tags: Json | null
+          seo_description: string | null
+          seo_title: string | null
+          total_upcoming_events: number | null
+        }
+        Relationships: []
+      }
       mv_attractions: {
         Row: {
           attraction_id: string | null
@@ -958,6 +979,27 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           top_cities_json: Json | null
+        }
+        Relationships: []
+      }
+      mv_cities_seo_content: {
+        Row: {
+          artists_count: number | null
+          available_genres: string | null
+          city_name: string | null
+          city_slug: string | null
+          genres_count: number | null
+          h1_content: string | null
+          intro_text: string | null
+          last_event_date: string | null
+          meta_keywords: string[] | null
+          min_price: number | null
+          next_event_date: string | null
+          og_tags: Json | null
+          seo_description: string | null
+          seo_title: string | null
+          top_artists: string | null
+          total_upcoming_events: number | null
         }
         Relationships: []
       }
@@ -1105,6 +1147,26 @@ export type Database = {
           genre_name: string | null
           image_genres: string | null
           last_event_date: string | null
+        }
+        Relationships: []
+      }
+      mv_genres_seo_content: {
+        Row: {
+          artists_count: number | null
+          cities_count: number | null
+          cities_with_events: string | null
+          genre_name: string | null
+          genre_slug: string | null
+          h1_content: string | null
+          intro_text: string | null
+          meta_keywords: string[] | null
+          min_price: number | null
+          next_event_date: string | null
+          og_tags: Json | null
+          seo_description: string | null
+          seo_title: string | null
+          top_artists: string | null
+          total_upcoming_events: number | null
         }
         Relationships: []
       }

@@ -18,6 +18,7 @@ import { useInView } from "react-intersection-observer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { normalizeSearch } from "@/lib/searchUtils";
+import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
@@ -42,6 +43,9 @@ const ArtistaDetalle = () => {
       navigate(`/conciertos/${artistSlug}`, { replace: true });
     }
   }, [rawSlug, artistSlug, navigate]);
+
+  // Fetch SEO content from materialized view
+  const { seoContent } = useAggregationSEO(artistSlug, 'artist');
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -377,8 +381,13 @@ const ArtistaDetalle = () => {
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
             <div className="container mx-auto">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight">
-                {artistName}
+                {seoContent?.h1Content || artistName}
               </h1>
+              {seoContent?.introText && (
+                <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
+                  {seoContent.introText}
+                </p>
+              )}
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
                   {events?.length || 0} eventos
