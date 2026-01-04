@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
 import { useSchemaOrg } from "@/hooks/useSchemaOrg";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -185,6 +186,9 @@ const Producto = () => {
 
   // Inject Schema.org JSON-LD from materialized view
   useSchemaOrg(slug);
+  
+  // Inject Open Graph and meta tags from materialized view
+  useMetaTags(slug);
 
   if (isLoading) {
     return <ProductoSkeleton />;
