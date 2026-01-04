@@ -43,14 +43,15 @@ interface EventCardProps {
   };
   // Optional: name of parent festival to show as badge (for artist day entries)
   festivalName?: string;
+  // Force route type - when true, always use /concierto/ route regardless of event_type
+  forceConcierto?: boolean;
 }
 
 interface EventCardComponentProps extends EventCardProps {
   priority?: boolean; // For LCP optimization - first 4 cards should have priority
-  festivalName?: string; // Name of parent festival to show as badge
 }
 
-const EventCard = memo(({ event, priority = false, festivalName }: EventCardComponentProps) => {
+const EventCard = memo(({ event, priority = false, festivalName, forceConcierto = false }: EventCardComponentProps) => {
   // Lazy loading state
   const [isInView, setIsInView] = useState(priority);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -93,8 +94,9 @@ const EventCard = memo(({ event, priority = false, festivalName }: EventCardComp
   // Detect if event has VIP tickets based on badges or name
   const hasVIP = badges.some((b: string) => /vip/i.test(b)) || /vip/i.test(eventName);
 
-  // Handle null/undefined dates
-  const hasDate = Boolean(event.event_date && event.event_date.length > 0);
+  // Handle null/undefined dates AND placeholder dates (9999-12-31)
+  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
+  const hasDate = Boolean(event.event_date) && !isPlaceholderDate(event.event_date);
   const eventDate = hasDate && event.event_date ? parseISO(event.event_date) : null;
   const dayNumber = eventDate ? format(eventDate, "dd") : '';
   const monthName = eventDate ? format(eventDate, "MMM", { locale: es }).toUpperCase() : '';
@@ -157,7 +159,8 @@ const EventCard = memo(({ event, priority = false, festivalName }: EventCardComp
   // If seats_available is null/undefined, don't show any availability badge
 
   // Determine if it's a festival based on is_festival OR event_type
-  const isFestival = event.is_festival === true || event.event_type === 'festival';
+  // BUT if forceConcierto is true (e.g., when inside FestivalDetalle), always use /concierto/
+  const isFestival = forceConcierto ? false : (event.is_festival === true || event.event_type === 'festival');
   const eventUrl = getEventUrl(eventSlug || '', isFestival);
   
   // Determine festival badge name: passed prop or detect from event data
@@ -226,25 +229,32 @@ const EventCard = memo(({ event, priority = false, festivalName }: EventCardComp
                 <CategoryBadge badges={badges} />
               </div>
 
-              {/* Date Card - Absolute positioned on the left - Only show if we have a date */}
-              {hasDate && (
-                <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
-                  <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
-                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
-                    <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
-                    <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
-                    {/* Time */}
-                    {time && <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>}
-                    {/* Location */}
-                    <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
-                      <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
-                      <span className="line-clamp-1 font-medium">
-                        {event.venue_city}
-                      </span>
-                    </div>
+              {/* Date Card - Absolute positioned on the left */}
+              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
+                <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
+                  {hasDate ? (
+                    <>
+                      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
+                      <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
+                      {/* Time */}
+                      {time && time !== "00:00" && <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>}
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">FECHA</div>
+                      <div className="text-xs font-bold text-gray-700 my-2 px-1">Pendiente fechas</div>
+                    </>
+                  )}
+                  {/* Location */}
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1 border-t border-gray-200 pt-1.5">
+                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                    <span className="line-clamp-1 font-medium">
+                      {event.venue_city || 'Por confirmar'}
+                    </span>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* VIP Badge and Countdown Timer - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">

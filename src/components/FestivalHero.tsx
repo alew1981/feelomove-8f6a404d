@@ -77,13 +77,14 @@ const FestivalHero = ({
   
   // Format date info
   const dateInfo = useMemo(() => {
-    if (!parsedDate) return { month: "TBC", day: "?", year: "", time: "", weekday: "" };
+    if (!parsedDate) return { month: "FECHA", day: "", year: "", time: "", weekday: "", pendiente: true };
     return {
       month: format(parsedDate, "MMM", { locale: es }).toUpperCase(),
       day: format(parsedDate, "dd"),
       year: format(parsedDate, "yyyy"),
       time: format(parsedDate, "HH:mm"),
       weekday: format(parsedDate, "EEEE", { locale: es }).toUpperCase(),
+      pendiente: false,
     };
   }, [parsedDate]);
 
@@ -119,12 +120,20 @@ const FestivalHero = ({
           <div className="text-xs md:text-sm font-bold text-primary">
             {dateInfo.month}
           </div>
-          <div className="text-3xl md:text-4xl font-black text-foreground leading-none my-1">
-            {dateInfo.day}
-          </div>
-          <div className="text-xs md:text-sm text-muted-foreground">
-            {dateInfo.year}
-          </div>
+          {dateInfo.pendiente ? (
+            <div className="text-xs md:text-sm font-bold text-muted-foreground my-2 px-1">
+              Pendiente fechas
+            </div>
+          ) : (
+            <>
+              <div className="text-3xl md:text-4xl font-black text-foreground leading-none my-1">
+                {dateInfo.day}
+              </div>
+              <div className="text-xs md:text-sm text-muted-foreground">
+                {dateInfo.year}
+              </div>
+            </>
+          )}
           {hasValidDate && (
             <>
               <div className="border-t border-border mt-2 pt-2">
@@ -143,6 +152,13 @@ const FestivalHero = ({
                 </div>
               )}
             </>
+          )}
+          {!hasValidDate && (city || venue) && (
+            <div className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">
+              <span className="flex items-center justify-center gap-1">
+                📍 {city || venue || "España"}
+              </span>
+            </div>
           )}
         </div>
       </div>

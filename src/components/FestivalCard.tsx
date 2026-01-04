@@ -123,11 +123,11 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   let dateDisplay: React.ReactNode;
   
   if (!hasValidDates) {
-    // Show "Fecha por confirmar" for placeholder dates - still show city
+    // Show "Pendiente fechas" for placeholder dates - still show city
     dateDisplay = (
       <div className="text-center px-3 py-3 bg-gradient-to-b from-gray-50 to-white">
         <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">FECHA</div>
-        <div className="text-sm font-bold text-gray-700 mt-1">Por confirmar</div>
+        <div className="text-xs font-bold text-gray-700 mt-1 px-1">Pendiente fechas</div>
         {/* Always show city */}
         <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-2 border-t border-gray-200 pt-2">
           <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
@@ -140,7 +140,6 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
     const startDay = format(startDate, "dd");
     const endDay = format(endDate, "dd");
     const year = format(startDate, "yyyy");
-    const time = format(startDate, "HH:mm");
     const dayDisplay = startDay === endDay ? startDay : `${startDay}-${endDay}`;
     
     dateDisplay = (
@@ -148,7 +147,6 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
         <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
         <div className="text-2xl font-black text-gray-900 leading-none my-1 whitespace-nowrap">{dayDisplay}</div>
         <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
-        {time && time !== "00:00" && <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>}
         <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
           <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
           <span className="line-clamp-1 font-medium">{festival.venue_city}</span>

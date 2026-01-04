@@ -346,6 +346,7 @@ const FestivalDetalle = () => {
                           event={event as any} 
                           priority={index < 4} 
                           festivalName={festivalData?.name}
+                          forceConcierto={true}
                         />
                       </div>
                     ))}
@@ -370,7 +371,7 @@ const FestivalDetalle = () => {
                           </div>
                         </div>
                         <div className="ring-2 ring-amber-500/50 rounded-lg overflow-hidden">
-                          <EventCard event={event as any} />
+                          <EventCard event={event as any} forceConcierto={true} />
                         </div>
                       </div>
                     ))}

@@ -16,6 +16,7 @@ import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
 
 const DestinoDetalle = () => {
   const { destino } = useParams<{ destino: string }>();
@@ -384,6 +385,9 @@ const DestinoDetalle = () => {
                 </div>
               </div>
             )}
+            
+            {/* Related Links for SEO */}
+            <RelatedLinks slug={citySlug} type="city" />
           </>
         )}
         </div>
