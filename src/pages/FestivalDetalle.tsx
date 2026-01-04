@@ -341,7 +341,11 @@ const FestivalDetalle = () => {
                         className="animate-fade-in"
                         style={{ animationDelay: `${index * 0.05}s` }}
                       >
-                        <EventCard event={event as any} priority={index < 4} />
+                        <EventCard 
+                          event={event as any} 
+                          priority={index < 4} 
+                          festivalName={festivalData?.name}
+                        />
                       </div>
                     ))}
                   </div>

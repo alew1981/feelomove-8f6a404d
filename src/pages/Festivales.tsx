@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X, Tent, Bus, Calendar } from "lucide-react";
+import { Search, X, Calendar } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
@@ -15,8 +15,6 @@ import FestivalCard from "@/components/FestivalCard";
 import ParentFestivalCard from "@/components/ParentFestivalCard";
 import { FestivalProductPage } from "@/types/events.types";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -228,8 +226,6 @@ const Festivales = () => {
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterSort, setFilterSort] = useState<string>("proximos");
   const [filterDuration, setFilterDuration] = useState<string>("all");
-  const [filterCamping, setFilterCamping] = useState<boolean>(false);
-  const [filterTransport, setFilterTransport] = useState<boolean>(false);
 
   // Fetch festivals using the new dedicated festivals view
   const { data: festivals, isLoading } = useQuery({
@@ -396,12 +392,6 @@ const Festivales = () => {
         if (filterDuration === "4+" && days < 4) return false;
       }
       
-      // Camping filter
-      if (filterCamping && !festival.festival_camping_available) return false;
-      
-      // Transport filter
-      if (filterTransport && !festival.festival_has_official_transport) return false;
-      
       return true;
     };
     
@@ -434,7 +424,7 @@ const Festivales = () => {
     }
     
     return { parentFestivals: filteredParents, standaloneFestivals: filteredStandalone };
-  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration, filterCamping, filterTransport]);
+  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration]);
 
   // Get hero image from first festival
   const heroImage = festivals?.[0]?.image_large_url || "/placeholder.svg";
@@ -443,7 +433,7 @@ const Festivales = () => {
   const totalCount = filteredData.parentFestivals.length + filteredData.standaloneFestivals.length;
 
   // Check if any advanced filter is active
-  const hasAdvancedFilters = filterDuration !== "all" || filterCamping || filterTransport;
+  const hasAdvancedFilters = filterDuration !== "all";
 
   // Generate JSON-LD for festivals list
   const allFilteredFestivals = [...filteredData.standaloneFestivals, ...filteredData.parentFestivals.flatMap(p => p.events)];
@@ -604,33 +594,6 @@ const Festivales = () => {
               </Select>
             </div>
 
-            {/* Advanced Filters Row - Camping & Transport toggles */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="camping-filter"
-                  checked={filterCamping}
-                  onCheckedChange={setFilterCamping}
-                />
-                <Label htmlFor="camping-filter" className="flex items-center gap-1.5 text-sm cursor-pointer">
-                  <Tent className="h-4 w-4" />
-                  Con camping
-                </Label>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="transport-filter"
-                  checked={filterTransport}
-                  onCheckedChange={setFilterTransport}
-                />
-                <Label htmlFor="transport-filter" className="flex items-center gap-1.5 text-sm cursor-pointer">
-                  <Bus className="h-4 w-4" />
-                  Con transporte oficial
-                </Label>
-              </div>
-            </div>
-
             {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterSort !== "proximos" || hasAdvancedFilters) && (
               <div className="flex justify-end">
                 <button
@@ -640,8 +603,6 @@ const Festivales = () => {
                     setFilterMonth("all");
                     setFilterSort("proximos");
                     setFilterDuration("all");
-                    setFilterCamping(false);
-                    setFilterTransport(false);
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
