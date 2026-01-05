@@ -147,27 +147,30 @@ ${urlsXml}
       });
     }
 
-    // Artists Sitemap - ONLY artists with future events (using URL structure /conciertos/:artist)
+    // Artists Sitemap - ONLY artists with future events (using existing slug field)
     if (type === "artists") {
-      // Query events directly to get only artists with future events
-      const { data: events, error } = await supabase
-        .from("tm_tbl_events")
-        .select("primary_attraction_name, primary_attraction_id, event_date")
-        .eq("cancelled", false)
-        .gte("event_date", new Date().toISOString())
-        .lt("event_date", "9999-01-01")
-        .not("primary_attraction_id", "is", null)
-        .not("primary_attraction_name", "is", null)
-        .order("event_date", { ascending: false })
-        .limit(10000);
+      // Query from mv_attractions which has proper slugs, then filter by future events
+      const { data: attractions, error: attractionsError } = await supabase
+        .from("mv_attractions")
+        .select("attraction_id, attraction_slug, attraction_name, next_event_date")
+        .not("attraction_slug", "is", null)
+        .not("attraction_id", "is", null)
+        .gte("next_event_date", today)
+        .limit(5000);
 
-      if (error) throw error;
+      if (attractionsError) {
+        console.error("Error fetching attractions:", attractionsError);
+        throw attractionsError;
+      }
 
       // Exclusion patterns for non-artist entries
       const excludePatterns = [
         'servicio de autobus',
+        'servicio-de-autobus',
         'plaza de parking',
+        'plaza-de-parking',
         'artista invisible',
+        'artista-invisible',
         'parking',
         'alojamiento',
         'camping',
@@ -175,44 +178,35 @@ ${urlsXml}
         'transporte'
       ];
 
-      // Group by artist and get latest event date
-      const artistsMap = new Map<string, { name: string; lastEventDate: string }>();
-      
-      (events || []).forEach(e => {
-        if (!e.primary_attraction_name || !e.primary_attraction_id) return;
-        
-        const nameLower = e.primary_attraction_name.toLowerCase();
-        
-        // Skip excluded patterns
-        for (const pattern of excludePatterns) {
-          if (nameLower.includes(pattern)) return;
-        }
-        
-        // Use attraction ID as key to avoid duplicates with different name casing
-        if (!artistsMap.has(e.primary_attraction_id)) {
-          artistsMap.set(e.primary_attraction_id, {
-            name: e.primary_attraction_name,
-            lastEventDate: e.event_date
-          });
-        }
-      });
-
-      // Generate slugs and URLs
-      const urlsXml = Array.from(artistsMap.values())
-        .map(artist => {
-          const slug = normalizeSlug(artist.name);
-          if (!slug) return null;
+      // Filter and generate URLs
+      const urlsXml = (attractions || [])
+        .filter(a => {
+          if (!a.attraction_slug || a.attraction_slug === '') return false;
           
-          const lastmod = artist.lastEventDate ? artist.lastEventDate.split('T')[0] : today;
+          const nameLower = (a.attraction_name || '').toLowerCase();
+          const slugLower = a.attraction_slug.toLowerCase();
+          
+          // Skip excluded patterns
+          for (const pattern of excludePatterns) {
+            if (nameLower.includes(pattern) || slugLower.includes(pattern)) {
+              return false;
+            }
+          }
+          
+          return true;
+        })
+        .map(a => {
+          const lastmod = a.next_event_date ? a.next_event_date.split('T')[0] : today;
           return `  <url>
-    <loc>${BASE_URL}/conciertos/${slug}</loc>
+    <loc>${BASE_URL}/conciertos/${a.attraction_slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`;
         })
-        .filter(Boolean)
         .join('\n');
+
+      console.log(`Generated ${(attractions || []).length} artist URLs for sitemap`);
 
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
