@@ -201,8 +201,8 @@ const Hero = () => {
       <div className="container mx-auto px-4 z-10 text-center pt-32 pb-20">
         <div className="animate-fade-in">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 text-white tracking-tight">
-            TU ESPECTÁCULO,{" "}
-            <span className="text-accent">TU ESTANCIA</span>
+            CONCIERTOS + HOTEL.{" "}
+            <span className="text-accent">TODO RESUELTO.</span>
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto font-medium">
             Ahorra en grande y quédate cerca: reserva tu próxima aventura hoy con Feelomove+
