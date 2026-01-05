@@ -3,6 +3,8 @@ Allow: /
 
 # Sitemap Index
 Sitemap: https://feelomove.com/sitemap.xml
+Sitemap: https://feelomove.com/sitemap-concerts.xml
+Sitemap: https://feelomove.com/sitemap-festivals.xml
 
 # Bloquear parámetros de tracking
 Disallow: /*?utm_
@@ -10,9 +12,14 @@ Disallow: /*?fbclid=
 Disallow: /*&utm_
 Disallow: /*&fbclid=
 
+# Bloquear slugs antiguos con formato de fecha
+Disallow: /concierto/*-????-??-??
+Disallow: /festival/*-????-??-??
+
 # Bloquear áreas privadas
 Disallow: /admin/
 Disallow: /api/private/
+Disallow: /404
 
 # Permitir todas las páginas de eventos
 Allow: /concierto/
