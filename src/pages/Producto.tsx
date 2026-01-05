@@ -88,6 +88,19 @@ const Producto = () => {
     queryFn: async () => {
       if (!slug) throw new Error("No se proporcionó el identificador del evento");
       
+      // Check for canonical slug redirect FIRST
+      const { data: canonicalSlug, error: rpcError } = await supabase
+        .rpc('get_canonical_slug' as any, { input_slug: slug });
+      
+      // If we have a different canonical slug, redirect 301
+      if (!rpcError && canonicalSlug && canonicalSlug !== slug) {
+        const redirectPath = isFestivalRoute 
+          ? `/festival/${canonicalSlug}` 
+          : `/concierto/${canonicalSlug}`;
+        navigate(redirectPath, { replace: true });
+        return null; // Stop execution, redirect will happen
+      }
+      
       // Use specific view based on route type
       const viewName = isFestivalRoute 
         ? "lovable_mv_event_product_page_festivales" 
