@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      canonical_event_urls: {
+        Row: {
+          canonical_event_id: string
+          canonical_slug: string
+          created_at: string | null
+          duplicate_event_ids: string[] | null
+          duplicate_slugs: string[] | null
+          event_date: string
+          event_name: string
+          id: string
+          updated_at: string | null
+          venue_city: string
+        }
+        Insert: {
+          canonical_event_id: string
+          canonical_slug: string
+          created_at?: string | null
+          duplicate_event_ids?: string[] | null
+          duplicate_slugs?: string[] | null
+          event_date: string
+          event_name: string
+          id?: string
+          updated_at?: string | null
+          venue_city: string
+        }
+        Update: {
+          canonical_event_id?: string
+          canonical_slug?: string
+          created_at?: string | null
+          duplicate_event_ids?: string[] | null
+          duplicate_slugs?: string[] | null
+          event_date?: string
+          event_name?: string
+          id?: string
+          updated_at?: string | null
+          venue_city?: string
+        }
+        Relationships: []
+      }
       lite_tbl_city_mapping: {
         Row: {
           country_code: string | null
@@ -363,6 +402,7 @@ export type Database = {
           door_opening_date: string | null
           event_date: string
           event_type: string | null
+          exclude_from_sitemap: boolean | null
           external_url: boolean | null
           has_hotel_prices: boolean | null
           has_real_availability: boolean | null
@@ -427,6 +467,7 @@ export type Database = {
           door_opening_date?: string | null
           event_date: string
           event_type?: string | null
+          exclude_from_sitemap?: boolean | null
           external_url?: boolean | null
           has_hotel_prices?: boolean | null
           has_real_availability?: boolean | null
@@ -491,6 +532,7 @@ export type Database = {
           door_opening_date?: string | null
           event_date?: string
           event_type?: string | null
+          exclude_from_sitemap?: boolean | null
           external_url?: boolean | null
           has_hotel_prices?: boolean | null
           has_real_availability?: boolean | null
