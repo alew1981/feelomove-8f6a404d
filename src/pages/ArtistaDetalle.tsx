@@ -116,6 +116,14 @@ const ArtistaDetalle = () => {
     enabled: !!artistSlug,
   });
 
+  // Redirect to 404 if artist has no future events
+  useEffect(() => {
+    // Only redirect after loading is complete and we have no events
+    if (!isLoading && events !== undefined && events.length === 0) {
+      navigate("/404", { replace: true });
+    }
+  }, [events, isLoading, navigate]);
+
   // Get artist name from first event - check both artist_name (concerts) and main_attraction (festivals)
   const artistName = events && events.length > 0 
     ? (events[0] as any).artist_name || (events[0] as any).main_attraction || artistSlug.replace(/-/g, ' ')

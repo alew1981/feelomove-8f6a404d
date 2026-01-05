@@ -1,6 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Home, Search, Music, Ticket, Bus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +120,13 @@ const NotFound = () => {
 
   return (
     <>
+      {/* SEO: Tell search engines not to index 404 pages */}
+      <Helmet>
+        <title>404 - Página no encontrada | Feelomove</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="googlebot" content="noindex, nofollow" />
+        <meta name="description" content="La página que buscas no existe o ha sido movida. Explora nuestros conciertos y festivales disponibles." />
+      </Helmet>
       <Navbar />
       <div className="flex min-h-screen flex-col pt-16">
         <div className="flex-1 flex items-center justify-center bg-background py-16 px-4">

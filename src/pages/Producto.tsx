@@ -118,8 +118,27 @@ const Producto = () => {
         throw new Error(`Error al cargar el evento: ${error.message}`);
       }
       
-      // Event found - return it
+      // Event found - check if valid (not cancelled, not past)
       if (data && data.length > 0) {
+        const event = data[0] as any;
+        
+        // Check if event is cancelled
+        if (event.cancelled === true) {
+          navigate("/404", { replace: true });
+          return null;
+        }
+        
+        // Check if event has passed (only if it has a valid date)
+        const eventDate = event.event_date;
+        if (eventDate && !eventDate.startsWith('9999')) {
+          const eventDateTime = new Date(eventDate);
+          const now = new Date();
+          if (eventDateTime < now) {
+            navigate("/404", { replace: true });
+            return null;
+          }
+        }
+        
         return data;
       }
       
