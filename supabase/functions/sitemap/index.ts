@@ -252,19 +252,46 @@ ${urlsXml}
 
       if (pagesError) throw pagesError;
 
-      // Get individual festival events (excluding VIP variants)
+      // Get individual festival events (excluding problematic events)
       const { data: festivalEvents, error: eventsError } = await supabase
         .from("tm_tbl_events")
-        .select("slug, event_date")
+        .select("slug, event_date, updated_at, name, primary_attraction_name, exclude_from_sitemap")
         .eq("event_type", "festival")
         .eq("cancelled", false)
         .gte("event_date", new Date().toISOString())
-        .not("slug", "like", "%-paquetes-vip%")
-        .not("slug", "like", "%-vip%")
+        .lt("event_date", "9999-01-01")
+        .not("slug", "is", null)
         .order("event_date", { ascending: true })
         .limit(5000);
 
       if (eventsError) throw eventsError;
+
+      // Filter out problematic events
+      const excludePatterns = ['parking', 'alojamiento', 'camping', 'upgrade', 'paquetes-vip', 'vip'];
+      const slugWithLongNumbers = /\d{5,}/; // Slugs with 5+ consecutive digits
+      
+      const filteredFestivalEvents = (festivalEvents || []).filter(f => {
+        if (!f.slug || f.slug === '') return false;
+        if (f.exclude_from_sitemap === true) return false;
+        if (slugWithLongNumbers.test(f.slug)) return false;
+        
+        const nameLower = (f.name || '').toLowerCase();
+        const attractionLower = (f.primary_attraction_name || '').toLowerCase();
+        
+        for (const pattern of excludePatterns) {
+          if (nameLower.includes(pattern) || attractionLower.includes(pattern)) {
+            return false;
+          }
+          if (f.slug.includes(pattern)) {
+            return false;
+          }
+        }
+        
+        // Also exclude "artista invisible"
+        if (attractionLower.includes('artista invisible')) return false;
+        
+        return true;
+      });
 
       // Get unique festival page slugs
       const festivalPageSlugs = new Set<string>();
@@ -282,10 +309,12 @@ ${urlsXml}
         }
       });
 
-      // Add individual festival events (using /festival/)
-      (festivalEvents || []).forEach(f => {
-        if (f.slug) {
-          const lastmod = f.event_date ? f.event_date.split('T')[0] : today;
+      // Add individual festival events (using /festival/) - deduplicate by slug
+      const addedSlugs = new Set<string>();
+      filteredFestivalEvents.forEach(f => {
+        if (f.slug && !addedSlugs.has(f.slug)) {
+          addedSlugs.add(f.slug);
+          const lastmod = f.updated_at ? f.updated_at.split('T')[0] : (f.event_date ? f.event_date.split('T')[0] : today);
           urlsArr.push(`  <url>
     <loc>${BASE_URL}/festival/${f.slug}</loc>
     <lastmod>${lastmod}</lastmod>
