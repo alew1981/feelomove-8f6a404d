@@ -147,24 +147,71 @@ ${urlsXml}
       });
     }
 
-    // Artists Sitemap - using URL structure /conciertos/:artist
+    // Artists Sitemap - ONLY artists with future events (using URL structure /conciertos/:artist)
     if (type === "artists") {
-      const { data: artists, error } = await supabase
-        .from("mv_attractions")
-        .select("attraction_slug, attraction_name")
-        .not("attraction_slug", "is", null)
-        .limit(5000);
+      // Query events directly to get only artists with future events
+      const { data: events, error } = await supabase
+        .from("tm_tbl_events")
+        .select("primary_attraction_name, primary_attraction_id, event_date")
+        .eq("cancelled", false)
+        .gte("event_date", new Date().toISOString())
+        .lt("event_date", "9999-01-01")
+        .not("primary_attraction_id", "is", null)
+        .not("primary_attraction_name", "is", null)
+        .order("event_date", { ascending: false })
+        .limit(10000);
 
       if (error) throw error;
 
-      const urlsXml = (artists || [])
-        .filter(a => a.attraction_slug)
-        .map(a => `  <url>
-    <loc>${BASE_URL}/conciertos/${a.attraction_slug}</loc>
-    <lastmod>${today}</lastmod>
+      // Exclusion patterns for non-artist entries
+      const excludePatterns = [
+        'servicio de autobus',
+        'plaza de parking',
+        'artista invisible',
+        'parking',
+        'alojamiento',
+        'camping',
+        'upgrade',
+        'transporte'
+      ];
+
+      // Group by artist and get latest event date
+      const artistsMap = new Map<string, { name: string; lastEventDate: string }>();
+      
+      (events || []).forEach(e => {
+        if (!e.primary_attraction_name || !e.primary_attraction_id) return;
+        
+        const nameLower = e.primary_attraction_name.toLowerCase();
+        
+        // Skip excluded patterns
+        for (const pattern of excludePatterns) {
+          if (nameLower.includes(pattern)) return;
+        }
+        
+        // Use attraction ID as key to avoid duplicates with different name casing
+        if (!artistsMap.has(e.primary_attraction_id)) {
+          artistsMap.set(e.primary_attraction_id, {
+            name: e.primary_attraction_name,
+            lastEventDate: e.event_date
+          });
+        }
+      });
+
+      // Generate slugs and URLs
+      const urlsXml = Array.from(artistsMap.values())
+        .map(artist => {
+          const slug = normalizeSlug(artist.name);
+          if (!slug) return null;
+          
+          const lastmod = artist.lastEventDate ? artist.lastEventDate.split('T')[0] : today;
+          return `  <url>
+    <loc>${BASE_URL}/conciertos/${slug}</loc>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>`)
+  </url>`;
+        })
+        .filter(Boolean)
         .join('\n');
 
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
