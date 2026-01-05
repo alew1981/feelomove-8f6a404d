@@ -293,14 +293,13 @@ ${urlsXml}
 
       if (pagesError) throw pagesError;
 
-      // Get individual festival events (excluding problematic events)
+      // Get individual festival events (INCLUDING festivals without confirmed date - 9999)
       const { data: festivalEvents, error: eventsError } = await supabase
         .from("tm_tbl_events")
         .select("slug, event_date, updated_at, name, primary_attraction_name, exclude_from_sitemap")
         .eq("event_type", "festival")
         .eq("cancelled", false)
         .gte("event_date", new Date().toISOString())
-        .lt("event_date", "9999-01-01")
         .not("slug", "is", null)
         .order("event_date", { ascending: true })
         .limit(5000);
@@ -355,7 +354,21 @@ ${urlsXml}
       filteredFestivalEvents.forEach(f => {
         if (f.slug && !addedSlugs.has(f.slug)) {
           addedSlugs.add(f.slug);
-          const lastmod = f.updated_at ? f.updated_at.split('T')[0] : (f.event_date ? f.event_date.split('T')[0] : today);
+          
+          // For lastmod: if event_date is 9999 (TBC), use today's date, otherwise use updated_at
+          let lastmod = today;
+          if (f.event_date) {
+            const eventYear = new Date(f.event_date).getFullYear();
+            if (eventYear >= 9999) {
+              // Festival without confirmed date - use current date
+              lastmod = today;
+            } else if (f.updated_at) {
+              lastmod = f.updated_at.split('T')[0];
+            } else {
+              lastmod = f.event_date.split('T')[0];
+            }
+          }
+          
           urlsArr.push(`  <url>
     <loc>${BASE_URL}/festival/${f.slug}</loc>
     <lastmod>${lastmod}</lastmod>
@@ -364,6 +377,8 @@ ${urlsXml}
   </url>`);
         }
       });
+
+      console.log(`Generated ${urlsArr.length} festival URLs for sitemap`);
 
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
