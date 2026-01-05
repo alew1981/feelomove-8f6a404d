@@ -134,9 +134,9 @@ const NotFound = () => {
             {/* Error Header */}
             <div className="mb-8">
               <h1 className="text-8xl md:text-9xl font-black text-primary mb-4">404</h1>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Página no encontrada</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">No encontramos este evento</h2>
               <p className="text-muted-foreground text-lg mb-6 max-w-md mx-auto">
-                Lo sentimos, la página que buscas no existe o ha sido movida.
+                Puede que el evento haya pasado, esté agotado o la URL sea incorrecta. ¡Pero tenemos más opciones para ti!
               </p>
             </div>
 
@@ -145,13 +145,13 @@ const NotFound = () => {
               <div className="flex gap-2">
                 <Input
                   type="text"
-                  placeholder="Buscar eventos, artistas..."
+                  placeholder="Buscar artistas, ciudades, eventos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 h-12"
                 />
-                <Button type="submit" variant="default">
-                  <Search className="h-4 w-4" />
+                <Button type="submit" variant="default" size="lg">
+                  <Search className="h-5 w-5" />
                 </Button>
               </div>
             </form>
@@ -159,15 +159,21 @@ const NotFound = () => {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link to="/">
-                  <Home className="mr-2 h-5 w-5" />
-                  Ir al Inicio
+                <Link to="/conciertos">
+                  <Music className="mr-2 h-5 w-5" />
+                  Ver Conciertos
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/eventos">
+                <Link to="/festivales">
                   <Ticket className="mr-2 h-5 w-5" />
-                  Ver Eventos
+                  Ver Festivales
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost">
+                <Link to="/">
+                  <Home className="mr-2 h-5 w-5" />
+                  Ir al Inicio
                 </Link>
               </Button>
             </div>
@@ -175,7 +181,7 @@ const NotFound = () => {
             {/* Suggested Events by Type */}
             {(concerts?.length || festivals?.length) && (
               <div className="mt-8">
-                <h3 className="text-xl md:text-2xl font-bold mb-6 text-foreground">Explora estos eventos</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-6 text-foreground">Quizás te interese:</h3>
                 
                 <Tabs defaultValue="conciertos" className="w-full">
                   <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
