@@ -82,6 +82,9 @@ const Producto = () => {
   
   const [showAllTickets, setShowAllTickets] = useState(false);
 
+  // State to store canonical slug from RPC
+  const [rpcCanonicalSlug, setRpcCanonicalSlug] = useState<string | null>(null);
+
   // Fetch event details from specific views based on route type
   const { data: eventData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["event-product-page", slug, isFestivalRoute],
@@ -91,6 +94,11 @@ const Producto = () => {
       // Check for canonical slug redirect FIRST
       const { data: canonicalSlug, error: rpcError } = await supabase
         .rpc('get_canonical_slug' as any, { input_slug: slug });
+      
+      // Store the canonical slug for SEO purposes
+      if (!rpcError && canonicalSlug) {
+        setRpcCanonicalSlug(canonicalSlug);
+      }
       
       // If we have a different canonical slug, redirect 301
       if (!rpcError && canonicalSlug && canonicalSlug !== slug) {
@@ -487,15 +495,19 @@ const Producto = () => {
   // Get image - prioritize image_large_url
   const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
 
-  // Detect VIP variant and build canonical URL
+  // Build canonical URL using RPC canonical slug, VIP variant detection, or current slug
   const currentSlug = eventDetails.event_slug || '';
   const isVipVariant = currentSlug.includes('-paquetes-vip') || currentSlug.includes('-vip');
-  const canonicalSlug = isVipVariant 
-    ? currentSlug.replace(/-paquetes-vip|-vip/g, '') 
-    : currentSlug;
   
-  // Build canonical URL - for VIP variants, point to base event; otherwise, point to self
-  const eventType = eventDetails.is_festival ? 'festival' : 'concierto';
+  // Priority: 1. RPC canonical slug, 2. VIP variant cleanup, 3. Current slug
+  const canonicalSlug = rpcCanonicalSlug 
+    ? rpcCanonicalSlug 
+    : isVipVariant 
+      ? currentSlug.replace(/-paquetes-vip|-vip/g, '') 
+      : currentSlug;
+  
+  // Build canonical URL - always use the canonical slug
+  const eventType = isFestivalRoute ? 'festival' : 'concierto';
   const canonicalUrl = `/${eventType}/${canonicalSlug}`;
   const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
 
