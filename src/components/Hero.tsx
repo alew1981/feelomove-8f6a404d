@@ -210,12 +210,12 @@ const Hero = () => {
       <div className="container mx-auto px-4 z-10 text-center pt-32 pb-20">
         <div className="animate-fade-in">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 text-white tracking-tight">
-            CONCIERTOS + HOTEL.
+            Entradas para Conciertos y Festivales en España
             <br />
-            <span className="text-accent">TODO RESUELTO.</span>
+            <span className="text-accent">+ Hotel. Todo Resuelto.</span>
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto font-medium">
-            Ahorra en grande y quédate cerca: reserva tu próxima aventura hoy con Feelomove+
+            Compra entradas y reserva hotel cerca del evento. Ahorra tiempo y dinero con Feelomove+
           </p>
         </div>
 

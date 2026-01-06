@@ -193,10 +193,11 @@ const Index = () => {
     <>
       <SEOHead
         title="Entradas Conciertos y Festivales España 2025"
-        description="Compra entradas para conciertos y festivales en España. Reserva hotel cerca del evento. Todo resuelto en un solo lugar."
-        canonical="/"
-        keywords="entradas conciertos, festivales españa 2025, hoteles eventos, conciertos madrid, festivales barcelona"
+        description="Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento y ahorra. ¡Descubre los mejores eventos ahora!"
+        canonical="https://feelomove.com/"
+        keywords="entradas conciertos españa, festivales españa 2025, hoteles para festivales, transporte conciertos, logística eventos musicales"
         jsonLd={jsonLd}
+        ogImage="https://feelomove.com/og-image.jpg"
       />
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -204,14 +205,14 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-12 space-y-16">
         {/* Feelomove + love - Featured Events */}
-        <section>
+        <section aria-labelledby="featured-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold mb-1 flex items-center gap-2">
-                Feelomove + love
-                <Heart className="h-5 w-5 text-accent fill-accent" />
+              <h2 id="featured-heading" className="text-3xl font-bold mb-1 flex items-center gap-2">
+                Eventos Destacados
+                <Heart className="h-5 w-5 text-accent fill-accent" aria-hidden="true" />
               </h2>
-              <p className="text-muted-foreground">Nuestros eventos favoritos</p>
+              <p className="text-muted-foreground">Los conciertos y festivales más populares de 2025</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -228,13 +229,13 @@ const Index = () => {
         </section>
 
         {/* Próximos Festivales - moved up */}
-        <section>
+        <section aria-labelledby="festivals-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Próximos Festivales</h2>
-              <p className="text-muted-foreground">Experiencias multi-día inolvidables</p>
+              <h2 id="festivals-heading" className="text-3xl font-bold mb-2">Festivales de Música en España</h2>
+              <p className="text-muted-foreground">Los mejores festivales con hoteles cerca del recinto</p>
             </div>
-            <Link to="/festivales" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <Link to="/festivales" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los festivales de música">
               Ver todos →
             </Link>
           </div>
@@ -253,13 +254,13 @@ const Index = () => {
 
         {/* City-specific sections */}
         {FEATURED_CITIES.map((city) => (
-          <section key={city}>
+          <section key={city} aria-labelledby={`city-${city.toLowerCase()}-heading`}>
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-3xl font-bold mb-2">Destacados en {city}</h2>
-                <p className="text-muted-foreground">Los mejores eventos en {city}</p>
+                <h2 id={`city-${city.toLowerCase()}-heading`} className="text-3xl font-bold mb-2">Conciertos y Festivales en {city}</h2>
+                <p className="text-muted-foreground">Entradas y hoteles para eventos en {city}</p>
               </div>
-              <Link to={`/destinos/${city.toLowerCase()}`} className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+              <Link to={`/destinos/${city.toLowerCase()}`} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={`Ver todos los eventos en ${city}`}>
                 Ver todos →
               </Link>
             </div>
@@ -278,13 +279,13 @@ const Index = () => {
         ))}
 
         {/* Próximos Conciertos */}
-        <section>
+        <section aria-labelledby="concerts-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Próximos Conciertos</h2>
-              <p className="text-muted-foreground">Los conciertos más esperados</p>
+              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">Conciertos en España 2025</h2>
+              <p className="text-muted-foreground">Compra entradas para los conciertos más esperados</p>
             </div>
-            <Link to="/conciertos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <Link to="/conciertos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los conciertos en España">
               Ver todos →
             </Link>
           </div>
@@ -301,13 +302,13 @@ const Index = () => {
 
 
         {/* Eventos con Hotel */}
-        <section>
+        <section aria-labelledby="hotels-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Eventos con Hotel</h2>
-              <p className="text-muted-foreground">Paquetes completos de evento + alojamiento</p>
+              <h2 id="hotels-heading" className="text-3xl font-bold mb-2">Hoteles para Festivales y Conciertos</h2>
+              <p className="text-muted-foreground">Paquetes de entradas + alojamiento cerca del evento</p>
             </div>
-            <Link to="/conciertos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <Link to="/conciertos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver paquetes de eventos con hotel">
               Ver todos →
             </Link>
           </div>
@@ -323,10 +324,10 @@ const Index = () => {
         </section>
 
         {/* Destinos Populares */}
-        <section>
+        <section aria-labelledby="destinations-heading">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Destinos Populares</h2>
-            <Link to="/destinos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <h2 id="destinations-heading" className="text-3xl font-bold">Ciudades con Eventos Musicales</h2>
+            <Link to="/destinos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los destinos con eventos">
               Ver todos →
             </Link>
           </div>
@@ -368,10 +369,10 @@ const Index = () => {
         </section>
 
         {/* Artistas */}
-        <section>
+        <section aria-labelledby="artists-heading">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Artistas</h2>
-            <Link to="/artistas" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <h2 id="artists-heading" className="text-3xl font-bold">Artistas en Gira por España</h2>
+            <Link to="/artistas" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los artistas con conciertos">
               Ver todos →
             </Link>
           </div>
@@ -413,10 +414,10 @@ const Index = () => {
         </section>
 
         {/* Géneros */}
-        <section>
+        <section aria-labelledby="genres-heading">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Géneros</h2>
-            <Link to="/generos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors">
+            <h2 id="genres-heading" className="text-3xl font-bold">Géneros Musicales</h2>
+            <Link to="/musica" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Explorar todos los géneros musicales">
               Ver todos →
             </Link>
           </div>
@@ -456,6 +457,32 @@ const Index = () => {
                 </Link>
               ))
             )}
+          </div>
+        </section>
+
+        {/* SEO Content Block - Bloque de texto informativo */}
+        <section className="mt-20 pt-12 border-t border-border">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6">Tu plataforma de logística para eventos musicales en España</h2>
+            <div className="prose prose-lg max-w-none text-muted-foreground space-y-4">
+              <p>
+                <strong>Feelomove+</strong> es la plataforma líder en <strong>logística de eventos</strong> musicales en España. 
+                Facilitamos la compra de entradas para los mejores conciertos y festivales del país, combinándolas con 
+                <strong> hoteles para festivales</strong> cercanos al recinto. Nuestro objetivo es que disfrutes de la música 
+                sin preocuparte por nada más.
+              </p>
+              <p>
+                Ya sea que busques <strong>transporte para conciertos</strong> en Madrid, alojamiento cerca de festivales en 
+                Barcelona, o paquetes completos para eventos en Valencia o Sevilla, en Feelomove+ encontrarás todo lo que 
+                necesitas. Trabajamos con los mejores proveedores para ofrecerte precios competitivos y una experiencia de 
+                reserva sencilla.
+              </p>
+              <p>
+                Explora nuestro catálogo de más de 500 eventos en toda España: desde conciertos íntimos de rock y pop hasta 
+                grandes festivales de música electrónica y jazz. Cada evento incluye opciones de <strong>hoteles cercanos</strong>, 
+                información del recinto y consejos para que tu experiencia sea inolvidable. ¡Reserva hoy y vive la música!
+              </p>
+            </div>
           </div>
         </section>
       </main>
