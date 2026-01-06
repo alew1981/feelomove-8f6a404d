@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react";
 
 interface PageHeroProps {
   title: string;
+  subtitle?: string;
   imageUrl?: string;
   className?: string;
+  priority?: boolean; // LCP optimization
 }
 
-const PageHero = ({ title, imageUrl, className = "" }: PageHeroProps) => {
+const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }: PageHeroProps) => {
   // Use a default concert image if none provided
   const defaultImage = "https://s1.ticketm.net/dam/a/512/655083a1-b8c6-45f5-ba9a-f7c3bca2c512_EVENT_DETAIL_PAGE_16_9.jpg";
   const finalImage = imageUrl && imageUrl !== "/placeholder.svg" ? imageUrl : defaultImage;
@@ -14,20 +16,24 @@ const PageHero = ({ title, imageUrl, className = "" }: PageHeroProps) => {
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  // Parallax effect on scroll
+  // Parallax effect on scroll - deferred to avoid blocking LCP
   useEffect(() => {
-    const handleScroll = () => {
-      if (heroRef.current) {
-        const rect = heroRef.current.getBoundingClientRect();
-        if (rect.bottom > 0 && rect.top < window.innerHeight) {
-          // Only apply parallax when hero is visible
-          setScrollOffset(window.scrollY * 0.3);
+    // Delay parallax registration to not block initial render
+    const timeoutId = setTimeout(() => {
+      const handleScroll = () => {
+        if (heroRef.current) {
+          const rect = heroRef.current.getBoundingClientRect();
+          if (rect.bottom > 0 && rect.top < window.innerHeight) {
+            setScrollOffset(window.scrollY * 0.3);
+          }
         }
-      }
-    };
+      };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, 100); // Small delay to prioritize LCP
+
+    return () => clearTimeout(timeoutId);
   }, []);
   
   return (
@@ -35,19 +41,31 @@ const PageHero = ({ title, imageUrl, className = "" }: PageHeroProps) => {
       ref={heroRef}
       className={`relative h-[200px] md:h-[280px] overflow-hidden rounded-xl mb-6 ${className}`}
     >
+      {/* LCP-optimized hero image */}
       <img
         src={finalImage}
-        alt={title}
+        alt={`${title} - Imagen principal de la página`}
         className="w-full h-full object-cover parallax-bg"
-        loading="eager"
-        decoding="sync"
-        style={{ transform: `translateY(${scrollOffset}px) scale(1.1)` }}
+        loading={priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
+        fetchPriority={priority ? "high" : "auto"}
+        width={1200}
+        height={400}
+        style={{ 
+          transform: `translateY(${scrollOffset}px) scale(1.1)`,
+          contentVisibility: 'auto'
+        }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       <div className="absolute bottom-6 left-6 right-6">
         <h1 className="text-3xl md:text-5xl font-black text-white drop-shadow-lg">
           {title}
         </h1>
+        {subtitle && (
+          <p className="text-lg md:text-xl text-white/90 mt-2 drop-shadow-md">
+            {subtitle}
+          </p>
+        )}
       </div>
     </div>
   );
