@@ -2,7 +2,6 @@ import { NavLink } from "./NavLink";
 import { Button } from "./ui/button";
 import { Menu, X, Search, Heart } from "lucide-react";
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Badge } from "./ui/badge";
@@ -12,7 +11,6 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { favorites } = useFavorites();
-  const navigate = useNavigate();
   const { prefetch } = usePrefetch();
 
   // Prefetch on hover
@@ -91,11 +89,10 @@ const Navbar = () => {
               >
                 <Search className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/favoritos")}
-                className="relative ripple-effect"
+              <NavLink
+                to="/favoritos"
+                className="relative ripple-effect inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                aria-label="Ver favoritos"
               >
                 <Heart className="h-5 w-5" />
                 {favorites.length > 0 && (
@@ -106,7 +103,7 @@ const Navbar = () => {
                     {favorites.length}
                   </Badge>
                 )}
-              </Button>
+              </NavLink>
             </div>
           </div>
 
@@ -188,16 +185,12 @@ const Navbar = () => {
                 <Search className="h-4 w-4 mr-2" />
                 Buscar
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigate("/favoritos");
-                  setIsMenuOpen(false);
-                }}
-                className="flex-1 relative ripple-effect"
+              <NavLink
+                to="/favoritos"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex-1 relative ripple-effect inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
               >
-                <Heart className="h-4 w-4 mr-2" />
+                <Heart className="h-4 w-4" />
                 Favoritos
                 {favorites.length > 0 && (
                   <Badge 
@@ -207,7 +200,7 @@ const Navbar = () => {
                     {favorites.length}
                   </Badge>
                 )}
-              </Button>
+              </NavLink>
             </div>
           </div>
         )}

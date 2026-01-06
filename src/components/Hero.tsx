@@ -279,16 +279,23 @@ const Hero = () => {
               ) : results.length > 0 ? (
                 <div className="py-2">
                   {results.map((result, index) => (
-                    <button
+                    <Link
                       key={`${result.type}-${result.name}-${index}`}
-                      onClick={() => handleResultClick(result.path)}
+                      to={result.path}
+                      onClick={() => {
+                        setShowResults(false);
+                        setSearchQuery("");
+                      }}
                       className="w-full px-4 py-3 flex items-center gap-3 hover:bg-accent/10 transition-colors text-left group"
                     >
                       {result.image ? (
                         <img 
                           src={result.image} 
-                          alt={result.name}
+                          alt={`${result.name} - ${result.type === 'event' ? 'Evento' : result.type === 'artist' ? 'Artista' : result.type === 'destination' ? 'Destino' : 'Género'}`}
                           className="w-12 h-12 rounded-lg object-cover border border-border group-hover:border-accent transition-colors"
+                          width={48}
+                          height={48}
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center border border-accent/20 group-hover:border-accent transition-colors">
@@ -306,7 +313,7 @@ const Hero = () => {
                          result.type === 'artist' ? 'Artista' :
                          result.type === 'destination' ? 'Destino' : 'Género'}
                       </span>
-                    </button>
+                    </Link>
                   ))}
                 </div>
               ) : searchQuery.length >= 2 ? (
