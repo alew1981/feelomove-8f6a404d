@@ -1,7 +1,10 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `feelomove-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `feelomove-images-${CACHE_VERSION}`;
 const DATA_CACHE = `feelomove-data-${CACHE_VERSION}`;
+
+// Maximum items in image cache to prevent storage bloat
+const MAX_IMAGE_CACHE_ITEMS = 100;
 
 // Critical routes to precache
 const PRECACHE_ROUTES = [

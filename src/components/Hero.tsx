@@ -183,18 +183,27 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-[750px] flex items-center justify-center overflow-hidden">
-      {/* Static Image Background - LCP optimized */}
+    <section className="hero-section relative min-h-[750px] flex items-center justify-center overflow-hidden">
+      {/* Static Image Background - LCP optimized with critical rendering path */}
       <div className="absolute inset-0 z-0">
+        {/* 
+          LCP Optimization:
+          - fetchpriority="high" tells browser this is critical
+          - loading="eager" disables lazy loading
+          - decoding="sync" ensures immediate decode
+          - width/height prevent layout shift
+        */}
         <img
           src={heroConcertImage}
-          alt="Festival concert"
-          className="w-full h-full object-cover"
+          alt="Conciertos y festivales en España - FEELOMOVE+"
+          className="hero-image w-full h-full object-cover"
           loading="eager"
           decoding="sync"
           fetchPriority="high"
+          width={1920}
+          height={1080}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
+        <div className="hero-overlay absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
 
       {/* Content */}

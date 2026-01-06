@@ -66,9 +66,16 @@ const OptimizedImage = memo(({
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  // Intersection Observer for lazy loading
+  // Intersection Observer for lazy loading - optimized for performance
   useEffect(() => {
     if (priority || isInView) return;
+
+    // Use native lazy loading support check
+    if ('loading' in HTMLImageElement.prototype && !priority) {
+      // Browser supports native lazy loading, let it handle it
+      setIsInView(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -78,7 +85,7 @@ const OptimizedImage = memo(({
         }
       },
       {
-        rootMargin: "600px", // Start loading 600px before visible for smoother UX
+        rootMargin: "400px", // Reduced from 600px for better initial load
         threshold: 0
       }
     );
