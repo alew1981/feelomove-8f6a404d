@@ -282,45 +282,50 @@ const Destinos = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedCities.map((city: any) => (
-                <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block">
-                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
-                    <div className="relative h-64 overflow-hidden bg-muted">
-                      <img 
-                        src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
-                        alt={`Conciertos y festivales en ${city.city_name} - ${city.event_count} eventos musicales`} 
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        width={400}
-                        height={256}
-                        onError={(e) => {
-                          e.currentTarget.src = city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg";
-                        }}
-                      />
-                      <div className="absolute top-3 right-3 flex flex-col gap-2">
-                        <Badge className="bg-accent text-accent-foreground hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                          {city.event_count} eventos
-                        </Badge>
+              {displayedCities.map((city: any, index: number) => {
+                const isPriority = index < 4; // First 4 cards get priority loading
+                return (
+                  <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block">
+                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
+                      <div className="relative h-64 overflow-hidden bg-muted">
+                        <img 
+                          src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
+                          alt={`Conciertos y festivales en ${city.city_name} - ${city.event_count} eventos musicales`} 
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                          loading={isPriority ? "eager" : "lazy"}
+                          decoding={isPriority ? "sync" : "async"}
+                          fetchPriority={isPriority ? "high" : "auto"}
+                          width={400}
+                          height={256}
+                          onError={(e) => {
+                            e.currentTarget.src = city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg";
+                          }}
+                        />
+                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                          <Badge className="bg-accent text-accent-foreground hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                            {city.event_count} eventos
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <CardContent className="p-4 space-y-2">
-                      <h3 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h3>
-                      <div className="flex gap-2 text-sm text-muted-foreground">
-                        {city.concerts_count > 0 && <span>{city.concerts_count} conciertos</span>}
-                        {city.festivals_count > 0 && <span>• {city.festivals_count} festivales</span>}
-                      </div>
-                      {city.price_from && (
-                        <p className="text-sm text-accent font-semibold">
-                          Desde {Number(city.price_from).toFixed(0)}€
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0">
-                      <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
+                      <CardContent className="p-4 space-y-2">
+                        <h2 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h2>
+                        <div className="flex gap-2 text-sm text-muted-foreground">
+                          {city.concerts_count > 0 && <span>{city.concerts_count} conciertos</span>}
+                          {city.festivals_count > 0 && <span>• {city.festivals_count} festivales</span>}
+                        </div>
+                        {city.price_from && (
+                          <p className="text-sm text-accent font-semibold">
+                            Desde {Number(city.price_from).toFixed(0)}€
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="p-4 pt-0">
+                        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
             {displayedCities.length < filteredCities.length && (
               <div ref={loadMoreRef} className="flex justify-center items-center py-12">
