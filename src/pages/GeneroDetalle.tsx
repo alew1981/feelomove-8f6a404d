@@ -276,12 +276,13 @@ const GeneroDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${genreName} - Conciertos y Festivales`}
-        description={seoDescription}
-        canonical={`/generos/${genreParam}`}
+        title={`Conciertos de ${genreName} en España 2025`}
+        description={`Encuentra ${events?.length || 0} conciertos de ${genreName} en España. Entradas + hotel para eventos de ${genreName}. ¡Compra ahora!`}
+        canonical={`https://feelomove.com/musica/${genreParam}`}
         pageType="CollectionPage"
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
         preloadImage={heroImage}
+        ogImage={heroImage || undefined}
       />
     <div className="min-h-screen bg-background">
       <Navbar />

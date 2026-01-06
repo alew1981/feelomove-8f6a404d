@@ -461,26 +461,26 @@ const Index = () => {
         </section>
 
         {/* SEO Content Block - Bloque de texto informativo */}
-        <section className="mt-20 pt-12 border-t border-border">
+        <section className="mt-20 pt-12 border-t border-border" aria-labelledby="seo-content-heading">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6">Tu plataforma de logística para eventos musicales en España</h2>
+            <h2 id="seo-content-heading" className="text-2xl font-bold mb-6">Tu plataforma para comprar entradas de conciertos y festivales en España</h2>
             <div className="prose prose-lg max-w-none text-muted-foreground space-y-4">
               <p>
-                <strong>Feelomove+</strong> es la plataforma líder en <strong>logística de eventos</strong> musicales en España. 
-                Facilitamos la compra de entradas para los mejores conciertos y festivales del país, combinándolas con 
-                <strong> hoteles para festivales</strong> cercanos al recinto. Nuestro objetivo es que disfrutes de la música 
-                sin preocuparte por nada más.
+                <strong>Feelomove+</strong> es tu destino para comprar <strong>entradas conciertos</strong> y festivales en España. 
+                Ofrecemos un servicio integral que incluye la <strong>gestión de movilidad</strong> y <strong>alojamiento para eventos</strong>, 
+                permitiéndote reservar hotel cerca del recinto sin complicaciones. Nuestra misión es que vivas la música 
+                sin preocuparte por la logística.
               </p>
               <p>
-                Ya sea que busques <strong>transporte para conciertos</strong> en Madrid, alojamiento cerca de festivales en 
-                Barcelona, o paquetes completos para eventos en Valencia o Sevilla, en Feelomove+ encontrarás todo lo que 
-                necesitas. Trabajamos con los mejores proveedores para ofrecerte precios competitivos y una experiencia de 
-                reserva sencilla.
+                Ya sea que busques entradas para conciertos en Madrid, Barcelona, Valencia o Sevilla, en Feelomove+ encontrarás 
+                paquetes completos de <strong>entradas + hotel</strong>. Trabajamos con los mejores hoteles cercanos a cada venue 
+                para ofrecerte la mejor experiencia al mejor precio. La gestión del transporte y el alojamiento nunca fue tan sencilla.
               </p>
               <p>
-                Explora nuestro catálogo de más de 500 eventos en toda España: desde conciertos íntimos de rock y pop hasta 
-                grandes festivales de música electrónica y jazz. Cada evento incluye opciones de <strong>hoteles cercanos</strong>, 
-                información del recinto y consejos para que tu experiencia sea inolvidable. ¡Reserva hoy y vive la música!
+                Explora nuestro catálogo de más de 500 eventos en toda España: desde conciertos de rock, pop e indie hasta 
+                grandes festivales de música electrónica y jazz. Cada evento incluye opciones de alojamiento cercano, 
+                información del recinto y consejos para que tu experiencia sea inolvidable. ¡Compra tus entradas hoy 
+                y prepárate para vivir la música en directo!
               </p>
             </div>
           </div>
