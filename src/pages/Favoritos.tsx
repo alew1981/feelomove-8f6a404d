@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import PageHero from "@/components/PageHero";
+import { SEOHead } from "@/components/SEOHead";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Heart } from "lucide-react";
@@ -16,20 +17,28 @@ const Favoritos = () => {
   const heroImage = favorites.length > 0 ? favorites[0].image_url : undefined;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="container mx-auto px-4 py-8 mt-16">
-        {/* Breadcrumbs */}
-        <div className="mb-4">
-          <Breadcrumbs />
-        </div>
+    <>
+      <SEOHead
+        title="Mis Favoritos - Eventos Guardados"
+        description="Tus conciertos y festivales favoritos guardados. Accede rápidamente a los eventos que más te interesan."
+        canonical="/favoritos"
+        keywords="favoritos, eventos guardados, conciertos favoritos"
+        pageType="CollectionPage"
+      />
+      <div className="min-h-screen bg-background">
+        <Navbar />
         
-        {/* Hero Image */}
-        <PageHero 
-          title="Mis Favoritos" 
-          imageUrl={heroImage || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1920"} 
-        />
+        <main className="container mx-auto px-4 py-8 mt-16">
+          {/* Breadcrumbs */}
+          <div className="mb-4">
+            <Breadcrumbs />
+          </div>
+          
+          {/* Hero Image */}
+          <PageHero 
+            title="Mis Eventos Favoritos" 
+            imageUrl={heroImage || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1920"} 
+          />
         
         <div className="mb-8">
           <p className="text-muted-foreground">
@@ -102,10 +111,11 @@ const Favoritos = () => {
             ))}
           </div>
         )}
-      </main>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 };
 

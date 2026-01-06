@@ -187,9 +187,12 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                   )}
                   <img
                     src={imageUrl}
-                    alt={eventName}
+                    alt={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
+                    fetchPriority={priority ? "high" : "auto"}
+                    width={400}
+                    height={224}
                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     onLoad={() => setImageLoaded(true)}
                     onError={(e) => {

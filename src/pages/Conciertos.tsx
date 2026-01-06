@@ -240,10 +240,10 @@ const Conciertos = () => {
   return (
     <>
       <SEOHead
-        title="Conciertos en España - Entradas y Hoteles"
-        description="Descubre todos los conciertos en España. Compra tus entradas y reserva hotel en el mismo lugar. Encuentra los mejores conciertos en Madrid, Barcelona, Valencia y más ciudades."
+        title="Conciertos en España 2025 - Entradas y Hoteles"
+        description="Compra entradas para conciertos en Madrid, Barcelona y toda España. Reserva hotel cerca del venue. Rock, pop, indie y más."
         canonical="/conciertos"
-        keywords="conciertos españa, entradas conciertos, conciertos madrid, conciertos barcelona"
+        keywords="conciertos españa 2025, entradas conciertos madrid, conciertos barcelona, rock pop indie"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
@@ -261,11 +261,16 @@ const Conciertos = () => {
             <Breadcrumbs />
           </div>
           
-          {/* Hero Image */}
-          <PageHero title="Conciertos" imageUrl={heroImage} />
+          {/* Hero Image - LCP optimized */}
+          <PageHero 
+            title="Conciertos en España" 
+            subtitle="Entradas y hoteles para los mejores conciertos"
+            imageUrl={heroImage} 
+            priority={true}
+          />
           
           {/* Description */}
-          <div className="prose prose-lg max-w-none mb-8">
+          <div className="prose prose-lg max-w-none mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
               Descubre todos los conciertos en España. Desde rock y pop hasta indie y electrónica. 
               Encuentra tu concierto perfecto y reserva hotel en la misma ciudad.

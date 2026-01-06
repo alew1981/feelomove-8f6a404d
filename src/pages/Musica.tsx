@@ -182,10 +182,10 @@ const Musica = () => {
   return (
     <>
       <SEOHead
-        title="Géneros Musicales - Eventos por Estilo"
-        description="Explora eventos por género musical en España. Rock, Pop, Electrónica, Jazz y más estilos musicales."
+        title="Géneros Musicales - Conciertos por Estilo"
+        description="Explora eventos por género: rock, pop, electrónica, jazz y más. Encuentra conciertos y festivales de tu estilo favorito."
         canonical="/generos"
-        keywords="géneros música, rock españa, pop español, electrónica festivales"
+        keywords="géneros musicales españa, conciertos rock, festivales electrónica, jazz en vivo"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
@@ -202,11 +202,16 @@ const Musica = () => {
           <Breadcrumbs />
         </div>
         
-        {/* Hero Image */}
-        <PageHero title="Géneros Musicales" imageUrl={heroImage} />
+        {/* Hero Image - LCP optimized */}
+        <PageHero 
+          title="Géneros Musicales" 
+          subtitle="Encuentra eventos de tu estilo favorito"
+          imageUrl={heroImage} 
+          priority={true}
+        />
         
         {/* Description */}
-        <p className="text-muted-foreground leading-relaxed mb-8">
+        <p className="text-muted-foreground leading-relaxed mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
           Explora eventos por género musical en toda España.
         </p>
 
@@ -302,8 +307,11 @@ const Musica = () => {
                     <div className="relative h-64 overflow-hidden">
                       <img 
                         src={genreImages?.[genre.genre_name] || "/placeholder.svg"} 
-                        alt={genre.genre_name} 
+                        alt={`Conciertos y festivales de ${genre.genre_name} - ${genre.event_count} eventos en España`} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                        loading="lazy"
+                        width={400}
+                        height={256}
                       />
                       <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
