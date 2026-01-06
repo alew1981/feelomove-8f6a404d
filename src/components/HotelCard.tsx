@@ -94,7 +94,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
       <div className="h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <img
           src={hotel.hotel_main_photo || "/placeholder.svg"}
-          alt={hotel.hotel_name}
+          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ' estrellas' : ''} en ${hotel.hotel_city || 'España'} para eventos`}
           className="w-full h-full object-cover"
           loading="lazy"
           decoding="async"

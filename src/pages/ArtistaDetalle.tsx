@@ -346,9 +346,9 @@ const ArtistaDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${artistName} - Entradas y Paquetes`}
-        description={seoDescription}
-        canonical={`/conciertos/${artistSlug}`}
+        title={`${artistName} - Conciertos y Gira España 2025`}
+        description={`Compra entradas para ${artistName} en ${firstCity} y más ciudades. ${events?.length || 0} conciertos + hotel. ¡Reserva ahora!`}
+        canonical={`https://feelomove.com/conciertos/${artistSlug}`}
         ogImage={heroImage || undefined}
         pageType="ItemPage"
         jsonLd={jsonLdData}
@@ -374,11 +374,13 @@ const ArtistaDetalle = () => {
           {heroImage ? (
             <img
               src={heroImage}
-              alt={artistName}
+              alt={`${artistName} - Conciertos y gira en España`}
               className="w-full h-full object-cover"
               fetchPriority="high"
               loading="eager"
               decoding="sync"
+              width={1200}
+              height={400}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-accent/20 to-background" />

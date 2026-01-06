@@ -258,12 +258,13 @@ const DestinoDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`Conciertos en ${cityName} - Entradas y Paquetes`}
-        description={seoDescription}
-        canonical={`/destinos/${citySlug}`}
+        title={`Conciertos en ${cityName} - Entradas y Hoteles`}
+        description={`Descubre ${events?.length || 0} conciertos y festivales en ${cityName}. Compra entradas + hotel cerca del evento. ¡Reserva ahora!`}
+        canonical={`https://feelomove.com/destinos/${citySlug}`}
         pageType="CollectionPage"
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
         preloadImage={heroImage}
+        ogImage={heroImage || undefined}
       />
       <div className="min-h-screen bg-background">
         <Navbar />

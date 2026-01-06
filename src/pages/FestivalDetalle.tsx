@@ -228,13 +228,14 @@ const FestivalDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${festivalData?.name || festivalName} - Todos los Conciertos`}
-        description={`Descubre todos los conciertos de ${festivalData?.name || festivalName}. ${festivalData?.eventCount || 0} eventos, ${festivalData?.artistCount || 0} artistas. Entradas desde €${festivalData?.minPrice || 0}.`}
-        canonical={`/festivales/${festivalSlug}`}
-        keywords={`${festivalName}, festival, conciertos, ${festivalData?.city || ""}`}
+        title={`${festivalData?.name || festivalName} 2025 - Entradas y Hotel`}
+        description={`Compra entradas para ${festivalData?.name || festivalName} en ${festivalData?.city || 'España'}. ${festivalData?.artistCount || 0} artistas. Reserva hotel cerca. ¡Vive la experiencia!`}
+        canonical={`https://feelomove.com/festivales/${festivalSlug}`}
+        keywords={`${festivalName}, festival música, entradas festival, ${festivalData?.city || 'España'}, hotel festival`}
         pageType="ItemPage"
         jsonLd={jsonLd || undefined}
         preloadImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
+        ogImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
       />
       
       <div className="min-h-screen bg-background">

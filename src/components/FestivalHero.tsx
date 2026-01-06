@@ -106,10 +106,13 @@ const FestivalHero = ({
       {/* Background Image with Parallax */}
       <img
         src={finalImage}
-        alt={title}
+        alt={`${title} - Festival de música en ${city || 'España'}`}
         className="absolute inset-0 w-full h-full object-cover parallax-bg"
         loading="eager"
         decoding="sync"
+        fetchPriority="high"
+        width={1200}
+        height={320}
         style={{ transform: `translateY(${scrollOffset}px) scale(1.1)` }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -268,8 +271,11 @@ const FestivalHero = ({
       <div className="hidden md:block absolute right-4 bottom-4 w-24 h-24 lg:w-28 lg:h-28 rounded-lg overflow-hidden shadow-xl border-2 border-white/20">
         <img
           src={finalImage}
-          alt={title}
+          alt={`Miniatura de ${title}`}
           className="w-full h-full object-cover"
+          loading="lazy"
+          width={112}
+          height={112}
         />
       </div>
     </div>
