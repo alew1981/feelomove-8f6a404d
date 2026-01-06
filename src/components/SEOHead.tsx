@@ -25,8 +25,13 @@ const organizationSchema = {
   "name": "FEELOMOVE+",
   "alternateName": "Feelomove",
   "url": "https://feelomove.com",
-  "logo": "https://feelomove.com/favicon.svg",
-  "description": "Plataforma líder para reservar conciertos, festivales y hoteles en España",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://feelomove.com/favicon.svg",
+    "width": 512,
+    "height": 512
+  },
+  "description": "Plataforma líder para reservar entradas de conciertos, festivales y hoteles en España. Gestión integral de movilidad y alojamiento para eventos musicales.",
   "sameAs": [
     "https://www.instagram.com/feelomove/",
     "https://x.com/feelomove",
@@ -35,12 +40,15 @@ const organizationSchema = {
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "customer service",
-    "availableLanguage": ["Spanish", "English"]
+    "availableLanguage": ["Spanish", "English"],
+    "email": "info@feelomove.com"
   },
   "areaServed": {
     "@type": "Country",
     "name": "Spain"
-  }
+  },
+  "foundingDate": "2024",
+  "slogan": "Tu música. Tu hotel. Todo resuelto."
 };
 
 // Site navigation schema
