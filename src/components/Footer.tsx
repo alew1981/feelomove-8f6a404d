@@ -32,29 +32,39 @@ const Footer = () => {
           </div>
 
           {/* Explorar */}
-          <div>
+          <nav aria-label="Explorar">
             <h3 className="font-semibold mb-4">Explorar</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                <NavLink to="/conciertos" className="hover:text-foreground transition-colors">
+                  Conciertos
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/festivales" className="hover:text-foreground transition-colors">
+                  Festivales
+                </NavLink>
+              </li>
               <li>
                 <NavLink to="/destinos" className="hover:text-foreground transition-colors">
                   Destinos
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/generos" className="hover:text-foreground transition-colors">
-                  Géneros Musicales
+                <NavLink to="/artistas" className="hover:text-foreground transition-colors">
+                  Artistas
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/conciertos" className="hover:text-foreground transition-colors">
-                  Próximos Eventos
+                <NavLink to="/musica" className="hover:text-foreground transition-colors">
+                  Géneros Musicales
                 </NavLink>
               </li>
             </ul>
-          </div>
+          </nav>
 
           {/* Compañía */}
-          <div>
+          <nav aria-label="Compañía">
             <h3 className="font-semibold mb-4">Compañía</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
@@ -63,39 +73,34 @@ const Footer = () => {
                 </NavLink>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
-                  Trabaja con Nosotros
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition-colors">
-                  Partners
-                </a>
+                <NavLink to="/favoritos" className="hover:text-foreground transition-colors">
+                  Mis Favoritos
+                </NavLink>
               </li>
             </ul>
-          </div>
+          </nav>
 
           {/* Legal */}
-          <div>
+          <nav aria-label="Legal">
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a href="/terminos" className="hover:text-foreground transition-colors">
                   Términos y Condiciones
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a href="/privacidad" className="hover:text-foreground transition-colors">
                   Política de Privacidad
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition-colors">
+                <a href="/cookies" className="hover:text-foreground transition-colors">
                   Cookies
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
 
         <div className="border-t-2 border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
