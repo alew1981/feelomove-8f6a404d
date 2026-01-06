@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
-import { useSchemaOrg } from "@/hooks/useSchemaOrg";
+// Schema.org is now handled directly by SEOHead component with dynamic jsonLd prop
 import { useMetaTags } from "@/hooks/useMetaTags";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -242,8 +242,7 @@ const Producto = () => {
     }
   }, [isError, error, navigate]);
 
-  // Inject Schema.org JSON-LD from materialized view
-  useSchemaOrg(slug);
+  // Schema.org is handled by SEOHead with jsonLd prop - no duplicate injection needed
   
   // Inject Open Graph and meta tags from materialized view
   useMetaTags(slug);
@@ -511,25 +510,37 @@ const Producto = () => {
   const canonicalUrl = `/${eventType}/${canonicalSlug}`;
   const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
 
+  // Build comprehensive Event JSON-LD for Google Rich Results
+  const minPrice = ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees || 0;
+  const maxPrice = ticketPrices[ticketPrices.length - 1]?.price || minPrice;
+  
   const jsonLdData = {
     "@context": "https://schema.org",
     "@type": eventDetails.is_festival ? "Festival" : "MusicEvent",
+    "@id": absoluteUrl,
     "name": eventDetails.event_name,
     "description": seoDescription,
     "startDate": eventDetails.event_date,
-    "endDate": eventDetails.event_date,
-    "eventStatus": eventDetails.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
+    "endDate": (eventDetails as any).festival_end_date || eventDetails.event_date,
+    "doorTime": (eventDetails as any).door_opening_date || undefined,
+    "eventStatus": eventDetails.cancelled 
+      ? "https://schema.org/EventCancelled" 
+      : eventDetails.rescheduled 
+        ? "https://schema.org/EventRescheduled"
+        : "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "url": absoluteUrl,
-    "image": eventImage,
+    "image": [eventImage],
     "location": {
       "@type": "Place",
       "name": eventDetails.venue_name,
+      "url": (eventDetails as any).venue_url || undefined,
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": eventDetails.venue_address || undefined,
         "addressLocality": eventDetails.venue_city,
-        "addressCountry": "ES",
-        "streetAddress": eventDetails.venue_address || undefined
+        "postalCode": eventDetails.venue_postal_code || undefined,
+        "addressCountry": "ES"
       },
       "geo": eventDetails.venue_latitude && eventDetails.venue_longitude ? {
         "@type": "GeoCoordinates",
@@ -537,24 +548,34 @@ const Producto = () => {
         "longitude": eventDetails.venue_longitude
       } : undefined
     },
-    "organizer": (eventDetails as any).promoter_name ? {
+    "organizer": {
       "@type": "Organization",
-      "name": (eventDetails as any).promoter_name
-    } : undefined,
-    "offers": ticketPrices.length > 0 ? {
+      "name": "FEELOMOVE+",
+      "url": "https://feelomove.com"
+    },
+    "offers": minPrice > 0 ? {
       "@type": "AggregateOffer",
       "url": absoluteUrl,
-      "lowPrice": ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees,
-      "highPrice": ticketPrices[ticketPrices.length - 1]?.price || (eventDetails as any).price_min_incl_fees,
+      "lowPrice": minPrice,
+      "highPrice": maxPrice,
       "priceCurrency": "EUR",
-      "availability": eventDetails.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
-      "offerCount": ticketPrices.length,
-      "validFrom": new Date().toISOString()
+      "availability": eventDetails.sold_out 
+        ? "https://schema.org/SoldOut" 
+        : isEventAvailable 
+          ? "https://schema.org/InStock" 
+          : "https://schema.org/PreOrder",
+      "offerCount": ticketPrices.length || 1,
+      "validFrom": (eventDetails as any).on_sale_date || new Date().toISOString(),
+      "seller": {
+        "@type": "Organization",
+        "name": "FEELOMOVE+"
+      }
     } : undefined,
-    "performer": artistNames.map((name: string) => ({
+    "performer": artistNames.length > 0 ? artistNames.map((name: string) => ({
       "@type": "MusicGroup",
       "name": name
-    }))
+    })) : undefined,
+    "inLanguage": "es"
   };
 
   return (
