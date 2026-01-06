@@ -107,11 +107,12 @@ export const SEOHead = ({
 }: SEOHeadProps) => {
   const fullTitle = `${title} | FEELOMOVE+`;
   const siteUrl = "https://feelomove.com";
+  // Ensure canonical is always absolute URL
   const fullCanonical = canonical 
     ? canonical.startsWith('http') 
       ? canonical 
-      : `${siteUrl}${canonical.startsWith('/') ? '' : '/'}${canonical}`
-    : undefined;
+      : `${siteUrl}${canonical.startsWith('/') ? canonical : `/${canonical}`}`
+    : `${siteUrl}/`;
 
   // Build WebPage schema
   const webPageSchema = {
