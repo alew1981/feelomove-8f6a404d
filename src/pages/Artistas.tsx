@@ -134,10 +134,10 @@ const Artistas = () => {
   return (
     <>
       <SEOHead
-        title="Artistas - Conciertos y Festivales"
-        description="Descubre artistas y músicos con conciertos y festivales en España. Encuentra eventos de tus artistas favoritos."
+        title="Artistas en Concierto España 2025 - Entradas"
+        description="Encuentra conciertos de tus artistas favoritos en España. Entradas para pop, rock, indie, electrónica y más géneros."
         canonical="/artistas"
-        keywords="artistas españa, músicos conciertos, artistas festivales"
+        keywords="artistas conciertos españa, músicos en directo, artistas festivales 2025"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
@@ -155,12 +155,17 @@ const Artistas = () => {
           <Breadcrumbs />
         </div>
         
-        {/* Hero Image */}
-        <PageHero title="Artistas" imageUrl={heroImage} />
+        {/* Hero Image - LCP optimized */}
+        <PageHero 
+          title="Artistas en Concierto" 
+          subtitle="Encuentra eventos de tus artistas favoritos"
+          imageUrl={heroImage} 
+          priority={true}
+        />
         
         {/* Description */}
-        <p className="text-muted-foreground text-lg mb-8">
-          Explora nuestra colección de {filteredArtists?.length || 0} artistas
+        <p className="text-muted-foreground text-lg mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
+          Explora nuestra colección de {filteredArtists?.length || 0} artistas con eventos en España
         </p>
 
         {/* Search and Filters */}
@@ -253,8 +258,11 @@ const Artistas = () => {
                     <div className="relative h-64 overflow-hidden">
                       <img
                         src={artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg"}
-                        alt={artist.attraction_name}
+                        alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        width={400}
+                        height={256}
                       />
                       <div className="absolute top-3 right-3">
                         <Badge className="bg-accent text-brand-black hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">

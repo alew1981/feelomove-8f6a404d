@@ -46,10 +46,10 @@ const About = () => {
   return (
     <>
       <SEOHead
-        title="Sobre Nosotros - Quiénes Somos"
-        description="FEELOMOVE+ conecta la pasión por la música con experiencias de alojamiento inolvidables. Descubre conciertos, festivales y hoteles en España."
+        title="Sobre Feelomove - Conciertos y Hoteles España"
+        description="Feelomove conecta música y alojamiento. Compra entradas y reserva hotel para conciertos y festivales en España."
         canonical="/about"
-        keywords="sobre feelomove, quienes somos, conciertos españa, hoteles eventos"
+        keywords="sobre feelomove, quienes somos, conciertos hoteles españa"
         pageType="AboutPage"
         jsonLd={faqJsonLd}
       />
@@ -62,7 +62,7 @@ const About = () => {
             {/* Hero Section */}
             <div className="text-center mb-16">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                Sobre Feelomove
+                Sobre Feelomove - Tu Portal de Eventos
               </h1>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
                 Conectamos la pasión por la música con experiencias de alojamiento inolvidables

@@ -150,10 +150,10 @@ const Destinos = () => {
   return (
     <>
       <SEOHead
-        title="Destinos - Eventos por Ciudad"
-        description="Explora eventos musicales en las mejores ciudades de España. Conciertos y festivales en Madrid, Barcelona, Valencia y más."
+        title="Destinos Musicales en España - Eventos por Ciudad"
+        description="Explora conciertos y festivales en Madrid, Barcelona, Valencia y más. Encuentra eventos musicales cerca de ti."
         canonical="/destinos"
-        keywords="destinos españa, eventos madrid, eventos barcelona, eventos valencia"
+        keywords="destinos musicales españa, eventos madrid, conciertos barcelona, festivales valencia"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
@@ -170,11 +170,16 @@ const Destinos = () => {
           <Breadcrumbs />
         </div>
         
-        {/* Hero Image */}
-        <PageHero title="Destinos" imageUrl={heroImage} />
+        {/* Hero Image - LCP optimized */}
+        <PageHero 
+          title="Destinos Musicales en España" 
+          subtitle="Conciertos y festivales por ciudad"
+          imageUrl={heroImage} 
+          priority={true}
+        />
         
         {/* Description */}
-        <p className="text-muted-foreground leading-relaxed mb-8">
+        <p className="text-muted-foreground leading-relaxed mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
           Explora eventos musicales en las mejores ciudades de España.
         </p>
 
@@ -283,9 +288,11 @@ const Destinos = () => {
                     <div className="relative h-64 overflow-hidden bg-muted">
                       <img 
                         src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
-                        alt={`Eventos en ${city.city_name}`} 
+                        alt={`Conciertos y festivales en ${city.city_name} - ${city.event_count} eventos musicales`} 
                         className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        width={400}
+                        height={256}
                         onError={(e) => {
                           e.currentTarget.src = city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg";
                         }}

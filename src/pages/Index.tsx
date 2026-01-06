@@ -192,10 +192,10 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="Conciertos, Festivales y Hoteles en España"
-        description="Descubre los mejores conciertos y festivales en España. Compra entradas y reserva hotel en el mismo lugar."
+        title="Entradas Conciertos y Festivales España 2025"
+        description="Compra entradas para conciertos y festivales en España. Reserva hotel cerca del evento. Todo resuelto en un solo lugar."
         canonical="/"
-        keywords="conciertos españa, festivales españa, entradas conciertos, hoteles eventos"
+        keywords="entradas conciertos, festivales españa 2025, hoteles eventos, conciertos madrid, festivales barcelona"
         jsonLd={jsonLd}
       />
       <div className="min-h-screen bg-background">
@@ -346,8 +346,10 @@ const Index = () => {
                     <div className="relative h-full">
                       <img
                         src={destination.sample_image_url || "/placeholder.svg"}
-                        alt={destination.city_name || "Destino"}
+                        alt={`Conciertos y festivales en ${destination.city_name} - ${destination.event_count} eventos disponibles`}
                         loading="lazy"
+                        width={400}
+                        height={256}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -389,8 +391,10 @@ const Index = () => {
                     <div className="relative h-full">
                       <img
                         src={artist.sample_image_url || "/placeholder.svg"}
-                        alt={artist.attraction_name || "Artista"}
+                        alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
                         loading="lazy"
+                        width={400}
+                        height={256}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -433,8 +437,10 @@ const Index = () => {
                       {genre.sample_image_url ? (
                         <img
                           src={genre.sample_image_url}
-                          alt={genre.genre_name || "Género"}
+                          alt={`Eventos de ${genre.genre_name} - ${genre.event_count} conciertos y festivales`}
                           loading="lazy"
+                          width={400}
+                          height={192}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
