@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Music } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { memo, useState, useRef, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ParentFestival {
   primary_attraction_id: string;
@@ -28,7 +30,36 @@ const isPlaceholderDate = (dateStr: string | null | undefined): boolean => {
   return dateStr.startsWith('9999');
 };
 
-const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardProps) => {
+const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalCardProps) => {
+  const [isInView, setIsInView] = useState(priority);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (priority) {
+      setIsInView(true);
+      return;
+    }
+
+    const element = cardRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.unobserve(element);
+          }
+        });
+      },
+      { rootMargin: "200px", threshold: 0 }
+    );
+
+    observer.observe(element);
+    return () => observer.unobserve(element);
+  }, [priority]);
+
   // Generate slug from festival name + city (matching the grouping key format)
   const festivalSlug = encodeURIComponent(
     `${festival.festival_nombre.toLowerCase().replace(/\s+/g, '-')}_${(festival.venue_city || 'unknown').toLowerCase().replace(/\s+/g, '-')}`
@@ -62,17 +93,41 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
     }
   }
 
+  const imageUrl = festival.image_large_url || "/placeholder.svg";
+
   return (
     <Link to={`/festivales/${festivalSlug}`}>
-      <Card className="group overflow-hidden border-2 border-border hover:border-accent transition-all duration-300 bg-card h-full">
+      <Card 
+        ref={cardRef}
+        className="group overflow-hidden border-2 border-border hover:border-accent transition-all duration-300 bg-card h-full"
+      >
         {/* Image Container */}
-        <div className="relative aspect-[16/9] overflow-hidden">
-          <img
-            src={festival.image_large_url || "/placeholder.svg"}
-            alt={festival.festival_nombre}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            loading={priority ? "eager" : "lazy"}
-          />
+        <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+          {isInView ? (
+            <>
+              {!imageLoaded && (
+                <Skeleton className="absolute inset-0 w-full h-full" />
+              )}
+              <img
+                src={imageUrl}
+                alt={`${festival.festival_nombre} - Festival de música en ${festival.venue_city}`}
+                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                loading={priority ? "eager" : "lazy"}
+                decoding={priority ? "sync" : "async"}
+                fetchPriority={priority ? "high" : "auto"}
+                width={400}
+                height={225}
+                onLoad={() => setImageLoaded(true)}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                  setImageLoaded(true);
+                }}
+              />
+            </>
+          ) : (
+            <Skeleton className="absolute inset-0 w-full h-full" />
+          )}
           
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -93,8 +148,8 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
           </div>
         </div>
         
-        {/* Card Content */}
-        <div className="p-4 space-y-3">
+        {/* Card Content - with content-visibility for below-fold cards */}
+        <div className="p-4 space-y-3" style={!priority ? { contentVisibility: 'auto', containIntrinsicSize: '0 120px' } : undefined}>
           {/* Date and Location Row */}
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
@@ -127,6 +182,8 @@ const ParentFestivalCard = ({ festival, priority = false }: ParentFestivalCardPr
       </Card>
     </Link>
   );
-};
+});
+
+ParentFestivalCard.displayName = "ParentFestivalCard";
 
 export default ParentFestivalCard;

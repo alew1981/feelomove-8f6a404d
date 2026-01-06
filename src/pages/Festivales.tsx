@@ -476,10 +476,10 @@ const Festivales = () => {
   return (
     <>
       <SEOHead
-        title="Festivales en España - Entradas y Hoteles"
-        description="Descubre todos los festivales de música en España. Compra tus entradas y reserva hotel. Los mejores festivales de rock, electrónica, indie y más."
+        title="Festivales de Música en España 2025 - Entradas y Hoteles | Feelomove"
+        description="Descubre los mejores festivales de música en España 2025. Compra tus entradas para festivales de rock, electrónica, indie y reserva hotel cerca del recinto."
         canonical="/festivales"
-        keywords="festivales españa, festivales música, festivales verano, festivales madrid"
+        keywords="festivales españa 2025, festivales música, festivales verano, festivales madrid, festivales barcelona"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
@@ -497,11 +497,16 @@ const Festivales = () => {
             <Breadcrumbs />
           </div>
           
-          {/* Hero Image */}
-          <PageHero title="Festivales" imageUrl={heroImage} />
+          {/* Hero Image - LCP optimized with priority loading */}
+          <PageHero 
+            title="Festivales de Música en España" 
+            subtitle="Entradas + Hotel para los mejores festivales de 2025"
+            imageUrl={heroImage} 
+            priority={true}
+          />
           
-          {/* Description */}
-          <div className="prose prose-lg max-w-none mb-8">
+          {/* Description - with content-visibility for below-fold optimization */}
+          <div className="prose prose-lg max-w-none mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
               Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. 
               Encuentra tu festival perfecto y reserva hotel cerca del recinto.
@@ -619,7 +624,7 @@ const Festivales = () => {
             </p>
           )}
 
-          {/* Festival Cards Grid */}
+          {/* Festival Cards Grid - content-visibility for below-fold optimization */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
@@ -627,13 +632,13 @@ const Festivales = () => {
               ))}
             </div>
           ) : totalCount === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}>
               <p className="text-xl text-muted-foreground mb-4">No se encontraron festivales</p>
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Parent Festivals - show as cards linking to detail page */}
+              {/* Parent Festivals - first 4 get priority loading for LCP */}
               {filteredData.parentFestivals.map((parent, index) => (
                 <ParentFestivalCard 
                   key={parent.primary_attraction_id} 
@@ -642,12 +647,12 @@ const Festivales = () => {
                 />
               ))}
 
-              {/* Standalone Festivals */}
+              {/* Standalone Festivals - priority based on position */}
               {filteredData.standaloneFestivals.map((festival, index) => (
                 <FestivalCard 
                   key={festival.event_id} 
                   festival={festival}
-                  priority={index < 4}
+                  priority={filteredData.parentFestivals.length + index < 4}
                 />
               ))}
             </div>
