@@ -3,33 +3,28 @@ import { Card, CardContent } from "./card";
 
 export const EventCardSkeleton = () => {
   return (
-    <Card className="overflow-hidden bg-card border-border/50">
-      {/* Image skeleton with aspect ratio */}
-      <div className="relative aspect-[16/10] bg-muted animate-pulse">
-        <div className="absolute top-3 left-3 flex gap-2">
-          <Skeleton className="h-6 w-16 rounded-full bg-muted-foreground/20" />
-          <Skeleton className="h-6 w-20 rounded-full bg-muted-foreground/20" />
+    <Card className="overflow-hidden bg-card border-2 border-accent/20 shadow-lg">
+      {/* Match exact dimensions of EventCard: h-56 = 224px */}
+      <div className="relative h-56 bg-muted animate-pulse">
+        {/* Date card placeholder - matches real position */}
+        <div className="absolute left-2 top-8 bg-muted-foreground/20 rounded-lg w-[85px] h-[100px]" />
+        {/* Category badge placeholder */}
+        <div className="absolute bottom-3 left-3">
+          <Skeleton className="h-5 w-16 rounded-md bg-muted-foreground/20" />
         </div>
-        <div className="absolute bottom-3 right-3">
-          <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
+        {/* VIP/Countdown placeholder */}
+        <div className="absolute top-3 right-3">
+          <Skeleton className="h-8 w-20 rounded-md bg-muted-foreground/30" />
         </div>
       </div>
-      <CardContent className="p-4 space-y-3">
-        {/* Title */}
-        <Skeleton className="h-5 w-4/5 bg-muted-foreground/20" />
-        {/* Date and venue */}
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-3/5 bg-muted-foreground/15" />
-          <Skeleton className="h-4 w-2/5 bg-muted-foreground/15" />
-        </div>
-        {/* Badges */}
-        <div className="flex gap-2 pt-1">
-          <Skeleton className="h-6 w-16 rounded-md bg-muted-foreground/20" />
-          <Skeleton className="h-6 w-20 rounded-md bg-muted-foreground/20" />
-        </div>
-        {/* Price button */}
-        <Skeleton className="h-10 w-full rounded-lg bg-accent/30" />
-      </CardContent>
+      {/* Event name area */}
+      <div className="bg-background px-4 pt-4 pb-2">
+        <Skeleton className="h-6 w-4/5 bg-muted-foreground/20" />
+      </div>
+      {/* Button area */}
+      <div className="bg-background px-4 pb-4">
+        <Skeleton className="h-12 w-full rounded-lg bg-accent/30" />
+      </div>
     </Card>
   );
 };
@@ -37,86 +32,98 @@ export const EventCardSkeleton = () => {
 export const ArtistCardSkeleton = () => {
   return (
     <Card className="overflow-hidden bg-card border-border/50">
-      {/* Image with gradient overlay */}
-      <div className="relative aspect-square bg-muted animate-pulse">
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 space-y-2">
-          <Skeleton className="h-6 w-3/4 bg-muted-foreground/30" />
-          <Skeleton className="h-4 w-1/2 bg-muted-foreground/20" />
+      {/* Match exact dimensions of real card: h-64 = 256px */}
+      <div className="relative h-64 bg-muted animate-pulse">
+        <div className="absolute top-3 right-3">
+          <Skeleton className="h-6 w-20 rounded-md bg-muted-foreground/30" />
+        </div>
+        <div className="absolute bottom-3 left-3">
+          <Skeleton className="h-5 w-16 rounded-md bg-muted-foreground/20" />
         </div>
       </div>
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-6 w-6 rounded-full bg-muted-foreground/20" />
-          <Skeleton className="h-5 w-24 bg-muted-foreground/20" />
-        </div>
-        <Skeleton className="h-11 w-full rounded-lg bg-accent/30" />
+      <CardContent className="p-4 space-y-2">
+        <Skeleton className="h-6 w-3/4 bg-muted-foreground/20" />
+        <Skeleton className="h-4 w-20 bg-muted-foreground/15" />
       </CardContent>
+      <div className="p-4 pt-0">
+        <Skeleton className="h-10 w-full rounded-lg bg-accent/30" />
+      </div>
     </Card>
   );
 };
 
 export const DestinationCardSkeleton = () => {
   return (
-    <Card className="bg-card border-border/50">
-      <CardContent className="p-6 space-y-4">
-        <div className="flex justify-between items-start">
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-7 w-32 bg-muted-foreground/20" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-4 w-4 rounded-full bg-muted-foreground/15" />
-              <Skeleton className="h-4 w-20 bg-muted-foreground/15" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-8 rounded-full bg-muted-foreground/20" />
+    <Card className="overflow-hidden bg-card border-border/50">
+      {/* Match exact dimensions of real card: h-64 = 256px */}
+      <div className="relative h-64 bg-muted animate-pulse">
+        <div className="absolute top-3 right-3">
+          <Skeleton className="h-6 w-20 rounded-md bg-muted-foreground/30" />
         </div>
-        <Skeleton className="h-6 w-40 bg-accent/30" />
-        <div className="pt-4 border-t border-border/50 space-y-2">
-          <Skeleton className="h-3 w-24 bg-muted-foreground/15" />
-          <Skeleton className="h-4 w-full bg-muted-foreground/20" />
-          <Skeleton className="h-3 w-16 bg-muted-foreground/15" />
+      </div>
+      <CardContent className="p-4 space-y-2">
+        <Skeleton className="h-6 w-3/4 bg-muted-foreground/20" />
+        <div className="flex gap-2">
+          <Skeleton className="h-4 w-24 bg-muted-foreground/15" />
+          <Skeleton className="h-4 w-20 bg-muted-foreground/15" />
         </div>
-        <Skeleton className="h-11 w-full rounded-lg bg-accent/30" />
+        <Skeleton className="h-4 w-20 bg-accent/30" />
       </CardContent>
+      <div className="p-4 pt-0">
+        <Skeleton className="h-10 w-full rounded-lg bg-accent/30" />
+      </div>
     </Card>
   );
 };
 
 export const FestivalCardSkeleton = () => {
   return (
-    <Card className="overflow-hidden bg-card border-border/50">
-      {/* Festival header image */}
-      <div className="relative aspect-[21/9] bg-muted animate-pulse">
-        <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent" />
-        <div className="absolute bottom-4 left-4 space-y-2">
-          <Skeleton className="h-8 w-48 bg-muted-foreground/30" />
-          <Skeleton className="h-5 w-32 bg-muted-foreground/20" />
+    <Card className="overflow-hidden bg-card border-2 border-accent/20 shadow-lg">
+      {/* Match exact dimensions of FestivalCard: h-56 = 224px */}
+      <div className="relative h-56 bg-muted animate-pulse">
+        {/* Availability badge placeholder */}
+        <div className="absolute left-2 top-0.5 z-20">
+          <Skeleton className="h-5 w-20 rounded bg-muted-foreground/30" />
         </div>
-        <div className="absolute top-3 right-3">
-          <Skeleton className="h-6 w-24 rounded-full bg-accent/40" />
+        {/* Date card placeholder - matches real position */}
+        <div className="absolute left-2 top-8 bg-muted-foreground/20 rounded-lg" style={{ minWidth: '90px', height: '90px' }} />
+        {/* Entry type badge placeholder */}
+        <div className="absolute bottom-2 right-2">
+          <Skeleton className="h-5 w-24 rounded bg-accent/40" />
         </div>
       </div>
-      <CardContent className="p-4 space-y-3">
-        <div className="flex gap-2">
-          <Skeleton className="h-6 w-20 rounded-md bg-muted-foreground/20" />
-          <Skeleton className="h-6 w-16 rounded-md bg-muted-foreground/20" />
-          <Skeleton className="h-6 w-24 rounded-md bg-muted-foreground/20" />
-        </div>
-        <Skeleton className="h-10 w-full rounded-lg bg-accent/30" />
-      </CardContent>
+      {/* Title area */}
+      <div className="bg-background px-4 pt-4 pb-2">
+        <Skeleton className="h-6 w-4/5 bg-muted-foreground/20" />
+        <Skeleton className="h-4 w-2/5 mt-1 bg-muted-foreground/15" />
+      </div>
+      {/* Button area */}
+      <div className="bg-background px-4 pb-4">
+        <Skeleton className="h-12 w-full rounded-lg bg-accent/30" />
+      </div>
     </Card>
   );
 };
 
 export const GenreCardSkeleton = () => {
   return (
-    <Card className="overflow-hidden bg-card border-border/50 group">
-      <div className="relative aspect-[4/3] bg-muted animate-pulse">
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 space-y-2">
-          <Skeleton className="h-7 w-32 bg-muted-foreground/30" />
-          <Skeleton className="h-4 w-24 bg-muted-foreground/20" />
+    <Card className="overflow-hidden bg-card border-2 border-border/50">
+      {/* Match exact dimensions of real card: h-64 = 256px */}
+      <div className="relative h-64 bg-muted animate-pulse">
+        <div className="absolute top-3 right-3">
+          <Skeleton className="h-6 w-20 rounded-md bg-muted-foreground/30" />
         </div>
+        <div className="absolute bottom-3 left-3">
+          <Skeleton className="h-5 w-16 rounded-md bg-muted-foreground/20" />
+        </div>
+      </div>
+      <CardContent className="p-4 space-y-2">
+        <Skeleton className="h-6 w-3/4 bg-muted-foreground/20" />
+        <Skeleton className="h-4 w-full bg-muted-foreground/15" />
+        <Skeleton className="h-4 w-20 bg-accent/30" />
+      </CardContent>
+      <div className="p-4 pt-0">
+        <Skeleton className="h-10 w-full rounded-lg bg-accent/30" />
       </div>
     </Card>
   );

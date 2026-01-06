@@ -252,49 +252,54 @@ const Artistas = () => {
         ) : filteredArtists.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedArtists.map((artist: any) => (
-                <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block">
-                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
-                    <div className="relative h-64 overflow-hidden">
-                      <img
-                        src={artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg"}
-                        alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        width={400}
-                        height={256}
-                      />
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-accent text-brand-black hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                          {artist.event_count} eventos
-                        </Badge>
-                      </div>
-                      {artist.genres && artist.genres[0] && (
-                        <div className="absolute bottom-3 left-3">
-                          <Badge variant="secondary" className="text-xs">
-                            {artist.genres[0]}
+              {displayedArtists.map((artist: any, index: number) => {
+                const isPriority = index < 4; // First 4 cards get priority loading
+                return (
+                  <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block">
+                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
+                      <div className="relative h-64 overflow-hidden bg-muted">
+                        <img
+                          src={artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg"}
+                          alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading={isPriority ? "eager" : "lazy"}
+                          decoding={isPriority ? "sync" : "async"}
+                          fetchPriority={isPriority ? "high" : "auto"}
+                          width={400}
+                          height={256}
+                        />
+                        <div className="absolute top-3 right-3">
+                          <Badge className="bg-accent text-brand-black hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                            {artist.event_count} eventos
                           </Badge>
                         </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4 space-y-2">
-                      <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
-                        {artist.attraction_name}
-                      </h3>
-                      {artist.city_count && (
-                        <p className="text-sm text-muted-foreground">
-                          {artist.city_count} ciudades
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0">
-                      <Button className="w-full bg-accent hover:bg-accent/90 text-brand-black font-semibold py-2 rounded-lg text-sm">
-                        Ver Eventos →
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
+                        {artist.genres && artist.genres[0] && (
+                          <div className="absolute bottom-3 left-3">
+                            <Badge variant="secondary" className="text-xs">
+                              {artist.genres[0]}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-4 space-y-2">
+                        <h2 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
+                          {artist.attraction_name}
+                        </h2>
+                        {artist.city_count && (
+                          <p className="text-sm text-muted-foreground">
+                            {artist.city_count} ciudades
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="p-4 pt-0">
+                        <Button className="w-full bg-accent hover:bg-accent/90 text-brand-black font-semibold py-2 rounded-lg text-sm">
+                          Ver Eventos →
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
             
             {displayedArtists.length < filteredArtists.length && (

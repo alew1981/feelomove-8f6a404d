@@ -301,50 +301,55 @@ const Musica = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedGenres.map((genre: any) => (
-                <Link key={genre.genre_id} to={`/generos/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`} className="block">
-                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
-                    <div className="relative h-64 overflow-hidden">
-                      <img 
-                        src={genreImages?.[genre.genre_name] || "/placeholder.svg"} 
-                        alt={`Conciertos y festivales de ${genre.genre_name} - ${genre.event_count} eventos en España`} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                        loading="lazy"
-                        width={400}
-                        height={256}
-                      />
-                      <div className="absolute top-3 right-3 flex flex-col gap-2">
-                        <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                          {genre.event_count} eventos
-                        </Badge>
-                      </div>
-                      {genre.city_count > 0 && (
-                        <div className="absolute bottom-3 left-3">
-                          <Badge variant="secondary" className="text-xs">
-                            {genre.city_count} ciudades
+              {displayedGenres.map((genre: any, index: number) => {
+                const isPriority = index < 4; // First 4 cards get priority loading
+                return (
+                  <Link key={genre.genre_id} to={`/musica/${genre.genre_slug || encodeURIComponent(genre.genre_name)}`} className="block">
+                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
+                      <div className="relative h-64 overflow-hidden bg-muted">
+                        <img 
+                          src={genreImages?.[genre.genre_name] || "/placeholder.svg"} 
+                          alt={`Conciertos y festivales de ${genre.genre_name} - ${genre.event_count} eventos en España`} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                          loading={isPriority ? "eager" : "lazy"}
+                          decoding={isPriority ? "sync" : "async"}
+                          fetchPriority={isPriority ? "high" : "auto"}
+                          width={400}
+                          height={256}
+                        />
+                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                          <Badge className="bg-accent text-accent-foreground hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
+                            {genre.event_count} eventos
                           </Badge>
                         </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4 space-y-2">
-                      <h3 className="font-bold text-xl text-foreground line-clamp-1">{genre.genre_name}</h3>
-                      {genre.top_artists && genre.top_artists.length > 0 && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {genre.top_artists.slice(0, 3).join(", ")}
-                        </p>
-                      )}
-                      {genre.price_from && (
-                        <p className="text-sm text-accent font-semibold">
-                          Desde {Number(genre.price_from).toFixed(0)}€
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0">
-                      <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
-                    </CardFooter>
-                  </Card>
-                </Link>
-              ))}
+                        {genre.city_count > 0 && (
+                          <div className="absolute bottom-3 left-3">
+                            <Badge variant="secondary" className="text-xs">
+                              {genre.city_count} ciudades
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-4 space-y-2">
+                        <h2 className="font-bold text-xl text-foreground line-clamp-1">{genre.genre_name}</h2>
+                        {genre.top_artists && genre.top_artists.length > 0 && (
+                          <p className="text-sm text-muted-foreground line-clamp-1">
+                            {genre.top_artists.slice(0, 3).join(", ")}
+                          </p>
+                        )}
+                        {genre.price_from && (
+                          <p className="text-sm text-accent font-semibold">
+                            Desde {Number(genre.price_from).toFixed(0)}€
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="p-4 pt-0">
+                        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
             {displayedGenres.length < filteredGenres.length && (
               <div ref={loadMoreRef} className="flex justify-center items-center py-12">

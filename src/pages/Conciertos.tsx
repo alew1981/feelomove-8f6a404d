@@ -406,13 +406,7 @@ const Conciertos = () => {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {displayedEvents.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <EventCard event={event} priority={index < 4} />
-                  </div>
+                  <EventCard key={event.id} event={event} priority={index < 4} />
                 ))}
               </div>
               
