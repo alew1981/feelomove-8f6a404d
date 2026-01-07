@@ -219,6 +219,28 @@
   ],
   "rewrites": [
     {
+      "source": "/conciertos/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|bingbot|Baiduspider|YandexBot|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slurp|DuckDuckBot|ia_archiver|Sogou|Exabot|AhrefsBot|SEMrushBot|MJ12bot|SeznamBot|PetalBot|Screaming Frog|seobility|msnbot|rogerbot|SemrushBot).*"
+        }
+      ],
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/seo-prerender?path=/conciertos/:slug"
+    },
+    {
+      "source": "/festivales/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|bingbot|Baiduspider|YandexBot|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slurp|DuckDuckBot|ia_archiver|Sogou|Exabot|AhrefsBot|SEMrushBot|MJ12bot|SeznamBot|PetalBot|Screaming Frog|seobility|msnbot|rogerbot|SemrushBot).*"
+        }
+      ],
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/seo-prerender?path=/festivales/:slug"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index"
     },
