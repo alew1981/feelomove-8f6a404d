@@ -108,6 +108,33 @@ const RedirectMusicaGenero = () => {
   const { genero } = useParams();
   return <Navigate to={`/generos/${genero}`} replace />;
 };
+
+// Redirect legacy/malformed genre URLs that include extra path segments, e.g. /generos/Hard%20Rock/Metal
+// We collapse the extra segments into a single slug: hard-rock-metal
+const RedirectGeneroCatchAll = () => {
+  const params = useParams();
+  const splat = (params["*"] ?? "") as string;
+  const normalized = splat
+    .split("/")
+    .map((seg) => {
+      try {
+        return decodeURIComponent(seg);
+      } catch {
+        return seg;
+      }
+    })
+    .filter(Boolean)
+    .join("-")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return <Navigate to={`/generos/${normalized}`} replace />;
+};
+
 const RedirectArtista = () => {
   const { slug } = useParams();
   return <Navigate to={`/conciertos/${slug}`} replace />;
@@ -131,6 +158,8 @@ const App = () => (
                 <Route path="/destinos/:destino" element={<DestinoDetalle />} />
                 <Route path="/generos" element={<Generos />} />
                 <Route path="/generos/:genero" element={<GeneroDetalle />} />
+                {/* Catch malformed legacy genre URLs that contain extra segments */}
+                <Route path="/generos/*" element={<RedirectGeneroCatchAll />} />
                 <Route path="/artistas" element={<Artistas />} />
                 <Route path="/conciertos/:artistSlug" element={<ArtistaDetalle />} />
                 <Route path="/eventos" element={<Eventos />} />
