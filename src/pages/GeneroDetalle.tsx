@@ -214,16 +214,72 @@ const GeneroDetalle = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
-  // SEO description
-  const seoDescription = `Descubre los mejores conciertos y festivales de ${genreName}. ${events?.length || 0} eventos disponibles en España.`;
+  // Calculate min price for SEO
+  const minPriceEur = useMemo(() => {
+    if (!events || events.length === 0) return null;
+    const prices = events.map(e => e.price_min_incl_fees).filter((p): p is number => p !== null && p > 0);
+    return prices.length > 0 ? Math.min(...prices) : null;
+  }, [events]);
+
+  // Top artists for SEO description
+  const topArtistsForSeo = useMemo(() => {
+    const artistSet = new Set<string>();
+    events?.forEach(event => {
+      const artist = getEventArtist(event);
+      if (artist) artistSet.add(artist);
+    });
+    return Array.from(artistSet).slice(0, 5);
+  }, [events]);
+
+  // Unique cities count
+  const uniqueCitiesCount = cities.length;
+
+  // Build proper genre SEO description (NOT destination)
+  const seoDescription = useMemo(() => {
+    const parts: string[] = [];
+    parts.push(`Descubre los mejores conciertos de ${genreName} en España.`);
+    
+    const eventCount = events?.length || 0;
+    if (eventCount > 0) {
+      parts.push(`${eventCount} eventos confirmados${uniqueCitiesCount > 0 ? ` en ${uniqueCitiesCount} ciudades` : ''}.`);
+    }
+    
+    if (topArtistsForSeo.length > 0) {
+      parts.push(`Artistas: ${topArtistsForSeo.join(', ')}.`);
+    }
+    
+    if (minPriceEur && minPriceEur > 0) {
+      parts.push(`Entradas desde ${Math.round(minPriceEur)}€.`);
+    }
+    
+    parts.push('Compra entradas y reserva hotel.');
+    
+    return parts.join(' ');
+  }, [genreName, events, uniqueCitiesCount, topArtistsForSeo, minPriceEur]);
+
+  // Clean genre slug for URLs (no %20)
+  const cleanGenreSlug = genreParam.toLowerCase().replace(/\s+/g, '-').replace(/%20/g, '-');
+  const canonicalUrl = `https://feelomove.com/generos/${cleanGenreSlug}`;
+
+  // Clean image URL (remove lovable.app references)
+  const cleanImageUrl = useMemo(() => {
+    const img = heroImage;
+    if (!img) return 'https://feelomove.com/og-image.jpg';
+    if (img.includes('lovable.app')) return 'https://feelomove.com/og-image.jpg';
+    return img;
+  }, [heroImage]);
+
+  // Clean title (no %20)
+  const cleanGenreName = genreName.replace(/%20/g, ' ');
+  const pageTitle = `Conciertos de ${cleanGenreName} en España 2025`;
 
   // Generate JSON-LD structured data for genre
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `Conciertos de ${genreName}`,
+    "name": `Conciertos de ${cleanGenreName}`,
     "description": seoDescription,
-    "url": `https://feelomove.com/generos/${genreParam}`,
+    "url": canonicalUrl,
     "numberOfItems": events?.length || 0,
     "itemListElement": events?.slice(0, 10).map((event: any, index: number) => ({
       "@type": "ListItem",
@@ -245,7 +301,7 @@ const GeneroDetalle = () => {
         }
       }
     }))
-  }), [genreName, genreParam, seoDescription, events]);
+  }), [cleanGenreName, canonicalUrl, seoDescription, events]);
 
   // BreadcrumbList JSON-LD
   const breadcrumbJsonLd = {
@@ -267,8 +323,8 @@ const GeneroDetalle = () => {
       {
         "@type": "ListItem",
         "position": 3,
-        "name": genreName,
-        "item": `https://feelomove.com/generos/${genreParam}`
+        "name": cleanGenreName,
+        "item": canonicalUrl
       }
     ]
   };
@@ -276,13 +332,13 @@ const GeneroDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`Conciertos de ${genreName} en España 2025`}
-        description={`Encuentra ${events?.length || 0} conciertos de ${genreName} en España. Entradas + hotel para eventos de ${genreName}. ¡Compra ahora!`}
-        canonical={`https://feelomove.com/musica/${genreParam}`}
+        title={pageTitle}
+        description={seoDescription}
+        canonical={canonicalUrl}
         pageType="CollectionPage"
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
         preloadImage={heroImage}
-        ogImage={heroImage || undefined}
+        ogImage={cleanImageUrl}
       />
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -294,11 +350,14 @@ const GeneroDetalle = () => {
         </div>
         
         {/* Hero Image */}
-        <PageHero title={seoContent?.h1Content || genreName} imageUrl={heroImage} />
+        <PageHero title={seoContent?.h1Content || cleanGenreName} imageUrl={heroImage} />
+        
+        {/* H2 for SEO hierarchy (sr-only) */}
+        <h2 className="sr-only">Listado de conciertos y eventos de música {cleanGenreName}</h2>
         
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8">
-          {seoContent?.introText || `Descubre los mejores eventos de ${genreName}`}
+          {seoContent?.introText || `Descubre los mejores eventos de ${cleanGenreName}`}
         </p>
 
         {/* Filters and Search */}
