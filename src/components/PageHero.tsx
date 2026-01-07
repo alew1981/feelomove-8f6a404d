@@ -44,14 +44,15 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
       {/* LCP-optimized hero image */}
       <img
         src={finalImage}
-        alt={`${title} - Imagen principal de la página`}
+        alt={`${title} - FEELOMOVE+`}
+        title={`${title} - FEELOMOVE+`}
         className="w-full h-full object-cover parallax-bg"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
         fetchPriority={priority ? "high" : "auto"}
         width={1200}
         height={400}
-        style={{ 
+        style={{
           transform: `translateY(${scrollOffset}px) scale(1.1)`,
           contentVisibility: 'auto'
         }}

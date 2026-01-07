@@ -336,7 +336,7 @@ const Musica = () => {
                         )}
                       </div>
                       <CardContent className="p-4 space-y-2">
-                        <h2 className="font-bold text-xl text-foreground line-clamp-1">{genre.genre_name}</h2>
+                        <h3 className="font-bold text-xl text-foreground line-clamp-1">{genre.genre_name}</h3>
                         {genre.top_artists && genre.top_artists.length > 0 && (
                           <p className="text-sm text-muted-foreground line-clamp-1">
                             {genre.top_artists.slice(0, 3).join(", ")}
