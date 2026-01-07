@@ -61,9 +61,15 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
   const [nearbyDestinations, setNearbyDestinations] = useState<RelatedLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Normalize slug for comparison
+  // Normalize slug for comparison and URL generation
   const normalizeSlug = (s: string) => 
-    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    s.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\/\\]/g, '-')  // Replace slashes with hyphens
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')      // Collapse multiple hyphens
+      .replace(/^-|-$/g, '');   // Remove leading/trailing hyphens
 
   // Fetch primary related links
   useEffect(() => {
