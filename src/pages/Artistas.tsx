@@ -163,6 +163,11 @@ const Artistas = () => {
           priority={true}
         />
         
+        {/* H2 for proper heading hierarchy */}
+        <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+          Artistas destacados con conciertos y festivales en España
+        </h2>
+        
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
           Explora nuestra colección de {filteredArtists?.length || 0} artistas con eventos en España

@@ -33,7 +33,7 @@ const Footer = () => {
 
           {/* Explorar */}
           <nav aria-label="Explorar">
-            <h3 className="font-semibold mb-4">Explorar</h3>
+            <h4 className="font-semibold mb-4">Explorar</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <NavLink to="/conciertos" className="hover:text-foreground transition-colors" title="Ver todos los conciertos en España">
@@ -65,7 +65,7 @@ const Footer = () => {
 
           {/* Compañía */}
           <nav aria-label="Compañía">
-            <h3 className="font-semibold mb-4">Compañía</h3>
+            <h4 className="font-semibold mb-4">Compañía</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <NavLink to="/about" className="hover:text-foreground transition-colors" title="Conoce más sobre FEELOMOVE+">
@@ -82,7 +82,7 @@ const Footer = () => {
 
           {/* Legal */}
           <nav aria-label="Legal">
-            <h3 className="font-semibold mb-4">Legal</h3>
+            <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a href="/terminos" className="hover:text-foreground transition-colors" title="Leer términos y condiciones de uso">

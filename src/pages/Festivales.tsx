@@ -505,6 +505,11 @@ const Festivales = () => {
             priority={true}
           />
           
+          {/* H2 for proper heading hierarchy */}
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+            Próximos festivales y eventos musicales destacados en España
+          </h2>
+          
           {/* Description - with content-visibility for below-fold optimization */}
           <div className="prose prose-lg max-w-none mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">

@@ -269,6 +269,11 @@ const Conciertos = () => {
             priority={true}
           />
           
+          {/* H2 for proper heading hierarchy - visible for SEO */}
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+            Próximos eventos y conciertos destacados en España
+          </h2>
+          
           {/* Description */}
           <div className="prose prose-lg max-w-none mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
