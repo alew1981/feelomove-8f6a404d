@@ -36,27 +36,27 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Explorar</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <NavLink to="/conciertos" className="hover:text-foreground transition-colors">
+                <NavLink to="/conciertos" className="hover:text-foreground transition-colors" title="Ver todos los conciertos en España">
                   Conciertos
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/festivales" className="hover:text-foreground transition-colors">
+                <NavLink to="/festivales" className="hover:text-foreground transition-colors" title="Descubre festivales de música en España">
                   Festivales
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/destinos" className="hover:text-foreground transition-colors">
+                <NavLink to="/destinos" className="hover:text-foreground transition-colors" title="Explora destinos con eventos musicales">
                   Destinos
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/artistas" className="hover:text-foreground transition-colors">
+                <NavLink to="/artistas" className="hover:text-foreground transition-colors" title="Ver artistas con conciertos en España">
                   Artistas
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/musica" className="hover:text-foreground transition-colors">
+                <NavLink to="/musica" className="hover:text-foreground transition-colors" title="Explorar géneros musicales">
                   Géneros Musicales
                 </NavLink>
               </li>
@@ -68,12 +68,12 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Compañía</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <NavLink to="/about" className="hover:text-foreground transition-colors">
+                <NavLink to="/about" className="hover:text-foreground transition-colors" title="Conoce más sobre FEELOMOVE+">
                   Sobre Nosotros
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/favoritos" className="hover:text-foreground transition-colors">
+                <NavLink to="/favoritos" className="hover:text-foreground transition-colors" title="Ver mis eventos favoritos guardados">
                   Mis Favoritos
                 </NavLink>
               </li>
@@ -85,17 +85,17 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="/terminos" className="hover:text-foreground transition-colors">
+                <a href="/terminos" className="hover:text-foreground transition-colors" title="Leer términos y condiciones de uso">
                   Términos y Condiciones
                 </a>
               </li>
               <li>
-                <a href="/privacidad" className="hover:text-foreground transition-colors">
+                <a href="/privacidad" className="hover:text-foreground transition-colors" title="Consultar política de privacidad">
                   Política de Privacidad
                 </a>
               </li>
               <li>
-                <a href="/cookies" className="hover:text-foreground transition-colors">
+                <a href="/cookies" className="hover:text-foreground transition-colors" title="Información sobre uso de cookies">
                   Cookies
                 </a>
               </li>
@@ -112,6 +112,7 @@ const Footer = () => {
               rel="noopener noreferrer"
               className="hover:text-accent transition-colors"
               aria-label="Instagram"
+              title="Síguenos en Instagram"
             >
               <Instagram className="h-5 w-5" />
             </a>
@@ -121,6 +122,7 @@ const Footer = () => {
               rel="noopener noreferrer"
               className="hover:text-accent transition-colors"
               aria-label="X (Twitter)"
+              title="Síguenos en X (Twitter)"
             >
               <XIcon className="h-5 w-5" />
             </a>
@@ -130,6 +132,7 @@ const Footer = () => {
               rel="noopener noreferrer"
               className="hover:text-accent transition-colors"
               aria-label="Pinterest"
+              title="Síguenos en Pinterest"
             >
               <PinterestIcon className="h-5 w-5" />
             </a>

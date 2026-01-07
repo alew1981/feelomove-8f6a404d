@@ -96,7 +96,7 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
   const imageUrl = festival.image_large_url || "/placeholder.svg";
 
   return (
-    <Link to={`/festivales/${festivalSlug}`}>
+    <Link to={`/festivales/${festivalSlug}`} title={`Ver eventos del festival ${festival.festival_nombre}`}>
       <Card 
         ref={cardRef}
         className="group overflow-hidden border-2 border-border hover:border-accent transition-all duration-300 bg-card h-full"
@@ -111,6 +111,7 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
               <img
                 src={imageUrl}
                 alt={`${festival.festival_nombre} - Festival de música en ${festival.venue_city}`}
+                title={`${festival.festival_nombre} - Festival en ${festival.venue_city}`}
                 className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 loading={priority ? "eager" : "lazy"}
                 decoding={priority ? "sync" : "async"}

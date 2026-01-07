@@ -285,12 +285,13 @@ const Destinos = () => {
               {displayedCities.map((city: any, index: number) => {
                 const isPriority = index < 4; // First 4 cards get priority loading
                 return (
-                  <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block">
+                  <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block" title={`Descubrir eventos en ${city.city_name}`}>
                     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                       <div className="relative h-64 overflow-hidden bg-muted">
                         <img 
                           src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
-                          alt={`Conciertos y festivales en ${city.city_name} - ${city.event_count} eventos musicales`} 
+                          alt={`Conciertos y festivales en ${city.city_name} - ${city.event_count} eventos musicales`}
+                          title={`Eventos en ${city.city_name} - ${city.event_count} conciertos y festivales`}
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                           loading={isPriority ? "eager" : "lazy"}
                           decoding={isPriority ? "sync" : "async"}
@@ -308,7 +309,7 @@ const Destinos = () => {
                         </div>
                       </div>
                       <CardContent className="p-4 space-y-2">
-                        <h2 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h2>
+                        <h3 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h3>
                         <div className="flex gap-2 text-sm text-muted-foreground">
                           {city.concerts_count > 0 && <span>{city.concerts_count} conciertos</span>}
                           {city.festivals_count > 0 && <span>• {city.festivals_count} festivales</span>}

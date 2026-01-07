@@ -174,7 +174,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
   );
 
   return (
-    <Link to={eventUrl} className="group block">
+    <Link to={eventUrl} className="group block" title={`Ver entradas y detalles de ${eventName}`}>
       <Card ref={cardRef} className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
@@ -188,6 +188,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                   <img
                     src={imageUrl}
                     alt={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
+                    title={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
                     fetchPriority={priority ? "high" : "auto"}
@@ -307,7 +308,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
 
             {/* Event Name Below Image */}
             <div className="bg-background px-4 pt-4 pb-2">
-              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']" title={eventName}>
+              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']">
                 {eventName}
               </h3>
             </div>

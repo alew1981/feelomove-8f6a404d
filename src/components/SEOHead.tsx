@@ -190,9 +190,7 @@ export const SEOHead = ({
       
       {/* Additional SEO */}
       <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-      <meta name="language" content="Spanish" />
       <meta name="revisit-after" content="7 days" />
-      <meta name="author" content="FEELOMOVE+" />
       <meta name="geo.region" content="ES" />
       <meta name="geo.placename" content="España" />
       

@@ -255,12 +255,13 @@ const Artistas = () => {
               {displayedArtists.map((artist: any, index: number) => {
                 const isPriority = index < 4; // First 4 cards get priority loading
                 return (
-                  <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block">
+                  <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block" title={`Ver conciertos y entradas de ${artist.attraction_name}`}>
                     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                       <div className="relative h-64 overflow-hidden bg-muted">
                         <img
                           src={artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg"}
                           alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
+                          title={`${artist.attraction_name} - Conciertos en España`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading={isPriority ? "eager" : "lazy"}
                           decoding={isPriority ? "sync" : "async"}
@@ -282,9 +283,9 @@ const Artistas = () => {
                         )}
                       </div>
                       <CardContent className="p-4 space-y-2">
-                        <h2 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
+                        <h3 className="font-bold text-xl text-foreground line-clamp-1" style={{ fontFamily: 'Poppins' }}>
                           {artist.attraction_name}
-                        </h2>
+                        </h3>
                         {artist.city_count && (
                           <p className="text-sm text-muted-foreground">
                             {artist.city_count} ciudades
