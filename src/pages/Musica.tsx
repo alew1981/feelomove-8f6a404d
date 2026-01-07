@@ -210,6 +210,11 @@ const Musica = () => {
           priority={true}
         />
         
+        {/* H2 for proper heading hierarchy */}
+        <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+          Estilos musicales destacados con eventos en España
+        </h2>
+        
         {/* Description */}
         <p className="text-muted-foreground leading-relaxed mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
           Explora eventos por género musical en toda España.

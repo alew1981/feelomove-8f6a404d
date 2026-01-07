@@ -178,6 +178,11 @@ const Destinos = () => {
           priority={true}
         />
         
+        {/* H2 for proper heading hierarchy */}
+        <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+          Ciudades destacadas con eventos musicales en España
+        </h2>
+        
         {/* Description */}
         <p className="text-muted-foreground leading-relaxed mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
           Explora eventos musicales en las mejores ciudades de España.

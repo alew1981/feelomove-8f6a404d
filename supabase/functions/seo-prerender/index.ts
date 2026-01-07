@@ -113,7 +113,10 @@ function generateHTML(event: EventData, slug: string, routeType: "conciertos" | 
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
   <meta name="keywords" content="${escapeHtml(keywords)}">
+  <meta name="author" content="FEELOMOVE+">
+  <meta name="language" content="es">
   <link rel="canonical" href="${canonicalUrl}">
+  <link rel="publisher" href="${SITE_URL}">
   
   <!-- Open Graph -->
   <meta property="og:type" content="event">
@@ -126,6 +129,7 @@ function generateHTML(event: EventData, slug: string, routeType: "conciertos" | 
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@feelomove">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${imageUrl}">
