@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
+import { buildDestinationSeoDescription } from "@/lib/seoDescriptions";
 
 const DestinoDetalle = () => {
   const { destino } = useParams<{ destino: string }>();
@@ -195,39 +196,57 @@ const DestinoDetalle = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
-  // SEO content
-  const topArtists = artists.slice(0, 3).join(", ");
-  const seoDescription = `Descubre los mejores conciertos y festivales en ${cityName}. Compra entradas + hotel para ${events?.length || 0} eventos en ${cityName}. Artistas: ${topArtists || "próximamente"}.`;
+  // SEO content (Súper SEO: conteos + artistas + precio)
+  const topArtistsList = artists.slice(0, 6);
+  const concertsCount = concerts?.length || 0;
+  const festivalsCount = festivals?.length || 0;
+  const minPriceEur = (() => {
+    const prices = (events || [])
+      .map((e: any) => e.price_min_incl_fees)
+      .filter((p: any) => typeof p === "number" && p > 0) as number[];
+    return prices.length ? Math.min(...prices) : null;
+  })();
 
-  // Generate JSON-LD structured data for destination
-  const jsonLdData = useMemo(() => ({
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": `Conciertos y Festivales en ${cityName}`,
-    "description": seoDescription,
-    "url": `https://feelomove.com/destinos/${citySlug}`,
-    "numberOfItems": events?.length || 0,
-    "itemListElement": events?.slice(0, 10).map((event: any, index: number) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "item": {
-        "@type": "MusicEvent",
-        "name": event.name,
-        "startDate": event.event_date,
-        "url": `https://feelomove.com/concierto/${event.slug}`,
-        "image": event.image_large_url || event.image_standard_url,
-        "location": {
-          "@type": "Place",
-          "name": event.venue_name,
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": cityName,
-            "addressCountry": "ES"
-          }
-        }
-      }
-    }))
-  }), [cityName, citySlug, seoDescription, events]);
+  const seoDescription = buildDestinationSeoDescription({
+    cityName,
+    totalEvents: events?.length || 0,
+    concertsCount,
+    festivalsCount,
+    topArtists: topArtistsList,
+    minPriceEur,
+  });
+
+  // Generate JSON-LD structured data for destination (ItemList de Events)
+  const jsonLdData = useMemo(() => {
+    const itemList = (events || []).slice(0, 10).map((event: any, index: number) => {
+      const isConcert = "artist_name" in event;
+      const eventUrl = isConcert
+        ? `https://feelomove.com/conciertos/${event.slug}`
+        : `https://feelomove.com/festivales/${event.slug}`;
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "Event",
+          name: event.name,
+          startDate: event.event_date,
+          url: eventUrl,
+          image: event.image_large_url || event.image_standard_url,
+        },
+      };
+    });
+
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `Eventos en ${cityName}`,
+      description: seoDescription,
+      url: `https://feelomove.com/destinos/${citySlug}`,
+      numberOfItems: events?.length || 0,
+      itemListElement: itemList,
+    };
+  }, [cityName, citySlug, seoDescription, events]);
 
   // BreadcrumbList JSON-LD
   const breadcrumbJsonLd = {
@@ -259,7 +278,7 @@ const DestinoDetalle = () => {
     <>
       <SEOHead
         title={`Conciertos en ${cityName} - Entradas y Hoteles`}
-        description={`Descubre ${events?.length || 0} conciertos y festivales en ${cityName}. Compra entradas + hotel cerca del evento. ¡Reserva ahora!`}
+        description={seoDescription}
         canonical={`https://feelomove.com/destinos/${citySlug}`}
         pageType="CollectionPage"
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
@@ -278,10 +297,13 @@ const DestinoDetalle = () => {
           {/* Hero Image */}
           <PageHero title={seoContent?.h1Content || cityName} imageUrl={heroImage} />
           
+          {/* H2 universal (sr-only) para evitar salto de niveles: H1 > H2 > H3 */}
+          <h2 className="sr-only">Eventos y experiencias destacadas en {cityName}</h2>
+          
           {/* SEO Text */}
           <SEOText 
             title={seoContent?.h1Content || `Eventos en ${cityName}`}
-            description={seoContent?.introText || `Encuentra todos los próximos conciertos y festivales en ${cityName}. Reserva tus entradas junto con hotel cercano al venue y ahorra en tu experiencia completa. Tenemos ${events?.length || 0} eventos disponibles${topArtists ? ` con artistas como ${topArtists}` : ''}.`}
+            description={seoContent?.introText || seoDescription}
             keywords={seoContent?.metaKeywords || [`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]}
           />
 
