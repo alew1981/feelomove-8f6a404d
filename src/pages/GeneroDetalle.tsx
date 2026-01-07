@@ -273,32 +273,55 @@ const GeneroDetalle = () => {
   const cleanGenreName = genreName.replace(/%20/g, ' ');
   const pageTitle = `Conciertos de ${cleanGenreName} en España 2025`;
 
-  // Generate JSON-LD structured data for genre
+  // Generate JSON-LD structured data for genre (ItemList with complete Event objects for Google)
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `Conciertos de ${cleanGenreName}`,
+    "name": `Conciertos de ${cleanGenreName} en España`,
     "description": seoDescription,
     "url": canonicalUrl,
     "numberOfItems": events?.length || 0,
-    "itemListElement": events?.slice(0, 10).map((event: any, index: number) => ({
+    "itemListElement": events?.slice(0, 15).map((event: any, index: number) => ({
       "@type": "ListItem",
       "position": index + 1,
       "item": {
         "@type": "MusicEvent",
         "name": event.name,
+        "description": `Concierto de ${cleanGenreName} en ${event.venue_city}. Compra entradas y reserva hotel.`,
         "startDate": event.event_date,
+        "endDate": event.event_date,
+        "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
         "url": `https://feelomove.com/concierto/${event.slug}`,
-        "image": event.image_large_url || event.image_standard_url,
+        "image": [event.image_large_url || event.image_standard_url || "https://feelomove.com/og-image.jpg"],
         "location": {
           "@type": "Place",
-          "name": event.venue_name,
+          "name": event.venue_name || "Recinto del evento",
           "address": {
             "@type": "PostalAddress",
+            "streetAddress": event.venue_name || "Recinto del evento",
             "addressLocality": event.venue_city,
+            "addressRegion": "España",
             "addressCountry": "ES"
           }
-        }
+        },
+        "organizer": {
+          "@type": "Organization",
+          "name": "FEELOMOVE+",
+          "url": "https://feelomove.com"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": `https://feelomove.com/concierto/${event.slug}`,
+          "price": event.price_min_incl_fees || 0,
+          "priceCurrency": event.currency || "EUR",
+          "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+          "validFrom": new Date().toISOString()
+        },
+        "performer": event.artist_name ? {
+          "@type": "MusicGroup",
+          "name": event.artist_name
+        } : undefined
       }
     }))
   }), [cleanGenreName, canonicalUrl, seoDescription, events]);

@@ -533,12 +533,13 @@ const Producto = () => {
     "image": [eventImage],
     "location": {
       "@type": "Place",
-      "name": eventDetails.venue_name,
+      "name": eventDetails.venue_name || "Venue",
       "url": (eventDetails as any).venue_url || undefined,
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": eventDetails.venue_address || undefined,
+        "streetAddress": eventDetails.venue_address || eventDetails.venue_name || "Recinto del evento",
         "addressLocality": eventDetails.venue_city,
+        "addressRegion": "España",
         "postalCode": eventDetails.venue_postal_code || undefined,
         "addressCountry": "ES"
       },
@@ -553,11 +554,11 @@ const Producto = () => {
       "name": "FEELOMOVE+",
       "url": "https://feelomove.com"
     },
-    "offers": minPrice > 0 ? {
+    "offers": {
       "@type": "AggregateOffer",
       "url": absoluteUrl,
-      "lowPrice": minPrice,
-      "highPrice": maxPrice,
+      "lowPrice": minPrice > 0 ? minPrice : 0,
+      "highPrice": maxPrice > 0 ? maxPrice : minPrice > 0 ? minPrice : 0,
       "priceCurrency": "EUR",
       "availability": eventDetails.sold_out 
         ? "https://schema.org/SoldOut" 
@@ -568,9 +569,10 @@ const Producto = () => {
       "validFrom": (eventDetails as any).on_sale_date || new Date().toISOString(),
       "seller": {
         "@type": "Organization",
-        "name": "FEELOMOVE+"
+        "name": "FEELOMOVE+",
+        "url": "https://feelomove.com"
       }
-    } : undefined,
+    },
     "performer": artistNames.length > 0 ? artistNames.map((name: string) => ({
       "@type": "MusicGroup",
       "name": name
