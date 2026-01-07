@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Music, Users, Ticket } from 'lucide-react';
@@ -21,12 +21,51 @@ interface RelatedLinksData {
 interface RelatedLinksProps {
   slug: string;
   type: 'event' | 'artist' | 'city' | 'genre';
+  currentCity?: string;
+  currentGenre?: string;
 }
 
-export const RelatedLinks = ({ slug, type }: RelatedLinksProps) => {
+// Semantic genre relationships for better link juice
+const GENRE_RELATIONSHIPS: Record<string, string[]> = {
+  'rock': ['metal', 'indie', 'alternative', 'punk', 'hard-rock'],
+  'metal': ['rock', 'hard-rock', 'alternative', 'punk', 'hardcore'],
+  'pop': ['dance', 'electro-pop', 'indie-pop', 'r-b', 'latin'],
+  'indie': ['alternative', 'rock', 'folk', 'indie-pop', 'shoegaze'],
+  'hip-hop': ['rap', 'r-b', 'trap', 'urban', 'reggaeton'],
+  'electronica': ['techno', 'house', 'dance', 'trance', 'edm'],
+  'jazz': ['blues', 'soul', 'funk', 'swing', 'latin-jazz'],
+  'reggaeton': ['latin', 'urban', 'hip-hop', 'trap', 'dancehall'],
+  'flamenco': ['latin', 'world', 'fusion', 'spanish-guitar', 'folk'],
+  'classical': ['opera', 'orchestra', 'chamber', 'baroque', 'contemporary-classical'],
+};
+
+// Geographic proximity for Spanish cities
+const CITY_PROXIMITY: Record<string, string[]> = {
+  'madrid': ['toledo', 'segovia', 'guadalajara', 'avila', 'barcelona', 'valencia'],
+  'barcelona': ['tarragona', 'girona', 'lleida', 'madrid', 'valencia', 'zaragoza'],
+  'valencia': ['castellon', 'alicante', 'murcia', 'barcelona', 'madrid', 'albacete'],
+  'sevilla': ['cadiz', 'malaga', 'cordoba', 'huelva', 'granada', 'jerez'],
+  'bilbao': ['san-sebastian', 'vitoria', 'santander', 'pamplona', 'logrono', 'burgos'],
+  'malaga': ['marbella', 'granada', 'sevilla', 'cordoba', 'almeria', 'cadiz'],
+  'zaragoza': ['huesca', 'teruel', 'pamplona', 'logrono', 'barcelona', 'madrid'],
+  'alicante': ['elche', 'murcia', 'valencia', 'albacete', 'cartagena', 'benidorm'],
+  'granada': ['malaga', 'almeria', 'jaen', 'sevilla', 'cordoba', 'murcia'],
+  'murcia': ['cartagena', 'alicante', 'almeria', 'albacete', 'valencia', 'granada'],
+};
+
+export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedLinksProps) => {
   const [links, setLinks] = useState<RelatedLink[] | RelatedLinksData | null>(null);
+  const [fallbackDestinations, setFallbackDestinations] = useState<RelatedLink[]>([]);
+  const [fallbackGenres, setFallbackGenres] = useState<RelatedLink[]>([]);
+  const [relatedGenres, setRelatedGenres] = useState<RelatedLink[]>([]);
+  const [nearbyDestinations, setNearbyDestinations] = useState<RelatedLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Normalize slug for comparison
+  const normalizeSlug = (s: string) => 
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+
+  // Fetch primary related links
   useEffect(() => {
     const fetchLinks = async () => {
       try {
@@ -53,7 +92,213 @@ export const RelatedLinks = ({ slug, type }: RelatedLinksProps) => {
     }
   }, [slug, type]);
 
-  if (isLoading || !links) return null;
+  // Fetch fallback destinations (top 6 by event count)
+  useEffect(() => {
+    const fetchFallbackDestinations = async () => {
+      try {
+        const { data } = await supabase
+          .from('mv_destinations_cards')
+          .select('city_name, city_slug, event_count')
+          .order('event_count', { ascending: false })
+          .limit(8);
+
+        if (data) {
+          const currentSlug = normalizeSlug(slug);
+          setFallbackDestinations(
+            data
+              .filter(d => normalizeSlug(d.city_slug || '') !== currentSlug)
+              .slice(0, 6)
+              .map(d => ({
+                type: 'city',
+                label: `Conciertos en ${d.city_name}`,
+                url: `/destinos/${d.city_slug}`,
+                slug: d.city_slug || '',
+                event_count: d.event_count || 0
+              }))
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching fallback destinations:', error);
+      }
+    };
+
+    if (type === 'city' || type === 'genre') {
+      fetchFallbackDestinations();
+    }
+  }, [type, slug]);
+
+  // Fetch fallback genres (top 6 by event count)
+  useEffect(() => {
+    const fetchFallbackGenres = async () => {
+      try {
+        const { data } = await supabase
+          .from('mv_genres_cards')
+          .select('genre_name, event_count')
+          .order('event_count', { ascending: false })
+          .limit(8);
+
+        if (data) {
+          const currentSlug = normalizeSlug(slug);
+          setFallbackGenres(
+            data
+              .filter(g => normalizeSlug(g.genre_name || '') !== currentSlug)
+              .slice(0, 6)
+              .map(g => {
+                const genreSlug = normalizeSlug(g.genre_name || '');
+                return {
+                  type: 'genre',
+                  label: `Explorar música ${g.genre_name}`,
+                  url: `/generos/${genreSlug}`,
+                  slug: genreSlug,
+                  event_count: g.event_count || 0
+                };
+              })
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching fallback genres:', error);
+      }
+    };
+
+    if (type === 'genre' || type === 'artist') {
+      fetchFallbackGenres();
+    }
+  }, [type, slug]);
+
+  // Fetch semantically related genres
+  useEffect(() => {
+    const fetchRelatedGenres = async () => {
+      if (type !== 'genre') return;
+
+      const normalizedSlug = normalizeSlug(slug);
+      const relatedSlugs = GENRE_RELATIONSHIPS[normalizedSlug] || [];
+
+      if (relatedSlugs.length === 0) return;
+
+      try {
+        const { data } = await supabase
+          .from('mv_genres_cards')
+          .select('genre_name, event_count');
+
+        if (data) {
+          const matches = data.filter(g => {
+            const gSlug = normalizeSlug(g.genre_name || '');
+            return relatedSlugs.some(rs => gSlug.includes(rs) || rs.includes(gSlug));
+          });
+
+          setRelatedGenres(
+            matches.slice(0, 4).map(g => {
+              const genreSlug = normalizeSlug(g.genre_name || '');
+              return {
+                type: 'genre',
+                label: `Explorar música ${g.genre_name}`,
+                url: `/generos/${genreSlug}`,
+                slug: genreSlug,
+                event_count: g.event_count || 0
+              };
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching related genres:', error);
+      }
+    };
+
+    fetchRelatedGenres();
+  }, [type, slug]);
+
+  // Fetch nearby destinations
+  useEffect(() => {
+    const fetchNearbyDestinations = async () => {
+      if (type !== 'city') return;
+
+      const normalizedSlug = normalizeSlug(slug);
+      const nearbySlugs = CITY_PROXIMITY[normalizedSlug] || [];
+
+      try {
+        const { data } = await supabase
+          .from('mv_destinations_cards')
+          .select('city_name, city_slug, event_count')
+          .order('event_count', { ascending: false });
+
+        if (data) {
+          // First try to get nearby cities from our proximity map
+          let matches = data.filter(d => {
+            const dSlug = normalizeSlug(d.city_slug || '');
+            return nearbySlugs.some(ns => dSlug === ns || dSlug.includes(ns));
+          });
+
+          // If not enough nearby cities, add popular ones
+          if (matches.length < 4) {
+            const additionalCities = data
+              .filter(d => {
+                const dSlug = normalizeSlug(d.city_slug || '');
+                return dSlug !== normalizedSlug && !matches.some(m => m.city_slug === d.city_slug);
+              })
+              .slice(0, 4 - matches.length);
+            matches = [...matches, ...additionalCities];
+          }
+
+          setNearbyDestinations(
+            matches.slice(0, 4).map(d => ({
+              type: 'city',
+              label: `Conciertos en ${d.city_name}`,
+              url: `/destinos/${d.city_slug}`,
+              slug: d.city_slug || '',
+              event_count: d.event_count || 0
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching nearby destinations:', error);
+      }
+    };
+
+    fetchNearbyDestinations();
+  }, [type, slug]);
+
+  // Compute context-aware links
+  const contextLinks = useMemo(() => {
+    const currentSlug = normalizeSlug(slug);
+
+    if (type === 'city') {
+      // For destinations: show nearby/popular destinations
+      const destinationLinks = nearbyDestinations.length > 0 
+        ? nearbyDestinations 
+        : fallbackDestinations.filter(d => normalizeSlug(d.slug) !== currentSlug).slice(0, 4);
+      
+      return {
+        destinations: destinationLinks,
+        showDestinations: true
+      };
+    }
+
+    if (type === 'genre') {
+      // For genres: show semantically related genres
+      const genreLinks = relatedGenres.length > 0 
+        ? relatedGenres 
+        : fallbackGenres.filter(g => normalizeSlug(g.slug) !== currentSlug).slice(0, 4);
+      
+      return {
+        genres: genreLinks,
+        showGenres: true
+      };
+    }
+
+    if (type === 'artist') {
+      // For artists: show genres and destinations
+      return {
+        genres: fallbackGenres.slice(0, 4),
+        destinations: fallbackDestinations.slice(0, 4),
+        showGenres: true,
+        showDestinations: true
+      };
+    }
+
+    return {};
+  }, [type, slug, nearbyDestinations, fallbackDestinations, relatedGenres, fallbackGenres]);
+
+  if (isLoading) return null;
 
   const getIcon = (linkType: string) => {
     switch (linkType) {
@@ -68,7 +313,7 @@ export const RelatedLinks = ({ slug, type }: RelatedLinksProps) => {
     }
   };
 
-  const renderLinkSection = (title: string, linkArray: RelatedLink[] | null | undefined) => {
+  const renderLinkSection = (title: string, linkArray: RelatedLink[] | null | undefined, titleAttr: string) => {
     if (!linkArray || linkArray.length === 0) return null;
 
     return (
@@ -76,9 +321,10 @@ export const RelatedLinks = ({ slug, type }: RelatedLinksProps) => {
         <h4 className="text-sm font-semibold text-muted-foreground mb-2">{title}</h4>
         <div className="flex flex-wrap gap-2">
           {linkArray.slice(0, 8).map((link, index) => (
-            <Link
+            <a
               key={`${link.slug}-${index}`}
-              to={link.url}
+              href={link.url}
+              title={`${titleAttr} ${link.label.replace(/^(Conciertos en |Explorar música )/, '')} - FEELOMOVE+`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-accent hover:text-accent-foreground transition-colors text-sm"
             >
               {getIcon(link.type)}
@@ -86,12 +332,29 @@ export const RelatedLinks = ({ slug, type }: RelatedLinksProps) => {
               {link.event_count && link.event_count > 0 && (
                 <span className="text-xs text-muted-foreground ml-1">({link.event_count})</span>
               )}
-            </Link>
+            </a>
           ))}
         </div>
       </div>
     );
   };
+
+  // Check if we have any links to show
+  const hasContextLinks = 
+    (contextLinks.showDestinations && contextLinks.destinations && contextLinks.destinations.length > 0) ||
+    (contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0);
+
+  const hasOriginalLinks = links && (
+    (Array.isArray(links) && links.length > 0) ||
+    (!Array.isArray(links) && (
+      (links.cities && links.cities.length > 0) ||
+      (links.genres && links.genres.length > 0) ||
+      (links.top_artists && links.top_artists.length > 0) ||
+      (links.top_cities && links.top_cities.length > 0)
+    ))
+  );
+
+  if (!hasContextLinks && !hasOriginalLinks) return null;
 
   return (
     <div className="mt-10 pt-8 border-t border-border">
@@ -99,43 +362,66 @@ export const RelatedLinks = ({ slug, type }: RelatedLinksProps) => {
         🔗 También te puede interesar
       </h3>
 
-      {/* For individual events - links is an array */}
-      {type === 'event' && Array.isArray(links) && (
+      {/* Context-aware links for destinations */}
+      {type === 'city' && contextLinks.showDestinations && (
+        renderLinkSection('Otros destinos populares', contextLinks.destinations, 'Ver conciertos en')
+      )}
+
+      {/* Context-aware links for genres */}
+      {type === 'genre' && contextLinks.showGenres && (
+        renderLinkSection('Géneros relacionados', contextLinks.genres, 'Explorar')
+      )}
+
+      {/* Context-aware links for artists */}
+      {type === 'artist' && (
+        <>
+          {contextLinks.showGenres && renderLinkSection('Géneros musicales', contextLinks.genres, 'Explorar')}
+          {contextLinks.showDestinations && renderLinkSection('Destinos con eventos', contextLinks.destinations, 'Ver conciertos en')}
+        </>
+      )}
+
+      {/* Original links from mv_internal_links as fallback/supplement */}
+      {type === 'event' && Array.isArray(links) && links.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {links.map((link: RelatedLink, index: number) => (
-            <Link
+            <a
               key={`${link.slug}-${index}`}
-              to={link.url}
+              href={link.url}
+              title={`${link.label} - FEELOMOVE+`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-accent hover:text-accent-foreground transition-colors text-sm"
             >
               {getIcon(link.type)}
               {link.label}
-            </Link>
+            </a>
           ))}
         </div>
       )}
 
-      {/* For artists - links has cities and genres */}
-      {type === 'artist' && !Array.isArray(links) && (
+      {/* Additional artist links from database */}
+      {type === 'artist' && !Array.isArray(links) && links && (
         <>
-          {renderLinkSection('Ciudades donde toca', links.cities)}
-          {renderLinkSection('Géneros musicales', links.genres)}
+          {links.cities && links.cities.length > 0 && 
+            renderLinkSection('Ciudades donde toca', links.cities, 'Ver conciertos en')}
         </>
       )}
 
-      {/* For cities - links has genres and top_artists */}
-      {type === 'city' && !Array.isArray(links) && (
+      {/* Additional city links from database */}
+      {type === 'city' && !Array.isArray(links) && links && (
         <>
-          {renderLinkSection('Géneros disponibles', links.genres)}
-          {renderLinkSection('Artistas destacados', links.top_artists)}
+          {links.genres && links.genres.length > 0 && 
+            renderLinkSection('Géneros disponibles', links.genres, 'Explorar')}
+          {links.top_artists && links.top_artists.length > 0 && 
+            renderLinkSection('Artistas destacados', links.top_artists, 'Ver conciertos de')}
         </>
       )}
 
-      {/* For genres - links has top_artists and top_cities */}
-      {type === 'genre' && !Array.isArray(links) && (
+      {/* Additional genre links from database */}
+      {type === 'genre' && !Array.isArray(links) && links && (
         <>
-          {renderLinkSection('Artistas destacados', links.top_artists)}
-          {renderLinkSection('Ciudades con eventos', links.top_cities)}
+          {links.top_artists && links.top_artists.length > 0 && 
+            renderLinkSection('Artistas destacados', links.top_artists, 'Ver conciertos de')}
+          {links.top_cities && links.top_cities.length > 0 && 
+            renderLinkSection('Ciudades con eventos', links.top_cities, 'Ver conciertos en')}
         </>
       )}
     </div>
