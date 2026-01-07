@@ -191,12 +191,13 @@ const Conciertos = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
-  // Generate JSON-LD for concerts list
+  // Generate JSON-LD for concerts list (ItemList with complete Event objects for Google)
   const jsonLd = events && events.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Conciertos en España",
-    "description": "Lista de conciertos disponibles en España",
+    "name": "Conciertos en España 2025",
+    "description": "Listado de conciertos y eventos musicales en España. Compra entradas y reserva hotel.",
+    "url": "https://feelomove.com/conciertos",
     "numberOfItems": events.length,
     "itemListElement": events.slice(0, 20).map((event, index) => ({
       "@type": "ListItem",
@@ -204,35 +205,41 @@ const Conciertos = () => {
       "item": {
         "@type": "MusicEvent",
         "name": event.name,
-        "description": `Concierto de ${event.artist_name || event.name} en ${event.venue_city}`,
+        "description": `Concierto de ${event.artist_name || event.name} en ${event.venue_city}. Compra entradas y reserva hotel cercano.`,
         "startDate": event.event_date,
         "endDate": event.event_date,
-        "eventStatus": event.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
+        "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
         "url": `https://feelomove.com/concierto/${event.slug || event.id}`,
-        "image": event.image_large_url || event.image_standard_url,
+        "image": [event.image_large_url || event.image_standard_url || "https://feelomove.com/og-image.jpg"],
         "location": {
           "@type": "Place",
-          "name": event.venue_name || "Venue",
+          "name": event.venue_name || "Recinto del evento",
           "address": {
             "@type": "PostalAddress",
+            "streetAddress": event.venue_name || "Recinto del evento",
             "addressLocality": event.venue_city,
+            "addressRegion": "España",
             "addressCountry": "ES"
           }
         },
-        "organizer": (event as any).promoter_name ? {
+        "organizer": {
           "@type": "Organization",
-          "name": (event as any).promoter_name
-        } : undefined,
-        ...(event.price_min_incl_fees && {
-          "offers": {
-            "@type": "Offer",
-            "price": event.price_min_incl_fees,
-            "priceCurrency": event.currency || "EUR",
-            "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
-            "validFrom": new Date().toISOString()
-          }
-        })
+          "name": "FEELOMOVE+",
+          "url": "https://feelomove.com"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": `https://feelomove.com/concierto/${event.slug || event.id}`,
+          "price": event.price_min_incl_fees || 0,
+          "priceCurrency": event.currency || "EUR",
+          "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+          "validFrom": new Date().toISOString()
+        },
+        "performer": event.artist_name ? {
+          "@type": "MusicGroup",
+          "name": event.artist_name
+        } : undefined
       }
     }))
   } : null;

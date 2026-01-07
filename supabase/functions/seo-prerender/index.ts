@@ -71,40 +71,47 @@ function generateHTML(event: EventData, slug: string, routeType: "conciertos" | 
   const keywords = event.seo_keywords?.join(", ") || 
     `${event.event_name}, entradas ${event.venue_city}, conciertos ${event.venue_city}, hotel ${event.venue_city}`;
 
-  // Generate JSON-LD Schema
+  // Generate JSON-LD Schema with complete Event structure for Google
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "MusicEvent",
-    name: event.event_name,
-    startDate: event.event_date,
-    location: {
+    "@type": event.event_type === "Festival" ? "Festival" : "MusicEvent",
+    "name": event.event_name,
+    "description": description,
+    "startDate": event.event_date,
+    "endDate": event.event_date,
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "url": canonicalUrl,
+    "image": [imageUrl],
+    "location": {
       "@type": "Place",
-      name: event.venue_name,
-      address: {
+      "name": event.venue_name || "Recinto del evento",
+      "address": {
         "@type": "PostalAddress",
-        addressLocality: event.venue_city,
-        streetAddress: event.venue_address || "",
-        addressCountry: "ES",
-      },
+        "streetAddress": event.venue_address || event.venue_name || "Recinto del evento",
+        "addressLocality": event.venue_city,
+        "addressRegion": "España",
+        "addressCountry": "ES"
+      }
     },
-    image: imageUrl,
-    description: description,
-    performer: {
-      "@type": "MusicGroup",
-      name: event.primary_attraction_name || event.event_name,
-    },
-    offers: {
-      "@type": "Offer",
-      url: canonicalUrl,
-      priceCurrency: event.event_currency || "EUR",
-      price: event.price_min_incl_fees || 0,
-      availability: "https://schema.org/InStock",
-    },
-    organizer: {
+    "organizer": {
       "@type": "Organization",
-      name: "FEELOMOVE+",
-      url: SITE_URL,
+      "name": "FEELOMOVE+",
+      "url": SITE_URL
     },
+    "offers": {
+      "@type": "Offer",
+      "url": canonicalUrl,
+      "price": event.price_min_incl_fees || 0,
+      "priceCurrency": event.event_currency || "EUR",
+      "availability": "https://schema.org/InStock",
+      "validFrom": new Date().toISOString()
+    },
+    "performer": {
+      "@type": "MusicGroup",
+      "name": event.primary_attraction_name || event.event_name
+    },
+    "inLanguage": "es"
   };
 
   return `<!DOCTYPE html>
@@ -284,24 +291,53 @@ function generateDestinationHTML(params: {
 }): string {
   const { citySlug, cityName, title, description, canonicalUrl, imageUrl, itemList } = params;
 
+  // Generate JSON-LD ItemList with complete Event objects for Google
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: `Eventos en ${cityName}`,
-    description,
-    url: canonicalUrl,
-    numberOfItems: itemList.length,
-    itemListElement: itemList.map((e, idx) => ({
+    "name": `Conciertos y Festivales en ${cityName}`,
+    "description": description,
+    "url": canonicalUrl,
+    "numberOfItems": itemList.length,
+    "itemListElement": itemList.map((e, idx) => ({
       "@type": "ListItem",
-      position: idx + 1,
-      item: {
-        "@type": "Event",
-        name: e.name,
-        startDate: e.startDate,
-        url: e.url,
-        image: e.image,
-      },
-    })),
+      "position": idx + 1,
+      "item": {
+        "@type": "MusicEvent",
+        "name": e.name,
+        "description": `Evento en ${cityName}. Compra entradas y reserva hotel.`,
+        "startDate": e.startDate,
+        "endDate": e.startDate,
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "url": e.url,
+        "image": [e.image],
+        "location": {
+          "@type": "Place",
+          "name": "Recinto del evento",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Recinto del evento",
+            "addressLocality": cityName,
+            "addressRegion": "España",
+            "addressCountry": "ES"
+          }
+        },
+        "organizer": {
+          "@type": "Organization",
+          "name": "FEELOMOVE+",
+          "url": SITE_URL
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": e.url,
+          "price": 0,
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "validFrom": new Date().toISOString()
+        }
+      }
+    }))
   };
 
   return `<!DOCTYPE html>

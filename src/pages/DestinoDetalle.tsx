@@ -216,35 +216,68 @@ const DestinoDetalle = () => {
     minPriceEur,
   });
 
-  // Generate JSON-LD structured data for destination (ItemList de Events)
+  // Generate JSON-LD structured data for destination (ItemList with complete Event objects for Google)
   const jsonLdData = useMemo(() => {
-    const itemList = (events || []).slice(0, 10).map((event: any, index: number) => {
+    const itemList = (events || []).slice(0, 15).map((event: any, index: number) => {
       const isConcert = "artist_name" in event;
       const eventUrl = isConcert
-        ? `https://feelomove.com/conciertos/${event.slug}`
-        : `https://feelomove.com/festivales/${event.slug}`;
+        ? `https://feelomove.com/concierto/${event.slug}`
+        : `https://feelomove.com/festival/${event.slug}`;
+      const artistName = event.artist_name || event.main_attraction || event.name;
 
       return {
         "@type": "ListItem",
-        position: index + 1,
-        item: {
-          "@type": "Event",
-          name: event.name,
-          startDate: event.event_date,
-          url: eventUrl,
-          image: event.image_large_url || event.image_standard_url,
-        },
+        "position": index + 1,
+        "item": {
+          "@type": isConcert ? "MusicEvent" : "Festival",
+          "name": event.name,
+          "description": `${isConcert ? 'Concierto' : 'Festival'} en ${cityName}. Compra entradas y reserva hotel.`,
+          "startDate": event.event_date,
+          "endDate": event.event_date,
+          "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
+          "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+          "url": eventUrl,
+          "image": [event.image_large_url || event.image_standard_url || "https://feelomove.com/og-image.jpg"],
+          "location": {
+            "@type": "Place",
+            "name": event.venue_name || "Recinto del evento",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": event.venue_name || "Recinto del evento",
+              "addressLocality": cityName,
+              "addressRegion": "España",
+              "addressCountry": "ES"
+            }
+          },
+          "organizer": {
+            "@type": "Organization",
+            "name": "FEELOMOVE+",
+            "url": "https://feelomove.com"
+          },
+          "offers": {
+            "@type": "Offer",
+            "url": eventUrl,
+            "price": event.price_min_incl_fees || 0,
+            "priceCurrency": event.currency || "EUR",
+            "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+            "validFrom": new Date().toISOString()
+          },
+          "performer": artistName ? {
+            "@type": "MusicGroup",
+            "name": artistName
+          } : undefined
+        }
       };
     });
 
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      name: `Eventos en ${cityName}`,
-      description: seoDescription,
-      url: `https://feelomove.com/destinos/${citySlug}`,
-      numberOfItems: events?.length || 0,
-      itemListElement: itemList,
+      "name": `Conciertos y Festivales en ${cityName}`,
+      "description": seoDescription,
+      "url": `https://feelomove.com/destinos/${citySlug}`,
+      "numberOfItems": events?.length || 0,
+      "itemListElement": itemList
     };
   }, [cityName, citySlug, seoDescription, events]);
 
