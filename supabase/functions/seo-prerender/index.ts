@@ -56,7 +56,9 @@ function generateHTML(event: EventData, slug: string, routeType: "conciertos" | 
   const description = event.meta_description || 
     `Compra entradas para ${event.event_name} en ${event.venue_city}. ${formatDate(event.event_date)} en ${event.venue_name}. Reserva hotel cercano incluido.`;
   const canonicalUrl = `${SITE_URL}/${routeType}/${slug}`;
-  const imageUrl = event.image_large_url || `${SITE_URL}/og-image.jpg`;
+  // Ensure image URL is always from production domain or fallback to og-image
+  const rawImageUrl = event.image_large_url || `${SITE_URL}/og-image.jpg`;
+  const imageUrl = rawImageUrl.includes('lovable.app') ? `${SITE_URL}/og-image.jpg` : rawImageUrl;
   
   const artists = event.attraction_names?.length 
     ? event.attraction_names.join(", ") 

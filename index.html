@@ -11,6 +11,7 @@
     <!-- Meta tags por defecto -->
     <meta name="description" content="Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento. Gestión de movilidad y alojamiento para eventos musicales." />
     <meta name="keywords" content="entradas conciertos, festivales españa, hoteles festivales, gestión movilidad eventos, alojamiento eventos, transporte conciertos" />
+    <meta name="author" content="FEELOMOVE+" />
     <meta name="language" content="es" />
     <meta name="impact-site-verification" content="7cc879ee-e195-4865-9dd5-6dc6eb167203">
     <link rel="publisher" href="https://feelomove.com" />
@@ -19,10 +20,12 @@
     <meta property="og:site_name" content="FEELOMOVE+" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_ES" />
+    <meta property="og:image" content="https://feelomove.com/og-image.jpg" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Feelomove" />
+    <meta name="twitter:image" content="https://feelomove.com/og-image.jpg" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
@@ -128,6 +131,24 @@
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
         }, 2000); // Delay 2s after load to not impact LCP
+        
+        // Add title attributes to CookieYes third-party images for accessibility
+        setTimeout(function() {
+          var cookieImages = document.querySelectorAll('img[src*="cookieyes"], img[src*="cdn-cookieyes"]');
+          cookieImages.forEach(function(img) {
+            var src = img.getAttribute('src') || '';
+            if (src.includes('revisit')) {
+              img.setAttribute('title', 'Configurar cookies');
+              if (!img.getAttribute('alt')) img.setAttribute('alt', 'Configurar cookies');
+            } else if (src.includes('close')) {
+              img.setAttribute('title', 'Cerrar');
+              if (!img.getAttribute('alt')) img.setAttribute('alt', 'Cerrar');
+            } else if (src.includes('powered')) {
+              img.setAttribute('title', 'CookieYes Logo');
+              if (!img.getAttribute('alt')) img.setAttribute('alt', 'CookieYes Logo');
+            }
+          });
+        }, 3000);
       });
     </script>
     
