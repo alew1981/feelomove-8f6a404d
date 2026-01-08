@@ -473,7 +473,7 @@ const Producto = () => {
   const handleAddHotel = (hotel: any) => {
     const nights = (eventDetails as any).package_nights || 1;
     const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
-    addHotel(eventDetails.event_id!, {
+    addHotel(eventDetails.event_id!, eventDetails, {
       hotel_id: hotel.hotel_id,
       hotel_name: hotel.hotel_name,
       nights: nights,
@@ -484,7 +484,6 @@ const Producto = () => {
       checkin_date: (eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd"),
       checkout_date: (eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
     });
-    // Hotel añadido silenciosamente (sin toast confuso)
   };
 
   const isEventInCart = cart?.event_id === eventDetails.event_id;
@@ -993,35 +992,6 @@ const Producto = () => {
                           {eventDetails.event_name}
                         </p>
                       </div>
-
-                      {/* Pack Progress */}
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                          totalPersons > 0 ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
-                        }`}>
-                          <Ticket className="h-3 w-3" />
-                          {totalPersons > 0 ? <Check className="h-3 w-3" /> : "1"}
-                        </div>
-                        <div className="h-0.5 flex-1 bg-border">
-                          <div className={`h-full transition-all ${totalPersons > 0 ? "bg-accent w-full" : "w-0"}`} />
-                        </div>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                          cart.hotel ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
-                        }`}>
-                          <Building2 className="h-3 w-3" />
-                          {cart.hotel ? <Check className="h-3 w-3" /> : "2"}
-                        </div>
-                      </div>
-
-                      {/* Missing hotel warning */}
-                      {!cart.hotel && totalPersons > 0 && (
-                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
-                          <p className="text-xs text-amber-700 dark:text-amber-400 font-medium flex items-center gap-2">
-                            <ArrowDown className="h-3 w-3 animate-bounce" />
-                            Falta añadir el hotel para completar tu experiencia
-                          </p>
-                        </div>
-                      )}
 
                       {/* Pack complete success */}
                       {cart.hotel && totalPersons > 0 && (
