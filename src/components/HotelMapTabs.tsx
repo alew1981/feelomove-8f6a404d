@@ -88,8 +88,8 @@ const HotelMapTabs = ({
               </p>
             )}
             {selectedHotelId && (
-              <p className="text-sm text-accent flex items-center gap-1 mt-0.5">
-                <Check className="h-3 w-3" />
+              <p className="text-sm text-foreground flex items-center gap-1 mt-0.5">
+                <Check className="h-3 w-3 text-accent" />
                 Hotel añadido al pack
               </p>
             )}

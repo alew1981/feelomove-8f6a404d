@@ -99,7 +99,7 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
                 {hasHotel && (
                   <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 flex items-center gap-2">
                     <Check className="h-4 w-4 text-accent" />
-                    <p className="text-xs text-accent font-medium">
+                    <p className="text-xs text-foreground font-medium">
                       ¡Pack completo! Entradas + Hotel
                     </p>
                   </div>
