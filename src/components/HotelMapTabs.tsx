@@ -175,7 +175,7 @@ const HotelMapTabs = ({
             <div className="rounded-xl overflow-hidden border-2 border-border">
               <iframe
                 srcDoc={mapWidgetHtml}
-                className="w-full min-h-[350px] sm:min-h-[450px] border-0"
+                className="w-full h-[450px] sm:h-[550px] lg:h-[600px] border-0"
                 title="Mapa de hoteles"
                 sandbox="allow-scripts allow-same-origin"
               />
