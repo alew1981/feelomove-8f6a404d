@@ -606,10 +606,40 @@ const Producto = () => {
           {/* Breadcrumbs above hero */}
           <Breadcrumbs />
           
+          {/* Mobile: Countdown + Event Name above hero */}
+          <div className="md:hidden mb-3">
+            {/* Countdown timer if last week - mobile */}
+            {daysUntil >= 0 && daysUntil < 7 && (
+              <div className="bg-accent/10 rounded-lg px-3 py-2 flex items-center justify-center gap-3 border border-accent/30 mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Faltan</span>
+                <div className="flex items-center gap-2">
+                  <div className="text-center">
+                    <span className="text-lg font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase text-muted-foreground ml-0.5">días</span>
+                  </div>
+                  <span className="text-accent font-bold">:</span>
+                  <div className="text-center">
+                    <span className="text-lg font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase text-muted-foreground ml-0.5">hrs</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Event title - mobile */}
+            <h1 className="text-xl font-black text-foreground leading-tight">
+              {displayTitle}
+            </h1>
+            {displaySubtitle && (
+              <p className="text-sm text-muted-foreground font-medium mt-1">
+                {displaySubtitle}
+              </p>
+            )}
+          </div>
+          
           {/* Hero Section */}
-          <div className="relative rounded-2xl overflow-hidden mb-8 mt-4">
+          <div className="relative rounded-2xl overflow-hidden mb-8">
             {/* Background Image */}
-            <div className="relative h-[280px] sm:h-[340px] md:h-[420px]">
+            <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
               <img
                 src={eventImage}
                 alt={eventDetails.event_name || "Evento"}
@@ -622,8 +652,29 @@ const Producto = () => {
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               
-              {/* Left Side - Date Card with Venue (aligned with event image) */}
-              <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4">
+              {/* Mobile: Compact date/city badge */}
+              <div className="absolute left-2 bottom-2 sm:hidden">
+                <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg px-2.5 py-2 flex items-center gap-2">
+                  <div className="text-center border-r border-border pr-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                      {format(eventDate, "MMM", { locale: es })}
+                    </p>
+                    <p className="text-xl font-black text-foreground leading-none">
+                      {format(eventDate, "dd")}
+                    </p>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-foreground">{formattedTime}h</p>
+                    <div className="flex items-center gap-0.5 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span className="text-[10px] font-medium">{eventDetails.venue_city}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Desktop: Full Date Card with Venue */}
+              <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 hidden sm:block">
                 <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
                     <p className="text-sm sm:text-base font-bold text-muted-foreground uppercase tracking-wider">
@@ -649,8 +700,8 @@ const Producto = () => {
                 </div>
               </div>
               
-              {/* Center - Event Name with Lineup (for festivals) and Favorite above */}
-              <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%]">
+              {/* Desktop: Center - Event Name with Lineup (for festivals) and Favorite above */}
+              <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%] hidden sm:block">
                 <div className="flex flex-col items-center gap-2">
                   <Button
                     variant="ghost"
@@ -697,8 +748,41 @@ const Producto = () => {
                 </div>
               </div>
               
-              {/* Right Side - Badges and Event Image */}
-              <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 flex flex-col items-end justify-between">
+              {/* Mobile: Favorite button and vertical badges */}
+              <div className="absolute right-2 top-2 bottom-2 sm:hidden flex flex-col items-end justify-between">
+                {/* Favorite button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm"
+                  onClick={() => toggleFavorite({
+                    event_id: eventDetails.event_id!,
+                    event_name: eventDetails.event_name || '',
+                    event_slug: eventDetails.event_slug || '',
+                    event_date: eventDetails.event_date || '',
+                    venue_city: eventDetails.venue_city || '',
+                    image_url: eventImage
+                  })}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                </Button>
+                
+                {/* Vertical badges */}
+                <div className="flex flex-col gap-1 items-end">
+                  {eventDetails.sold_out && (
+                    <Badge className="bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5">AGOTADO</Badge>
+                  )}
+                  {!eventDetails.sold_out && daysUntil >= 0 && daysUntil <= 7 && (
+                    <Badge className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5">¡ÚLTIMA SEMANA!</Badge>
+                  )}
+                  {hasVipTickets && (
+                    <Badge variant="outline" className="bg-background/80 text-[9px] px-1.5 py-0.5">VIP</Badge>
+                  )}
+                </div>
+              </div>
+              
+              {/* Desktop: Right Side - Badges and Event Image */}
+              <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 hidden sm:flex flex-col items-end justify-between">
                 {/* Badges - collapsible on mobile */}
                 <CollapsibleBadges eventDetails={eventDetails} hasVipTickets={hasVipTickets} isEventAvailable={isEventAvailable} daysUntil={daysUntil} />
                 
@@ -723,7 +807,7 @@ const Producto = () => {
                     <img
                       src={(eventDetails as any).image_large_url || eventImage}
                       alt={eventDetails.event_name || "Evento"}
-                      className="w-[100px] h-[133px] sm:w-[150px] sm:h-[200px] md:w-[225px] md:h-[305px] object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   </div>
                 </div>
@@ -757,7 +841,7 @@ const Producto = () => {
                           }`}
                         >
                           <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-center justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                               {/* Left: Ticket info */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -780,46 +864,54 @@ const Producto = () => {
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-sm sm:text-base font-bold uppercase text-foreground truncate">
-                                  {ticket.description || ticket.type}
+                                <p className="text-sm sm:text-base font-bold uppercase text-foreground">
+                                  {ticket.type}
                                 </p>
-                              </div>
-
-                              {/* Center: Price */}
-                              <div className="text-center px-4 flex-shrink-0">
-                                <span className="text-xl sm:text-2xl font-black text-foreground">
-                                  €{ticket.price.toFixed(0)}
-                                </span>
-                                {ticket.fees > 0 && (
-                                  <p className="text-[10px] text-muted-foreground">
-                                    + €{ticket.fees.toFixed(2)} gastos
+                                {ticket.description && ticket.description !== ticket.type && (
+                                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 sm:line-clamp-1">
+                                    {ticket.description}
                                   </p>
                                 )}
                               </div>
 
-                              {/* Right: Quantity Selector */}
-                              <div className="flex items-center gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
-                                  onClick={() => handleTicketQuantityChange(ticket.id, -1)}
-                                  disabled={quantity === 0 || isSoldOut}
-                                  aria-label={`Reducir cantidad de ${ticket.type}`}
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <span className="w-8 text-center font-bold text-lg">{quantity}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
-                                  onClick={() => handleTicketQuantityChange(ticket.id, 1)}
-                                  disabled={quantity >= 10 || isSoldOut}
-                                  aria-label={`Aumentar cantidad de ${ticket.type}`}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
+                              {/* Price and Quantity row */}
+                              <div className="flex items-center justify-between sm:justify-end gap-4">
+                                {/* Price */}
+                                <div className="text-left sm:text-center sm:px-4 flex-shrink-0">
+                                  <span className="text-xl sm:text-2xl font-black text-foreground">
+                                    €{ticket.price.toFixed(0)}
+                                  </span>
+                                  {ticket.fees > 0 && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      + €{ticket.fees.toFixed(2)} gastos
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Quantity Selector */}
+                                <div className="flex items-center gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
+                                    onClick={() => handleTicketQuantityChange(ticket.id, -1)}
+                                    disabled={quantity === 0 || isSoldOut}
+                                    aria-label={`Reducir cantidad de ${ticket.type}`}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <span className="w-8 text-center font-bold text-lg">{quantity}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
+                                    onClick={() => handleTicketQuantityChange(ticket.id, 1)}
+                                    disabled={quantity >= 10 || isSoldOut}
+                                    aria-label={`Aumentar cantidad de ${ticket.type}`}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </CardContent>
