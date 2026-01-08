@@ -113,32 +113,31 @@ const Breadcrumbs = () => {
   const genreFromPath = params.genero ? decodeURIComponent(params.genero) : null;
 
   return (
-    <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6 pb-2">
-      <div className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
+    <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-4 pb-2" aria-label="Breadcrumb">
+      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-0">
         <Link
           to="/"
           className="flex items-center gap-0.5 sm:gap-1 hover:text-foreground transition-colors flex-shrink-0"
         >
-          <Home className="h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">Inicio</span>
+          <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Link>
 
       {/* For product page (/concierto/:slug or /festival/:slug): Inicio > Conciertos/Festivales > Ciudad > Género > Artista > Evento */}
       {isProductPage && eventDetails ? (
         <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             <Link
               to={isFestivalProduct ? "/festivales" : "/conciertos"}
               className={linkClass}
               onMouseEnter={() => prefetch(isFestivalProduct ? '/festivales' : '/conciertos')}
             >
-              {isFestivalProduct ? "Festivales" : "Conciertos"}
+              {isFestivalProduct ? "Fest." : "Conc."}
             </Link>
           </div>
           {eventCity && (
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
               <Link
                 to={`/destinos/${encodeURIComponent(eventCity.toLowerCase().replace(/\s+/g, '-'))}`}
                 className={linkClass}
@@ -149,32 +148,34 @@ const Breadcrumbs = () => {
             </div>
           )}
           {eventGenre && (
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
               <Link
                 to={`/generos/${generateSlug(eventGenre)}`}
                 className={linkClass}
                 onMouseEnter={() => prefetch('/generos')}
               >
-                {eventGenre.split(' - ')[0]}
+                <span className="max-w-[60px] sm:max-w-none truncate inline-block">
+                  {eventGenre.split(' - ')[0]}
+                </span>
               </Link>
             </div>
           )}
           {eventArtist && (
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
               <Link
                 to={`/conciertos/${generateSlug(eventArtist)}`}
-                className={linkClass}
+                className={`${linkClass} max-w-[80px] sm:max-w-none truncate`}
                 onMouseEnter={() => prefetch(`/conciertos/${generateSlug(eventArtist)}`)}
               >
                 {eventArtist}
               </Link>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{eventDetails.event_name}</span>
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0">
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="text-foreground font-semibold truncate">{eventDetails.event_name}</span>
           </div>
         </>
       ) : pathnames[0] === "generos" && genreFromPath ? (
