@@ -438,6 +438,7 @@ const Producto = () => {
     let updatedTickets = [...existingTickets];
     
     if (ticketIndex >= 0) {
+      // Existing ticket - increment/decrement
       const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
       if (newQuantity === 0) {
         updatedTickets = updatedTickets.filter(t => t.type !== ticketId);
@@ -448,12 +449,13 @@ const Producto = () => {
         };
       }
     } else if (change > 0) {
+      // New ticket - start with quantity 1
       updatedTickets.push({
         type: ticketId,
         description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
         price: ticketData.price,
         fees: ticketData.fees,
-        quantity: 2
+        quantity: 1
       });
     }
 
