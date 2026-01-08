@@ -113,31 +113,42 @@ const Breadcrumbs = () => {
   const genreFromPath = params.genero ? decodeURIComponent(params.genero) : null;
 
   return (
-    <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-4 pb-2" aria-label="Breadcrumb">
-      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-0">
-        <Link
-          to="/"
-          className="flex items-center gap-0.5 sm:gap-1 hover:text-foreground transition-colors flex-shrink-0"
-        >
-          <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-        </Link>
+    <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-4 pb-1" aria-label="Breadcrumb">
+      <ol className="flex items-center text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+        {/* Home */}
+        <li className="flex items-center">
+          <Link
+            to="/"
+            className="flex items-center hover:text-foreground transition-colors p-1 -m-1 rounded"
+            aria-label="Inicio"
+          >
+            <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </Link>
+        </li>
 
       {/* For product page (/concierto/:slug or /festival/:slug): Inicio > Conciertos/Festivales > Ciudad > Género > Artista > Evento */}
       {isProductPage && eventDetails ? (
         <>
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
             <Link
               to={isFestivalProduct ? "/festivales" : "/conciertos"}
-              className={linkClass}
+              className={`${linkClass} hidden sm:inline`}
+              onMouseEnter={() => prefetch(isFestivalProduct ? '/festivales' : '/conciertos')}
+            >
+              {isFestivalProduct ? "Festivales" : "Conciertos"}
+            </Link>
+            <Link
+              to={isFestivalProduct ? "/festivales" : "/conciertos"}
+              className={`${linkClass} sm:hidden`}
               onMouseEnter={() => prefetch(isFestivalProduct ? '/festivales' : '/conciertos')}
             >
               {isFestivalProduct ? "Fest." : "Conc."}
             </Link>
-          </div>
+          </li>
           {eventCity && (
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+            <li className="flex items-center">
+              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
               <Link
                 to={`/destinos/${encodeURIComponent(eventCity.toLowerCase().replace(/\s+/g, '-'))}`}
                 className={linkClass}
@@ -145,44 +156,44 @@ const Breadcrumbs = () => {
               >
                 {eventCity}
               </Link>
-            </div>
+            </li>
           )}
           {eventGenre && (
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+            <li className="flex items-center">
+              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
               <Link
                 to={`/generos/${generateSlug(eventGenre)}`}
-                className={linkClass}
+                className={`${linkClass} max-w-[70px] sm:max-w-none truncate`}
                 onMouseEnter={() => prefetch('/generos')}
               >
-                <span className="max-w-[60px] sm:max-w-none truncate inline-block">
-                  {eventGenre.split(' - ')[0]}
-                </span>
+                {eventGenre.split(' - ')[0]}
               </Link>
-            </div>
+            </li>
           )}
           {eventArtist && (
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+            <li className="flex items-center">
+              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
               <Link
                 to={`/conciertos/${generateSlug(eventArtist)}`}
-                className={`${linkClass} max-w-[80px] sm:max-w-none truncate`}
+                className={`${linkClass} max-w-[70px] sm:max-w-[120px] md:max-w-none truncate`}
                 onMouseEnter={() => prefetch(`/conciertos/${generateSlug(eventArtist)}`)}
               >
                 {eventArtist}
               </Link>
-            </div>
+            </li>
           )}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0">
-            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-            <span className="text-foreground font-semibold truncate">{eventDetails.event_name}</span>
-          </div>
+          <li className="flex items-center min-w-0">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-foreground font-semibold truncate max-w-[100px] sm:max-w-[180px] md:max-w-none" title={eventDetails.event_name || ''}>
+              {eventDetails.event_name}
+            </span>
+          </li>
         </>
       ) : pathnames[0] === "generos" && genreFromPath ? (
         /* Para página de género: Inicio > Géneros > Género */
         <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
             <Link
               to="/generos"
               className={linkClass}
@@ -190,17 +201,17 @@ const Breadcrumbs = () => {
             >
               Géneros
             </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">{genreFromPath}</span>
-          </div>
+          </li>
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
+            <span className="text-foreground font-semibold">{genreFromPath}</span>
+          </li>
         </>
       ) : pathnames[0] === "destinos" && destinoSlug ? (
         /* Para página de destino: Inicio > Destinos > Ciudad */
         <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
             <Link
               to="/destinos"
               className={linkClass}
@@ -208,19 +219,19 @@ const Breadcrumbs = () => {
             >
               Destinos
             </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">
+          </li>
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
+            <span className="text-foreground font-semibold">
               {destinoData || destinoSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </span>
-          </div>
+          </li>
         </>
       ) : pathnames[0] === "conciertos" && artistSlug ? (
         /* Para página de artista: Inicio > Conciertos > Nombre del artista */
         <>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
             <Link
               to="/conciertos"
               className={linkClass}
@@ -228,13 +239,13 @@ const Breadcrumbs = () => {
             >
               Conciertos
             </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground font-medium">
+          </li>
+          <li className="flex items-center">
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
+            <span className="text-foreground font-semibold">
               {artistData || artistSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </span>
-          </div>
+          </li>
         </>
       ) : (
         pathnames.map((name, index) => {
@@ -244,10 +255,10 @@ const Breadcrumbs = () => {
           let displayName = breadcrumbNames[name] || decodeURIComponent(name);
 
           return (
-            <div key={`${name}-${index}`} className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
+            <li key={`${name}-${index}`} className="flex items-center">
+              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
               {isLast ? (
-                <span className="text-foreground font-medium">{displayName}</span>
+                <span className="text-foreground font-semibold">{displayName}</span>
               ) : (
                 <Link
                   to={routeTo}
@@ -257,11 +268,11 @@ const Breadcrumbs = () => {
                   {displayName}
                 </Link>
               )}
-            </div>
+            </li>
           );
         })
       )}
-      </div>
+      </ol>
     </nav>
   );
 };
