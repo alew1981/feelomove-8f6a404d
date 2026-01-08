@@ -448,6 +448,184 @@ function generate404HTML(slug: string): string {
 </html>`;
 }
 
+function generateHomepageHTML(): string {
+  const title = "FEELOMOVE+ | Entradas Conciertos, Festivales y Hoteles en España";
+  const description = "Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento y ahorra. Gestión integral de movilidad y alojamiento para eventos musicales.";
+  const canonicalUrl = SITE_URL;
+  const imageUrl = `${SITE_URL}/og-image.jpg`;
+
+  // Main cities for internal links
+  const mainCities = [
+    { name: "Madrid", slug: "madrid" },
+    { name: "Barcelona", slug: "barcelona" },
+    { name: "Valencia", slug: "valencia" },
+    { name: "Sevilla", slug: "sevilla" },
+    { name: "Bilbao", slug: "bilbao" },
+    { name: "Málaga", slug: "malaga" },
+    { name: "Granada", slug: "granada" },
+    { name: "Zaragoza", slug: "zaragoza" }
+  ];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "FEELOMOVE+",
+    "url": canonicalUrl,
+    "description": description,
+    "inLanguage": "es",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${canonicalUrl}/conciertos?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "FEELOMOVE+",
+    "url": canonicalUrl,
+    "logo": `${SITE_URL}/favicon.svg`,
+    "description": "Plataforma líder en España para compra de entradas de conciertos y festivales con reserva de hotel incluido.",
+    "sameAs": [
+      "https://twitter.com/Feelomove"
+    ]
+  };
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <meta name="keywords" content="entradas conciertos españa, festivales españa 2025, hoteles para festivales, transporte conciertos, logística eventos musicales, conciertos madrid, festivales barcelona">
+  <meta name="author" content="FEELOMOVE+">
+  <meta name="language" content="es">
+  <link rel="canonical" href="${canonicalUrl}">
+  <link rel="publisher" href="${canonicalUrl}">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:site_name" content="FEELOMOVE+">
+  <meta property="og:locale" content="es_ES">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@Feelomove">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${imageUrl}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="${SITE_URL}/favicon.svg">
+
+  <!-- JSON-LD Schema -->
+  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+  <script type="application/ld+json">${JSON.stringify(orgJsonLd)}</script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background: #0a0a0a; color: #fff; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; color: #00ff8f; }
+    h2 { font-size: 1.5rem; color: #cfcfcf; margin-top: 2rem; }
+    .hero { background: linear-gradient(180deg, rgba(0,255,143,0.1) 0%, transparent 100%); padding: 60px 20px; text-align: center; }
+    .description { line-height: 1.8; color: #cfcfcf; max-width: 800px; margin: 0 auto 2rem; }
+    .cities { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 2rem 0; }
+    .city-link { display: inline-block; background: #1a1a1a; color: #00ff8f; padding: 12px 24px; border-radius: 8px; text-decoration: none; border: 1px solid #2a2a2a; transition: all 0.2s; }
+    .city-link:hover { background: #00ff8f; color: #000; }
+    .nav-links { display: flex; gap: 24px; justify-content: center; margin: 2rem 0; }
+    .nav-links a { color: #fff; text-decoration: none; font-weight: 600; }
+    .nav-links a:hover { color: #00ff8f; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 2rem 0; }
+    .feature { background: #141414; padding: 24px; border-radius: 12px; border: 1px solid #2a2a2a; }
+    .feature h3 { color: #00ff8f; margin: 0 0 12px; }
+    .feature p { color: #9a9a9a; margin: 0; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header style="padding: 20px 0;">
+      <a href="${SITE_URL}" style="color: #00ff8f; text-decoration: none; font-weight: bold; font-size: 1.5rem;">FEELOMOVE+</a>
+      <nav class="nav-links" style="margin-top: 1rem;">
+        <a href="${SITE_URL}/conciertos">Conciertos</a>
+        <a href="${SITE_URL}/festivales">Festivales</a>
+        <a href="${SITE_URL}/destinos">Destinos</a>
+        <a href="${SITE_URL}/artistas">Artistas</a>
+        <a href="${SITE_URL}/generos">Géneros</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>FEELOMOVE+ | Entradas Conciertos, Festivales y Hoteles en España</h1>
+        <p class="description">
+          Bienvenido a FEELOMOVE+, tu plataforma líder para comprar entradas de conciertos y festivales en España. 
+          Ofrecemos una experiencia única combinando la venta de entradas oficiales con reservas de hotel cerca del evento. 
+          Descubre los mejores conciertos de 2025 en Madrid, Barcelona, Valencia, Sevilla y toda España. 
+          Gestión integral de tu viaje musical con transporte y alojamiento incluido.
+        </p>
+      </section>
+
+      <section>
+        <h2>Conciertos y Festivales por Ciudad</h2>
+        <p style="color: #9a9a9a; margin-bottom: 1.5rem;">Encuentra eventos musicales en las principales ciudades de España</p>
+        <div class="cities">
+          ${mainCities.map(city => `<a href="${SITE_URL}/destinos/${city.slug}" class="city-link">Eventos en ${city.name}</a>`).join("\n          ")}
+        </div>
+      </section>
+
+      <section class="features">
+        <div class="feature">
+          <h3>🎵 Entradas Oficiales</h3>
+          <p>Compra entradas verificadas para los mejores conciertos y festivales de música en España. Rock, pop, electrónica, indie y más géneros disponibles.</p>
+        </div>
+        <div class="feature">
+          <h3>🏨 Hoteles Cercanos</h3>
+          <p>Reserva alojamiento cerca del recinto del evento. Hoteles seleccionados para que disfrutes al máximo de tu experiencia musical.</p>
+        </div>
+        <div class="feature">
+          <h3>📍 Toda España</h3>
+          <p>Cobertura nacional con eventos en Madrid, Barcelona, Valencia, Sevilla, Bilbao, Málaga y muchas más ciudades.</p>
+        </div>
+        <div class="feature">
+          <h3>💰 Mejores Precios</h3>
+          <p>Combina entrada + hotel y ahorra en tu escapada musical. Paquetes desde los precios más competitivos del mercado.</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>Explora por Categoría</h2>
+        <nav class="nav-links" style="justify-content: flex-start; flex-wrap: wrap;">
+          <a href="${SITE_URL}/conciertos">Ver todos los Conciertos →</a>
+          <a href="${SITE_URL}/festivales">Ver todos los Festivales →</a>
+          <a href="${SITE_URL}/destinos">Ver todos los Destinos →</a>
+          <a href="${SITE_URL}/artistas">Ver todos los Artistas →</a>
+          <a href="${SITE_URL}/generos">Ver todos los Géneros →</a>
+        </nav>
+      </section>
+    </main>
+
+    <footer style="margin-top: 3rem; padding: 2rem 0; border-top: 1px solid #333; color: #666;">
+      <p>© ${new Date().getFullYear()} FEELOMOVE+ - Entradas para Conciertos y Festivales en España + Hotel</p>
+      <p style="margin-top: 1rem; font-size: 0.9rem; color: #888;">
+        FEELOMOVE+ es la plataforma líder en España para la compra de entradas de eventos musicales. 
+        Ofrecemos conciertos, festivales, espectáculos y experiencias únicas con la posibilidad de reservar 
+        hotel cercano al recinto. Disfruta de la mejor música en vivo en Madrid, Barcelona, Valencia, 
+        Sevilla, Bilbao, Málaga, Granada, Zaragoza y toda España.
+      </p>
+    </footer>
+  </div>
+
+  <!-- This page is pre-rendered for SEO crawlers. Full interactive version at: ${canonicalUrl} -->
+</body>
+</html>`;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -457,6 +635,20 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const path = url.searchParams.get("path") || "";
+    
+    // Handle homepage prerender
+    if (path === "/" || path === "") {
+      const html = generateHomepageHTML();
+      return new Response(html, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+          "X-Robots-Tag": "index, follow",
+        },
+      });
+    }
     
     // Parse the path: /conciertos/slug, /festivales/slug o /destinos/slug
     const pathMatch = path.match(/^\/(conciertos|festivales|destinos)\/(.+)$/);
