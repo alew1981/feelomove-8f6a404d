@@ -11,10 +11,11 @@ import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
+import PackStepper from "@/components/PackStepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw } from "lucide-react";
+import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw, Check, ArrowDown, Ticket, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart, CartTicket } from "@/contexts/CartContext";
@@ -818,10 +819,35 @@ const Producto = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="xl:col-span-2 space-y-8">
+              {/* Pack Stepper - Mobile Sticky */}
+              <PackStepper 
+                currentStep={isEventInCart && totalPersons > 0 ? 2 : 1}
+                ticketsSelected={isEventInCart && totalPersons > 0}
+                hotelSelected={!!cart?.hotel}
+              />
+
               {/* Ticket Cards - List Format */}
               {ticketPrices.length > 0 && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Entradas</h2>
+                  {/* Section Header with Step Number */}
+                  <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      isEventInCart && totalPersons > 0 
+                        ? "bg-accent text-accent-foreground" 
+                        : "bg-foreground text-background"
+                    }`}>
+                      {isEventInCart && totalPersons > 0 ? <Check className="h-4 w-4" /> : "1"}
+                    </div>
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-bold">Selecciona tus entradas</h2>
+                      {isEventInCart && totalPersons > 0 && (
+                        <p className="text-sm text-accent flex items-center gap-1 mt-0.5">
+                          <Check className="h-3 w-3" />
+                          ¡Entradas añadidas! Ahora elige tu alojamiento abajo
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex flex-col gap-3">
                     {displayedTickets.map((ticket: any) => {
                       const quantity = getTicketQuantity(ticket.id);
@@ -936,7 +962,7 @@ const Producto = () => {
 
               {/* Hotels & Map Section with Tabs */}
               {(hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.hotels_list_widget_html) && (
-                <div>
+                <div id="hotels-section">
                   <HotelMapTabs 
                     hotels={hotels} 
                     mapWidgetHtml={mapWidgetHtml} 
@@ -945,6 +971,8 @@ const Producto = () => {
                     checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
                     checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
                     eventName={eventDetails.event_name || undefined}
+                    ticketsSelected={isEventInCart && totalPersons > 0}
+                    selectedHotelId={cart?.hotel?.hotel_id || null}
                   />
                 </div>
               )}
@@ -954,8 +982,13 @@ const Producto = () => {
             <div className="hidden xl:block xl:col-span-1">
               <Card className="sticky top-24 border-2">
                 <CardHeader className="bg-foreground text-background">
-                  <CardTitle className="uppercase tracking-wide text-sm">
-                    Tu Reserva
+                  <CardTitle className="uppercase tracking-wide text-sm flex items-center gap-2">
+                    Tu Pack
+                    {isEventInCart && cart?.hotel && (
+                      <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded font-bold">
+                        COMPLETO
+                      </span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
@@ -968,11 +1001,54 @@ const Producto = () => {
                         </p>
                       </div>
 
+                      {/* Pack Progress */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                          totalPersons > 0 ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
+                        }`}>
+                          <Ticket className="h-3 w-3" />
+                          {totalPersons > 0 ? <Check className="h-3 w-3" /> : "1"}
+                        </div>
+                        <div className="h-0.5 flex-1 bg-border">
+                          <div className={`h-full transition-all ${totalPersons > 0 ? "bg-accent w-full" : "w-0"}`} />
+                        </div>
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                          cart.hotel ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
+                        }`}>
+                          <Building2 className="h-3 w-3" />
+                          {cart.hotel ? <Check className="h-3 w-3" /> : "2"}
+                        </div>
+                      </div>
+
+                      {/* Missing hotel warning */}
+                      {!cart.hotel && totalPersons > 0 && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
+                          <p className="text-xs text-amber-700 dark:text-amber-400 font-medium flex items-center gap-2">
+                            <ArrowDown className="h-3 w-3 animate-bounce" />
+                            Falta añadir el hotel para completar tu experiencia
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Pack complete success */}
+                      {cart.hotel && totalPersons > 0 && (
+                        <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mb-4">
+                          <p className="text-xs text-accent font-medium flex items-center gap-2">
+                            <Check className="h-3 w-3" />
+                            ¡Pack completo! Entradas + Hotel
+                          </p>
+                        </div>
+                      )}
+
                       {/* Tickets in cart */}
                       {cart.tickets.map((ticket, idx) => (
                         <div key={idx} className="bg-muted/50 rounded-lg p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <Ticket className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-[10px] uppercase text-muted-foreground font-medium">Entrada</span>
+                              </div>
                               <h3 className="font-bold text-sm">{ticket.type}</h3>
                               {ticket.description && (
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
@@ -1020,7 +1096,13 @@ const Producto = () => {
                         <>
                           <div className="bg-muted/50 rounded-lg p-4">
                             <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-bold text-sm flex-1">{cart.hotel.hotel_name}</h3>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <Building2 className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-[10px] uppercase text-muted-foreground font-medium">Hotel</span>
+                                </div>
+                                <h3 className="font-bold text-sm">{cart.hotel.hotel_name}</h3>
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1064,14 +1146,20 @@ const Producto = () => {
                         
                         <div className="flex items-center justify-between pt-2">
                           <span className="text-sm text-muted-foreground">Total ({totalPersons} personas)</span>
-                          <span className="text-base font-bold text-green-600">€{totalPrice.toFixed(2)}</span>
+                          <span className="text-base font-bold text-accent">€{totalPrice.toFixed(2)}</span>
                         </div>
                       </div>
                     </>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">
-                        Selecciona entradas para comenzar
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                        <Ticket className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-foreground font-medium mb-2">
+                        Empieza seleccionando tus entradas
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Elige las entradas y después añade un hotel para completar tu pack
                       </p>
                     </div>
                   )}

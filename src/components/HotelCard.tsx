@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { MapPin, Check, Loader2 } from "lucide-react";
 
 interface HotelCardProps {
   hotel: {
@@ -23,6 +23,8 @@ interface HotelCardProps {
   checkinDate?: string;
   checkoutDate?: string;
   eventName?: string;
+  showTicketHint?: boolean;
+  isAdded?: boolean;
 }
 
 // Helper to strip HTML tags
@@ -40,8 +42,9 @@ const getRatingText = (rating: number): string => {
   return "Regular";
 };
 
-const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: HotelCardProps) => {
+const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, showTicketHint = false, isAdded = false }: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
@@ -69,8 +72,24 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
     return stars;
   };
 
+  const handleAddClick = async () => {
+    if (isAdded) return;
+    setIsLoading(true);
+    // Small delay for UX feedback
+    await new Promise(resolve => setTimeout(resolve, 300));
+    onAddHotel(hotel);
+    setIsLoading(false);
+  };
+
   return (
-    <div className="rounded-lg shadow-lg bg-card overflow-visible relative max-w-[350px]">
+    <div className={`rounded-lg shadow-lg bg-card overflow-visible relative max-w-[350px] transition-all ${isAdded ? 'ring-2 ring-accent' : ''}`}>
+      {/* Added badge */}
+      {isAdded && (
+        <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground rounded-full p-1">
+          <Check className="h-4 w-4" />
+        </div>
+      )}
+      
       {/* Review Box - Top Right */}
       {reviewScore > 0 && (
         <div className="absolute top-2.5 right-2.5 z-10 flex items-start p-1.5 bg-background/95 rounded-md shadow-sm">
@@ -175,15 +194,34 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName }: 
           <span className="text-3xl font-bold text-foreground block mb-0.5">
             €{pricePerNight.toFixed(0)}
           </span>
-          <span className="text-xs text-muted-foreground block leading-tight mb-2">
+          <span className="text-xs text-muted-foreground block leading-tight">
             1 habitación x 1 noche impuestos incluidos
           </span>
+          {showTicketHint && (
+            <span className="text-[10px] text-accent font-medium block mt-0.5">
+              + entradas seleccionadas
+            </span>
+          )}
           <Button
             size="sm"
-            className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-sm px-3 py-1.5 rounded"
-            onClick={() => onAddHotel(hotel)}
+            className={`mt-2 font-bold text-sm px-3 py-1.5 rounded transition-all ${
+              isAdded 
+                ? 'bg-accent/20 text-accent border-2 border-accent cursor-default' 
+                : 'bg-accent text-accent-foreground hover:bg-accent/90'
+            }`}
+            onClick={handleAddClick}
+            disabled={isLoading || isAdded}
           >
-            Añadir a la cesta
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isAdded ? (
+              <>
+                <Check className="h-4 w-4 mr-1" />
+                Añadido
+              </>
+            ) : (
+              "Añadir al pack"
+            )}
           </Button>
         </div>
       </div>
