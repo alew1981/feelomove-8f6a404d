@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, ChevronUp, ChevronDown, Trash2, X } from "lucide-react";
+import { ShoppingCart, ChevronUp, ChevronDown, Trash2, Check, Building2, Ticket, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
   const totalTickets = getTotalTickets();
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalTickets > 0 ? totalPrice / totalTickets : 0;
+  const hasHotel = !!cart?.hotel;
 
   if (!cart || totalTickets === 0) return null;
 
@@ -49,8 +50,23 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
                 </span>
               </div>
               <div className="text-left">
-                <p className="text-xs opacity-80">Tu reserva</p>
-                <p className="font-bold text-sm">{eventName}</p>
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
+                    "bg-accent/20 text-accent"
+                  )}>
+                    <Ticket className="h-3 w-3" />
+                    <Check className="h-3 w-3" />
+                  </div>
+                  <div className={cn(
+                    "flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
+                    hasHotel ? "bg-accent/20 text-accent" : "bg-white/10 text-white/60"
+                  )}>
+                    <Building2 className="h-3 w-3" />
+                    {hasHotel ? <Check className="h-3 w-3" /> : <span className="text-[10px]">?</span>}
+                  </div>
+                </div>
+                <p className="font-bold text-sm mt-1 line-clamp-1">{eventName}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -70,11 +86,34 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
           {isExpanded && (
             <div className="max-h-[60vh] overflow-y-auto bg-card">
               <div className="p-4 space-y-3">
+                {/* Pack Status Banner */}
+                {!hasHotel && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2">
+                    <ArrowDown className="h-4 w-4 text-amber-500 animate-bounce" />
+                    <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                      Falta añadir el hotel para completar tu pack
+                    </p>
+                  </div>
+                )}
+
+                {hasHotel && (
+                  <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 flex items-center gap-2">
+                    <Check className="h-4 w-4 text-accent" />
+                    <p className="text-xs text-accent font-medium">
+                      ¡Pack completo! Entradas + Hotel
+                    </p>
+                  </div>
+                )}
+
                 {/* Tickets */}
                 {cart.tickets.map((ticket, idx) => (
                   <div key={idx} className="bg-muted/50 rounded-lg p-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 pr-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Ticket className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-[10px] uppercase text-muted-foreground font-medium">Entrada</span>
+                        </div>
                         <h3 className="font-bold text-sm uppercase line-clamp-2">{ticket.description || ticket.type}</h3>
                         <p className="text-xs text-muted-foreground mt-1">
                           {ticket.quantity} x €{(ticket.price + ticket.fees).toFixed(2)}
@@ -102,6 +141,10 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
                   <div className="bg-muted/50 rounded-lg p-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Building2 className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-[10px] uppercase text-muted-foreground font-medium">Hotel</span>
+                        </div>
                         <h3 className="font-bold text-sm">{cart.hotel.hotel_name}</h3>
                         <p className="text-xs text-muted-foreground">
                           {cart.hotel.nights} noches
@@ -132,7 +175,7 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground text-sm">Total ({totalTickets} personas)</span>
-                    <span className="font-black text-green-600 text-lg">€{totalPrice.toFixed(2)}</span>
+                    <span className="font-black text-accent text-lg">€{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
 
