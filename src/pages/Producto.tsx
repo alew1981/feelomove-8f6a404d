@@ -11,7 +11,7 @@ import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
-import PackStepper from "@/components/PackStepper";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -819,13 +819,6 @@ const Producto = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="xl:col-span-2 space-y-8">
-              {/* Pack Stepper - Mobile Sticky */}
-              <PackStepper 
-                currentStep={isEventInCart && totalPersons > 0 ? 2 : 1}
-                ticketsSelected={isEventInCart && totalPersons > 0}
-                hotelSelected={!!cart?.hotel}
-              />
-
               {/* Ticket Cards - List Format */}
               {ticketPrices.length > 0 && (
                 <div>
@@ -841,8 +834,8 @@ const Producto = () => {
                     <div>
                       <h2 className="text-xl sm:text-2xl font-bold">Selecciona tus entradas</h2>
                       {isEventInCart && totalPersons > 0 && (
-                        <p className="text-sm text-accent flex items-center gap-1 mt-0.5">
-                          <Check className="h-3 w-3" />
+                        <p className="text-sm text-foreground flex items-center gap-1 mt-0.5">
+                          <Check className="h-3 w-3 text-accent" />
                           ¡Entradas añadidas! Ahora elige tu alojamiento abajo
                         </p>
                       )}
@@ -1033,8 +1026,8 @@ const Producto = () => {
                       {/* Pack complete success */}
                       {cart.hotel && totalPersons > 0 && (
                         <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mb-4">
-                          <p className="text-xs text-accent font-medium flex items-center gap-2">
-                            <Check className="h-3 w-3" />
+                          <p className="text-xs text-foreground font-medium flex items-center gap-2">
+                            <Check className="h-3 w-3 text-accent" />
                             ¡Pack completo! Entradas + Hotel
                           </p>
                         </div>
