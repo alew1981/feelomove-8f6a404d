@@ -86,15 +86,6 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
           {isExpanded && (
             <div className="max-h-[60vh] overflow-y-auto bg-card">
               <div className="p-4 space-y-3">
-                {/* Pack Status Banner */}
-                {!hasHotel && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center gap-2">
-                    <ArrowDown className="h-4 w-4 text-amber-500 animate-bounce" />
-                    <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-                      Falta añadir el hotel para completar tu pack
-                    </p>
-                  </div>
-                )}
 
                 {hasHotel && (
                   <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 flex items-center gap-2">

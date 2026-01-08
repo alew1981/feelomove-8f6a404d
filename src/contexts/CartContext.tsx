@@ -33,7 +33,7 @@ export interface CartItem {
 interface CartContextType {
   cart: CartItem | null;
   addTickets: (eventId: string, eventDetails: any, tickets: CartTicket[]) => void;
-  addHotel: (eventId: string, hotel: CartHotel) => void;
+  addHotel: (eventId: string, eventDetails: any, hotel: CartHotel) => void;
   removeTicket: (ticketType: string) => void;
   removeHotel: () => void;
   clearCart: () => void;
@@ -81,9 +81,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addHotel = (eventId: string, hotel: CartHotel) => {
+  const addHotel = (eventId: string, eventDetails: any, hotel: CartHotel) => {
     setCart(prev => {
-      if (!prev || prev.event_id !== eventId) return prev;
+      // If no cart or different event, create a new cart with just the hotel
+      if (!prev || prev.event_id !== eventId) {
+        return {
+          event_id: eventId,
+          event_name: eventDetails.event_name || '',
+          event_date: eventDetails.event_date || '',
+          venue_name: eventDetails.venue_name || '',
+          venue_city: eventDetails.venue_city || '',
+          tickets: [],
+          hotel
+        };
+      }
       return { ...prev, hotel };
     });
   };

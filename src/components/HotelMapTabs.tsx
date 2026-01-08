@@ -73,20 +73,12 @@ const HotelMapTabs = ({
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
             selectedHotelId 
               ? "bg-accent text-accent-foreground" 
-              : ticketsSelected 
-                ? "bg-foreground text-background ring-2 ring-accent" 
-                : "bg-muted text-muted-foreground"
+              : "bg-foreground text-background"
           }`}>
             {selectedHotelId ? <Check className="h-4 w-4" /> : "2"}
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-bold">Completa tu pack con un hotel</h2>
-            {ticketsSelected && !selectedHotelId && (
-              <p className="text-sm text-accent flex items-center gap-1 mt-0.5">
-                <ArrowDown className="h-3 w-3 animate-bounce" />
-                Elige un hotel para tu experiencia completa
-              </p>
-            )}
             {selectedHotelId && (
               <p className="text-sm text-foreground flex items-center gap-1 mt-0.5">
                 <Check className="h-3 w-3 text-accent" />
