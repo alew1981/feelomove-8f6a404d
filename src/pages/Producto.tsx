@@ -841,9 +841,9 @@ const Producto = () => {
                           }`}
                         >
                           <CardContent className="p-3 sm:p-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                            <div className="flex items-start sm:items-center justify-between gap-3">
                               {/* Left: Ticket info */}
-                              <div className="flex-1 min-w-0">
+                              <div className="flex-1 min-w-0 pr-2">
                                 <div className="flex items-center gap-2 flex-wrap mb-1">
                                   {isVIP && (
                                     <span className="text-[10px] font-bold text-white bg-foreground px-2 py-0.5 rounded">
@@ -874,10 +874,10 @@ const Producto = () => {
                                 )}
                               </div>
 
-                              {/* Price and Quantity row */}
-                              <div className="flex items-center justify-between sm:justify-end gap-4">
+                              {/* Right: Price stacked above Quantity Selector */}
+                              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
                                 {/* Price */}
-                                <div className="text-left sm:text-center sm:px-4 flex-shrink-0">
+                                <div className="text-center">
                                   <span className="text-xl sm:text-2xl font-black text-foreground">
                                     €{ticket.price.toFixed(0)}
                                   </span>
@@ -889,27 +889,27 @@ const Producto = () => {
                                 </div>
 
                                 {/* Quantity Selector */}
-                                <div className="flex items-center gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
+                                    className="h-7 w-7 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
                                     onClick={() => handleTicketQuantityChange(ticket.id, -1)}
                                     disabled={quantity === 0 || isSoldOut}
                                     aria-label={`Reducir cantidad de ${ticket.type}`}
                                   >
-                                    <Minus className="h-4 w-4" />
+                                    <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
-                                  <span className="w-8 text-center font-bold text-lg">{quantity}</span>
+                                  <span className="w-6 sm:w-8 text-center font-bold text-base sm:text-lg">{quantity}</span>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
+                                    className="h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
                                     onClick={() => handleTicketQuantityChange(ticket.id, 1)}
                                     disabled={quantity >= 10 || isSoldOut}
                                     aria-label={`Aumentar cantidad de ${ticket.type}`}
                                   >
-                                    <Plus className="h-4 w-4" />
+                                    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
                                 </div>
                               </div>
