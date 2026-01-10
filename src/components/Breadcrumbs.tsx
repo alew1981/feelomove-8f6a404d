@@ -1,9 +1,10 @@
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { usePrefetch } from "@/hooks/usePrefetch";
+import { useEffect, useMemo } from "react";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
@@ -12,10 +13,78 @@ const generateSlug = (name: string): string => {
 
 const linkClass = "hover:text-foreground hover:underline transition-colors";
 
-const Breadcrumbs = () => {
+export interface BreadcrumbItem {
+  name: string;
+  url?: string;
+}
+
+interface BreadcrumbsProps {
+  /** Override automatic breadcrumb generation with custom items */
+  items?: BreadcrumbItem[];
+  /** Whether to inject JSON-LD (default: true) */
+  injectJsonLd?: boolean;
+}
+
+/**
+ * Generates BreadcrumbList JSON-LD schema for SEO
+ */
+const generateBreadcrumbJsonLd = (items: BreadcrumbItem[]) => {
+  if (!items || items.length === 0) return null;
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      ...(item.url && { 
+        "item": item.url.startsWith('http') 
+          ? item.url 
+          : `https://feelomove.com${item.url}` 
+      })
+    }))
+  };
+};
+
+/**
+ * Injects BreadcrumbList JSON-LD into document head
+ */
+const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) => {
+  useEffect(() => {
+    if (!enabled || !items || items.length === 0) return;
+    
+    const scriptId = 'breadcrumb-jsonld';
+    
+    // Remove existing script
+    const existingScript = document.getElementById(scriptId);
+    if (existingScript) {
+      existingScript.remove();
+    }
+    
+    // Create and inject new script
+    const jsonLd = generateBreadcrumbJsonLd(items);
+    if (jsonLd) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(jsonLd);
+      document.head.appendChild(script);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      const script = document.getElementById(scriptId);
+      if (script) {
+        script.remove();
+      }
+    };
+  }, [items, enabled]);
+};
+
+const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsProps) => {
   const location = useLocation();
   const params = useParams();
-  const [searchParams] = useSearchParams();
   const pathnames = location.pathname.split("/").filter((x) => x);
   const { prefetch } = usePrefetch();
 
@@ -24,28 +93,41 @@ const Breadcrumbs = () => {
   const productSlug = isProductPage ? params.slug : null;
   const isFestivalProduct = pathnames[0] === "festival";
 
-  // Get event name and categories for product page using lovable_mv_event_product_page
+  // Get event name and genre for product page
   const { data: eventDetails } = useQuery({
     queryKey: ["event-breadcrumb", productSlug],
     queryFn: async () => {
       if (!productSlug) return null;
       
+      // Use festival-specific view for festivals, concert-specific for concerts
+      const viewName = isFestivalProduct 
+        ? "lovable_mv_event_product_page_festivales" 
+        : "lovable_mv_event_product_page_conciertos";
+      
       const { data, error } = await supabase
-        .from("lovable_mv_event_product_page")
-        .select("event_name, primary_subcategory_name, attraction_names, venue_city, event_type")
+        .from(viewName)
+        .select("event_name, primary_subcategory_name, primary_category_name, venue_city, event_slug")
         .eq("event_slug", productSlug)
         .maybeSingle();
       
-      if (error) return null;
+      if (error) {
+        // Fallback to generic view
+        const { data: fallbackData } = await supabase
+          .from("lovable_mv_event_product_page")
+          .select("event_name, primary_subcategory_name, primary_category_name, venue_city, event_slug")
+          .eq("event_slug", productSlug)
+          .maybeSingle();
+        return fallbackData;
+      }
       return data;
     },
     enabled: !!productSlug,
   });
 
-  // Get artist name from database for artist detail page (now under /conciertos/:artistSlug)
-  // Only when it's /conciertos/:artistSlug (NOT /conciertos alone)
-  const artistSlugRaw = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug ? decodeURIComponent(params.artistSlug) : null;
-  // Normalize artist slug: replace multiple dashes with single dash for DB lookup
+  // Get artist name from database for artist detail page
+  const artistSlugRaw = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug 
+    ? decodeURIComponent(params.artistSlug) 
+    : null;
   const artistSlug = artistSlugRaw ? artistSlugRaw.toLowerCase().replace(/-+/g, '-') : null;
   
   const { data: artistData } = useQuery({
@@ -53,7 +135,6 @@ const Breadcrumbs = () => {
     queryFn: async () => {
       if (!artistSlug) return null;
       
-      // Query attractions view directly using the normalized slug
       const { data, error } = await supabase
         .from("mv_attractions")
         .select("attraction_name")
@@ -67,7 +148,9 @@ const Breadcrumbs = () => {
   });
 
   // Get destination name from database for destination detail page
-  const destinoSlug = pathnames[0] === "destinos" && params.destino ? decodeURIComponent(params.destino) : null;
+  const destinoSlug = pathnames[0] === "destinos" && params.destino 
+    ? decodeURIComponent(params.destino) 
+    : null;
   
   const { data: destinoData } = useQuery({
     queryKey: ["destino-breadcrumb", destinoSlug],
@@ -86,195 +169,174 @@ const Breadcrumbs = () => {
     enabled: !!destinoSlug,
   });
 
-  // Extract genre from event
-  const eventGenre = eventDetails?.primary_subcategory_name || null;
-
-  // Extract first artist from event
-  const eventArtist = eventDetails?.attraction_names && Array.isArray(eventDetails.attraction_names)
-    ? eventDetails.attraction_names[0]
-    : null;
-  
-  // Extract city from event
-  const eventCity = eventDetails?.venue_city || null;
-
-  const breadcrumbNames: Record<string, string> = {
-    about: "Nosotros",
-    destinos: "Destinos",
-    generos: "Géneros",
-    eventos: "Eventos",
-    conciertos: "Conciertos",
-    concierto: "Concierto",
-    festivales: "Festivales",
-    festival: "Festival",
-    artistas: "Artistas",
-  };
-
-  // Obtener el nombre del género desde la URL si existe
+  // Extract genre from event (prefer subcategory, fallback to category)
+  const eventGenre = eventDetails?.primary_subcategory_name || eventDetails?.primary_category_name || null;
   const genreFromPath = params.genero ? decodeURIComponent(params.genero) : null;
+
+  // Build breadcrumb items based on current route
+  const breadcrumbItems = useMemo((): BreadcrumbItem[] => {
+    // If custom items provided, use those
+    if (customItems && customItems.length > 0) {
+      return customItems;
+    }
+    
+    const items: BreadcrumbItem[] = [
+      { name: "Inicio", url: "/" }
+    ];
+
+    // Product page: Inicio > Género > Evento
+    if (isProductPage && eventDetails) {
+      // Add genre if available
+      if (eventGenre) {
+        const genreSlug = generateSlug(eventGenre);
+        items.push({
+          name: eventGenre.split(' - ')[0], // Clean up genre name
+          url: `/musica/${genreSlug}`
+        });
+      }
+      
+      // Add event name (no URL - current page)
+      items.push({
+        name: eventDetails.event_name || ''
+      });
+      
+      return items;
+    }
+
+    // Genre page: Inicio > Géneros > Nombre del Género
+    if (pathnames[0] === "generos" && genreFromPath) {
+      items.push({ name: "Géneros", url: "/musica" });
+      items.push({ name: genreFromPath });
+      return items;
+    }
+    
+    // Music/Genre page: Inicio > Géneros > Nombre del Género
+    if (pathnames[0] === "musica" && pathnames.length === 2) {
+      items.push({ name: "Géneros", url: "/musica" });
+      const genreName = pathnames[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      items.push({ name: genreName });
+      return items;
+    }
+
+    // Destination page: Inicio > Destinos > Ciudad
+    if (pathnames[0] === "destinos" && destinoSlug) {
+      items.push({ name: "Destinos", url: "/destinos" });
+      const cityName = destinoData || destinoSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      items.push({ name: cityName });
+      return items;
+    }
+
+    // Artist page: Inicio > Artistas > Nombre del Artista
+    if (pathnames[0] === "conciertos" && artistSlug) {
+      items.push({ name: "Artistas", url: "/artistas" });
+      const artistName = artistData || artistSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      items.push({ name: artistName });
+      return items;
+    }
+
+    // Festival detail page: Inicio > Festivales > Nombre del Festival
+    if (pathnames[0] === "festivales" && pathnames.length === 2) {
+      items.push({ name: "Festivales", url: "/festivales" });
+      const festivalName = pathnames[1].split('_')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      items.push({ name: festivalName });
+      return items;
+    }
+
+    // Default: map pathnames to breadcrumb names
+    const breadcrumbNames: Record<string, string> = {
+      about: "Nosotros",
+      destinos: "Destinos",
+      musica: "Géneros",
+      generos: "Géneros",
+      eventos: "Eventos",
+      conciertos: "Conciertos",
+      festivales: "Festivales",
+      artistas: "Artistas",
+      favoritos: "Favoritos",
+    };
+
+    pathnames.forEach((name, index) => {
+      const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
+      const isLast = index === pathnames.length - 1;
+      const displayName = breadcrumbNames[name] || decodeURIComponent(name).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      
+      items.push({
+        name: displayName,
+        url: isLast ? undefined : routeTo
+      });
+    });
+
+    return items;
+  }, [customItems, isProductPage, eventDetails, eventGenre, genreFromPath, pathnames, destinoSlug, destinoData, artistSlug, artistData]);
+
+  // Inject BreadcrumbList JSON-LD for SEO
+  useBreadcrumbJsonLd(breadcrumbItems, injectJsonLd);
 
   return (
     <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-4 pb-1" aria-label="Breadcrumb">
-      <ol className="flex items-center text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-        {/* Home */}
-        <li className="flex items-center">
-          <Link
-            to="/"
-            className="flex items-center hover:text-foreground transition-colors p-1 -m-1 rounded"
-            aria-label="Inicio"
-          >
-            <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </Link>
-        </li>
-
-      {/* For product page (/concierto/:slug or /festival/:slug): Inicio > Conciertos/Festivales > Ciudad > Género > Artista > Evento */}
-      {isProductPage && eventDetails ? (
-        <>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <Link
-              to={isFestivalProduct ? "/festivales" : "/conciertos"}
-              className={`${linkClass} hidden sm:inline`}
-              onMouseEnter={() => prefetch(isFestivalProduct ? '/festivales' : '/conciertos')}
-            >
-              {isFestivalProduct ? "Festivales" : "Conciertos"}
-            </Link>
-            <Link
-              to={isFestivalProduct ? "/festivales" : "/conciertos"}
-              className={`${linkClass} sm:hidden`}
-              onMouseEnter={() => prefetch(isFestivalProduct ? '/festivales' : '/conciertos')}
-            >
-              {isFestivalProduct ? "Fest." : "Conc."}
-            </Link>
-          </li>
-          {eventCity && (
-            <li className="flex items-center">
-              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-              <Link
-                to={`/destinos/${encodeURIComponent(eventCity.toLowerCase().replace(/\s+/g, '-'))}`}
-                className={linkClass}
-                onMouseEnter={() => prefetch('/destinos')}
-              >
-                {eventCity}
-              </Link>
-            </li>
-          )}
-          {eventGenre && (
-            <li className="flex items-center">
-              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-              <Link
-                to={`/generos/${generateSlug(eventGenre)}`}
-                className={`${linkClass} max-w-[70px] sm:max-w-none truncate`}
-                onMouseEnter={() => prefetch('/generos')}
-              >
-                {eventGenre.split(' - ')[0]}
-              </Link>
-            </li>
-          )}
-          {eventArtist && (
-            <li className="flex items-center">
-              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-              <Link
-                to={`/conciertos/${generateSlug(eventArtist)}`}
-                className={`${linkClass} max-w-[70px] sm:max-w-[120px] md:max-w-none truncate`}
-                onMouseEnter={() => prefetch(`/conciertos/${generateSlug(eventArtist)}`)}
-              >
-                {eventArtist}
-              </Link>
-            </li>
-          )}
-          <li className="flex items-center min-w-0">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60 flex-shrink-0" />
-            <span className="text-foreground font-semibold truncate max-w-[100px] sm:max-w-[180px] md:max-w-none" title={eventDetails.event_name || ''}>
-              {eventDetails.event_name}
-            </span>
-          </li>
-        </>
-      ) : pathnames[0] === "generos" && genreFromPath ? (
-        /* Para página de género: Inicio > Géneros > Género */
-        <>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <Link
-              to="/generos"
-              className={linkClass}
-              onMouseEnter={() => prefetch('/generos')}
-            >
-              Géneros
-            </Link>
-          </li>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <span className="text-foreground font-semibold">{genreFromPath}</span>
-          </li>
-        </>
-      ) : pathnames[0] === "destinos" && destinoSlug ? (
-        /* Para página de destino: Inicio > Destinos > Ciudad */
-        <>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <Link
-              to="/destinos"
-              className={linkClass}
-              onMouseEnter={() => prefetch('/destinos')}
-            >
-              Destinos
-            </Link>
-          </li>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <span className="text-foreground font-semibold">
-              {destinoData || destinoSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </span>
-          </li>
-        </>
-      ) : pathnames[0] === "conciertos" && artistSlug ? (
-        /* Para página de artista: Inicio > Conciertos > Nombre del artista */
-        <>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <Link
-              to="/conciertos"
-              className={linkClass}
-              onMouseEnter={() => prefetch('/conciertos')}
-            >
-              Conciertos
-            </Link>
-          </li>
-          <li className="flex items-center">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-            <span className="text-foreground font-semibold">
-              {artistData || artistSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </span>
-          </li>
-        </>
-      ) : (
-        pathnames.map((name, index) => {
-          const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
-          const isLast = index === pathnames.length - 1;
+      <ol className="flex items-center text-xs sm:text-sm text-muted-foreground whitespace-nowrap" itemScope itemType="https://schema.org/BreadcrumbList">
+        {breadcrumbItems.map((item, index) => {
+          const isFirst = index === 0;
+          const isLast = index === breadcrumbItems.length - 1;
           
-          let displayName = breadcrumbNames[name] || decodeURIComponent(name);
-
           return (
-            <li key={`${name}-${index}`} className="flex items-center">
-              <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60" />
-              {isLast ? (
-                <span className="text-foreground font-semibold">{displayName}</span>
-              ) : (
+            <li 
+              key={`${item.name}-${index}`} 
+              className="flex items-center"
+              itemProp="itemListElement"
+              itemScope
+              itemType="https://schema.org/ListItem"
+            >
+              {/* Separator (not for first item) */}
+              {!isFirst && (
+                <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 mx-1 text-muted-foreground/60 flex-shrink-0" />
+              )}
+              
+              {/* Home icon for first item */}
+              {isFirst ? (
                 <Link
-                  to={routeTo}
-                  className={linkClass}
-                  onMouseEnter={() => prefetch(routeTo)}
+                  to={item.url || "/"}
+                  className="flex items-center hover:text-foreground transition-colors p-1 -m-1 rounded"
+                  aria-label="Inicio"
+                  itemProp="item"
+                  onMouseEnter={() => prefetch("/")}
                 >
-                  {displayName}
+                  <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <meta itemProp="name" content={item.name} />
+                </Link>
+              ) : isLast || !item.url ? (
+                // Last item or no URL: display as text
+                <span 
+                  className="text-foreground font-semibold truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" 
+                  itemProp="name"
+                  title={item.name}
+                >
+                  {item.name}
+                </span>
+              ) : (
+                // Middle items: display as links
+                <Link
+                  to={item.url}
+                  className={`${linkClass} truncate max-w-[80px] sm:max-w-[150px] md:max-w-none`}
+                  itemProp="item"
+                  onMouseEnter={() => item.url && prefetch(item.url)}
+                >
+                  <span itemProp="name">{item.name}</span>
                 </Link>
               )}
+              
+              {/* Position meta for schema */}
+              <meta itemProp="position" content={String(index + 1)} />
             </li>
           );
-        })
-      )}
+        })}
       </ol>
     </nav>
   );
 };
 
 export default Breadcrumbs;
+
+// Re-export types and utilities for external use
+export { generateBreadcrumbJsonLd };
+export type { BreadcrumbItem as BreadcrumbItemType };
