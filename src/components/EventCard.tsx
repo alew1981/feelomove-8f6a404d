@@ -173,9 +173,19 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
       : null
   );
 
+  // ISO 8601 date for schema
+  const isoDate = eventDate ? event.event_date : undefined;
+
   return (
     <Link to={eventUrl} className="group block" title={`Ver entradas y detalles de ${eventName}`}>
       <Card ref={cardRef} className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
+        <article itemScope itemType="https://schema.org/Event">
+          {/* Hidden semantic data for SEO */}
+          <meta itemProp="name" content={eventName} />
+          {isoDate && <meta itemProp="startDate" content={isoDate} />}
+          <meta itemProp="eventAttendanceMode" content="https://schema.org/OfflineEventAttendanceMode" />
+          <meta itemProp="eventStatus" content="https://schema.org/EventScheduled" />
+          
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
             <div className="relative h-56 overflow-hidden bg-muted">
@@ -201,6 +211,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                       target.src = "/placeholder.svg";
                       setImageLoaded(true);
                     }}
+                    itemProp="image"
                   />
                 </>
               ) : (
@@ -236,27 +247,33 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               {/* Date Card - Absolute positioned on the left */}
               <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
                 <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
-                  {hasDate ? (
-                    <>
+                  {hasDate && eventDate ? (
+                    <time dateTime={isoDate} itemProp="startDate" content={isoDate}>
                       <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
                       <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
                       <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
                       {/* Time */}
                       {time && time !== "00:00" && <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>}
-                    </>
+                    </time>
                   ) : (
-                    <>
+                    <time dateTime="" aria-label="Fecha pendiente de confirmar">
                       <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">FECHA</div>
-                      <div className="text-xs font-bold text-gray-700 my-2 px-1">Pendiente fechas</div>
-                    </>
+                      <div className="text-xs font-bold text-gray-700 my-2 px-1">Por confirmar</div>
+                    </time>
                   )}
-                  {/* Location */}
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1 border-t border-gray-200 pt-1.5">
-                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
-                    <span className="line-clamp-1 font-medium">
+                  {/* Location with semantic address tag */}
+                  <address 
+                    className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1 border-t border-gray-200 pt-1.5 not-italic"
+                    itemProp="location" 
+                    itemScope 
+                    itemType="https://schema.org/Place"
+                  >
+                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="line-clamp-1 font-medium" itemProp="name">
                       {event.venue_city || 'Por confirmar'}
                     </span>
-                  </div>
+                    <meta itemProp="address" content={event.venue_city || 'España'} />
+                  </address>
                 </div>
               </div>
 
@@ -308,7 +325,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
 
             {/* Event Name Below Image */}
             <div className="bg-background px-4 pt-4 pb-2">
-              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']">
+              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']" itemProp="name">
                 {eventName}
               </h3>
             </div>
@@ -321,7 +338,8 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               </Button>
             </div>
           </div>
-        </Card>
+        </article>
+      </Card>
     </Link>
   );
 });

@@ -87,19 +87,19 @@ const Favoritos = () => {
                   <h3 className="font-bold text-lg mb-2 line-clamp-2">{favorite.event_name}</h3>
                   <div className="space-y-1 text-sm text-muted-foreground mb-4">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>
+                      <Calendar className="h-4 w-4" aria-hidden="true" />
+                      <time dateTime={favorite.event_date}>
                         {new Date(favorite.event_date).toLocaleDateString('es-ES', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',
                         })}
-                      </span>
+                      </time>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{favorite.venue_city}</span>
-                    </div>
+                    <address className="flex items-center gap-2 not-italic">
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                      <span>{favorite.venue_city || 'Por confirmar'}</span>
+                    </address>
                   </div>
                   <Button asChild className="w-full">
                     <Link to={getEventUrl(favorite.event_slug, favorite.is_festival)}>
