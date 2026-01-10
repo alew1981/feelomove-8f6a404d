@@ -12,6 +12,7 @@ import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
+import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -501,86 +502,50 @@ const Producto = () => {
     eventDetails.event_date
   );
   
-  // Build comprehensive Event JSON-LD for Google Rich Results
+  // Build comprehensive Event JSON-LD using EventSeo component
   const minPrice = ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees || 0;
   const maxPrice = ticketPrices[ticketPrices.length - 1]?.price || minPrice;
   
-  // Map event status to Schema.org eventStatus
-  const getSchemaEventStatus = () => {
-    switch (eventStatus) {
-      case 'cancelled': return "https://schema.org/EventCancelled";
-      case 'rescheduled': return "https://schema.org/EventRescheduled";
-      case 'past': return "https://schema.org/EventScheduled"; // Past events keep EventScheduled per Google guidelines
-      default: return "https://schema.org/EventScheduled";
+  // Create EventSeo props using helper function
+  const eventSeoProps = createEventSeoProps(
+    {
+      event_id: eventDetails.event_id || '',
+      event_name: eventDetails.event_name || '',
+      event_slug: eventDetails.event_slug,
+      event_date: eventDetails.event_date || '',
+      festival_end_date: (eventDetails as any).festival_end_date,
+      door_opening_date: (eventDetails as any).door_opening_date,
+      venue_name: eventDetails.venue_name,
+      venue_address: eventDetails.venue_address,
+      venue_city: eventDetails.venue_city || '',
+      venue_postal_code: eventDetails.venue_postal_code,
+      venue_latitude: eventDetails.venue_latitude,
+      venue_longitude: eventDetails.venue_longitude,
+      venue_url: (eventDetails as any).venue_url,
+      image_large_url: eventDetails.image_large_url,
+      image_standard_url: eventDetails.image_standard_url,
+      attraction_names: eventDetails.attraction_names,
+      price_min_incl_fees: minPrice,
+      price_max_incl_fees: maxPrice,
+      on_sale_date: (eventDetails as any).on_sale_date,
+      sold_out: eventDetails.sold_out,
+      cancelled: eventDetails.cancelled,
+      rescheduled: eventDetails.rescheduled,
+      is_festival: eventDetails.is_festival,
+    },
+    {
+      description: seoDescription,
+      url: absoluteUrl,
+      status: eventStatus,
+      isEventAvailable,
     }
-  };
-  
-  const jsonLdData = {
-    "@context": "https://schema.org",
-    "@type": eventDetails.is_festival ? "Festival" : "MusicEvent",
-    "@id": absoluteUrl,
-    "name": eventDetails.event_name,
-    "description": seoDescription,
-    "startDate": eventDetails.event_date,
-    "endDate": (eventDetails as any).festival_end_date || eventDetails.event_date,
-    "doorTime": (eventDetails as any).door_opening_date || undefined,
-    "eventStatus": getSchemaEventStatus(),
-    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-    "url": absoluteUrl,
-    "image": [eventImage],
-    "location": {
-      "@type": "Place",
-      "name": eventDetails.venue_name || "Venue",
-      "url": (eventDetails as any).venue_url || undefined,
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": eventDetails.venue_address || eventDetails.venue_name || "Recinto del evento",
-        "addressLocality": eventDetails.venue_city,
-        "addressRegion": "España",
-        "postalCode": eventDetails.venue_postal_code || undefined,
-        "addressCountry": "ES"
-      },
-      "geo": eventDetails.venue_latitude && eventDetails.venue_longitude ? {
-        "@type": "GeoCoordinates",
-        "latitude": eventDetails.venue_latitude,
-        "longitude": eventDetails.venue_longitude
-      } : undefined
-    },
-    "organizer": {
-      "@type": "Organization",
-      "name": "FEELOMOVE+",
-      "url": "https://feelomove.com"
-    },
-    "offers": {
-      "@type": "AggregateOffer",
-      "url": absoluteUrl,
-      "lowPrice": minPrice > 0 ? minPrice : 0,
-      "highPrice": maxPrice > 0 ? maxPrice : minPrice > 0 ? minPrice : 0,
-      "priceCurrency": "EUR",
-      "availability": eventStatus === 'past' || eventStatus === 'cancelled'
-        ? "https://schema.org/SoldOut"
-        : eventDetails.sold_out 
-          ? "https://schema.org/SoldOut" 
-          : isEventAvailable 
-            ? "https://schema.org/InStock" 
-            : "https://schema.org/PreOrder",
-      "offerCount": ticketPrices.length || 1,
-      "validFrom": (eventDetails as any).on_sale_date || new Date().toISOString(),
-      "seller": {
-        "@type": "Organization",
-        "name": "FEELOMOVE+",
-        "url": "https://feelomove.com"
-      }
-    },
-    "performer": artistNames.length > 0 ? artistNames.map((name: string) => ({
-      "@type": "MusicGroup",
-      "name": name
-    })) : undefined,
-    "inLanguage": "es"
-  };
+  );
 
   return (
     <>
+      {/* EventSeo component injects JSON-LD structured data */}
+      <EventSeo {...eventSeoProps} />
+      
       <SEOHead
         title={`${eventDetails.event_name} - Entradas y Hotel`}
         description={seoDescription}
@@ -589,7 +554,6 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        jsonLd={jsonLdData}
         preloadImage={eventImage}
         breadcrumbs={[
           { name: "Inicio", url: "/" },

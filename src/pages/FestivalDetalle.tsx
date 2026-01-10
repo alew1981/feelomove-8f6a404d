@@ -19,6 +19,7 @@ import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festival
 import { FestivalServices } from "@/components/FestivalServices";
 import { FestivalProductPage } from "@/types/events.types";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
+import { EventSeo } from "@/components/EventSeo";
 
 // Keywords that identify a festival name (case-insensitive)
 const FESTIVAL_KEYWORDS = [
@@ -214,57 +215,55 @@ const FestivalDetalle = () => {
     return 'scheduled' as const;
   }, [events, festivalData?.lastDate]);
 
-  // Generate JSON-LD for festival detail with proper eventStatus
-  const getSchemaEventStatus = () => {
-    switch (festivalStatus) {
-      case 'cancelled': return "https://schema.org/EventCancelled";
-      case 'past': return "https://schema.org/EventScheduled"; // Past events keep EventScheduled per Google guidelines
-      default: return "https://schema.org/EventScheduled";
-    }
-  };
-  
-  const jsonLd = festivalData ? {
-    "@context": "https://schema.org",
-    "@type": "Festival",
-    "name": festivalData.name,
-    "startDate": festivalData.firstDate,
-    "endDate": festivalData.lastDate,
-    "url": `https://feelomove.com/festivales/${festivalSlug}`,
-    "image": festivalData.image,
-    "eventStatus": getSchemaEventStatus(),
-    "location": {
-      "@type": "Place",
-      "name": festivalData.venue || festivalData.city,
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": festivalData.city
-      }
-    },
-    ...(festivalData.minPrice > 0 && {
-      "offers": {
-        "@type": "Offer",
-        "price": festivalData.minPrice,
-        "priceCurrency": "EUR",
-        "availability": festivalStatus === 'past' || festivalStatus === 'cancelled' 
-          ? "https://schema.org/SoldOut" 
-          : "https://schema.org/InStock"
-      }
-    }),
-    "performer": concertEvents.slice(0, 10).map(event => ({
-      "@type": "MusicGroup",
-      "name": event.primary_attraction_name || event.event_name
-    }))
-  } : null;
+  // Build description for SEO
+  const seoDescription = `Compra entradas para ${festivalData?.name || festivalName} en ${festivalData?.city || 'España'}. ${festivalData?.artistCount || 0} artistas. Reserva hotel cerca. ¡Vive la experiencia!`;
+  const absoluteUrl = `https://feelomove.com/festivales/${festivalSlug}`;
+
+  // Build performers list from concert events
+  const performers = concertEvents.slice(0, 20).map(event => ({
+    name: event.primary_attraction_name || event.event_name || '',
+    type: 'MusicGroup' as const,
+  }));
 
   return (
     <>
+      {/* EventSeo component injects JSON-LD structured data */}
+      {festivalData && events && events.length > 0 && (
+        <EventSeo
+          eventId={events[0].event_id || festivalSlug || ''}
+          name={festivalData.name}
+          description={seoDescription}
+          image={heroImage}
+          images={{
+            wide: festivalData.image,
+          }}
+          startDate={festivalData.firstDate || ''}
+          endDate={festivalData.lastDate || festivalData.firstDate || ''}
+          location={{
+            name: festivalData.venue || festivalData.city || '',
+            city: festivalData.city || '',
+            country: 'ES',
+          }}
+          performers={performers}
+          offers={festivalData.minPrice > 0 ? {
+            lowPrice: festivalData.minPrice,
+            highPrice: festivalData.maxPrice || festivalData.minPrice,
+            currency: 'EUR',
+            url: absoluteUrl,
+            availability: festivalStatus === 'past' || festivalStatus === 'cancelled' ? 'SoldOut' : 'InStock',
+          } : undefined}
+          status={festivalStatus}
+          isFestival={true}
+          url={absoluteUrl}
+        />
+      )}
+      
       <SEOHead
         title={`${festivalData?.name || festivalName} 2025 - Entradas y Hotel`}
-        description={`Compra entradas para ${festivalData?.name || festivalName} en ${festivalData?.city || 'España'}. ${festivalData?.artistCount || 0} artistas. Reserva hotel cerca. ¡Vive la experiencia!`}
+        description={seoDescription}
         canonical={`https://feelomove.com/festivales/${festivalSlug}`}
         keywords={`${festivalName}, festival música, entradas festival, ${festivalData?.city || 'España'}, hotel festival`}
         pageType="ItemPage"
-        jsonLd={jsonLd || undefined}
         preloadImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
         ogImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
       />
