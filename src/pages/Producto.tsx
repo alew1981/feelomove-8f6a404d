@@ -11,6 +11,7 @@ import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
+import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -127,27 +128,8 @@ const Producto = () => {
         throw new Error(`Error al cargar el evento: ${error.message}`);
       }
       
-      // Event found - check if valid (not cancelled, not past)
+      // Event found - return data (cancelled/past events are kept accessible for SEO)
       if (data && data.length > 0) {
-        const event = data[0] as any;
-        
-        // Check if event is cancelled
-        if (event.cancelled === true) {
-          navigate("/404", { replace: true });
-          return null;
-        }
-        
-        // Check if event has passed (only if it has a valid date)
-        const eventDate = event.event_date;
-        if (eventDate && !eventDate.startsWith('9999')) {
-          const eventDateTime = new Date(eventDate);
-          const now = new Date();
-          if (eventDateTime < now) {
-            navigate("/404", { replace: true });
-            return null;
-          }
-        }
-        
         return data;
       }
       
@@ -512,9 +494,26 @@ const Producto = () => {
   const canonicalUrl = `/${eventType}/${canonicalSlug}`;
   const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
 
+  // Determine event status for banner and JSON-LD
+  const eventStatus = getEventStatus(
+    eventDetails.cancelled,
+    eventDetails.rescheduled,
+    eventDetails.event_date
+  );
+  
   // Build comprehensive Event JSON-LD for Google Rich Results
   const minPrice = ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees || 0;
   const maxPrice = ticketPrices[ticketPrices.length - 1]?.price || minPrice;
+  
+  // Map event status to Schema.org eventStatus
+  const getSchemaEventStatus = () => {
+    switch (eventStatus) {
+      case 'cancelled': return "https://schema.org/EventCancelled";
+      case 'rescheduled': return "https://schema.org/EventRescheduled";
+      case 'past': return "https://schema.org/EventScheduled"; // Past events keep EventScheduled per Google guidelines
+      default: return "https://schema.org/EventScheduled";
+    }
+  };
   
   const jsonLdData = {
     "@context": "https://schema.org",
@@ -525,11 +524,7 @@ const Producto = () => {
     "startDate": eventDetails.event_date,
     "endDate": (eventDetails as any).festival_end_date || eventDetails.event_date,
     "doorTime": (eventDetails as any).door_opening_date || undefined,
-    "eventStatus": eventDetails.cancelled 
-      ? "https://schema.org/EventCancelled" 
-      : eventDetails.rescheduled 
-        ? "https://schema.org/EventRescheduled"
-        : "https://schema.org/EventScheduled",
+    "eventStatus": getSchemaEventStatus(),
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "url": absoluteUrl,
     "image": [eventImage],
@@ -562,11 +557,13 @@ const Producto = () => {
       "lowPrice": minPrice > 0 ? minPrice : 0,
       "highPrice": maxPrice > 0 ? maxPrice : minPrice > 0 ? minPrice : 0,
       "priceCurrency": "EUR",
-      "availability": eventDetails.sold_out 
-        ? "https://schema.org/SoldOut" 
-        : isEventAvailable 
-          ? "https://schema.org/InStock" 
-          : "https://schema.org/PreOrder",
+      "availability": eventStatus === 'past' || eventStatus === 'cancelled'
+        ? "https://schema.org/SoldOut"
+        : eventDetails.sold_out 
+          ? "https://schema.org/SoldOut" 
+          : isEventAvailable 
+            ? "https://schema.org/InStock" 
+            : "https://schema.org/PreOrder",
       "offerCount": ticketPrices.length || 1,
       "validFrom": (eventDetails as any).on_sale_date || new Date().toISOString(),
       "seller": {
@@ -607,6 +604,13 @@ const Producto = () => {
         <main className="container mx-auto px-4 py-8 mt-20">
           {/* Breadcrumbs above hero */}
           <Breadcrumbs />
+          
+          {/* Event Status Banner for cancelled, rescheduled, or past events */}
+          <EventStatusBanner 
+            status={eventStatus} 
+            eventName={eventDetails.event_name || ''} 
+            eventDate={eventDetails.event_date || ''}
+          />
           
           {/* Mobile: Countdown + Event Name above hero */}
           <div className="md:hidden mb-3">

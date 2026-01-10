@@ -18,6 +18,7 @@ import { es } from "date-fns/locale";
 import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festivalUtils";
 import { FestivalServices } from "@/components/FestivalServices";
 import { FestivalProductPage } from "@/types/events.types";
+import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 
 // Keywords that identify a festival name (case-insensitive)
 const FESTIVAL_KEYWORDS = [
@@ -194,7 +195,34 @@ const FestivalDetalle = () => {
 
   const heroImage = festivalData?.image || "/placeholder.svg";
 
-  // Generate JSON-LD for festival detail
+  // Determine festival status for banner display
+  const festivalStatus = useMemo(() => {
+    if (!events || events.length === 0) return 'scheduled' as const;
+    
+    // Check if any event is cancelled
+    const hasCancelledEvent = events.some(e => e.cancelled);
+    if (hasCancelledEvent) return 'cancelled' as const;
+    
+    // Check if festival has passed (use last date)
+    const lastDate = festivalData?.lastDate;
+    if (lastDate && !lastDate.startsWith('9999')) {
+      const festivalEndDate = new Date(lastDate);
+      const now = new Date();
+      if (festivalEndDate < now) return 'past' as const;
+    }
+    
+    return 'scheduled' as const;
+  }, [events, festivalData?.lastDate]);
+
+  // Generate JSON-LD for festival detail with proper eventStatus
+  const getSchemaEventStatus = () => {
+    switch (festivalStatus) {
+      case 'cancelled': return "https://schema.org/EventCancelled";
+      case 'past': return "https://schema.org/EventScheduled"; // Past events keep EventScheduled per Google guidelines
+      default: return "https://schema.org/EventScheduled";
+    }
+  };
+  
   const jsonLd = festivalData ? {
     "@context": "https://schema.org",
     "@type": "Festival",
@@ -203,6 +231,7 @@ const FestivalDetalle = () => {
     "endDate": festivalData.lastDate,
     "url": `https://feelomove.com/festivales/${festivalSlug}`,
     "image": festivalData.image,
+    "eventStatus": getSchemaEventStatus(),
     "location": {
       "@type": "Place",
       "name": festivalData.venue || festivalData.city,
@@ -216,7 +245,9 @@ const FestivalDetalle = () => {
         "@type": "Offer",
         "price": festivalData.minPrice,
         "priceCurrency": "EUR",
-        "availability": "https://schema.org/InStock"
+        "availability": festivalStatus === 'past' || festivalStatus === 'cancelled' 
+          ? "https://schema.org/SoldOut" 
+          : "https://schema.org/InStock"
       }
     }),
     "performer": concertEvents.slice(0, 10).map(event => ({
@@ -246,6 +277,13 @@ const FestivalDetalle = () => {
           <div className="mb-4">
             <Breadcrumbs />
           </div>
+          
+          {/* Event Status Banner for cancelled or past festivals */}
+          <EventStatusBanner 
+            status={festivalStatus} 
+            eventName={festivalData?.name || festivalName} 
+            eventDate={festivalData?.lastDate || ''}
+          />
           
           {/* Festival Hero with dates, lineup, countdown */}
           <FestivalHero 
