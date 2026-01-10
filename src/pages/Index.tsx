@@ -264,7 +264,7 @@ const Index = () => {
                 <h2 id={`city-${city.toLowerCase()}-heading`} className="text-3xl font-bold mb-2">Conciertos y Festivales en {city}</h2>
                 <p className="text-muted-foreground">Entradas y hoteles para eventos en {city}</p>
               </div>
-              <Link to={`/destinos/${city.toLowerCase()}`} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={`Ver todos los eventos en ${city}`}>
+              <Link to={`/destinos/${city.toLowerCase().replace(/\s+/g, '-')}`} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={`Ver todos los eventos en ${city}`}>
                 Ver todos →
               </Link>
             </div>
@@ -344,7 +344,7 @@ const Index = () => {
               destinations.map((destination: any) => (
                 <Link
                   key={destination.city_name}
-                  to={`/destinos/${encodeURIComponent(destination.city_name || '')}`}
+                  to={`/destinos/${destination.city_slug || encodeURIComponent((destination.city_name || '').toLowerCase().replace(/\s+/g, '-'))}`}
                   className="group block"
                 >
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
