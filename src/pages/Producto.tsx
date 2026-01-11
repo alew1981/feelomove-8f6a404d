@@ -209,8 +209,8 @@ const Producto = () => {
     });
   })();
 
-  // Get map widget HTML - prefer Stay22 map for concerts, fallback to LiteAPI
-  const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || (eventDetails as any)?.map_widget_html || null;
+  // Get map widget HTML - only use Stay22 map
+  const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || null;
 
   // Clear cart when changing events
   useEffect(() => {
