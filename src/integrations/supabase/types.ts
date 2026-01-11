@@ -696,18 +696,6 @@ export type Database = {
           },
         ]
       }
-      total_events: {
-        Row: {
-          count: number | null
-        }
-        Insert: {
-          count?: number | null
-        }
-        Update: {
-          count?: number | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       geography_columns: {
