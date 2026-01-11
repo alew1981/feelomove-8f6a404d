@@ -134,7 +134,32 @@ const Producto = () => {
         return data;
       }
       
-      // No event found - try the general view as fallback before giving up
+      // No event found - try alternative views as fallback
+      // If we were looking in conciertos, try festivales (events might be mis-categorized)
+      if (viewName === "lovable_mv_event_product_page_conciertos") {
+        const { data: festivalData, error: festivalError } = await supabase
+          .from("lovable_mv_event_product_page_festivales")
+          .select("*")
+          .eq("event_slug", slug);
+        
+        if (!festivalError && festivalData && festivalData.length > 0) {
+          return festivalData;
+        }
+      }
+      
+      // If we were looking in festivales, try conciertos
+      if (viewName === "lovable_mv_event_product_page_festivales") {
+        const { data: concertData, error: concertError } = await supabase
+          .from("lovable_mv_event_product_page_conciertos")
+          .select("*")
+          .eq("event_slug", slug);
+        
+        if (!concertError && concertData && concertData.length > 0) {
+          return concertData;
+        }
+      }
+      
+      // Final fallback - try general view
       if (viewName !== "lovable_mv_event_product_page") {
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("lovable_mv_event_product_page")
