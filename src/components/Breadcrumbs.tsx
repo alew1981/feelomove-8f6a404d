@@ -14,7 +14,58 @@ import { useEffect, useMemo } from "react";
  * Generates URL-friendly slug from name (accent-insensitive)
  */
 const generateSlug = (name: string): string => {
-  return normalizeSearch(name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return normalizeSearch(name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+};
+
+/**
+ * Maps genre subcategory names to their correct URL slugs
+ * This ensures breadcrumb links match actual routes in /generos/:slug
+ */
+const GENRE_SLUG_MAP: Record<string, string> = {
+  'Pop/Rock': 'pop-rock',
+  'poprock': 'pop-rock',
+  'Hard Rock/Metal': 'hard-rock-metal',
+  'hardrockmetall': 'hard-rock-metal',
+  'Dance/Electrónica': 'dance-electronica',
+  'danceelectronica': 'dance-electronica',
+  'Jazz/Blues': 'jazz-blues',
+  'jazzblues': 'jazz-blues',
+  'Hip-hop/R&B': 'hip-hop-rb',
+  'hiphoprab': 'hip-hop-rb',
+  'hiphopb': 'hip-hop-rb',
+  'hip-hoprb': 'hip-hop-rb',
+  'Indie/Alternativo': 'indie-alternativo',
+  'indiealternativo': 'indie-alternativo',
+  'Otros - Música': 'otros-musica',
+  'otrosmusica': 'otros-musica',
+  'otros-musica': 'otros-musica',
+  'World': 'world',
+  'Reggae': 'reggae',
+  'Soul': 'soul',
+  'Festival de Música': 'festival-de-musica',
+  'festivaldemusica': 'festival-de-musica',
+};
+
+/**
+ * Gets the correct genre slug for URL routing
+ * Prioritizes the mapping table, falls back to slug generation
+ */
+const getGenreSlug = (genreName: string): string => {
+  if (!genreName) return '';
+  
+  // Check direct mapping first
+  if (GENRE_SLUG_MAP[genreName]) {
+    return GENRE_SLUG_MAP[genreName];
+  }
+  
+  // Check normalized version
+  const normalized = generateSlug(genreName);
+  if (GENRE_SLUG_MAP[normalized]) {
+    return GENRE_SLUG_MAP[normalized];
+  }
+  
+  // Fallback to generated slug
+  return normalized;
 };
 
 /**
@@ -362,7 +413,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
       
       // Level 3: Genre (if available)
       if (eventGenre) {
-        const genreSlug = generateSlug(eventGenre);
+        const genreSlug = getGenreSlug(eventGenre);
         items.push({
           name: cleanGenreName(eventGenre),
           url: `/generos/${genreSlug}`
@@ -400,7 +451,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
       
       // Level 3: Genre (if available)
       if (eventGenre) {
-        const genreSlug = generateSlug(eventGenre);
+        const genreSlug = getGenreSlug(eventGenre);
         items.push({
           name: cleanGenreName(eventGenre),
           url: `/generos/${genreSlug}`
@@ -603,5 +654,5 @@ export default Breadcrumbs;
 // EXPORTS
 // ============================================
 
-export { generateBreadcrumbJsonLd, formatDisplayText, cleanGenreName, cleanCityName };
+export { generateBreadcrumbJsonLd, formatDisplayText, cleanGenreName, cleanCityName, getGenreSlug, generateSlug };
 export type { BreadcrumbItem as BreadcrumbItemType };
