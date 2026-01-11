@@ -134,35 +134,34 @@ const FestivalHero = ({
           </div>
         )}
         
-        {/* Date Badge - Without time for festivals */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 md:p-4 text-center shadow-lg min-w-[80px] md:min-w-[100px]">
-          <div className="text-xs md:text-sm font-bold text-primary">
+        {/* Date Badge - Same structure as concerts but without time */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 md:p-5 text-center shadow-lg min-w-[140px] md:min-w-[180px]">
+          <div className="text-xs md:text-sm font-bold text-primary uppercase">
             {dateInfo.month}
           </div>
           {dateInfo.pendiente ? (
-            <div className="text-xs md:text-sm font-bold text-muted-foreground my-2 px-1">
+            <div className="text-sm md:text-base font-bold text-muted-foreground my-3 px-1">
               Pendiente fechas
             </div>
           ) : (
             <>
-              <div className="text-3xl md:text-4xl font-black text-foreground leading-none my-1">
+              <div className="text-4xl md:text-5xl font-black text-foreground leading-none my-2">
                 {dateInfo.day}
               </div>
-              <div className="text-xs md:text-sm text-muted-foreground">
+              <div className="text-sm md:text-base text-muted-foreground">
                 {dateInfo.year}
               </div>
             </>
           )}
-          {/* City/Venue - no time for festivals */}
+          {/* City/Venue section - same style as concerts */}
           {(city || venue) && (
-            <div className="border-t border-border mt-2 pt-2">
-              <div className="text-xs text-muted-foreground">
-                <span className="flex items-center justify-center gap-1">
-                  📍 {city || venue || "España"}
-                </span>
+            <div className="border-t border-border mt-3 pt-3">
+              <div className="flex items-center justify-center gap-1 text-sm md:text-base">
+                <span className="text-muted-foreground">📍</span>
+                <span className="font-bold text-foreground">{city || "España"}</span>
               </div>
-              {venue && city && (
-                <div className="text-xs text-muted-foreground truncate max-w-[90px] md:max-w-[110px]">
+              {venue && (
+                <div className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
                   {venue}
                 </div>
               )}
