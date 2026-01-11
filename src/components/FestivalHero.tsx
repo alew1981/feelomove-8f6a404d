@@ -117,9 +117,9 @@ const FestivalHero = ({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       
-      {/* Left Side - Countdown above Date Badge */}
-      <div className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-3">
-        {/* Countdown - Above Date Badge */}
+      {/* Left Side - Countdown (top) + Date Badge (below) */}
+      <div className="absolute left-4 md:left-6 top-4 md:top-6 z-10 flex flex-col items-start gap-3">
+        {/* Countdown - Top Left */}
         {countdown && (
           <div className="bg-accent/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 text-accent-foreground">
             <div className="text-center">
@@ -171,34 +171,34 @@ const FestivalHero = ({
         </div>
       </div>
       
-      {/* Top Right - Status Badges */}
-      <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
-        <div className="flex flex-wrap justify-end gap-1.5 max-w-[280px]">
-          <Badge className="bg-accent text-accent-foreground text-[10px] md:text-xs font-bold">
+      {/* Top Right - Status Badges in horizontal row */}
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+        <div className="flex flex-wrap justify-end gap-1.5">
+          <Badge className="bg-accent text-accent-foreground text-[10px] md:text-xs font-bold px-3 py-1">
             DISPONIBLE
           </Badge>
           {countdown && countdown.days <= 7 && (
-            <Badge className="bg-destructive text-destructive-foreground text-[10px] md:text-xs font-bold">
+            <Badge className="bg-destructive text-destructive-foreground text-[10px] md:text-xs font-bold px-3 py-1">
               ¡ÚLTIMA SEMANA!
             </Badge>
           )}
-          {dateInfo.weekday && (
-            <Badge variant="secondary" className="text-[10px] md:text-xs">
+          {dateInfo.weekday && !dateInfo.pendiente && (
+            <Badge variant="secondary" className="text-[10px] md:text-xs px-3 py-1">
               {dateInfo.weekday}
             </Badge>
           )}
           {season && (
-            <Badge variant="secondary" className="text-[10px] md:text-xs">
+            <Badge variant="secondary" className="text-[10px] md:text-xs px-3 py-1">
               {season}
             </Badge>
           )}
           {genre && (
-            <Badge variant="secondary" className="text-[10px] md:text-xs">
+            <Badge variant="secondary" className="text-[10px] md:text-xs px-3 py-1">
               {genre.toUpperCase()}
             </Badge>
           )}
           {durationDays > 1 && (
-            <Badge variant="secondary" className="text-[10px] md:text-xs">
+            <Badge variant="secondary" className="text-[10px] md:text-xs px-3 py-1">
               {durationDays} DÍAS
             </Badge>
           )}
@@ -230,31 +230,29 @@ const FestivalHero = ({
         </div>
       )}
       
-      {/* Bottom - Title and Headliners */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 pl-[110px] md:pl-[140px]">
-        <div className="flex items-end justify-between gap-4">
-          <div className="flex-1">
-            {/* Headliners */}
-            {headliners.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                {headliners.slice(0, 4).map((artist) => (
-                  <Badge key={artist} variant="outline" className="bg-white/10 text-white border-white/20 text-xs">
-                    {artist}
-                  </Badge>
-                ))}
-                {headliners.length > 4 && (
-                  <Badge variant="outline" className="bg-white/10 text-white/70 border-white/20 text-xs">
-                    +{headliners.length - 4} más
-                  </Badge>
-                )}
-              </div>
-            )}
-            
-            {/* Title */}
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white drop-shadow-lg leading-tight">
-              {title}
-            </h1>
-          </div>
+      {/* Bottom Center - Title */}
+      <div className="absolute bottom-4 md:bottom-6 left-0 right-0 z-10">
+        <div className="text-center px-4 md:px-6">
+          {/* Headliners */}
+          {headliners.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1 mb-2">
+              {headliners.slice(0, 4).map((artist) => (
+                <Badge key={artist} variant="outline" className="bg-white/10 text-white border-white/20 text-xs">
+                  {artist}
+                </Badge>
+              ))}
+              {headliners.length > 4 && (
+                <Badge variant="outline" className="bg-white/10 text-white/70 border-white/20 text-xs">
+                  +{headliners.length - 4} más
+                </Badge>
+              )}
+            </div>
+          )}
+          
+          {/* Title - Centered */}
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white drop-shadow-lg leading-tight">
+            {title}
+          </h1>
         </div>
       </div>
       
