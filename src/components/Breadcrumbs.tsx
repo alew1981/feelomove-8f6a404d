@@ -524,7 +524,9 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     // ----------------------------------------
     if (pathnames[0] === "festivales" && pathnames.length === 2) {
       items.push({ name: "Festivales", url: "/festivales" });
-      const festivalName = formatDisplayText(pathnames[1].split('_')[0]);
+      // Decode URL encoding first, then extract festival name before underscore
+      const decodedSlug = decodeURIComponent(pathnames[1]);
+      const festivalName = formatDisplayText(decodedSlug.split('_')[0]);
       items.push({ name: festivalName });
       return items;
     }
