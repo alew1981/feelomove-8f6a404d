@@ -173,12 +173,12 @@ const HotelMapTabs = ({
         <TabsContent value="map">
           {mapWidgetHtml ? (
             <div className="rounded-xl overflow-hidden border-2 border-border">
-              <iframe
-                srcDoc={mapWidgetHtml}
-                className="w-full h-[550px] sm:h-[650px] lg:h-[720px] border-0"
-                title="Mapa de hoteles"
-                sandbox="allow-scripts allow-same-origin"
-              />
+            <iframe
+              srcDoc={mapWidgetHtml}
+              className="w-full h-[550px] sm:h-[650px] lg:h-[720px] border-0"
+              title="Mapa de hoteles"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+            />
             </div>
           ) : (
             <div className="text-center py-8">
