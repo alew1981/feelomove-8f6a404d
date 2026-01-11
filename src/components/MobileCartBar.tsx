@@ -16,10 +16,13 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
 
   const totalTickets = getTotalTickets();
   const totalPrice = getTotalPrice();
-  const pricePerPerson = totalTickets > 0 ? totalPrice / totalTickets : 0;
   const hasHotel = !!cart?.hotel;
+  const hasTickets = totalTickets > 0;
+  const hasItems = hasTickets || hasHotel;
+  const pricePerPerson = totalTickets > 0 ? totalPrice / totalTickets : (hasHotel ? totalPrice : 0);
 
-  if (!cart || totalTickets === 0) return null;
+  // Show cart bar if there are any items (tickets OR hotel)
+  if (!cart || !hasItems) return null;
 
   return (
     <>
@@ -45,18 +48,20 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
             <div className="flex items-center gap-3">
               <div className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {totalTickets}
-                </span>
+                {(hasTickets || hasHotel) && (
+                  <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {hasTickets ? totalTickets : (hasHotel ? 1 : 0)}
+                  </span>
+                )}
               </div>
               <div className="text-left">
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
-                    "bg-accent/20 text-accent"
+                    hasTickets ? "bg-accent/20 text-accent" : "bg-white/10 text-white/60"
                   )}>
                     <Ticket className="h-3 w-3" />
-                    <Check className="h-3 w-3" />
+                    {hasTickets ? <Check className="h-3 w-3" /> : <span className="text-[10px]">?</span>}
                   </div>
                   <div className={cn(
                     "flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
@@ -160,30 +165,39 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
 
                 {/* Summary */}
                 <div className="pt-3 border-t space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Por persona</span>
-                    <span className="font-bold text-foreground">€{pricePerPerson.toFixed(2)}</span>
-                  </div>
+                  {hasTickets && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Por persona</span>
+                      <span className="font-bold text-foreground">€{pricePerPerson.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Total ({totalTickets} personas)</span>
+                    <span className="text-muted-foreground text-sm">
+                      Total{hasTickets ? ` (${totalTickets} personas)` : ''}
+                    </span>
                     <span className="font-black text-accent text-lg">€{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="space-y-2 pt-2">
-                  <Button
-                    className="w-full h-12 text-sm font-bold bg-accent text-accent-foreground hover:bg-accent/90"
-                    asChild
-                  >
-                    <a href={eventUrl || "#"} target="_blank" rel="noopener noreferrer">
-                      Reservar Entradas
-                    </a>
-                  </Button>
+                  {hasTickets && (
+                    <Button
+                      className="w-full h-12 text-sm font-bold bg-accent text-accent-foreground hover:bg-accent/90"
+                      asChild
+                    >
+                      <a href={eventUrl || "#"} target="_blank" rel="noopener noreferrer">
+                        Reservar Entradas
+                      </a>
+                    </Button>
+                  )}
                   {cart.hotel && hotelUrl && (
                     <Button
-                      variant="outline"
-                      className="w-full h-12 text-sm font-bold border-2"
+                      variant={hasTickets ? "outline" : "default"}
+                      className={cn(
+                        "w-full h-12 text-sm font-bold",
+                        hasTickets ? "border-2" : "bg-accent text-accent-foreground hover:bg-accent/90"
+                      )}
                       asChild
                     >
                       <a href={hotelUrl} target="_blank" rel="noopener noreferrer">
