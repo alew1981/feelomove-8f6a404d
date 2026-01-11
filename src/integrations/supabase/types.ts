@@ -877,6 +877,7 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           sold_out: boolean | null
+          stay22_map_general: string | null
           ticket_price_min: number | null
           ticket_types: Json | null
           timezone: string | null
