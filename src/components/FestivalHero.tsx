@@ -157,7 +157,7 @@ const FestivalHero = ({
           {(city || venue) && (
             <div className="border-t border-border mt-3 pt-3">
               <div className="flex items-center justify-center gap-1 text-sm md:text-base">
-                <span className="text-muted-foreground">📍</span>
+                <span className="text-muted-foreground">⊙</span>
                 <span className="font-bold text-foreground">{city || "España"}</span>
               </div>
               {venue && (
