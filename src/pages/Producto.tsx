@@ -397,8 +397,8 @@ const Producto = () => {
     }
   })();
 
-  const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 8);
-  const hasMoreTickets = ticketPrices.length > 8;
+  const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
+  const hasMoreTickets = ticketPrices.length > 4;
   
   // Calculate if event has VIP tickets from ticket data (more reliable than has_vip_tickets field)
   const hasVipTickets = ticketPrices.some(ticket => 
@@ -915,7 +915,7 @@ const Producto = () => {
                         onClick={() => setShowAllTickets(!showAllTickets)}
                         className="border-2 hover:border-accent hover:text-accent font-bold px-8"
                       >
-                        {showAllTickets ? "Ver menos" : `Ver ${ticketPrices.length - 8} más`}
+                        {showAllTickets ? "Ver menos" : `Ver ${ticketPrices.length - 4} más`}
                       </Button>
                     </div>
                   )}
