@@ -191,7 +191,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
         const genreSlug = generateSlug(eventGenre);
         items.push({
           name: eventGenre.split(' - ')[0], // Clean up genre name
-          url: `/musica/${genreSlug}`
+          url: `/generos/${genreSlug}`
         });
       }
       
@@ -205,14 +205,14 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
 
     // Genre page: Inicio > Géneros > Nombre del Género
     if (pathnames[0] === "generos" && genreFromPath) {
-      items.push({ name: "Géneros", url: "/musica" });
+      items.push({ name: "Géneros", url: "/generos" });
       items.push({ name: genreFromPath });
       return items;
     }
     
-    // Music/Genre page: Inicio > Géneros > Nombre del Género
+    // Music/Genre page (legacy - redirects to /generos): Inicio > Géneros > Nombre del Género
     if (pathnames[0] === "musica" && pathnames.length === 2) {
-      items.push({ name: "Géneros", url: "/musica" });
+      items.push({ name: "Géneros", url: "/generos" });
       const genreName = pathnames[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       items.push({ name: genreName });
       return items;
