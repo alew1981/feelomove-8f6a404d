@@ -924,7 +924,6 @@ export type Database = {
           has_parking_tickets: boolean | null
           has_real_availability: boolean | null
           has_vip_tickets: boolean | null
-          hotels_list_widget_html: string | null
           hotels_prices_aggregated_jsonb: Json | null
           hotels_with_high_rating: number | null
           image_large_url: string | null
@@ -935,7 +934,6 @@ export type Database = {
           is_transport: boolean | null
           is_weekend: boolean | null
           low_availability: boolean | null
-          map_widget_html: string | null
           meta_description: string | null
           min_hotel_price: number | null
           minimum_age_required: number | null
@@ -954,6 +952,7 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           sold_out: boolean | null
+          stay22_map_general: string | null
           ticket_price_min: number | null
           ticket_types: Json | null
           timezone: string | null

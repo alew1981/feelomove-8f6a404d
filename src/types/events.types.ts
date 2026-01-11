@@ -177,8 +177,7 @@ export interface BaseEventProductPage {
   meta_description: string;
   seo_keywords: string[];
   destination_deeplink: string | null;
-  hotels_list_widget_html: string | null;
-  map_widget_html: string | null;
+  stay22_map_general: string | null;
   hotels_prices_aggregated_jsonb: unknown | null;
   total_hotels_available: number;
   min_hotel_price: number | null;
