@@ -21,7 +21,6 @@ interface HotelData {
 interface HotelMapTabsProps {
   hotels: HotelData[];
   mapWidgetHtml: string | null;
-  hotelsListWidgetHtml?: string | null;
   onAddHotel: (hotel: HotelData) => void;
   checkinDate?: string;
   checkoutDate?: string;
@@ -33,7 +32,6 @@ interface HotelMapTabsProps {
 const HotelMapTabs = ({ 
   hotels, 
   mapWidgetHtml, 
-  hotelsListWidgetHtml, 
   onAddHotel, 
   checkinDate, 
   checkoutDate, 
@@ -141,23 +139,25 @@ const HotelMapTabs = ({
                 ))}
               </div>
             </>
-          ) : hotelsListWidgetHtml ? (
+          ) : mapWidgetHtml ? (
+            // Fallback: Show Stay22 map when no hotels available
             <div className="space-y-4">
               <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-start gap-3">
-                <Building2 className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Buscar hoteles cercanos</p>
+                  <p className="text-sm font-medium text-foreground">Buscar hoteles en el mapa</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Encuentra alojamiento cerca del evento con disponibilidad y precios actualizados.
+                    Explora alojamientos cerca del evento directamente en el mapa interactivo.
                   </p>
                 </div>
               </div>
               <div className="rounded-xl overflow-hidden border-2 border-border shadow-lg">
                 <iframe
-                  srcDoc={hotelsListWidgetHtml}
-                  className="w-full min-h-[500px] sm:min-h-[600px] border-0"
-                  title="Lista de hoteles"
-                  sandbox="allow-scripts allow-same-origin"
+                  src={mapWidgetHtml}
+                  className="w-full h-[550px] sm:h-[650px] lg:h-[720px] border-0"
+                  title="Mapa de hoteles"
+                  allow="geolocation"
+                  loading="lazy"
                 />
               </div>
             </div>
