@@ -117,8 +117,24 @@ const FestivalHero = ({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       
-      {/* Date Badge - Left Side */}
-      <div className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-10">
+      {/* Left Side - Countdown above Date Badge */}
+      <div className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-3">
+        {/* Countdown - Above Date Badge */}
+        {countdown && (
+          <div className="bg-accent/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 text-accent-foreground">
+            <div className="text-center">
+              <div className="text-lg md:text-xl font-black leading-none">{String(countdown.days).padStart(2, '0')}</div>
+              <div className="text-[8px] md:text-[10px] uppercase">DÍAS</div>
+            </div>
+            <div className="text-lg md:text-xl font-bold">:</div>
+            <div className="text-center">
+              <div className="text-lg md:text-xl font-black leading-none">{String(countdown.hours).padStart(2, '0')}</div>
+              <div className="text-[8px] md:text-[10px] uppercase">HRS</div>
+            </div>
+          </div>
+        )}
+        
+        {/* Date Badge - Without time for festivals */}
         <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 md:p-4 text-center shadow-lg min-w-[80px] md:min-w-[100px]">
           <div className="text-xs md:text-sm font-bold text-primary">
             {dateInfo.month}
@@ -137,14 +153,10 @@ const FestivalHero = ({
               </div>
             </>
           )}
-          {hasValidDate && (
-            <>
-              <div className="border-t border-border mt-2 pt-2">
-                <div className="text-sm md:text-base font-bold text-foreground">
-                  {dateInfo.time}h
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
+          {/* City/Venue - no time for festivals */}
+          {(city || venue) && (
+            <div className="border-t border-border mt-2 pt-2">
+              <div className="text-xs text-muted-foreground">
                 <span className="flex items-center justify-center gap-1">
                   📍 {city || venue || "España"}
                 </span>
@@ -154,21 +166,13 @@ const FestivalHero = ({
                   {venue}
                 </div>
               )}
-            </>
-          )}
-          {!hasValidDate && (city || venue) && (
-            <div className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">
-              <span className="flex items-center justify-center gap-1">
-                📍 {city || venue || "España"}
-              </span>
             </div>
           )}
         </div>
       </div>
       
-      {/* Top Right - Badges & Countdown */}
-      <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10 flex flex-col items-end gap-2">
-        {/* Status Badges */}
+      {/* Top Right - Status Badges */}
+      <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
         <div className="flex flex-wrap justify-end gap-1.5 max-w-[280px]">
           <Badge className="bg-accent text-accent-foreground text-[10px] md:text-xs font-bold">
             DISPONIBLE
@@ -199,24 +203,34 @@ const FestivalHero = ({
             </Badge>
           )}
         </div>
-        
-        {/* Countdown */}
-        {countdown && (
-          <div className="bg-accent/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 text-accent-foreground">
-            <div className="text-center">
-              <div className="text-lg md:text-xl font-black leading-none">{String(countdown.days).padStart(2, '0')}</div>
-              <div className="text-[8px] md:text-[10px] uppercase">DÍAS</div>
-            </div>
-            <div className="text-lg md:text-xl font-bold">:</div>
-            <div className="text-center">
-              <div className="text-lg md:text-xl font-black leading-none">{String(countdown.hours).padStart(2, '0')}</div>
-              <div className="text-[8px] md:text-[10px] uppercase">HRS</div>
-            </div>
-          </div>
-        )}
       </div>
       
-      {/* Center Content - Title and Favorite */}
+      {/* Center - Favorite Button */}
+      {eventId && eventSlug && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <button
+            onClick={() => toggleFavorite({
+              event_id: eventId,
+              event_name: title,
+              event_slug: eventSlug,
+              event_date: eventDate || '',
+              venue_city: city || '',
+              image_url: finalImage,
+              is_festival: isFestival
+            })}
+            className="p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
+            aria-label={isFavorite(eventId) ? "Quitar de favoritos" : "Añadir a favoritos"}
+          >
+            <Heart
+              className={`h-6 w-6 ${
+                isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-white"
+              }`}
+            />
+          </button>
+        </div>
+      )}
+      
+      {/* Bottom - Title and Headliners */}
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 pl-[110px] md:pl-[140px]">
         <div className="flex items-end justify-between gap-4">
           <div className="flex-1">
@@ -241,29 +255,6 @@ const FestivalHero = ({
               {title}
             </h1>
           </div>
-          
-          {/* Favorite Button */}
-          {eventId && eventSlug && (
-            <button
-              onClick={() => toggleFavorite({
-                event_id: eventId,
-                event_name: title,
-                event_slug: eventSlug,
-                event_date: eventDate || '',
-                venue_city: city || '',
-                image_url: finalImage,
-                is_festival: isFestival
-              })}
-              className="p-2 md:p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors flex-shrink-0"
-              aria-label={isFavorite(eventId) ? "Quitar de favoritos" : "Añadir a favoritos"}
-            >
-              <Heart
-                className={`h-5 w-5 md:h-6 md:w-6 ${
-                  isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-white"
-                }`}
-              />
-            </button>
-          )}
         </div>
       </div>
       
