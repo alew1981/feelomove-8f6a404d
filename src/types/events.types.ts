@@ -118,6 +118,7 @@ export interface TicketType {
 }
 
 // Base interface for common event product page fields
+// Updated to match optimized materialized views (removed unused fields)
 export interface BaseEventProductPage {
   is_festival?: boolean;
   event_id: string;
@@ -128,7 +129,6 @@ export interface BaseEventProductPage {
   timezone: string;
   day_of_week: string;
   event_url: string;
-  venue_id: string;
   venue_name: string;
   venue_city: string;
   venue_address: string;
@@ -136,9 +136,9 @@ export interface BaseEventProductPage {
   venue_country: string;
   venue_latitude: number;
   venue_longitude: number;
+  venue_url?: string;
   primary_attraction_id: string;
   primary_attraction_name: string;
-  secondary_attraction_id: string | null;
   secondary_attraction_name: string | null;
   attraction_ids: string[];
   attraction_names: string[];
@@ -149,7 +149,6 @@ export interface BaseEventProductPage {
   cancelled: boolean;
   sold_out: boolean;
   rescheduled: boolean;
-  schedule_status: string;
   seats_available: boolean;
   has_real_availability: boolean;
   is_transport: boolean;
@@ -159,17 +158,7 @@ export interface BaseEventProductPage {
   price_min_incl_fees: number | null;
   ticket_price_min: number | null;
   has_vip_tickets: boolean;
-  low_availability: boolean;
-  days_until_event: number;
-  is_last_minute: boolean;
-  is_coming_soon: boolean;
-  is_weekend: boolean;
-  event_day_name_es: string;
-  event_month_name_es: string;
-  event_year: number;
   event_season: string;
-  created_at: string;
-  updated_at: string;
   on_sale_date: string;
   off_sale_date: string;
   minimum_age_required: number | null;
@@ -179,11 +168,7 @@ export interface BaseEventProductPage {
   destination_deeplink: string | null;
   stay22_map_general: string | null;
   hotels_prices_aggregated_jsonb: unknown | null;
-  total_hotels_available: number;
   min_hotel_price: number | null;
-  avg_hotel_distance_meters: number | null;
-  hotels_with_high_rating: number;
-  has_5_star_hotels: boolean;
 }
 
 // Concert-specific product page (no additional fields beyond base)
@@ -212,8 +197,6 @@ export interface FestivalProductPage extends BaseEventProductPage {
   has_daily_tickets: boolean;
   has_camping_tickets: boolean;
   has_parking_tickets: boolean;
-  festival_manually_edited: boolean;
-  festival_last_manual_edit_at: string | null;
 }
 
 // Union type for any event product page

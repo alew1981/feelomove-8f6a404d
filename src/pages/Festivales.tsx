@@ -408,10 +408,11 @@ const Festivales = () => {
     
     // Sort
     if (filterSort === "recientes") {
-      filteredStandalone.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Sort by event_date descending (most recent dates first) as proxy for "recently added"
+      filteredStandalone.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
       filteredParents.sort((a, b) => {
-        const aLatest = Math.max(...a.events.map(e => new Date(e.created_at).getTime()));
-        const bLatest = Math.max(...b.events.map(e => new Date(e.created_at).getTime()));
+        const aLatest = Math.max(...a.events.map(e => new Date(e.event_date).getTime()));
+        const bLatest = Math.max(...b.events.map(e => new Date(e.event_date).getTime()));
         return bLatest - aLatest;
       });
     } else {
