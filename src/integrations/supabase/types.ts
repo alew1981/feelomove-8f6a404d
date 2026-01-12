@@ -815,37 +815,22 @@ export type Database = {
         Row: {
           attraction_ids: string[] | null
           attraction_names: string[] | null
-          avg_hotel_distance_meters: number | null
           cancelled: boolean | null
-          created_at: string | null
           day_of_week: string | null
-          days_until_event: number | null
-          destination_deeplink: string | null
           event_currency: string | null
           event_date: string | null
-          event_day_name_es: string | null
           event_id: string | null
-          event_month_name_es: string | null
           event_name: string | null
-          event_season: string | null
           event_slug: string | null
           event_type: string | null
           event_url: string | null
-          event_year: number | null
-          has_5_star_hotels: boolean | null
           has_real_availability: boolean | null
           has_vip_tickets: boolean | null
           hotels_prices_aggregated_jsonb: Json | null
-          hotels_with_high_rating: number | null
           image_large_url: string | null
           image_standard_url: string | null
-          is_coming_soon: boolean | null
-          is_last_minute: boolean | null
           is_package: boolean | null
           is_transport: boolean | null
-          is_weekend: boolean | null
-          low_availability: boolean | null
-          meta_description: string | null
           min_hotel_price: number | null
           minimum_age_required: number | null
           off_sale_date: string | null
@@ -856,23 +841,14 @@ export type Database = {
           primary_category_name: string | null
           primary_subcategory_name: string | null
           rescheduled: boolean | null
-          schedule_status: string | null
           seats_available: boolean | null
-          secondary_attraction_id: string | null
-          secondary_attraction_name: string | null
-          seo_keywords: string[] | null
-          seo_title: string | null
           sold_out: boolean | null
           stay22_map_general: string | null
-          ticket_price_min: number | null
           ticket_types: Json | null
           timezone: string | null
-          total_hotels_available: number | null
-          updated_at: string | null
           venue_address: string | null
           venue_city: string | null
           venue_country: string | null
-          venue_id: string | null
           venue_latitude: number | null
           venue_longitude: number | null
           venue_name: string | null
