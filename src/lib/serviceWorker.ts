@@ -5,7 +5,7 @@ export const registerServiceWorker = async () => {
   try {
     // IMPORTANT: avoid the browser HTTP cache for sw.js so production updates actually apply.
     // (Chrome supports this option; cast to any for TS compatibility.)
-    const registration = await navigator.serviceWorker.register('/sw.js', {
+    const registration = await navigator.serviceWorker.register('/sw.js?v=5', {
       scope: '/',
       updateViaCache: 'none',
     } as any);
