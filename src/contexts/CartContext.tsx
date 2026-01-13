@@ -44,16 +44,85 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const safeParse = (value: string | null): unknown => {
+    if (!value) return null;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  };
+
+  const normalizeCart = (raw: unknown): CartItem | null => {
+    if (!raw || typeof raw !== 'object') return null;
+    const c = raw as any;
+    if (!c.event_id) return null;
+
+    return {
+      event_id: String(c.event_id),
+      event_name: String(c.event_name ?? ''),
+      event_date: String(c.event_date ?? ''),
+      venue_name: String(c.venue_name ?? ''),
+      venue_city: String(c.venue_city ?? ''),
+      tickets: Array.isArray(c.tickets)
+        ? c.tickets.map((t: any) => ({
+            type: String(t.type ?? ''),
+            description: t.description ? String(t.description) : undefined,
+            price: Number(t.price ?? 0),
+            fees: Number(t.fees ?? 0),
+            quantity: Number(t.quantity ?? 0),
+          }))
+        : [],
+      hotel: c.hotel
+        ? {
+            hotel_id: String(c.hotel.hotel_id ?? ''),
+            hotel_name: String(c.hotel.hotel_name ?? ''),
+            nights: Number(c.hotel.nights ?? 0),
+            price_per_night: Number(c.hotel.price_per_night ?? 0),
+            total_price: Number(c.hotel.total_price ?? 0),
+            image: String(c.hotel.image ?? ''),
+            description: String(c.hotel.description ?? ''),
+            checkin_date: c.hotel.checkin_date ? String(c.hotel.checkin_date) : undefined,
+            checkout_date: c.hotel.checkout_date ? String(c.hotel.checkout_date) : undefined,
+          }
+        : undefined,
+    };
+  };
+
+  const safeStorageGet = (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+
+  const safeStorageSet = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // ignore
+    }
+  };
+
+  const safeStorageRemove = (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  };
+
   const [cart, setCart] = useState<CartItem | null>(() => {
-    const saved = localStorage.getItem('feelomove_cart');
-    return saved ? JSON.parse(saved) : null;
+    const saved = safeStorageGet('feelomove_cart');
+    return normalizeCart(safeParse(saved));
   });
 
   useEffect(() => {
     if (cart) {
-      localStorage.setItem('feelomove_cart', JSON.stringify(cart));
+      safeStorageSet('feelomove_cart', JSON.stringify(cart));
     } else {
-      localStorage.removeItem('feelomove_cart');
+      safeStorageRemove('feelomove_cart');
     }
   }, [cart]);
 
@@ -61,7 +130,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'feelomove_cart') {
-        setCart(e.newValue ? JSON.parse(e.newValue) : null);
+        setCart(normalizeCart(safeParse(e.newValue)));
       }
     };
 
