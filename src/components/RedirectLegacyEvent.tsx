@@ -1,12 +1,14 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, lazy, Suspense } from "react";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load Producto for normal event rendering
 const Producto = lazy(() => import("@/pages/Producto"));
 
+// Minimal loader for normal page loading
 const PageLoader = () => (
   <div className="min-h-screen bg-background">
     <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16">
@@ -27,6 +29,27 @@ const PageLoader = () => (
       <Skeleton className="h-4 w-full max-w-2xl mb-8" />
     </div>
   </div>
+);
+
+// Minimal redirect loader with SEO meta tags for crawlers
+const RedirectLoader = ({ targetUrl }: { targetUrl: string }) => (
+  <>
+    <Helmet>
+      {/* Signal to prerender services this is a 301 redirect */}
+      <meta name="prerender-status-code" content="301" />
+      <meta name="prerender-header" content={`Location: ${targetUrl}`} />
+      {/* Tell crawlers not to index this redirect page */}
+      <meta name="robots" content="noindex, follow" />
+      {/* Canonical pointing to target */}
+      <link rel="canonical" href={targetUrl} />
+    </Helmet>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground text-sm">Redirigiendo...</p>
+      </div>
+    </div>
+  </>
 );
 
 /**
@@ -165,14 +188,20 @@ const RedirectLegacyEvent = () => {
 
   // Handle query errors for legacy redirects
   if (hasDateSuffix && error) {
-    console.error('Error in legacy redirect:', error);
+    console.error('Legacy redirect error:', error);
     navigate(isFestivalRoute ? '/festivales' : '/conciertos', { replace: true });
     return null;
   }
 
-  // For legacy URLs, show loader while looking up the event
+  // For legacy URLs, show minimal redirect loader with SEO meta tags
   if (hasDateSuffix) {
-    return <PageLoader />;
+    // Calculate target URL for SEO meta tags
+    const targetPath = isFestivalRoute ? `/festival/${baseSlug}` : `/concierto/${baseSlug}`;
+    const targetUrl = `https://feelomove.com${targetPath}`;
+    
+    console.log(`Legacy URL detected: ${rawSlug} → redirecting to ${targetPath}`);
+    
+    return <RedirectLoader targetUrl={targetUrl} />;
   }
 
   // For normal URLs (no date suffix), render the Producto page directly
