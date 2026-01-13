@@ -239,7 +239,7 @@ const Producto = () => {
 
   // Clear cart when changing events
   useEffect(() => {
-    if (cart && eventDetails && cart.event_id !== String(eventDetails.event_id)) {
+    if (cart && eventDetails && cart.event_id !== eventDetails.event_id) {
       clearCart();
     }
   }, [eventDetails, cart, clearCart]);
@@ -437,9 +437,7 @@ const Producto = () => {
   const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
 
   const handleTicketQuantityChange = (ticketId: string, change: number) => {
-    // Convert event_id to string for consistent comparison (DB returns number, cart stores string)
-    const currentEventId = String(eventDetails.event_id);
-    const existingTickets = cart?.event_id === currentEventId ? cart.tickets : [];
+    const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
     const ticketIndex = existingTickets.findIndex(t => t.type === ticketId);
     
     const ticketData = ticketPrices.find(t => t.id === ticketId);
@@ -470,24 +468,22 @@ const Producto = () => {
     }
 
     if (updatedTickets.length > 0) {
-      addTickets(currentEventId, eventDetails as any, updatedTickets);
+      addTickets(eventDetails.event_id!, eventDetails as any, updatedTickets);
     } else {
       clearCart();
     }
   };
 
   const getTicketQuantity = (ticketId: string) => {
-    const currentEventId = String(eventDetails.event_id);
-    if (!cart || cart.event_id !== currentEventId) return 0;
+    if (!cart || cart.event_id !== eventDetails.event_id) return 0;
     const ticket = cart.tickets.find(t => t.type === ticketId);
     return ticket ? ticket.quantity : 0;
   };
 
   const handleAddHotel = (hotel: any) => {
-    const currentEventId = String(eventDetails.event_id);
     const nights = (eventDetails as any).package_nights || 1;
     const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
-    addHotel(currentEventId, eventDetails, {
+    addHotel(eventDetails.event_id!, eventDetails, {
       hotel_id: hotel.hotel_id,
       hotel_name: hotel.hotel_name,
       nights: nights,
@@ -500,7 +496,7 @@ const Producto = () => {
     });
   };
 
-  const isEventInCart = cart?.event_id === String(eventDetails.event_id);
+  const isEventInCart = cart?.event_id === eventDetails.event_id;
   const totalPersons = getTotalTickets();
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
