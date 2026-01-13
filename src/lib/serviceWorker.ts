@@ -3,6 +3,26 @@ export const registerServiceWorker = async () => {
   if (!('serviceWorker' in navigator)) return null;
 
   try {
+    // If a previous SW is stuck (common on production), aggressively unregister it and clear caches.
+    // This ensures all tabs converge to the same, latest bundle.
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      const hasOldSw = regs.some((r) => {
+        const url = r.active?.scriptURL || r.waiting?.scriptURL || r.installing?.scriptURL || '';
+        return url.includes('/sw.js') && !url.includes('v=5');
+      });
+
+      if (hasOldSw) {
+        await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+      }
+    } catch {
+      // ignore cleanup failures
+    }
+
     // IMPORTANT: avoid the browser HTTP cache for sw.js so production updates actually apply.
     // (Chrome supports this option; cast to any for TS compatibility.)
     const registration = await navigator.serviceWorker.register('/sw.js?v=5', {
