@@ -27,6 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 // Lazy load redirect components
 const RedirectProducto = lazy(() => import("./components/RedirectProducto"));
 const RedirectEvento = lazy(() => import("./components/RedirectEvento"));
+const RedirectLegacyEvent = lazy(() => import("./components/RedirectLegacyEvent"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -168,9 +169,9 @@ const App = () => (
                 <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
                 <Route path="/favoritos" element={<Favoritos />} />
                 
-                {/* New SEO-friendly event routes */}
-                <Route path="/concierto/:slug" element={<Producto />} />
-                <Route path="/festival/:slug" element={<Producto />} />
+                {/* SEO-friendly event routes - handles both new and legacy URLs */}
+                <Route path="/concierto/:slug" element={<RedirectLegacyEvent />} />
+                <Route path="/festival/:slug" element={<RedirectLegacyEvent />} />
                 
                 {/* Legacy URL redirects (301) */}
                 <Route path="/producto/:slug" element={<RedirectProducto />} />

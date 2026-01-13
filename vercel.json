@@ -1,16 +1,6 @@
 {
   "redirects": [
     {
-      "source": "/concierto/:slug-:year(\\d{4})-:month(\\d{2})-:day(\\d{2})",
-      "destination": "/concierto/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/festival/:slug-:year(\\d{4})-:month(\\d{2})-:day(\\d{2})",
-      "destination": "/festival/:slug",
-      "permanent": true
-    },
-    {
       "source": "/concierto/servicio-de-autobus-dani-fernandez-concert-music-festival-chiclana-de-la-frontera",
       "destination": "/concierto/dani-fernandez-concert-music-festival-chiclana",
       "permanent": true
