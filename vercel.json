@@ -1,13 +1,13 @@
 {
   "redirects": [
     {
-      "source": "/concierto/:slug(.*)-\\d{4}-\\d{2}-\\d{2}",
-      "destination": "/concierto/:slug",
+      "source": "/concierto/:event([\\w-]+)-:year(\\d{4})-:month(\\d{2})-:day(\\d{2})",
+      "destination": "/concierto/:event",
       "permanent": true
     },
     {
-      "source": "/festival/:slug(.*)-\\d{4}-\\d{2}-\\d{2}",
-      "destination": "/festival/:slug",
+      "source": "/festival/:event([\\w-]+)-:year(\\d{4})-:month(\\d{2})-:day(\\d{2})",
+      "destination": "/festival/:event",
       "permanent": true
     },
     {
