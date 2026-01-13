@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE = `feelomove-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `feelomove-images-${CACHE_VERSION}`;
 const DATA_CACHE = `feelomove-data-${CACHE_VERSION}`;
@@ -126,9 +126,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: Cache First with long expiry
+  // JS files: Network First (so new deploys always get fresh bundles)
+  if (url.pathname.match(/\.js$/i)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // CSS & Fonts: Cache First with long expiry
   if (
-    url.pathname.match(/\.(js|css|woff2?|ttf|eot)$/i) ||
+    url.pathname.match(/\.(css|woff2?|ttf|eot)$/i) ||
     url.hostname.includes('fonts.googleapis.com') ||
     url.hostname.includes('fonts.gstatic.com')
   ) {
