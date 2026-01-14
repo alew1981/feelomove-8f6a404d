@@ -27,12 +27,17 @@ const PageLoader = () => (
 );
 
 const RedirectProducto = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: rawSlug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  
+  // Clean slug - remove trailing /feed or /feed/ from WordPress legacy URLs
+  const slug = rawSlug?.replace(/\/feed\/?$/, '') || '';
 
   const { data: eventData, isLoading, error } = useQuery({
     queryKey: ['event-type', slug],
     queryFn: async () => {
+      if (!slug) return null;
+      
       const { data, error } = await supabase
         .from("tm_tbl_events")
         .select("event_type, slug")

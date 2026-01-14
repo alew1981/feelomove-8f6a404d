@@ -141,6 +141,20 @@ const RedirectArtista = () => {
   return <Navigate to={`/conciertos/${slug}`} replace />;
 };
 
+// Redirect legacy WordPress URLs to appropriate pages
+const RedirectToHome = () => <Navigate to="/" replace />;
+const RedirectToAbout = () => <Navigate to="/about" replace />;
+const RedirectToConciertos = () => <Navigate to="/conciertos" replace />;
+
+// Redirect legacy /events/:id URLs (WordPress numeric IDs)
+const RedirectLegacyEvents = () => <Navigate to="/conciertos" replace />;
+
+// Redirect malformed destination URLs like /destinos/pamplona/iruña
+const RedirectDestinoMalformed = () => {
+  const { destino } = useParams();
+  return <Navigate to={`/destinos/${destino}`} replace />;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -179,6 +193,22 @@ const App = () => (
                 <Route path="/musica" element={<RedirectMusica />} />
                 <Route path="/musica/:genero" element={<RedirectMusicaGenero />} />
                 <Route path="/artista/:slug" element={<RedirectArtista />} />
+                
+                {/* Legacy WordPress URLs - redirect to appropriate pages */}
+                <Route path="/privacidad" element={<RedirectToAbout />} />
+                <Route path="/cookies" element={<RedirectToAbout />} />
+                <Route path="/cart" element={<RedirectToConciertos />} />
+                <Route path="/cart/" element={<RedirectToConciertos />} />
+                <Route path="/my-account" element={<RedirectToHome />} />
+                <Route path="/my-account/" element={<RedirectToHome />} />
+                <Route path="/wp-login.php" element={<RedirectToHome />} />
+                <Route path="/events/:id" element={<RedirectLegacyEvents />} />
+                <Route path="/product/:slug" element={<RedirectProducto />} />
+                <Route path="/product/:slug/feed" element={<RedirectProducto />} />
+                <Route path="/product/:slug/feed/" element={<RedirectProducto />} />
+                
+                {/* Malformed destination URLs */}
+                <Route path="/destinos/:destino/*" element={<RedirectDestinoMalformed />} />
                 
                 {/* Dedicated 404 route for tracking */}
                 <Route path="/404" element={<NotFound />} />
