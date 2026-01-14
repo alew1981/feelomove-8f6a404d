@@ -12,10 +12,6 @@ Disallow: /*?fbclid=
 Disallow: /*&utm_
 Disallow: /*&fbclid=
 
-# Bloquear slugs antiguos con formato de fecha
-Disallow: /concierto/*-????-??-??
-Disallow: /festival/*-????-??-??
-
 # Bloquear áreas privadas
 Disallow: /admin/
 Disallow: /api/private/
@@ -28,6 +24,7 @@ Allow: /conciertos/
 Allow: /festivales/
 Allow: /destinos/
 Allow: /generos/
+Allow: /artistas/
 
 # Permitir crawling de JavaScript y CSS
 User-agent: Googlebot
