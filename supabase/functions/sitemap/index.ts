@@ -281,22 +281,12 @@ ${urlsXml}
       });
     }
 
-    // Festivals Sitemap (festival pages + individual festival events using /festival/, excluding VIP variants)
+    // Festivals Sitemap (individual festival events using /festival/ and /concierto/, excluding VIP variants)
     if (type === "festivals") {
-      // Get festival page slugs
-      const { data: festivalPages, error: pagesError } = await supabase
-        .from("mv_festivals_cards")
-        .select("canonical_slug")
-        .not("canonical_slug", "is", null)
-        .order("canonical_slug", { ascending: true })
-        .limit(2000);
-
-      if (pagesError) throw pagesError;
-
       // Get individual festival events (INCLUDING festivals without confirmed date - 9999)
       const { data: festivalEvents, error: eventsError } = await supabase
         .from("tm_tbl_events")
-        .select("slug, event_date, updated_at, name, primary_attraction_name, exclude_from_sitemap")
+        .select("slug, event_date, updated_at, name, primary_attraction_name, exclude_from_sitemap, event_type")
         .eq("event_type", "festival")
         .eq("cancelled", false)
         .gte("event_date", new Date().toISOString())
@@ -333,21 +323,22 @@ ${urlsXml}
         return true;
       });
 
-      // Get unique festival page slugs
-      const festivalPageSlugs = new Set<string>();
-      const urlsArr: string[] = [];
-
-      // Add festival group pages (using /festivales/)
-      (festivalPages || []).forEach(f => {
-        if (f.canonical_slug && !festivalPageSlugs.has(f.canonical_slug)) {
-          festivalPageSlugs.add(f.canonical_slug);
-          urlsArr.push(`  <url>
-    <loc>${BASE_URL}/festivales/${f.canonical_slug}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`);
+      // Generate unique festival group pages from festival events
+      // Format: festival-name_city (matching ParentFestivalCard slug generation)
+      const festivalGroupSlugs = new Map<string, { name: string; city: string; lastmod: string }>();
+      
+      filteredFestivalEvents.forEach(f => {
+        const festivalName = f.primary_attraction_name || f.name || '';
+        const city = 'España'; // We don't have city in this query, will be handled by the page
+        const slug = normalizeSlug(festivalName);
+        
+        if (slug && !festivalGroupSlugs.has(slug)) {
+          const lastmod = f.event_date?.startsWith('9999') ? today : (f.updated_at?.split('T')[0] || today);
+          festivalGroupSlugs.set(slug, { name: festivalName, city, lastmod });
         }
       });
+
+      const urlsArr: string[] = [];
 
       // Add individual festival events (using /festival/) - deduplicate by slug
       const addedSlugs = new Set<string>();

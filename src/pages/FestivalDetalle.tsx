@@ -215,8 +215,17 @@ const FestivalDetalle = () => {
     return 'scheduled' as const;
   }, [events, festivalData?.lastDate]);
 
-  // Build description for SEO
-  const seoDescription = `Compra entradas para ${festivalData?.name || festivalName} en ${festivalData?.city || 'España'}. ${festivalData?.artistCount || 0} artistas. Reserva hotel cerca. ¡Vive la experiencia!`;
+  // Build description for SEO - rich and unique content
+  const headlinersText = festivalData?.headliners?.slice(0, 3).join(', ') || '';
+  const dateText = festivalData?.hasValidDates && festivalData?.firstDate
+    ? ` del ${new Date(festivalData.firstDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`
+    : '';
+  const priceText = festivalData?.minPrice ? ` desde ${Math.round(festivalData.minPrice)}€` : '';
+  
+  const seoDescription = festivalData?.artistCount && festivalData.artistCount > 1
+    ? `Compra entradas para ${festivalData?.name || festivalName}${dateText} en ${festivalData?.city || 'España'}. ${festivalData.artistCount} artistas${headlinersText ? ` incluyendo ${headlinersText}` : ''}. Entradas${priceText}. Reserva hotel cerca del festival. ¡Vive la experiencia!`
+    : `Compra entradas para ${festivalData?.name || festivalName}${dateText} en ${festivalData?.city || 'España'}. Entradas${priceText}. Reserva hotel cerca del recinto. ¡Vive la experiencia del mejor festival!`;
+  
   const absoluteUrl = `https://feelomove.com/festivales/${festivalSlug}`;
 
   // Build performers list from concert events
@@ -259,13 +268,18 @@ const FestivalDetalle = () => {
       )}
       
       <SEOHead
-        title={`${festivalData?.name || festivalName} 2025 - Entradas y Hotel`}
+        title={`${festivalData?.name || festivalName} ${new Date().getFullYear()} - Entradas y Hotel`}
         description={seoDescription}
-        canonical={`https://feelomove.com/festivales/${festivalSlug}`}
-        keywords={`${festivalName}, festival música, entradas festival, ${festivalData?.city || 'España'}, hotel festival`}
+        canonical={absoluteUrl}
+        keywords={`${festivalName}, festival música, entradas festival, ${festivalData?.city || 'España'}, hotel festival, ${festivalData?.lineupArtists?.slice(0, 5).join(', ') || ''}`}
         pageType="ItemPage"
         preloadImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
         ogImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Festivales", url: "/festivales" },
+          { name: festivalData?.name || festivalName }
+        ]}
       />
       
       <div className="min-h-screen bg-background">
