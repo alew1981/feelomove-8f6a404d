@@ -141,6 +141,16 @@ const buildImageArray = (
  * Generates and injects Schema.org Event JSON-LD structured data into the document head.
  * Follows Google's guidelines for Event rich results.
  * 
+ * REQUIRED FIELDS for Google:
+ * - name: Event name
+ * - startDate: ISO 8601 date format
+ * - location: Place with address
+ * 
+ * RECOMMENDED FIELDS:
+ * - image: At least one image URL
+ * - description: Event description
+ * - offers: Ticket pricing information
+ * 
  * @see https://developers.google.com/search/docs/appearance/structured-data/event
  */
 export const EventSeo = ({
@@ -164,6 +174,44 @@ export const EventSeo = ({
   
   // Build the JSON-LD object with proper escaping
   const jsonLd = useMemo(() => {
+    // CRITICAL: Validate required fields for Google Rich Results
+    if (!startDate) {
+      console.error('[EventSeo] CRITICAL: Missing startDate for event:', name);
+    }
+    if (!image && !images?.wide && !images?.standard) {
+      console.warn('[EventSeo] WARNING: Missing image for event:', name);
+    }
+    if (!location?.name || !location?.city) {
+      console.warn('[EventSeo] WARNING: Incomplete location for event:', name);
+    }
+    
+    // Ensure startDate is in proper ISO 8601 format
+    const formatDateToISO = (dateStr: string | undefined | null): string => {
+      if (!dateStr) return new Date().toISOString();
+      
+      try {
+        // If already ISO format, return as-is
+        if (dateStr.includes('T')) {
+          return dateStr;
+        }
+        // Convert date string to ISO format
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+          console.error('[EventSeo] Invalid date format:', dateStr);
+          return new Date().toISOString();
+        }
+        return date.toISOString();
+      } catch (e) {
+        console.error('[EventSeo] Error parsing date:', dateStr, e);
+        return new Date().toISOString();
+      }
+    };
+    
+    const formattedStartDate = formatDateToISO(startDate);
+    const formattedEndDate = formatDateToISO(endDate || startDate);
+    
+    // Ensure we have at least one image
+    const primaryImage = image || images?.wide || images?.standard || 'https://feelomove.com/og-image.jpg';
     const absoluteUrl = url.startsWith('http') ? url : `https://feelomove.com${url}`;
     
     // Build location object
@@ -236,19 +284,25 @@ export const EventSeo = ({
       };
     }
     
-    // Build the complete JSON-LD object
+    // Build the complete JSON-LD object with REQUIRED fields first
     const schema: Record<string, unknown> = {
       '@context': 'https://schema.org',
       '@type': isFestival ? 'Festival' : 'MusicEvent',
       '@id': absoluteUrl,
-      name: escapeJsonLdString(name),
-      description: escapeJsonLdString(description),
-      image: buildImageArray(image, images),
-      startDate: startDate,
-      endDate: endDate || startDate,
+      // REQUIRED: name
+      name: escapeJsonLdString(name) || 'Evento',
+      // REQUIRED: startDate (in ISO 8601 format)
+      startDate: formattedStartDate,
+      // REQUIRED: location
+      location: locationSchema,
+      // RECOMMENDED: description
+      description: escapeJsonLdString(description) || '',
+      // RECOMMENDED: image (always include at least one)
+      image: buildImageArray(primaryImage, images),
+      // End date (defaults to startDate if not provided)
+      endDate: formattedEndDate,
       eventStatus: getSchemaEventStatus(status),
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      location: locationSchema,
       url: absoluteUrl,
       inLanguage: 'es',
       organizer: {
@@ -313,31 +367,33 @@ export const EventSeo = ({
 /**
  * Helper function to create EventSeo props from event data
  * Use this to transform your event data into the required format
+ * 
+ * IMPORTANT: This function ensures all required fields have valid values
  */
 export const createEventSeoProps = (eventData: {
   event_id: string;
   event_name: string;
   event_slug?: string;
-  event_date: string;
-  festival_end_date?: string;
-  door_opening_date?: string;
-  venue_name?: string;
-  venue_address?: string;
-  venue_city: string;
-  venue_postal_code?: string;
-  venue_latitude?: number;
-  venue_longitude?: number;
-  venue_url?: string;
-  image_large_url?: string;
-  image_standard_url?: string;
-  attraction_names?: string[];
-  price_min_incl_fees?: number;
-  price_max_incl_fees?: number;
-  on_sale_date?: string;
-  sold_out?: boolean;
-  cancelled?: boolean;
-  rescheduled?: boolean;
-  is_festival?: boolean;
+  event_date: string | null | undefined;
+  festival_end_date?: string | null;
+  door_opening_date?: string | null;
+  venue_name?: string | null;
+  venue_address?: string | null;
+  venue_city: string | null | undefined;
+  venue_postal_code?: string | null;
+  venue_latitude?: number | null;
+  venue_longitude?: number | null;
+  venue_url?: string | null;
+  image_large_url?: string | null;
+  image_standard_url?: string | null;
+  attraction_names?: string[] | null;
+  price_min_incl_fees?: number | null;
+  price_max_incl_fees?: number | null;
+  on_sale_date?: string | null;
+  sold_out?: boolean | null;
+  cancelled?: boolean | null;
+  rescheduled?: boolean | null;
+  is_festival?: boolean | null;
 }, options: {
   description: string;
   url: string;
@@ -359,36 +415,56 @@ export const createEventSeoProps = (eventData: {
     availability = 'PreOrder';
   }
   
+  // CRITICAL: Ensure event_date is always present
+  // If missing, log error and use a far-future date as fallback
+  let validEventDate = eventData.event_date;
+  if (!validEventDate) {
+    console.error('[createEventSeoProps] CRITICAL: Missing event_date for event:', eventData.event_name);
+    validEventDate = new Date().toISOString();
+  }
+  
+  // CRITICAL: Ensure image is always present
+  const primaryImage = eventData.image_large_url || eventData.image_standard_url || 'https://feelomove.com/og-image.jpg';
+  if (!eventData.image_large_url && !eventData.image_standard_url) {
+    console.warn('[createEventSeoProps] WARNING: Missing image for event:', eventData.event_name);
+  }
+  
+  // Ensure venue_city has a value
+  const venueCity = eventData.venue_city || 'España';
+  if (!eventData.venue_city) {
+    console.warn('[createEventSeoProps] WARNING: Missing venue_city for event:', eventData.event_name);
+  }
+  
   return {
-    eventId: eventData.event_id,
-    name: eventData.event_name,
-    description: options.description,
-    image: eventData.image_large_url || eventData.image_standard_url || '',
+    eventId: eventData.event_id || 'unknown',
+    name: eventData.event_name || 'Evento',
+    description: options.description || '',
+    image: primaryImage,
     images: {
-      wide: eventData.image_large_url,    // Typically 16:9
-      standard: eventData.image_standard_url, // Typically 4:3
+      wide: eventData.image_large_url || undefined,    // Typically 16:9
+      standard: eventData.image_standard_url || undefined, // Typically 4:3
     },
-    startDate: eventData.event_date,
-    endDate: eventData.festival_end_date || eventData.event_date,
-    doorTime: eventData.door_opening_date,
+    startDate: validEventDate,
+    endDate: eventData.festival_end_date || validEventDate,
+    doorTime: eventData.door_opening_date || undefined,
     location: {
       name: eventData.venue_name || 'Venue',
-      streetAddress: eventData.venue_address,
-      city: eventData.venue_city,
-      postalCode: eventData.venue_postal_code,
+      streetAddress: eventData.venue_address || undefined,
+      city: venueCity,
+      postalCode: eventData.venue_postal_code || undefined,
       country: 'ES',
-      latitude: eventData.venue_latitude,
-      longitude: eventData.venue_longitude,
-      url: eventData.venue_url,
+      latitude: eventData.venue_latitude || undefined,
+      longitude: eventData.venue_longitude || undefined,
+      url: eventData.venue_url || undefined,
     },
     performers,
     offers: {
       lowPrice: eventData.price_min_incl_fees || 0,
-      highPrice: eventData.price_max_incl_fees,
+      highPrice: eventData.price_max_incl_fees || undefined,
       currency: 'EUR',
       url: options.url,
       availability,
-      validFrom: eventData.on_sale_date,
+      validFrom: eventData.on_sale_date || undefined,
     },
     status: options.status,
     isFestival: eventData.is_festival || false,
