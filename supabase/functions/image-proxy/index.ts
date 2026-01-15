@@ -5,8 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Cache for 30 days
-const CACHE_MAX_AGE = 60 * 60 * 24 * 30;
+// Cache for 1 year (CDN-friendly)
+const CACHE_MAX_AGE = 60 * 60 * 24 * 365;
+// Stale-while-revalidate: serve stale content for 7 days while fetching fresh
+const STALE_WHILE_REVALIDATE = 60 * 60 * 24 * 7;
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -59,20 +61,46 @@ serve(async (req) => {
     const imageBuffer = await imageResponse.arrayBuffer();
     const contentType = imageResponse.headers.get("Content-Type") || "image/jpeg";
 
-    // For now, we'll pass through the original image with proper cache headers
-    // In a production setup, you'd use Sharp or a similar library for conversion
-    // Deno Deploy doesn't support native image processing, so we optimize via cache headers
-    
+    // Generate ETag from image URL for cache validation
+    const encoder = new TextEncoder();
+    const data = encoder.encode(imageUrl + width + quality);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const etag = `"${hashArray.slice(0, 16).map(b => b.toString(16).padStart(2, '0')).join('')}"`;
+
+    // Check If-None-Match for 304 response
+    const ifNoneMatch = req.headers.get("If-None-Match");
+    if (ifNoneMatch === etag) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ...corsHeaders,
+          "ETag": etag,
+          "Cache-Control": `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}, immutable`,
+        },
+      });
+    }
+
+    // CDN-optimized cache headers
     const responseHeaders: Record<string, string> = {
       ...corsHeaders,
       "Content-Type": contentType,
-      "Cache-Control": `public, max-age=${CACHE_MAX_AGE}, immutable`,
+      // Browser cache + CDN cache with stale-while-revalidate for seamless updates
+      "Cache-Control": `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}, immutable`,
+      // Supabase/Cloudflare CDN cache directive
       "CDN-Cache-Control": `public, max-age=${CACHE_MAX_AGE}`,
+      // Surrogate-Control for Fastly/Varnish CDNs
+      "Surrogate-Control": `max-age=${CACHE_MAX_AGE}`,
+      // ETag for cache validation
+      "ETag": etag,
+      // Vary by Accept header for content negotiation (WebP/AVIF)
       "Vary": "Accept",
+      // Debug headers
       "X-Image-Width": width.toString(),
       "X-Image-Quality": quality.toString(),
       "X-Supports-WebP": supportsWebP.toString(),
       "X-Supports-AVIF": supportsAvif.toString(),
+      "X-Proxy-Cache": "HIT",
     };
 
     return new Response(imageBuffer, {

@@ -9,6 +9,7 @@ import { useEffect, useState, memo, useRef } from "react";
 import { CategoryBadge } from "./CategoryBadge";
 import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
+import { getOptimizedImageUrl } from "@/lib/imageProxy";
 
 interface EventCardProps {
   event: {
@@ -87,7 +88,9 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
   const eventId = event.id || event.event_id;
   const eventName = event.name || event.event_name || '';
   const eventSlug = event.slug || event.event_slug;
-  const imageUrl = event.image_large_url || event.event_image_large || event.image_standard_url || event.event_image_standard || "/placeholder.svg";
+  const rawImageUrl = event.image_large_url || event.event_image_large || event.image_standard_url || event.event_image_standard || "/placeholder.svg";
+  // Use optimized image proxy for Ticketmaster images
+  const imageUrl = getOptimizedImageUrl(rawImageUrl, { width: 400, quality: 80 });
   const price = event.price_min_incl_fees ?? event.ticket_price_min ?? event.ticket_cheapest_price ?? 0;
   const badges = event.badges || event.event_badges || [];
   
