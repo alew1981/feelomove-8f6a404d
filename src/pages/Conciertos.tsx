@@ -54,28 +54,44 @@ const Conciertos = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch conciertos using mv_concerts_cards (excluding transport services)
+  // Fetch conciertos using mv_concerts_cards with created_at from tm_tbl_events
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get the cards
+      const { data: cards, error: cardsError } = await supabase
         .from("mv_concerts_cards")
         .select("*")
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
       
-      if (error) throw error;
+      if (cardsError) throw cardsError;
+      
+      // Get created_at dates for these events
+      const eventIds = (cards || []).map(c => c.id).filter(Boolean);
+      const { data: eventsWithDates, error: datesError } = await supabase
+        .from("tm_tbl_events")
+        .select("id, created_at")
+        .in("id", eventIds);
+      
+      if (datesError) throw datesError;
+      
+      // Create a map of id -> created_at
+      const createdAtMap = new Map((eventsWithDates || []).map(e => [e.id, e.created_at]));
       
       // Filter out transport services (bus, shuttle, etc.)
       const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
       const normalizeText = (text: string) => 
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
       
-      return (data || []).filter(event => {
+      return (cards || []).filter(event => {
         const name = normalizeText(event.name || "");
         const artist = normalizeText(event.artist_name || "");
         return !transportKeywords.some(kw => name.includes(kw) || artist.includes(kw));
-      });
+      }).map(event => ({
+        ...event,
+        created_at: createdAtMap.get(event.id) || null
+      }));
     }
   });
 
@@ -143,7 +159,7 @@ const Conciertos = () => {
       });
     }
 
-    // Apply recent filter (events in next 30 days or recently added)
+    // Apply recent filter (events in next 30 days, novedades, or recently added)
     if (filterRecent === "recent") {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
@@ -152,12 +168,27 @@ const Conciertos = () => {
         const eventDate = new Date(event.event_date);
         return eventDate <= thirtyDaysFromNow;
       });
+    } else if (filterRecent === "novedades") {
+      // Filter events added in the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      filtered = filtered.filter(event => {
+        if (!event.created_at) return false;
+        const createdDate = new Date(event.created_at);
+        return createdDate >= sevenDaysAgo;
+      });
+      // Sort by created_at descending (newest first)
+      filtered.sort((a, b) => {
+        const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bDate - aDate;
+      });
     } else if (filterRecent === "added") {
-      // Sort by recently added (we'll reverse the order to show most recent first)
-      // Since we don't have created_at, we'll sort by id descending as a proxy
+      // Sort by recently added using created_at
       filtered = [...filtered].sort((a, b) => {
-        // Compare IDs as strings - higher IDs are typically newer
-        return String(b.id).localeCompare(String(a.id));
+        const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bDate - aDate;
       });
     }
     
@@ -171,8 +202,8 @@ const Conciertos = () => {
       });
     }
 
-    // Sort by date ascending by default (unless already sorted by recently added)
-    if (filterRecent !== "added") {
+    // Sort by date ascending by default (unless already sorted by novedades or recently added)
+    if (filterRecent !== "added" && filterRecent !== "novedades") {
       filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
     }
     
@@ -363,10 +394,15 @@ const Conciertos = () => {
 
               <Select value={filterRecent} onValueChange={setFilterRecent}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : filterRecent === "recent" ? "30 días" : "Recientes"}</span>
+                  <span className="truncate text-sm">
+                    {filterRecent === "all" ? "Próximos" : 
+                     filterRecent === "recent" ? "30 días" : 
+                     filterRecent === "novedades" ? "🆕 Novedades" : "Recientes"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="novedades">🆕 Novedades</SelectItem>
                   <SelectItem value="recent">Próximos 30 días</SelectItem>
                   <SelectItem value="added">Añadidos recientemente</SelectItem>
                 </SelectContent>
