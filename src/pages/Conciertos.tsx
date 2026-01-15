@@ -5,12 +5,13 @@ import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
+import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import VirtualizedEventGrid from "@/components/VirtualizedEventGrid";
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 
@@ -64,6 +65,8 @@ const Conciertos = () => {
   const [filterRecent, setFilterRecent] = useState<string>("all");
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
   // Fetch conciertos paginated (avoid pulling thousands of rows on first paint)
   const {
@@ -236,12 +239,12 @@ const Conciertos = () => {
     return filtered;
   }, [events, searchQuery, filterRecent, filterVip, createdAtMap]);
 
-  // Callback for load more
-  const handleLoadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
+  // Load more when scrolling to bottom
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  };
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Generate JSON-LD for concerts list (ItemList with complete Event objects for Google)
   const jsonLd = events && events.length > 0 ? {
@@ -477,12 +480,23 @@ const Conciertos = () => {
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <VirtualizedEventGrid
-              events={filteredAndSortedEvents}
-              onLoadMore={handleLoadMore}
-              hasMore={hasNextPage}
-              isLoadingMore={isFetchingNextPage}
-            />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredAndSortedEvents.map((event: any, index: number) => (
+                  <EventCard key={event.id} event={event} priority={index < 4} />
+                ))}
+              </div>
+              
+              {/* Infinite Scroll Loader */}
+              {(hasNextPage || isFetchingNextPage) && (
+                <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                    <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más conciertos...</p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
         <Footer />
