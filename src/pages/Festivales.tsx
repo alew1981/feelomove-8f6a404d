@@ -608,12 +608,12 @@ const Festivales = () => {
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">
                     {filterSort === "proximos" ? "Próximos" : 
-                     filterSort === "novedades" ? "🆕 Novedades" : "Recientes"}
+                     filterSort === "novedades" ? "Novedades" : "Recientes"}
                   </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="proximos">Próximos</SelectItem>
-                  <SelectItem value="novedades">🆕 Novedades</SelectItem>
+                  <SelectItem value="novedades">Novedades</SelectItem>
                   <SelectItem value="recientes">Añadidos recientemente</SelectItem>
                 </SelectContent>
               </Select>
