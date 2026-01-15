@@ -44,16 +44,13 @@ const FestivalHero = ({
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const { toggleFavorite, isFavorite } = useFavorites();
-  
-  // Detect mobile - disable parallax for performance
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // Parse dates
   const hasValidDate = eventDate && !eventDate.startsWith('9999');
   const parsedDate = hasValidDate ? new Date(eventDate) : null;
   const parsedEndDate = endDate && !endDate.startsWith('9999') ? new Date(endDate) : null;
   
-  // Countdown calculation - static, no interval
+  // Countdown calculation
   const countdown = useMemo(() => {
     if (!parsedDate) return null;
     const now = new Date();
@@ -63,10 +60,8 @@ const FestivalHero = ({
     return { days, hours };
   }, [parsedDate]);
 
-  // Parallax effect on scroll - DISABLED on mobile for performance
+  // Parallax effect on scroll
   useEffect(() => {
-    if (isMobile) return; // Skip parallax on mobile
-    
     const handleScroll = () => {
       if (heroRef.current) {
         const rect = heroRef.current.getBoundingClientRect();
@@ -78,7 +73,7 @@ const FestivalHero = ({
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isMobile]);
+  }, []);
   
   // Format date info
   const dateInfo = useMemo(() => {
@@ -108,17 +103,17 @@ const FestivalHero = ({
       ref={heroRef}
       className={`relative min-h-[280px] md:min-h-[320px] overflow-hidden rounded-xl mb-6 ${className}`}
     >
-      {/* Background Image - Parallax only on desktop */}
+      {/* Background Image with Parallax */}
       <img
         src={finalImage}
         alt={`${title} - Festival de música en ${city || 'España'}`}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover parallax-bg"
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        width={isMobile ? 640 : 1200}
-        height={isMobile ? 280 : 320}
-        style={isMobile ? undefined : { transform: `translateY(${scrollOffset}px) scale(1.1)` }}
+        width={1200}
+        height={320}
+        style={{ transform: `translateY(${scrollOffset}px) scale(1.1)` }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       

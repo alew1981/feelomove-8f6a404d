@@ -109,16 +109,16 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
         </div>
       )}
 
-      {/* Hotel Image - optimized for mobile */}
-      <div className="h-[180px] sm:h-[200px] overflow-hidden rounded-t-lg bg-muted">
+      {/* Hotel Image */}
+      <div className="h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <img
           src={hotel.hotel_main_photo || "/placeholder.svg"}
-          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ' estrellas' : ''} en ${hotel.hotel_city || 'España'}`}
+          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ' estrellas' : ''} en ${hotel.hotel_city || 'España'} para eventos`}
           className="w-full h-full object-cover"
           loading="lazy"
           decoding="async"
-          width={320}
-          height={180}
+          width={350}
+          height={200}
         />
       </div>
 

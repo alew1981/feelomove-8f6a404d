@@ -8,8 +8,8 @@ interface VirtualizedEventGridProps {
   isLoadingMore?: boolean;
 }
 
-const INITIAL_VISIBLE = 12;
-const CHUNK_SIZE = 12;
+const INITIAL_VISIBLE = 12; // Show first 12 cards immediately
+const CHUNK_SIZE = 12; // Load 12 more when scrolling
 
 const VirtualizedEventGrid = memo(({
   events,
@@ -19,24 +19,8 @@ const VirtualizedEventGrid = memo(({
 }: VirtualizedEventGridProps) => {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const eventsLengthRef = useRef(events.length);
-  
-  // Stable callback refs to avoid re-creating observer
-  const onLoadMoreRef = useRef(onLoadMore);
-  onLoadMoreRef.current = onLoadMore;
 
-  // Reset visible count only when events array actually changes
-  useEffect(() => {
-    if (eventsLengthRef.current !== events.length) {
-      eventsLengthRef.current = events.length;
-      // Only reset if filter changed (length decreased or dramatically changed)
-      if (events.length < visibleCount) {
-        setVisibleCount(INITIAL_VISIBLE);
-      }
-    }
-  }, [events.length, visibleCount]);
-
-  // Single stable IntersectionObserver
+  // IntersectionObserver for infinite scroll within rendered items
   useEffect(() => {
     const element = loadMoreRef.current;
     if (!element) return;
@@ -44,25 +28,27 @@ const VirtualizedEventGrid = memo(({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount(prev => {
-            const eventsLen = eventsLengthRef.current;
-            if (prev < eventsLen) {
-              return Math.min(prev + CHUNK_SIZE, eventsLen);
-            }
-            // Trigger server fetch if needed
-            if (hasMore && !isLoadingMore) {
-              onLoadMoreRef.current?.();
-            }
-            return prev;
-          });
+          // Show more cards from already fetched events
+          if (visibleCount < events.length) {
+            setVisibleCount(prev => Math.min(prev + CHUNK_SIZE, events.length));
+          }
+          // Fetch more from server if we've shown all fetched events
+          if (visibleCount >= events.length && hasMore && !isLoadingMore) {
+            onLoadMore?.();
+          }
         }
       },
-      { rootMargin: "300px", threshold: 0 }
+      { rootMargin: "200px", threshold: 0 }
     );
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore]);
+  }, [visibleCount, events.length, hasMore, isLoadingMore, onLoadMore]);
+
+  // Reset visible count when events change (e.g., filter applied)
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [events.length]);
 
   if (events.length === 0) {
     return (
