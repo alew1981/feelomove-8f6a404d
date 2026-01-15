@@ -54,11 +54,10 @@ const Conciertos = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch conciertos using mv_concerts_cards with created_at from tm_tbl_events
+  // Fetch conciertos using mv_concerts_cards - single optimized query
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
-      // First get the cards
       const { data: cards, error: cardsError } = await supabase
         .from("mv_concerts_cards")
         .select("*")
@@ -66,18 +65,6 @@ const Conciertos = () => {
         .order("event_date", { ascending: true });
       
       if (cardsError) throw cardsError;
-      
-      // Get created_at dates for these events
-      const eventIds = (cards || []).map(c => c.id).filter(Boolean);
-      const { data: eventsWithDates, error: datesError } = await supabase
-        .from("tm_tbl_events")
-        .select("id, created_at")
-        .in("id", eventIds);
-      
-      if (datesError) throw datesError;
-      
-      // Create a map of id -> created_at
-      const createdAtMap = new Map((eventsWithDates || []).map(e => [e.id, e.created_at]));
       
       // Filter out transport services (bus, shuttle, etc.)
       const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
@@ -88,11 +75,28 @@ const Conciertos = () => {
         const name = normalizeText(event.name || "");
         const artist = normalizeText(event.artist_name || "");
         return !transportKeywords.some(kw => name.includes(kw) || artist.includes(kw));
-      }).map(event => ({
-        ...event,
-        created_at: createdAtMap.get(event.id) || null
-      }));
+      });
     }
+  });
+
+  // Separate query for created_at - only fetched when "novedades" or "added" filter is active
+  const { data: createdAtMap } = useQuery({
+    queryKey: ["conciertos-created-at"],
+    queryFn: async () => {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      // Only get events created in the last 7 days for novedades
+      const { data, error } = await supabase
+        .from("tm_tbl_events")
+        .select("id, created_at")
+        .gte("created_at", sevenDaysAgo.toISOString());
+      
+      if (error) throw error;
+      return new Map((data || []).map(e => [e.id, e.created_at]));
+    },
+    enabled: filterRecent === "novedades" || filterRecent === "added",
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Get first event image for hero
@@ -168,26 +172,20 @@ const Conciertos = () => {
         const eventDate = new Date(event.event_date);
         return eventDate <= thirtyDaysFromNow;
       });
-    } else if (filterRecent === "novedades") {
-      // Filter events added in the last 7 days
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      filtered = filtered.filter(event => {
-        if (!event.created_at) return false;
-        const createdDate = new Date(event.created_at);
-        return createdDate >= sevenDaysAgo;
-      });
+    } else if (filterRecent === "novedades" && createdAtMap) {
+      // Filter events added in the last 7 days using the lazy-loaded map
+      filtered = filtered.filter(event => createdAtMap.has(event.id));
       // Sort by created_at descending (newest first)
       filtered.sort((a, b) => {
-        const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+        const aDate = createdAtMap.get(a.id) ? new Date(createdAtMap.get(a.id)!).getTime() : 0;
+        const bDate = createdAtMap.get(b.id) ? new Date(createdAtMap.get(b.id)!).getTime() : 0;
         return bDate - aDate;
       });
-    } else if (filterRecent === "added") {
-      // Sort by recently added using created_at
+    } else if (filterRecent === "added" && createdAtMap) {
+      // Sort by recently added using created_at from lazy-loaded map
       filtered = [...filtered].sort((a, b) => {
-        const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+        const aDate = createdAtMap.get(a.id) ? new Date(createdAtMap.get(a.id)!).getTime() : 0;
+        const bDate = createdAtMap.get(b.id) ? new Date(createdAtMap.get(b.id)!).getTime() : 0;
         return bDate - aDate;
       });
     }
@@ -208,7 +206,7 @@ const Conciertos = () => {
     }
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent, filterVip]);
+  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent, filterVip, createdAtMap]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
