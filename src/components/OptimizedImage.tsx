@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { cn } from "@/lib/utils";
+import { getOptimizedImageUrl, getOptimizedSrcSet } from "@/lib/imageProxy";
 
 interface OptimizedImageProps {
   src: string;
@@ -11,19 +12,13 @@ interface OptimizedImageProps {
   onLoad?: () => void;
 }
 
-// Generate srcset for Ticketmaster/Unsplash images
+// Generate srcset for images - use proxy for Ticketmaster, native for others
 const generateSrcSet = (src: string): string => {
-  // Ticketmaster images support size suffixes
-  if (src.includes("ticketm.net") || src.includes("tmimg.net")) {
-    const baseSrc = src.replace(/_[0-9]+_[0-9]+\.(jpg|png|webp)/, "");
-    return `
-      ${baseSrc}_320_180.jpg 320w,
-      ${baseSrc}_640_360.jpg 640w,
-      ${baseSrc}_1024_576.jpg 1024w
-    `.trim();
-  }
+  // Use proxy for Ticketmaster images (CDN cached, optimized)
+  const proxySrcSet = getOptimizedSrcSet(src, [320, 640, 1024]);
+  if (proxySrcSet) return proxySrcSet;
   
-  // Unsplash supports w parameter
+  // Unsplash supports w parameter natively
   if (src.includes("unsplash.com")) {
     const baseUrl = src.split("?")[0];
     return `
@@ -36,16 +31,16 @@ const generateSrcSet = (src: string): string => {
   return "";
 };
 
-// Generate blur placeholder URL (low quality image)
+// Generate blur placeholder URL (low quality image via proxy)
 const generateBlurPlaceholder = (src: string): string => {
   if (src.includes("unsplash.com")) {
     const baseUrl = src.split("?")[0];
     return `${baseUrl}?w=20&q=10&blur=10`;
   }
   
-  if (src.includes("ticketm.net") || src.includes("tmimg.net")) {
-    // Use smallest available size
-    return src.replace(/_[0-9]+_[0-9]+\.(jpg|png|webp)/, "_100_56.jpg");
+  // Use proxy with very low quality for Ticketmaster images
+  if (src.includes("ticketm.net") || src.includes("tmimg.net") || src.includes("ticketmaster.com")) {
+    return getOptimizedImageUrl(src, { width: 40, quality: 20 });
   }
   
   // For other images, just return the original (no blur available)
@@ -130,16 +125,15 @@ const OptimizedImage = memo(({
         <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-pulse" />
       )}
 
-      {/* Actual image */}
+      {/* Actual image - use proxy for Ticketmaster */}
       {(isInView || priority) && (
         <img
-          src={hasError ? "/placeholder.svg" : src}
+          src={hasError ? "/placeholder.svg" : getOptimizedImageUrl(src, { width: 800, quality: 80 })}
           srcSet={!hasError && srcSet ? srcSet : undefined}
           sizes={!hasError && srcSet ? sizes : undefined}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
-          fetchPriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(

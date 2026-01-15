@@ -29,6 +29,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
 import { RelatedLinks } from "@/components/RelatedLinks";
+import { getOptimizedImageUrl, getOptimizedSrcSet } from "@/lib/imageProxy";
 
 interface PriceLevel {
   id: number;
@@ -501,8 +502,10 @@ const Producto = () => {
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // Get image - prioritize image_large_url
-  const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
+  // Get image - prioritize image_large_url and optimize through proxy
+  const rawEventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
+  const eventImage = getOptimizedImageUrl(rawEventImage, { width: 1200, quality: 85 });
+  const eventImageSrcSet = getOptimizedSrcSet(rawEventImage, [400, 800, 1200]);
 
   // Build canonical URL using RPC canonical slug, VIP variant detection, or current slug
   const currentSlug = eventDetails.event_slug || '';
@@ -637,9 +640,10 @@ const Producto = () => {
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
               <img
                 src={eventImage}
+                srcSet={eventImageSrcSet || undefined}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
-                fetchPriority="high"
                 loading="eager"
                 decoding="sync"
               />
