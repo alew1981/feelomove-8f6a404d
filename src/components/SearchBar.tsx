@@ -374,8 +374,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              id="global-search"
-              name="search"
               ref={inputRef}
               type="text"
               placeholder="Buscar eventos, artistas, ciudades, géneros..."
@@ -384,7 +382,6 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
               onKeyDown={handleKeyDown}
               className="pl-12 pr-12 h-14 text-base bg-muted/50 border-0 rounded-xl focus-visible:ring-2 focus-visible:ring-accent/50 placeholder:text-muted-foreground/60"
               autoFocus
-              autoComplete="off"
             />
             {searchTerm && (
               <Button
