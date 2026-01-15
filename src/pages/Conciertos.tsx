@@ -397,12 +397,12 @@ const Conciertos = () => {
                   <span className="truncate text-sm">
                     {filterRecent === "all" ? "Próximos" : 
                      filterRecent === "recent" ? "30 días" : 
-                     filterRecent === "novedades" ? "🆕 Novedades" : "Recientes"}
+                     filterRecent === "novedades" ? "Novedades" : "Recientes"}
                   </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="novedades">🆕 Novedades</SelectItem>
+                  <SelectItem value="novedades">Novedades</SelectItem>
                   <SelectItem value="recent">Próximos 30 días</SelectItem>
                   <SelectItem value="added">Añadidos recientemente</SelectItem>
                 </SelectContent>
