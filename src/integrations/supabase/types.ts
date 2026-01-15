@@ -2132,6 +2132,7 @@ export type Database = {
       trigger_ticketmaster_sync: { Args: never; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_affiliate_urls: { Args: never; Returns: number }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
