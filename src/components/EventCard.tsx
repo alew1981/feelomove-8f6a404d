@@ -76,7 +76,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
           }
         });
       },
-      { rootMargin: '200px', threshold: 0 }
+      { rootMargin: '100px', threshold: 0 }
     );
 
     observer.observe(element);
@@ -201,7 +201,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     title={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
-                    fetchPriority={priority ? "high" : "auto"}
+                    fetchPriority={priority ? "high" : "low"}
                     width={400}
                     height={224}
                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
