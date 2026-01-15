@@ -1,18 +1,20 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 // Schema.org is now handled directly by SEOHead component with dynamic jsonLd prop
 import { useMetaTags } from "@/hooks/useMetaTags";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import HotelCard from "@/components/HotelCard";
-import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
+
+// Lazy load heavy components for better mobile performance
+const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -951,19 +953,33 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Hotels & Map Section with Tabs */}
+              {/* Hotels & Map Section with Tabs - Lazy loaded for mobile performance */}
               {(hotels.length > 0 || mapWidgetHtml) && (
                 <div id="hotels-section">
-                  <HotelMapTabs 
-                    hotels={hotels} 
-                    mapWidgetHtml={mapWidgetHtml} 
-                    onAddHotel={handleAddHotel}
-                    checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
-                    checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
-                    eventName={eventDetails.event_name || undefined}
-                    ticketsSelected={isEventInCart && totalPersons > 0}
-                    selectedHotelId={cart?.hotel?.hotel_id || null}
-                  />
+                  <Suspense fallback={
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+                        <div className="h-6 w-48 bg-muted animate-pulse rounded" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="h-[320px] bg-muted animate-pulse rounded-lg" />
+                        ))}
+                      </div>
+                    </div>
+                  }>
+                    <HotelMapTabs 
+                      hotels={hotels} 
+                      mapWidgetHtml={mapWidgetHtml} 
+                      onAddHotel={handleAddHotel}
+                      checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
+                      checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
+                      eventName={eventDetails.event_name || undefined}
+                      ticketsSelected={isEventInCart && totalPersons > 0}
+                      selectedHotelId={cart?.hotel?.hotel_id || null}
+                    />
+                  </Suspense>
                 </div>
               )}
             </div>

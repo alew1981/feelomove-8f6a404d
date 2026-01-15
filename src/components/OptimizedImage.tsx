@@ -10,22 +10,29 @@ interface OptimizedImageProps {
   sizes?: string;
   aspectRatio?: string;
   onLoad?: () => void;
+  /** Mobile-optimized: use smaller widths for srcset */
+  mobileOptimized?: boolean;
 }
 
+// Detect mobile for smaller image sizes
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
 // Generate srcset for images - use proxy for Ticketmaster, native for others
-const generateSrcSet = (src: string): string => {
+const generateSrcSet = (src: string, mobileOptimized = false): string => {
+  // Use smaller widths on mobile for faster loading
+  const widths = mobileOptimized && isMobile ? [280, 400, 560] : [320, 640, 1024];
+  
   // Use proxy for Ticketmaster images (CDN cached, optimized)
-  const proxySrcSet = getOptimizedSrcSet(src, [320, 640, 1024]);
+  const proxySrcSet = getOptimizedSrcSet(src, widths);
   if (proxySrcSet) return proxySrcSet;
   
   // Unsplash supports w parameter natively
   if (src.includes("unsplash.com")) {
     const baseUrl = src.split("?")[0];
-    return `
-      ${baseUrl}?w=400&q=75 400w,
-      ${baseUrl}?w=800&q=80 800w,
-      ${baseUrl}?w=1200&q=85 1200w
-    `.trim();
+    const sizes = mobileOptimized && isMobile 
+      ? [280, 400, 560]
+      : [400, 800, 1200];
+    return sizes.map(w => `${baseUrl}?w=${w}&q=75 ${w}w`).join(', ');
   }
   
   return "";
@@ -54,7 +61,8 @@ const OptimizedImage = memo(({
   priority = false,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
   aspectRatio,
-  onLoad
+  onLoad,
+  mobileOptimized = true
 }: OptimizedImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -92,8 +100,11 @@ const OptimizedImage = memo(({
     return () => observer.disconnect();
   }, [priority, isInView]);
 
-  const srcSet = generateSrcSet(src);
+  const srcSet = generateSrcSet(src, mobileOptimized);
   const blurPlaceholder = generateBlurPlaceholder(src);
+  
+  // Use smaller default image size on mobile
+  const defaultWidth = mobileOptimized && isMobile ? 400 : 800;
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -128,7 +139,7 @@ const OptimizedImage = memo(({
       {/* Actual image - use proxy for Ticketmaster */}
       {(isInView || priority) && (
         <img
-          src={hasError ? "/placeholder.svg" : getOptimizedImageUrl(src, { width: 800, quality: 80 })}
+          src={hasError ? "/placeholder.svg" : getOptimizedImageUrl(src, { width: defaultWidth, quality: mobileOptimized && isMobile ? 70 : 80 })}
           srcSet={!hasError && srcSet ? srcSet : undefined}
           sizes={!hasError && srcSet ? sizes : undefined}
           alt={alt}
@@ -137,7 +148,7 @@ const OptimizedImage = memo(({
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            "w-full h-full object-cover transition-opacity duration-300",
+            "w-full h-full object-cover transition-opacity duration-200",
             isLoaded ? "opacity-100" : "opacity-0"
           )}
         />
