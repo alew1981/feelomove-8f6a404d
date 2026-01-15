@@ -227,7 +227,7 @@ const Festivales = () => {
   const [filterSort, setFilterSort] = useState<string>("proximos");
   const [filterDuration, setFilterDuration] = useState<string>("all");
 
-  // Fetch festivals using the new dedicated festivals view
+  // Fetch festivals using the new dedicated festivals view with created_at
   const { data: festivals, isLoading } = useQuery({
     queryKey: ["festivales-list"],
     queryFn: async () => {
@@ -237,7 +237,23 @@ const Festivales = () => {
         .order("festival_start_date", { ascending: true });
       
       if (error) throw error;
-      return (data || []) as unknown as FestivalProductPage[];
+      
+      // Get created_at dates for these events
+      const eventIds = (data || []).map(f => f.event_id).filter(Boolean);
+      const { data: eventsWithDates, error: datesError } = await supabase
+        .from("tm_tbl_events")
+        .select("id, created_at")
+        .in("id", eventIds);
+      
+      if (datesError) throw datesError;
+      
+      // Create a map of id -> created_at
+      const createdAtMap = new Map((eventsWithDates || []).map(e => [e.id, e.created_at]));
+      
+      return (data || []).map(f => ({
+        ...f,
+        created_at: createdAtMap.get(f.event_id) || null
+      })) as unknown as (FestivalProductPage & { created_at: string | null })[];
     }
   });
 
@@ -407,13 +423,58 @@ const Festivales = () => {
     }));
     
     // Sort
-    if (filterSort === "recientes") {
-      // Sort by event_date descending (most recent dates first) as proxy for "recently added"
-      filteredStandalone.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+    if (filterSort === "novedades") {
+      // Filter events added in the last 7 days and sort by created_at descending
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      filteredStandalone = filteredStandalone.filter(f => {
+        const createdAt = (f as any).created_at;
+        if (!createdAt) return false;
+        return new Date(createdAt) >= sevenDaysAgo;
+      });
+      filteredStandalone.sort((a, b) => {
+        const aDate = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const bDate = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        return bDate - aDate;
+      });
+      
+      // For parent festivals, filter those with any event added in last 7 days
+      filteredParents = filteredParents.filter(parent => 
+        parent.events.some(e => {
+          const createdAt = (e as any).created_at;
+          if (!createdAt) return false;
+          return new Date(createdAt) >= sevenDaysAgo;
+        })
+      );
       filteredParents.sort((a, b) => {
-        const aLatest = Math.max(...a.events.map(e => new Date(e.event_date).getTime()));
-        const bLatest = Math.max(...b.events.map(e => new Date(e.event_date).getTime()));
-        return bLatest - aLatest;
+        const aNewest = Math.max(...a.events.map(e => {
+          const createdAt = (e as any).created_at;
+          return createdAt ? new Date(createdAt).getTime() : 0;
+        }));
+        const bNewest = Math.max(...b.events.map(e => {
+          const createdAt = (e as any).created_at;
+          return createdAt ? new Date(createdAt).getTime() : 0;
+        }));
+        return bNewest - aNewest;
+      });
+    } else if (filterSort === "recientes") {
+      // Sort by created_at descending (most recently added first)
+      filteredStandalone.sort((a, b) => {
+        const aDate = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const bDate = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        return bDate - aDate;
+      });
+      filteredParents.sort((a, b) => {
+        const aNewest = Math.max(...a.events.map(e => {
+          const createdAt = (e as any).created_at;
+          return createdAt ? new Date(createdAt).getTime() : 0;
+        }));
+        const bNewest = Math.max(...b.events.map(e => {
+          const createdAt = (e as any).created_at;
+          return createdAt ? new Date(createdAt).getTime() : 0;
+        }));
+        return bNewest - aNewest;
       });
     } else {
       filteredStandalone.sort((a, b) => 
@@ -545,10 +606,14 @@ const Festivales = () => {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterSort === "proximos" ? "Próximos" : "Recientes"}</span>
+                  <span className="truncate text-sm">
+                    {filterSort === "proximos" ? "Próximos" : 
+                     filterSort === "novedades" ? "🆕 Novedades" : "Recientes"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="proximos">Próximos</SelectItem>
+                  <SelectItem value="novedades">🆕 Novedades</SelectItem>
                   <SelectItem value="recientes">Añadidos recientemente</SelectItem>
                 </SelectContent>
               </Select>
