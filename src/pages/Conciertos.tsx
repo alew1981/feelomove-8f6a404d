@@ -1,60 +1,46 @@
 import { useState, useMemo, useEffect } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
+import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import VirtualizedEventGrid from "@/components/VirtualizedEventGrid";
 
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 
 // Generate month-year options dynamically from available events
 const getMonthYearOptions = (events: any[]) => {
   if (!events || events.length === 0) return [];
-
+  
   const monthYearSet = new Set<string>();
-  events.forEach((event) => {
+  events.forEach(event => {
     if (event.event_date) {
       const date = new Date(event.event_date);
-      const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       monthYearSet.add(monthYear);
     }
   });
-
-  const monthNames = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
-
+  
+  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  
   return Array.from(monthYearSet)
     .sort()
-    .map((my) => {
-      const [year, month] = my.split("-");
+    .map(my => {
+      const [year, month] = my.split('-');
       const monthName = monthNames[parseInt(month) - 1];
       return {
         value: my,
-        label: `${monthName} - ${year}`,
+        label: `${monthName} - ${year}`
       };
     });
 };
-
-const PAGE_SIZE = 30;
 
 const Conciertos = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -64,184 +50,146 @@ const Conciertos = () => {
   const [filterRecent, setFilterRecent] = useState<string>("all");
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [displayCount, setDisplayCount] = useState<number>(30);
+  
+  const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch conciertos paginated (avoid pulling thousands of rows on first paint)
-  const {
-    data: eventsPages,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: [
-      "conciertos",
-      {
-        filterCity,
-        filterGenre,
-        filterArtist,
-        filterMonthYear,
-        filterRecent,
-        searchQuery,
-      },
-    ],
-    initialPageParam: 0,
-    queryFn: async ({ pageParam }) => {
-      const nowIso = new Date().toISOString();
-
-      // Only request columns we actually use in the cards/list
-      let query = supabase
+  // Fetch conciertos using mv_concerts_cards (excluding transport services)
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["conciertos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("mv_concerts_cards")
-        .select(
-          "id, name, slug, event_date, venue_city, venue_name, venue_latitude, venue_longitude, image_standard_url, image_large_url, price_min_incl_fees, currency, sold_out, badges, artist_name, genre"
-        )
-        .gte("event_date", nowIso)
-        .order("event_date", { ascending: true })
-        .range(pageParam, pageParam + PAGE_SIZE - 1);
-
-      // Server-side filters to reduce payload
-      if (filterCity !== "all") query = query.eq("venue_city", filterCity);
-      if (filterGenre !== "all") query = query.eq("genre", filterGenre);
-      if (filterArtist !== "all") query = query.eq("artist_name", filterArtist);
-
-      if (filterMonthYear !== "all") {
-        const [yearStr, monthStr] = filterMonthYear.split("-");
-        const year = Number(yearStr);
-        const monthIndex = Number(monthStr) - 1;
-        const start = new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0));
-        const end = new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59));
-        query = query.gte("event_date", start.toISOString()).lte("event_date", end.toISOString());
-      }
-
-      if (filterRecent === "recent") {
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-        query = query.lte("event_date", thirtyDaysFromNow.toISOString());
-      }
-
-      // Basic server-side search (keeps initial load fast)
-      if (searchQuery.trim()) {
-        const pattern = `%${searchQuery.trim()}%`;
-        query = query.or(`name.ilike.${pattern},venue_city.ilike.${pattern},artist_name.ilike.${pattern}`);
-      }
-
-      const { data: cards, error } = await query;
+        .select("*")
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true });
+      
       if (error) throw error;
-
+      
       // Filter out transport services (bus, shuttle, etc.)
       const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
-      const normalizeText = (text: string) =>
+      const normalizeText = (text: string) => 
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
-
-      return (cards || []).filter((event: any) => {
+      
+      return (data || []).filter(event => {
         const name = normalizeText(event.name || "");
         const artist = normalizeText(event.artist_name || "");
-        return !transportKeywords.some((kw) => name.includes(kw) || artist.includes(kw));
+        return !transportKeywords.some(kw => name.includes(kw) || artist.includes(kw));
       });
-    },
-    getNextPageParam: (lastPage, allPages) => (lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined),
-    staleTime: 60 * 1000,
-  });
-
-  const events = useMemo(() => eventsPages?.pages.flat() ?? [], [eventsPages]);
-
-  // Separate query for created_at - only fetched when "novedades" or "added" filter is active
-  const { data: createdAtMap } = useQuery({
-    queryKey: ["conciertos-created-at"],
-    queryFn: async () => {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      // Only get events created in the last 7 days for novedades
-      const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("id, created_at")
-        .gte("created_at", sevenDaysAgo.toISOString());
-
-      if (error) throw error;
-      return new Map((data || []).map((e) => [e.id, e.created_at]));
-    },
-    enabled: filterRecent === "novedades" || filterRecent === "added",
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    }
   });
 
   // Get first event image for hero
   const heroImage = events?.[0]?.image_large_url || events?.[0]?.image_standard_url;
 
-  // Extract unique cities, genres, and artists (based on loaded pages; grows as you scroll)
+  // Extract unique cities, genres, and artists
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(events.map((e: any) => e.venue_city).filter(Boolean))];
+    if (!events) return [];
+    const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
     return uniqueCities.sort() as string[];
   }, [events]);
 
   const genres = useMemo(() => {
-    const uniqueGenres = [...new Set(events.map((e: any) => e.genre).filter(Boolean))];
+    if (!events) return [];
+    const uniqueGenres = [...new Set(events.map(e => e.genre).filter(Boolean))];
     return uniqueGenres.sort() as string[];
   }, [events]);
 
   const artists = useMemo(() => {
-    const uniqueArtists = [...new Set(events.map((e: any) => e.artist_name).filter(Boolean))];
+    if (!events) return [];
+    const uniqueArtists = [...new Set(events.map(e => e.artist_name).filter(Boolean))];
     return uniqueArtists.sort() as string[];
   }, [events]);
 
   // Get month-year options from events
   const monthYearOptions = useMemo(() => getMonthYearOptions(events || []), [events]);
 
-  // Filter and sort events (keep client-side VIP + novedades sorting)
+  // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {
+    if (!events) return [];
     let filtered = [...events];
 
-    // Apply search filter (accent-insensitive) as a second-pass, to keep UX consistent
+    // Apply search filter (accent-insensitive)
     if (searchQuery) {
-      filtered = filtered.filter(
-        (event: any) =>
-          matchesSearch(event.name, searchQuery) ||
-          matchesSearch(event.venue_city, searchQuery) ||
-          matchesSearch(event.artist_name, searchQuery)
+      filtered = filtered.filter(event => 
+        matchesSearch(event.name, searchQuery) ||
+        matchesSearch(event.venue_city, searchQuery) ||
+        matchesSearch(event.artist_name, searchQuery)
       );
     }
 
-    // Apply recent filter for novedades / recently added (created_at)
-    if (filterRecent === "novedades" && createdAtMap) {
-      filtered = filtered.filter((event: any) => createdAtMap.has(event.id));
-      filtered.sort((a: any, b: any) => {
-        const aDate = createdAtMap.get(a.id) ? new Date(createdAtMap.get(a.id)!).getTime() : 0;
-        const bDate = createdAtMap.get(b.id) ? new Date(createdAtMap.get(b.id)!).getTime() : 0;
-        return bDate - aDate;
-      });
-    } else if (filterRecent === "added" && createdAtMap) {
-      filtered = [...filtered].sort((a: any, b: any) => {
-        const aDate = createdAtMap.get(a.id) ? new Date(createdAtMap.get(a.id)!).getTime() : 0;
-        const bDate = createdAtMap.get(b.id) ? new Date(createdAtMap.get(b.id)!).getTime() : 0;
-        return bDate - aDate;
+    // Apply city filter
+    if (filterCity !== "all") {
+      filtered = filtered.filter(event => event.venue_city === filterCity);
+    }
+
+    // Apply genre filter
+    if (filterGenre !== "all") {
+      filtered = filtered.filter(event => event.genre === filterGenre);
+    }
+
+    // Apply artist filter
+    if (filterArtist !== "all") {
+      filtered = filtered.filter(event => event.artist_name === filterArtist);
+    }
+
+    // Apply month-year filter
+    if (filterMonthYear !== "all") {
+      filtered = filtered.filter(event => {
+        if (!event.event_date) return false;
+        const date = new Date(event.event_date);
+        const eventMonthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        return eventMonthYear === filterMonthYear;
       });
     }
 
+    // Apply recent filter (events in next 30 days or recently added)
+    if (filterRecent === "recent") {
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      filtered = filtered.filter(event => {
+        if (!event.event_date) return false;
+        const eventDate = new Date(event.event_date);
+        return eventDate <= thirtyDaysFromNow;
+      });
+    } else if (filterRecent === "added") {
+      // Sort by recently added (we'll reverse the order to show most recent first)
+      // Since we don't have created_at, we'll sort by id descending as a proxy
+      filtered = [...filtered].sort((a, b) => {
+        // Compare IDs as strings - higher IDs are typically newer
+        return String(b.id).localeCompare(String(a.id));
+      });
+    }
+    
     // Apply VIP filter (check badges for VIP or name contains VIP)
     if (filterVip === "vip") {
-      filtered = filtered.filter((event: any) => {
+      filtered = filtered.filter(event => {
         const badges = event.badges || [];
         const hasVipBadge = badges.some((b: string) => /vip/i.test(b));
-        const hasVipInName = /vip/i.test(event.name || "");
+        const hasVipInName = /vip/i.test(event.name || '');
         return hasVipBadge || hasVipInName;
       });
     }
 
-    // Default sort by date ascending unless already sorted by created_at
-    if (filterRecent !== "added" && filterRecent !== "novedades") {
-      filtered.sort(
-        (a: any, b: any) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime()
-      );
+    // Sort by date ascending by default (unless already sorted by recently added)
+    if (filterRecent !== "added") {
+      filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
     }
-
+    
     return filtered;
-  }, [events, searchQuery, filterRecent, filterVip, createdAtMap]);
+  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent, filterVip]);
 
-  // Callback for load more
-  const handleLoadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+  // Display only the first displayCount events
+  const displayedEvents = useMemo(() => {
+    return filteredAndSortedEvents.slice(0, displayCount);
+  }, [filteredAndSortedEvents, displayCount]);
+
+  // Load more when scrolling to bottom
+  useEffect(() => {
+    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
+      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
     }
-  };
+  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
   // Generate JSON-LD for concerts list (ItemList with complete Event objects for Google)
   const jsonLd = events && events.length > 0 ? {
@@ -347,21 +295,16 @@ const Conciertos = () => {
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                id="conciertos-search"
-                name="q"
                 type="text"
                 placeholder="Buscar conciertos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
-                autoComplete="off"
               />
               {searchQuery && (
                 <button
-                  type="button"
                   onClick={() => setSearchQuery("")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
-                  aria-label="Borrar búsqueda"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -420,15 +363,10 @@ const Conciertos = () => {
 
               <Select value={filterRecent} onValueChange={setFilterRecent}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">
-                    {filterRecent === "all" ? "Próximos" : 
-                     filterRecent === "recent" ? "30 días" : 
-                     filterRecent === "novedades" ? "Novedades" : "Recientes"}
-                  </span>
+                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : filterRecent === "recent" ? "30 días" : "Recientes"}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="novedades">Novedades</SelectItem>
                   <SelectItem value="recent">Próximos 30 días</SelectItem>
                   <SelectItem value="added">Añadidos recientemente</SelectItem>
                 </SelectContent>
@@ -477,12 +415,23 @@ const Conciertos = () => {
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <VirtualizedEventGrid
-              events={filteredAndSortedEvents}
-              onLoadMore={handleLoadMore}
-              hasMore={hasNextPage}
-              isLoadingMore={isFetchingNextPage}
-            />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {displayedEvents.map((event, index) => (
+                  <EventCard key={event.id} event={event} priority={index < 4} />
+                ))}
+              </div>
+              
+              {/* Infinite Scroll Loader */}
+              {displayedEvents.length < filteredAndSortedEvents.length && (
+                <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                    <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más conciertos...</p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
         <Footer />

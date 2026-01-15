@@ -227,7 +227,7 @@ const Festivales = () => {
   const [filterSort, setFilterSort] = useState<string>("proximos");
   const [filterDuration, setFilterDuration] = useState<string>("all");
 
-  // Fetch festivals using the new dedicated festivals view - single optimized query
+  // Fetch festivals using the new dedicated festivals view
   const { data: festivals, isLoading } = useQuery({
     queryKey: ["festivales-list"],
     queryFn: async () => {
@@ -239,26 +239,6 @@ const Festivales = () => {
       if (error) throw error;
       return (data || []) as unknown as FestivalProductPage[];
     }
-  });
-
-  // Separate query for created_at - only fetched when "novedades" or "recientes" filter is active
-  const { data: createdAtMap } = useQuery({
-    queryKey: ["festivales-created-at"],
-    queryFn: async () => {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      // Only get events created in the last 7 days for novedades
-      const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("id, created_at")
-        .gte("created_at", sevenDaysAgo.toISOString());
-      
-      if (error) throw error;
-      return new Map((data || []).map(e => [e.id, e.created_at]));
-    },
-    enabled: filterSort === "novedades" || filterSort === "recientes",
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Normalize and group festivals
@@ -427,47 +407,13 @@ const Festivales = () => {
     }));
     
     // Sort
-    if (filterSort === "novedades" && createdAtMap) {
-      // Filter events added in the last 7 days using lazy-loaded map
-      filteredStandalone = filteredStandalone.filter(f => createdAtMap.has(f.event_id));
-      filteredStandalone.sort((a, b) => {
-        const aDate = createdAtMap.get(a.event_id) ? new Date(createdAtMap.get(a.event_id)!).getTime() : 0;
-        const bDate = createdAtMap.get(b.event_id) ? new Date(createdAtMap.get(b.event_id)!).getTime() : 0;
-        return bDate - aDate;
-      });
-      
-      // For parent festivals, filter those with any event added in last 7 days
-      filteredParents = filteredParents.filter(parent => 
-        parent.events.some(e => createdAtMap.has(e.event_id))
-      );
+    if (filterSort === "recientes") {
+      // Sort by event_date descending (most recent dates first) as proxy for "recently added"
+      filteredStandalone.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
       filteredParents.sort((a, b) => {
-        const aNewest = Math.max(...a.events.map(e => {
-          const createdAt = createdAtMap.get(e.event_id);
-          return createdAt ? new Date(createdAt).getTime() : 0;
-        }));
-        const bNewest = Math.max(...b.events.map(e => {
-          const createdAt = createdAtMap.get(e.event_id);
-          return createdAt ? new Date(createdAt).getTime() : 0;
-        }));
-        return bNewest - aNewest;
-      });
-    } else if (filterSort === "recientes" && createdAtMap) {
-      // Sort by created_at descending (most recently added first)
-      filteredStandalone.sort((a, b) => {
-        const aDate = createdAtMap.get(a.event_id) ? new Date(createdAtMap.get(a.event_id)!).getTime() : 0;
-        const bDate = createdAtMap.get(b.event_id) ? new Date(createdAtMap.get(b.event_id)!).getTime() : 0;
-        return bDate - aDate;
-      });
-      filteredParents.sort((a, b) => {
-        const aNewest = Math.max(...a.events.map(e => {
-          const createdAt = createdAtMap.get(e.event_id);
-          return createdAt ? new Date(createdAt).getTime() : 0;
-        }));
-        const bNewest = Math.max(...b.events.map(e => {
-          const createdAt = createdAtMap.get(e.event_id);
-          return createdAt ? new Date(createdAt).getTime() : 0;
-        }));
-        return bNewest - aNewest;
+        const aLatest = Math.max(...a.events.map(e => new Date(e.event_date).getTime()));
+        const bLatest = Math.max(...b.events.map(e => new Date(e.event_date).getTime()));
+        return bLatest - aLatest;
       });
     } else {
       filteredStandalone.sort((a, b) => 
@@ -479,7 +425,7 @@ const Festivales = () => {
     }
     
     return { parentFestivals: filteredParents, standaloneFestivals: filteredStandalone };
-  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration, createdAtMap]);
+  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration]);
 
   // Get hero image from first festival
   const heroImage = festivals?.[0]?.image_large_url || "/placeholder.svg";
@@ -599,14 +545,10 @@ const Festivales = () => {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">
-                    {filterSort === "proximos" ? "Próximos" : 
-                     filterSort === "novedades" ? "Novedades" : "Recientes"}
-                  </span>
+                  <span className="truncate text-sm">{filterSort === "proximos" ? "Próximos" : "Recientes"}</span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="proximos">Próximos</SelectItem>
-                  <SelectItem value="novedades">Novedades</SelectItem>
                   <SelectItem value="recientes">Añadidos recientemente</SelectItem>
                 </SelectContent>
               </Select>
