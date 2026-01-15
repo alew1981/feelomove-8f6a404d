@@ -8,6 +8,9 @@ interface PageHeroProps {
   priority?: boolean; // LCP optimization
 }
 
+// Detect mobile once at module level
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
 const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }: PageHeroProps) => {
   // Use a default concert image if none provided
   const defaultImage = "https://s1.ticketm.net/dam/a/512/655083a1-b8c6-45f5-ba9a-f7c3bca2c512_EVENT_DETAIL_PAGE_16_9.jpg";
@@ -16,8 +19,10 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  // Parallax effect on scroll - deferred to avoid blocking LCP
+  // Parallax effect on scroll - DISABLED on mobile for performance
   useEffect(() => {
+    if (isMobile) return; // Skip parallax on mobile for better performance
+    
     // Delay parallax registration to not block initial render
     const timeoutId = setTimeout(() => {
       const handleScroll = () => {
@@ -40,21 +45,21 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
     <div 
       ref={heroRef}
       className={`relative h-[200px] md:h-[280px] overflow-hidden rounded-xl mb-6 ${className}`}
+      style={{ aspectRatio: '3/1' }}
     >
-      {/* LCP-optimized hero image */}
+      {/* LCP-optimized hero image with explicit dimensions for CLS prevention */}
       <img
         src={finalImage}
         alt={`${title} - FEELOMOVE+`}
         title={`${title} - FEELOMOVE+`}
-        className="w-full h-full object-cover parallax-bg"
+        className="w-full h-full object-cover"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
         fetchPriority={priority ? "high" : "auto"}
-        width={1200}
-        height={400}
-        style={{
+        width={isMobile ? 640 : 1200}
+        height={isMobile ? 213 : 400}
+        style={isMobile ? undefined : {
           transform: `translateY(${scrollOffset}px) scale(1.1)`,
-          contentVisibility: 'auto'
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />

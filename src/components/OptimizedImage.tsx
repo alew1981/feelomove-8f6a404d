@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, useEffect, memo, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { getOptimizedImageUrl, getOptimizedSrcSet } from "@/lib/imageProxy";
 
@@ -12,9 +12,13 @@ interface OptimizedImageProps {
   onLoad?: () => void;
   /** Mobile-optimized: use smaller widths for srcset */
   mobileOptimized?: boolean;
+  /** Explicit width for CLS prevention */
+  width?: number;
+  /** Explicit height for CLS prevention */
+  height?: number;
 }
 
-// Detect mobile for smaller image sizes
+// Detect mobile for smaller image sizes - cached once at module level
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
 // Generate srcset for images - use proxy for Ticketmaster, native for others
@@ -62,49 +66,29 @@ const OptimizedImage = memo(({
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
   aspectRatio,
   onLoad,
-  mobileOptimized = true
+  mobileOptimized = true,
+  width,
+  height
 }: OptimizedImageProps) => {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(priority); // Start loaded for priority images
   const [isInView, setIsInView] = useState(priority);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  // Intersection Observer for lazy loading - optimized for performance
-  useEffect(() => {
-    if (priority || isInView) return;
-
-    // Use native lazy loading support check
-    if ('loading' in HTMLImageElement.prototype && !priority) {
-      // Browser supports native lazy loading, let it handle it
-      setIsInView(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      {
-        rootMargin: "400px", // Reduced from 600px for better initial load
-        threshold: 0
-      }
-    );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [priority, isInView]);
-
-  const srcSet = generateSrcSet(src, mobileOptimized);
-  const blurPlaceholder = generateBlurPlaceholder(src);
+  // Memoize srcSet and placeholder to prevent recalculation
+  const srcSet = useMemo(() => generateSrcSet(src, mobileOptimized), [src, mobileOptimized]);
+  const blurPlaceholder = useMemo(() => generateBlurPlaceholder(src), [src]);
   
   // Use smaller default image size on mobile
   const defaultWidth = mobileOptimized && isMobile ? 400 : 800;
+
+  // Intersection Observer for lazy loading - only for non-priority images
+  useEffect(() => {
+    if (priority) return; // Priority images load immediately
+    
+    // Use native lazy loading - no custom observer needed
+    setIsInView(true);
+  }, [priority]);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -115,14 +99,23 @@ const OptimizedImage = memo(({
     setHasError(true);
   };
 
+  // Compute container style with explicit dimensions for CLS prevention
+  const containerStyle = useMemo(() => {
+    const style: React.CSSProperties = {};
+    if (aspectRatio) style.aspectRatio = aspectRatio;
+    if (width) style.width = width;
+    if (height) style.height = height;
+    return style;
+  }, [aspectRatio, width, height]);
+
   return (
     <div 
       ref={imgRef}
       className={cn("relative overflow-hidden bg-muted", className)}
-      style={aspectRatio ? { aspectRatio } : undefined}
+      style={Object.keys(containerStyle).length > 0 ? containerStyle : undefined}
     >
-      {/* Blur placeholder */}
-      {blurPlaceholder && !isLoaded && !hasError && (
+      {/* Blur placeholder - only for non-priority */}
+      {!priority && blurPlaceholder && !isLoaded && !hasError && (
         <img
           src={blurPlaceholder}
           alt=""
@@ -131,8 +124,8 @@ const OptimizedImage = memo(({
         />
       )}
 
-      {/* Skeleton while loading */}
-      {!isLoaded && !hasError && !blurPlaceholder && (
+      {/* Skeleton while loading - only for non-priority */}
+      {!priority && !isLoaded && !hasError && !blurPlaceholder && (
         <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-pulse" />
       )}
 
@@ -143,13 +136,16 @@ const OptimizedImage = memo(({
           srcSet={!hasError && srcSet ? srcSet : undefined}
           sizes={!hasError && srcSet ? sizes : undefined}
           alt={alt}
+          width={width}
+          height={height}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
+          fetchPriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            "w-full h-full object-cover transition-opacity duration-200",
-            isLoaded ? "opacity-100" : "opacity-0"
+            "w-full h-full object-cover",
+            priority ? "opacity-100" : (isLoaded ? "opacity-100 transition-opacity duration-200" : "opacity-0 transition-opacity duration-200")
           )}
         />
       )}

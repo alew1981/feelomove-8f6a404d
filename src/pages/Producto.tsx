@@ -636,10 +636,10 @@ const Producto = () => {
             )}
           </div>
           
-          {/* Hero Section */}
+          {/* Hero Section - LCP optimized with explicit dimensions */}
           <div className="relative rounded-2xl overflow-hidden mb-8">
-            {/* Background Image */}
-            <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
+            {/* Background Image - LCP element with priority loading */}
+            <div className="relative h-[200px] sm:h-[340px] md:h-[420px]" style={{ aspectRatio: '16/9' }}>
               <img
                 src={eventImage}
                 srcSet={eventImageSrcSet || undefined}
@@ -648,6 +648,9 @@ const Producto = () => {
                 className="w-full h-full object-cover"
                 loading="eager"
                 decoding="sync"
+                fetchPriority="high"
+                width={1200}
+                height={675}
               />
               
               {/* Gradient Overlay */}
