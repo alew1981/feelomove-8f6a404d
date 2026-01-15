@@ -257,7 +257,7 @@ const Festivales = () => {
       if (error) throw error;
       return new Map((data || []).map(e => [e.id, e.created_at]));
     },
-    enabled: filterSort === "novedades" || filterSort === "recientes",
+    enabled: filterSort === "novedades",
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -451,24 +451,6 @@ const Festivales = () => {
         }));
         return bNewest - aNewest;
       });
-    } else if (filterSort === "recientes" && createdAtMap) {
-      // Sort by created_at descending (most recently added first)
-      filteredStandalone.sort((a, b) => {
-        const aDate = createdAtMap.get(a.event_id) ? new Date(createdAtMap.get(a.event_id)!).getTime() : 0;
-        const bDate = createdAtMap.get(b.event_id) ? new Date(createdAtMap.get(b.event_id)!).getTime() : 0;
-        return bDate - aDate;
-      });
-      filteredParents.sort((a, b) => {
-        const aNewest = Math.max(...a.events.map(e => {
-          const createdAt = createdAtMap.get(e.event_id);
-          return createdAt ? new Date(createdAt).getTime() : 0;
-        }));
-        const bNewest = Math.max(...b.events.map(e => {
-          const createdAt = createdAtMap.get(e.event_id);
-          return createdAt ? new Date(createdAt).getTime() : 0;
-        }));
-        return bNewest - aNewest;
-      });
     } else {
       filteredStandalone.sort((a, b) => 
         new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
@@ -600,14 +582,12 @@ const Festivales = () => {
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">
-                    {filterSort === "proximos" ? "Próximos" : 
-                     filterSort === "novedades" ? "Novedades" : "Recientes"}
+                    {filterSort === "proximos" ? "Orden" : "Novedades"}
                   </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="proximos">Próximos</SelectItem>
                   <SelectItem value="novedades">Novedades</SelectItem>
-                  <SelectItem value="recientes">Añadidos recientemente</SelectItem>
                 </SelectContent>
               </Select>
 

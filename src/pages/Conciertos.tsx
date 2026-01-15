@@ -61,7 +61,6 @@ const Conciertos = () => {
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
-  const [filterRecent, setFilterRecent] = useState<string>("all");
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -80,7 +79,6 @@ const Conciertos = () => {
         filterGenre,
         filterArtist,
         filterMonthYear,
-        filterRecent,
         searchQuery,
       },
     ],
@@ -112,11 +110,6 @@ const Conciertos = () => {
         query = query.gte("event_date", start.toISOString()).lte("event_date", end.toISOString());
       }
 
-      if (filterRecent === "recent") {
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-        query = query.lte("event_date", thirtyDaysFromNow.toISOString());
-      }
 
       // Basic server-side search (keeps initial load fast)
       if (searchQuery.trim()) {
@@ -160,7 +153,7 @@ const Conciertos = () => {
       if (error) throw error;
       return new Map((data || []).map((e) => [e.id, e.created_at]));
     },
-    enabled: filterRecent === "novedades" || filterRecent === "added",
+    enabled: filterVip === "novedades",
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -200,16 +193,10 @@ const Conciertos = () => {
       );
     }
 
-    // Apply recent filter for novedades / recently added (created_at)
-    if (filterRecent === "novedades" && createdAtMap) {
+    // Apply novedades filter (events added in last 7 days)
+    if (filterVip === "novedades" && createdAtMap) {
       filtered = filtered.filter((event: any) => createdAtMap.has(event.id));
       filtered.sort((a: any, b: any) => {
-        const aDate = createdAtMap.get(a.id) ? new Date(createdAtMap.get(a.id)!).getTime() : 0;
-        const bDate = createdAtMap.get(b.id) ? new Date(createdAtMap.get(b.id)!).getTime() : 0;
-        return bDate - aDate;
-      });
-    } else if (filterRecent === "added" && createdAtMap) {
-      filtered = [...filtered].sort((a: any, b: any) => {
         const aDate = createdAtMap.get(a.id) ? new Date(createdAtMap.get(a.id)!).getTime() : 0;
         const bDate = createdAtMap.get(b.id) ? new Date(createdAtMap.get(b.id)!).getTime() : 0;
         return bDate - aDate;
@@ -226,15 +213,15 @@ const Conciertos = () => {
       });
     }
 
-    // Default sort by date ascending unless already sorted by created_at
-    if (filterRecent !== "added" && filterRecent !== "novedades") {
+    // Default sort by date ascending unless already sorted by created_at (novedades)
+    if (filterVip !== "novedades") {
       filtered.sort(
         (a: any, b: any) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime()
       );
     }
 
     return filtered;
-  }, [events, searchQuery, filterRecent, filterVip, createdAtMap]);
+  }, [events, searchQuery, filterVip, createdAtMap]);
 
   // Callback for load more
   const handleLoadMore = () => {
@@ -418,34 +405,21 @@ const Conciertos = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterRecent} onValueChange={setFilterRecent}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
+              <Select value={filterVip} onValueChange={setFilterVip}>
+                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterVip !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">
-                    {filterRecent === "all" ? "Próximos" : 
-                     filterRecent === "recent" ? "30 días" : 
-                     filterRecent === "novedades" ? "Novedades" : "Recientes"}
+                    {filterVip === "all" ? "Tipo" : filterVip === "vip" ? "VIP" : "Novedades"}
                   </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="novedades">Novedades</SelectItem>
-                  <SelectItem value="recent">Próximos 30 días</SelectItem>
-                  <SelectItem value="added">Añadidos recientemente</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterVip} onValueChange={setFilterVip}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterVip !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterVip === "all" ? "Tipo" : "VIP"}</span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="vip">Solo VIP</SelectItem>
+                  <SelectItem value="novedades">Novedades</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterRecent !== "all" || filterVip !== "all") && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterVip !== "all") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
@@ -453,7 +427,6 @@ const Conciertos = () => {
                     setFilterGenre("all");
                     setFilterArtist("all");
                     setFilterMonthYear("all");
-                    setFilterRecent("all");
                     setFilterVip("all");
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
