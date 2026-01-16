@@ -94,22 +94,28 @@ const Producto = () => {
     queryFn: async () => {
       if (!slug) throw new Error("No se proporcionó el identificador del evento");
       
-      // Check for canonical slug redirect FIRST
-      const { data: canonicalSlug, error: rpcError } = await supabase
-        .rpc('get_canonical_slug' as any, { input_slug: slug });
-      
-      // Store the canonical slug for SEO purposes
-      if (!rpcError && canonicalSlug) {
-        setRpcCanonicalSlug(canonicalSlug);
-      }
-      
-      // If we have a different canonical slug, redirect 301
-      if (!rpcError && canonicalSlug && canonicalSlug !== slug) {
-        const redirectPath = isFestivalRoute 
-          ? `/festival/${canonicalSlug}` 
-          : `/concierto/${canonicalSlug}`;
-        navigate(redirectPath, { replace: true });
-        return null; // Stop execution, redirect will happen
+      // Check for canonical slug redirect using slug_redirects table
+      // (Removed RPC call to non-existent get_canonical_slug function)
+      try {
+        const { data: redirectData } = await supabase
+          .from('slug_redirects')
+          .select('new_slug')
+          .eq('old_slug', slug)
+          .maybeSingle();
+        
+        if (redirectData?.new_slug && redirectData.new_slug !== slug) {
+          // Store the canonical slug for SEO purposes
+          setRpcCanonicalSlug(redirectData.new_slug);
+          // Redirect to the new canonical URL
+          const redirectPath = isFestivalRoute 
+            ? `/festival/${redirectData.new_slug}` 
+            : `/concierto/${redirectData.new_slug}`;
+          navigate(redirectPath, { replace: true });
+          return null; // Stop execution, redirect will happen
+        }
+      } catch (redirectError) {
+        // Silently continue if redirect table is unavailable
+        console.warn('Redirect check skipped:', redirectError);
       }
       
       // Use specific view based on route type

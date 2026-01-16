@@ -71,7 +71,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
       .replace(/-+/g, '-')      // Collapse multiple hyphens
       .replace(/^-|-$/g, '');   // Remove leading/trailing hyphens
 
-  // Fetch primary related links
+  // Fetch primary related links with graceful error handling for MV
   useEffect(() => {
     const fetchLinks = async () => {
       try {
@@ -80,14 +80,18 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
           .select('related_links')
           .eq('source_type', type)
           .eq('source_slug', slug)
-          .single();
+          .maybeSingle(); // Use maybeSingle to handle 406 errors gracefully
 
-        if (error) throw error;
-        if (data?.related_links) {
+        // Gracefully handle MV errors (406, 500) - these can happen during refresh
+        if (error) {
+          console.warn('mv_internal_links unavailable (MV may be refreshing):', error.message);
+          // Continue with fallback data instead of throwing
+        } else if (data?.related_links) {
           setLinks(data.related_links as RelatedLink[] | RelatedLinksData);
         }
       } catch (error) {
-        console.error('Error fetching related links:', error);
+        // Catch any unexpected errors silently - fallback links will be used
+        console.warn('Error fetching related links, using fallback:', error);
       } finally {
         setIsLoading(false);
       }

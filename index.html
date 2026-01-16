@@ -118,36 +118,57 @@
     
     <!-- NON-CRITICAL: Defer all analytics and third-party scripts -->
     <script>
-      // Defer GTM loading until after page is interactive
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          var gtmScript = document.createElement('script');
-          gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-5VPZ5LH';
-          gtmScript.async = true;
-          document.head.appendChild(gtmScript);
+      // Defer GTM and CookieYes loading until after page is fully loaded
+      // This prevents them from blocking LCP (Largest Contentful Paint)
+      (function() {
+        function loadDeferredScripts() {
+          // Load GTM after 2s delay
+          setTimeout(function() {
+            var gtmScript = document.createElement('script');
+            gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-5VPZ5LH';
+            gtmScript.async = true;
+            document.head.appendChild(gtmScript);
+            
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+          }, 2000);
           
-          window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-        }, 2000); // Delay 2s after load to not impact LCP
+          // Load CookieYes after 3s delay (deferred from head to not impact LCP)
+          setTimeout(function() {
+            var cookieScript = document.createElement('script');
+            cookieScript.id = 'cookieyes';
+            cookieScript.type = 'text/javascript';
+            cookieScript.src = 'https://cdn-cookieyes.com/client_data/e04de8a47af64b7e2b2a69e5/script.js';
+            cookieScript.async = true;
+            document.head.appendChild(cookieScript);
+          }, 3000);
+          
+          // Add accessibility attributes to CookieYes images
+          setTimeout(function() {
+            var cookieImages = document.querySelectorAll('img[src*="cookieyes"], img[src*="cdn-cookieyes"]');
+            cookieImages.forEach(function(img) {
+              var src = img.getAttribute('src') || '';
+              if (src.includes('revisit')) {
+                img.setAttribute('title', 'Configurar cookies');
+                if (!img.getAttribute('alt')) img.setAttribute('alt', 'Configurar cookies');
+              } else if (src.includes('close')) {
+                img.setAttribute('title', 'Cerrar');
+                if (!img.getAttribute('alt')) img.setAttribute('alt', 'Cerrar');
+              } else if (src.includes('powered')) {
+                img.setAttribute('title', 'CookieYes Logo');
+                if (!img.getAttribute('alt')) img.setAttribute('alt', 'CookieYes Logo');
+              }
+            });
+          }, 5000);
+        }
         
-        // Add title attributes to CookieYes third-party images for accessibility
-        setTimeout(function() {
-          var cookieImages = document.querySelectorAll('img[src*="cookieyes"], img[src*="cdn-cookieyes"]');
-          cookieImages.forEach(function(img) {
-            var src = img.getAttribute('src') || '';
-            if (src.includes('revisit')) {
-              img.setAttribute('title', 'Configurar cookies');
-              if (!img.getAttribute('alt')) img.setAttribute('alt', 'Configurar cookies');
-            } else if (src.includes('close')) {
-              img.setAttribute('title', 'Cerrar');
-              if (!img.getAttribute('alt')) img.setAttribute('alt', 'Cerrar');
-            } else if (src.includes('powered')) {
-              img.setAttribute('title', 'CookieYes Logo');
-              if (!img.getAttribute('alt')) img.setAttribute('alt', 'CookieYes Logo');
-            }
-          });
-        }, 3000);
-      });
+        // Trigger after page load to ensure LCP is not impacted
+        if (document.readyState === 'complete') {
+          loadDeferredScripts();
+        } else {
+          window.addEventListener('load', loadDeferredScripts);
+        }
+      })();
     </script>
     
     <!-- Keak A/B Testing - defer -->
