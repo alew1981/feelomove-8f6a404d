@@ -19,7 +19,10 @@ export const optimizeImageUrl = (
   originalUrl: string | undefined | null,
   options: OptimizeOptions = {}
 ): string | undefined => {
-  if (!originalUrl) return undefined;
+  if (!originalUrl) {
+    console.log('[ImageOptimizer] No URL provided');
+    return undefined;
+  }
 
   // Only optimize LiteAPI hotel images
   const isLiteApiImage = 
@@ -37,21 +40,22 @@ export const optimizeImageUrl = (
   } = options;
 
   // Use Cloudinary's fetch API for optimization if configured
-  const cloudName = (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  
+  console.log('[ImageOptimizer] Cloudinary cloud name:', cloudName);
+  console.log('[ImageOptimizer] Original URL:', originalUrl);
   
   if (cloudName) {
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/fetch`;
     const transformations = `f_${format},q_${quality},w_${width},c_limit`;
-    return `${baseUrl}/${transformations}/${encodeURIComponent(originalUrl)}`;
+    const optimizedUrl = `${baseUrl}/${transformations}/${encodeURIComponent(originalUrl)}`;
+    console.log('[ImageOptimizer] Optimized URL:', optimizedUrl);
+    return optimizedUrl;
   }
 
-  // Fallback: Use URL parameters if supported by the image server
-  // Most CDNs support these parameters
-  const url = new URL(originalUrl);
-  url.searchParams.set('w', width.toString());
-  url.searchParams.set('q', quality.toString());
-  
-  return url.toString();
+  // Fallback: Return original URL (static.cupid.travel should work directly)
+  console.log('[ImageOptimizer] Fallback: using original URL');
+  return originalUrl;
 };
 
 /**
