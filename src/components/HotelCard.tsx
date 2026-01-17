@@ -50,11 +50,6 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
   // Optimize hotel image for performance (reduces 144-696KB to ~30-50KB)
   const optimizedImageUrl = useOptimizedImage(hotel.hotel_main_photo, 400);
 
-  if (import.meta.env.DEV) {
-    console.log('[HotelCard] hotel:', hotel);
-    console.log('[HotelCard] hotel_main_photo:', hotel.hotel_main_photo);
-    console.log('[HotelCard] optimizedImageUrl:', optimizedImageUrl);
-  }
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
