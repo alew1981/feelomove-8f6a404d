@@ -95,23 +95,38 @@ const Producto = () => {
       if (!slug) throw new Error("No se proporcionó el identificador del evento");
       
       // Check for canonical slug redirect using slug_redirects table
-      // If current slug is an OLD slug, redirect to new one
+      // If current slug is an OLD slug, redirect to new one.
+      // IMPORTANT: Ignore redirects that point to placeholder slugs (e.g. ending in -9999),
+      // because they create redirect loops with our legacy-slug normalizer.
       try {
         const { data: redirectData } = await supabase
           .from('slug_redirects')
           .select('new_slug')
           .eq('old_slug', slug)
           .maybeSingle();
-        
+
+        const isPlaceholderSlug = (s: string) => /-9999(-\d{2})?(-\d{2})?$/.test(s);
+
         if (redirectData?.new_slug && redirectData.new_slug !== slug) {
-          // Store the canonical slug for SEO purposes
-          setRpcCanonicalSlug(redirectData.new_slug);
-          // Redirect to the new canonical URL
-          const redirectPath = isFestivalRoute 
-            ? `/festival/${redirectData.new_slug}` 
-            : `/concierto/${redirectData.new_slug}`;
-          navigate(redirectPath, { replace: true });
-          return null; // Stop execution, redirect will happen
+          if (isPlaceholderSlug(redirectData.new_slug)) {
+            // Skip placeholder redirects to avoid infinite loops like:
+            // clean-slug -> clean-slug-9999 -> clean-slug
+            console.warn('Ignoring placeholder slug_redirects entry:', {
+              old_slug: slug,
+              new_slug: redirectData.new_slug,
+            });
+          } else {
+            // Store the canonical slug for SEO purposes
+            setRpcCanonicalSlug(redirectData.new_slug);
+
+            // Redirect to the new canonical URL
+            const redirectPath = isFestivalRoute
+              ? `/festival/${redirectData.new_slug}`
+              : `/concierto/${redirectData.new_slug}`;
+
+            navigate(redirectPath, { replace: true });
+            return null; // Stop execution, redirect will happen
+          }
         }
       } catch (redirectError) {
         // Silently continue if redirect table is unavailable
