@@ -856,16 +856,6 @@ const Producto = () => {
                       const isLimited = ticket.availability === "limited";
                       const isVIP = /vip/i.test(ticket.type || '') || /vip/i.test(ticket.description || '') || /vip/i.test(ticket.code || '');
 
-                      if (import.meta.env.DEV) {
-                        console.log('[TicketSelector] ticket:', ticket);
-                        console.log('[TicketSelector] disabled state:', {
-                          ticketId: ticket.id,
-                          availability: ticket.availability,
-                          isSoldOut,
-                          isLimited,
-                          quantity,
-                        });
-                      }
                       
                       return (
                         <Card 
