@@ -85,17 +85,28 @@ const Index = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch artists
+  // Fetch artists with graceful MV error handling
   const { data: artists = [], isLoading: loadingArtists } = useQuery({
     queryKey: ["home-artists"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('mv_attractions')
-        .select('*')
-        .order('event_count', { ascending: false })
-        .limit(4);
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('mv_attractions')
+          .select('*')
+          .order('event_count', { ascending: false })
+          .limit(4);
+        
+        if (error) {
+          console.warn('mv_attractions unavailable (MV may be refreshing):', error.message);
+          return [];
+        }
+        return data || [];
+      } catch (error) {
+        console.warn('Error fetching home artists:', error);
+        return [];
+      }
     },
+    retry: 1,
     staleTime: 5 * 60 * 1000,
   });
 

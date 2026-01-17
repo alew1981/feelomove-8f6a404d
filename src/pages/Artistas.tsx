@@ -41,18 +41,28 @@ const Artistas = () => {
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
-  // Fetch artists from mv_attractions
+  // Fetch artists from mv_attractions with graceful error handling
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["allArtists"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mv_attractions")
-        .select("*")
-        .order("event_count", { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from("mv_attractions")
+          .select("*")
+          .order("event_count", { ascending: false });
+        
+        if (error) {
+          console.warn('mv_attractions unavailable (MV may be refreshing):', error.message);
+          return []; // Return empty array on MV error
+        }
+        return data || [];
+      } catch (error) {
+        console.warn('Error fetching artists:', error);
+        return [];
+      }
     },
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Get hero image from first artist
