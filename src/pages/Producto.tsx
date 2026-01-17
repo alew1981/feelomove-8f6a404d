@@ -402,6 +402,14 @@ const Producto = () => {
         if (priceType.price_levels && Array.isArray(priceType.price_levels)) {
           priceType.price_levels.forEach((level, levelIndex) => {
             const ticketId = `${priceType.code || 'ticket'}-${levelIndex}`;
+            // Normalize availability - treat missing/unknown values as "available"
+            const rawAvailability = level.availability?.toLowerCase() || "available";
+            const normalizedAvailability = rawAvailability === "none" || rawAvailability === "soldout" || rawAvailability === "sold_out" 
+              ? "none" 
+              : rawAvailability === "limited" 
+                ? "limited" 
+                : "available";
+            
             tickets.push({
               id: ticketId,
               type: priceType.name || level.name || "Entrada General",
@@ -409,7 +417,7 @@ const Producto = () => {
               description: priceType.description || "",
               price: Number(level.face_value || 0),
               fees: Number(level.ticket_fees || 0),
-              availability: level.availability || "available"
+              availability: normalizedAvailability
             });
           });
         }

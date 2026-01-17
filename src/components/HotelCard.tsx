@@ -47,14 +47,8 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Debug: Log hotel data to see what's coming through
-  console.log('[HotelCard] Hotel data:', hotel);
-  console.log('[HotelCard] hotel_main_photo:', hotel.hotel_main_photo);
-  
   // Optimize hotel image for performance (reduces 144-696KB to ~30-50KB)
   const optimizedImageUrl = useOptimizedImage(hotel.hotel_main_photo, 400);
-  
-  console.log('[HotelCard] Optimized URL:', optimizedImageUrl);
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
