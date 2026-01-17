@@ -6,7 +6,7 @@ export const registerServiceWorker = async () => {
     // IMPORTANT:
     // - We add a version query param to bypass any CDN/browser caching of sw.js
     // - This fixes the "works in incognito but not in normal mode" issue caused by stale SW.
-    const registration = await navigator.serviceWorker.register('/sw.js?v=v4', {
+    const registration = await navigator.serviceWorker.register('/sw.js?v=v5', {
       scope: '/',
     });
 

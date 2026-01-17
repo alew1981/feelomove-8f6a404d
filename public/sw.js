@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `feelomove-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `feelomove-images-${CACHE_VERSION}`;
 
@@ -72,7 +72,16 @@ self.addEventListener('fetch', (event) => {
     return; // let the browser handle it (network)
   }
 
-  // Image caching: Stale-While-Revalidate
+  // Skip caching for external image domains that don't support CORS
+  // These will be handled directly by the browser without SW interference
+  if (
+    url.hostname.includes('cupid.travel') ||
+    url.hostname.includes('static.cupid.travel')
+  ) {
+    return; // Let browser handle directly - no SW caching
+  }
+
+  // Image caching: Stale-While-Revalidate (only for CORS-enabled sources)
   if (
     request.destination === 'image' ||
     url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg|avif)$/i) ||
@@ -82,13 +91,18 @@ self.addEventListener('fetch', (event) => {
   ) {
     event.respondWith(
       caches.open(IMAGE_CACHE).then((cache) =>
-        cache.match(request).then((cachedResponse) => {
+        cache.match(request).then(async (cachedResponse) => {
           const fetchPromise = fetch(request)
             .then((response) => {
               if (response.ok) cache.put(request, response.clone());
               return response;
             })
-            .catch(() => cachedResponse || caches.match('/placeholder.svg'));
+            .catch(async () => {
+              // Return cached response or placeholder (properly awaited)
+              if (cachedResponse) return cachedResponse;
+              const placeholder = await caches.match('/placeholder.svg');
+              return placeholder || new Response('', { status: 404 });
+            });
 
           return cachedResponse || fetchPromise;
         })
