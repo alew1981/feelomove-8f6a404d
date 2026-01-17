@@ -56,9 +56,19 @@ export const optimizeImageUrl = (
   if (cloudName) {
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/fetch`;
     const transformations = `f_${format},q_${quality},w_${width},c_limit`;
-    // Cloudinary fetch API needs the URL to be encoded
-    const optimizedUrl = `${baseUrl}/${transformations}/${encodeURIComponent(cleanUrl)}`;
-    return optimizedUrl;
+
+    // Cloudinary fetch expects the remote URL as a plain URL path segment (not fully URL-encoded)
+    // We decode first (handled above) and only apply encodeURI to avoid breaking spaces/
+    // special characters while keeping :// and / intact.
+    const remoteUrl = encodeURI(cleanUrl);
+
+    if (import.meta.env.DEV) {
+      console.log('[ImageOptimizer] originalUrl:', originalUrl);
+      console.log('[ImageOptimizer] cleanUrl:', cleanUrl);
+      console.log('[ImageOptimizer] remoteUrl:', remoteUrl);
+    }
+
+    return `${baseUrl}/${transformations}/${remoteUrl}`;
   }
 
   // Fallback: Return clean URL (static.cupid.travel should work directly)
