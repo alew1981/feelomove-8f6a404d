@@ -102,9 +102,9 @@ const RedirectLegacyEvent = () => {
   // Determine if this is a festival or concert route
   const isFestivalRoute = location.pathname.startsWith('/festival');
 
-  // Only query if we have a legacy slug with date suffix (skip for placeholder dates - redirect immediately)
+  // Query to find event type and correct slug - needed for both placeholder and regular legacy slugs
   const { data: eventData, isLoading, error, isFetched } = useQuery({
-    queryKey: ['legacy-event-redirect', baseSlug, date],
+    queryKey: ['legacy-event-redirect', baseSlug, date, isPlaceholderDate],
     queryFn: async () => {
       // First, try exact match with base slug
       let query = supabase
@@ -112,8 +112,8 @@ const RedirectLegacyEvent = () => {
         .select("event_type, slug, name, venue_city, event_date")
         .eq("slug", baseSlug);
       
-      // If we have a date, also filter by date for more accuracy
-      if (date) {
+      // If we have a date (not placeholder), also filter by date for more accuracy
+      if (date && !isPlaceholderDate) {
         query = query.gte("event_date", `${date}T00:00:00`)
                      .lte("event_date", `${date}T23:59:59`);
       }
@@ -128,7 +128,7 @@ const RedirectLegacyEvent = () => {
       }
       
       // If no exact match found with date filter, try without date filter
-      if (date) {
+      if (date && !isPlaceholderDate) {
         const { data: withoutDateData } = await supabase
           .from("tm_tbl_events")
           .select("event_type, slug, name, venue_city, event_date")
@@ -152,7 +152,7 @@ const RedirectLegacyEvent = () => {
             .select("event_type, slug, name, venue_city, event_date")
             .ilike("slug", `${possibleSlugWithoutCity}%`);
           
-          if (date) {
+          if (date && !isPlaceholderDate) {
             fuzzyQuery = fuzzyQuery.gte("event_date", `${date}T00:00:00`)
                                    .lte("event_date", `${date}T23:59:59`);
           }
@@ -167,7 +167,7 @@ const RedirectLegacyEvent = () => {
       
       return null;
     },
-    enabled: hasLegacySuffix && !!baseSlug && !isPlaceholderDate, // Skip DB query for placeholder dates
+    enabled: hasLegacySuffix && !!baseSlug, // Always query when legacy suffix detected
     staleTime: Infinity, // Cache indefinitely for redirects
     gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
   });
@@ -176,20 +176,11 @@ const RedirectLegacyEvent = () => {
     // Only process redirects for legacy URLs with date suffix or placeholder
     if (!hasLegacySuffix) return;
     
-    // For placeholder dates (9999), immediately redirect to baseSlug without DB lookup
-    if (isPlaceholderDate && baseSlug) {
-      const newPath = isFestivalRoute 
-        ? `/festival/${baseSlug}` 
-        : `/concierto/${baseSlug}`;
-      
-      console.log(`Placeholder date redirect: ${location.pathname} → ${newPath}`);
-      navigate(newPath, { replace: true });
-      return;
-    }
+    // Wait for data to be fetched
+    if (isLoading) return;
     
-    // For regular legacy date suffixes, use DB lookup result
     if (eventData) {
-      // Redirect to the correct URL based on event type
+      // Redirect to the correct URL based on event type from DB
       const isFestival = eventData.event_type === 'festival';
       const newPath = isFestival 
         ? `/festival/${eventData.slug}` 
@@ -197,12 +188,12 @@ const RedirectLegacyEvent = () => {
       
       // Only redirect if the path is different
       if (location.pathname !== newPath) {
-        console.log(`Legacy redirect: ${location.pathname} → ${newPath}`);
+        console.log(`Legacy redirect: ${location.pathname} → ${newPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}`);
         navigate(newPath, { replace: true });
       }
-    } else if (isFetched && !isLoading && !eventData && !isPlaceholderDate) {
-      // No event found - redirect to search or events page
-      console.warn(`Legacy redirect: No event found for legacy slug "${rawSlug}", redirecting to list page`);
+    } else if (isFetched && !eventData) {
+      // No event found - redirect to list page based on current route
+      console.warn(`Legacy redirect: No event found for slug "${baseSlug}", redirecting to list page`);
       
       if (isFestivalRoute) {
         navigate('/festivales', { replace: true });
@@ -210,7 +201,7 @@ const RedirectLegacyEvent = () => {
         navigate('/conciertos', { replace: true });
       }
     }
-  }, [eventData, isLoading, isFetched, navigate, location.pathname, rawSlug, isFestivalRoute, hasLegacySuffix, isPlaceholderDate, baseSlug]);
+  }, [eventData, isLoading, isFetched, navigate, location.pathname, baseSlug, isFestivalRoute, hasLegacySuffix, isPlaceholderDate]);
 
   // Handle query errors for legacy redirects
   if (hasLegacySuffix && error) {
