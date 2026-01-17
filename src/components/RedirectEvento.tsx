@@ -33,37 +33,14 @@ const RedirectEvento = () => {
   const { data: eventData, isLoading, error } = useQuery({
     queryKey: ['event-type', slug],
     queryFn: async () => {
-      if (!slug) return null;
-      
-      // First try to find the event directly
-      const { data: directEvent, error: directError } = await supabase
+      const { data, error } = await supabase
         .from("tm_tbl_events")
         .select("event_type, slug")
         .eq("slug", slug)
         .maybeSingle();
       
-      if (directEvent) return directEvent;
-      
-      // If not found, check if it's an old slug that needs redirect
-      const { data: redirect, error: redirectError } = await supabase
-        .from("slug_redirects")
-        .select("new_slug")
-        .eq("old_slug", slug)
-        .maybeSingle();
-      
-      if (redirect) {
-        // Get the event with the new slug
-        const { data: redirectedEvent } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug")
-          .eq("slug", redirect.new_slug)
-          .maybeSingle();
-        
-        return redirectedEvent;
-      }
-      
-      if (directError) throw directError;
-      return null;
+      if (error) throw error;
+      return data;
     },
     enabled: !!slug,
   });

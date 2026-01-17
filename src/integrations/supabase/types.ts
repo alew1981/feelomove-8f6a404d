@@ -366,30 +366,6 @@ export type Database = {
         }
         Relationships: []
       }
-      slug_redirects: {
-        Row: {
-          created_at: string | null
-          event_id: string
-          id: string
-          new_slug: string
-          old_slug: string
-        }
-        Insert: {
-          created_at?: string | null
-          event_id: string
-          id?: string
-          new_slug: string
-          old_slug: string
-        }
-        Update: {
-          created_at?: string | null
-          event_id?: string
-          id?: string
-          new_slug?: string
-          old_slug?: string
-        }
-        Relationships: []
-      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
@@ -1392,16 +1368,6 @@ export type Database = {
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       generate_event_schema_org: { Args: { p_event_id: string }; Returns: Json }
-      generate_event_slug: {
-        Args: {
-          p_event_date: string
-          p_event_id: string
-          p_name: string
-          p_venue_city: string
-          p_venue_name: string
-        }
-        Returns: string
-      }
       generate_seo_slug: { Args: { text_input: string }; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {

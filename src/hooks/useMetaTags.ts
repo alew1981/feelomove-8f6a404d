@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Hook to fetch meta tags from mv_events_meta_tags and inject them into the document head.
- * Uses try-catch to gracefully handle errors from materialized views (406/500 errors).
+ * Hook to fetch meta tags from mv_events_meta_tags and inject them into the document head
  * @param eventSlug - The event slug to fetch meta tags for
  */
 export const useMetaTags = (eventSlug: string | undefined) => {
@@ -16,11 +15,10 @@ export const useMetaTags = (eventSlug: string | undefined) => {
           .from('mv_events_meta_tags')
           .select('*')
           .eq('slug', eventSlug)
-          .maybeSingle(); // Use maybeSingle to avoid errors when no row found
+          .single();
 
         if (error) {
-          // Log as warning, not error - MVs can be temporarily unavailable
-          console.warn('Meta tags fetch warning (MV may be refreshing):', error.message);
+          console.warn('Meta tags fetch error:', error.message);
           return;
         }
 
