@@ -20,17 +20,28 @@ export const optimizeImageUrl = (
   options: OptimizeOptions = {}
 ): string | undefined => {
   if (!originalUrl) {
-    console.log('[ImageOptimizer] No URL provided');
     return undefined;
+  }
+
+  // Decode URL first in case it comes already encoded from database
+  let cleanUrl = originalUrl;
+  try {
+    // Check if URL is encoded (contains %3A or %2F which are : and /)
+    if (cleanUrl.includes('%3A') || cleanUrl.includes('%2F')) {
+      cleanUrl = decodeURIComponent(cleanUrl);
+    }
+  } catch (e) {
+    // If decode fails, use original
+    cleanUrl = originalUrl;
   }
 
   // Only optimize LiteAPI hotel images
   const isLiteApiImage = 
-    originalUrl.includes('static.cupid.travel') || 
-    originalUrl.includes('cupid.travel');
+    cleanUrl.includes('static.cupid.travel') || 
+    cleanUrl.includes('cupid.travel');
 
   if (!isLiteApiImage) {
-    return originalUrl;
+    return cleanUrl;
   }
 
   const {
@@ -42,20 +53,16 @@ export const optimizeImageUrl = (
   // Use Cloudinary's fetch API for optimization if configured
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   
-  console.log('[ImageOptimizer] Cloudinary cloud name:', cloudName);
-  console.log('[ImageOptimizer] Original URL:', originalUrl);
-  
   if (cloudName) {
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/fetch`;
     const transformations = `f_${format},q_${quality},w_${width},c_limit`;
-    const optimizedUrl = `${baseUrl}/${transformations}/${encodeURIComponent(originalUrl)}`;
-    console.log('[ImageOptimizer] Optimized URL:', optimizedUrl);
+    // Cloudinary fetch API needs the URL to be encoded
+    const optimizedUrl = `${baseUrl}/${transformations}/${encodeURIComponent(cleanUrl)}`;
     return optimizedUrl;
   }
 
-  // Fallback: Return original URL (static.cupid.travel should work directly)
-  console.log('[ImageOptimizer] Fallback: using original URL');
-  return originalUrl;
+  // Fallback: Return clean URL (static.cupid.travel should work directly)
+  return cleanUrl;
 };
 
 /**
