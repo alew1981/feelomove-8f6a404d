@@ -1,10 +1,6 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `feelomove-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `feelomove-images-${CACHE_VERSION}`;
-const DATA_CACHE = `feelomove-data-${CACHE_VERSION}`;
-
-// Maximum items in image cache to prevent storage bloat
-const MAX_IMAGE_CACHE_ITEMS = 100;
 
 // Critical routes to precache
 const PRECACHE_ROUTES = [
@@ -23,60 +19,60 @@ const STATIC_ASSETS = [
   '/og-image.jpg',
 ];
 
-// Install event - cache static assets and critical routes
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      // Cache static assets
       return cache.addAll(STATIC_ASSETS).then(() => {
-        // Precache critical routes (best effort, don't fail install)
+        // Best-effort route precache; don't fail install
         return Promise.allSettled(
-          PRECACHE_ROUTES.map(route => 
+          PRECACHE_ROUTES.map(route =>
             fetch(route, { mode: 'no-cors' })
               .then(response => {
                 if (response.ok || response.type === 'opaque') {
                   return cache.put(route, response);
                 }
               })
-              .catch(() => {/* Ignore precache failures */})
+              .catch(() => {/* ignore */})
           )
         );
       });
     })
   );
+
+  // Activate updated SW ASAP
   self.skipWaiting();
 });
 
-// Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-  const validCaches = [STATIC_CACHE, IMAGE_CACHE, DATA_CACHE];
-  
+  const validCaches = [STATIC_CACHE, IMAGE_CACHE];
+
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => {
-            return name.startsWith('feelomove-') && !validCaches.includes(name);
-          })
+          .filter((name) => name.startsWith('feelomove-') && !validCaches.includes(name))
           .map((name) => caches.delete(name))
       );
     })
   );
+
   self.clients.claim();
 });
 
-// Fetch event - apply caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
   if (request.method !== 'GET') return;
-
-  // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) return;
 
-  // Image caching strategy: Stale-While-Revalidate with aggressive caching
+  // NEVER cache Supabase/API requests here.
+  // This avoids serving stale availability/ticket data that can break add-to-cart logic.
+  if (url.hostname.includes('supabase.co')) {
+    return; // let the browser handle it (network)
+  }
+
+  // Image caching: Stale-While-Revalidate
   if (
     request.destination === 'image' ||
     url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg|avif)$/i) ||
@@ -85,110 +81,73 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('unsplash.com')
   ) {
     event.respondWith(
-      caches.open(IMAGE_CACHE).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
+      caches.open(IMAGE_CACHE).then((cache) =>
+        cache.match(request).then((cachedResponse) => {
           const fetchPromise = fetch(request)
             .then((response) => {
-              if (response.ok) {
-                cache.put(request, response.clone());
-              }
+              if (response.ok) cache.put(request, response.clone());
               return response;
             })
             .catch(() => cachedResponse || caches.match('/placeholder.svg'));
 
-          // Return cached immediately, update in background
           return cachedResponse || fetchPromise;
-        });
-      })
+        })
+      )
     );
     return;
   }
 
-  // API/Data caching: Stale-While-Revalidate with short cache
-  if (url.hostname.includes('supabase.co')) {
-    event.respondWith(
-      caches.open(DATA_CACHE).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
-          const fetchPromise = fetch(request).then((response) => {
-            if (response.ok) {
-              // Clone and cache the response
-              const responseToCache = response.clone();
-              cache.put(request, responseToCache);
-            }
-            return response;
-          });
-
-          // Return cached immediately, update in background
-          return cachedResponse || fetchPromise;
-        });
-      })
-    );
-    return;
-  }
-
-  // Static assets: Cache First with long expiry
+  // Static assets: Cache First (hashed assets will still update on new deploy)
   if (
     url.pathname.match(/\.(js|css|woff2?|ttf|eot)$/i) ||
     url.hostname.includes('fonts.googleapis.com') ||
     url.hostname.includes('fonts.gstatic.com')
   ) {
     event.respondWith(
-      caches.open(STATIC_CACHE).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
+      caches.open(STATIC_CACHE).then((cache) =>
+        cache.match(request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
-
           return fetch(request).then((response) => {
-            if (response.ok) {
-              cache.put(request, response.clone());
-            }
+            if (response.ok) cache.put(request, response.clone());
             return response;
           });
-        });
-      })
+        })
+      )
     );
     return;
   }
 
-  // HTML pages: Network First, fallback to Cache
+  // HTML navigation: Network First, fallback to cache
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.ok) {
             const responseClone = response.clone();
-            caches.open(STATIC_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, responseClone));
           }
           return response;
         })
-        .catch(() => {
-          return caches.match(request).then((cachedResponse) => {
-            return cachedResponse || caches.match('/');
-          });
-        })
+        .catch(() =>
+          caches.match(request).then((cachedResponse) => cachedResponse || caches.match('/'))
+        )
     );
-    return;
   }
 });
 
-// Handle messages from main thread
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
-  // Prefetch specific routes on demand
-  if (event.data && event.data.type === 'PREFETCH_ROUTE') {
+
+  if (event.data?.type === 'PREFETCH_ROUTE') {
     const route = event.data.route;
     caches.open(STATIC_CACHE).then((cache) => {
       fetch(route)
         .then((response) => {
-          if (response.ok) {
-            cache.put(route, response);
-          }
+          if (response.ok) cache.put(route, response);
         })
-        .catch(() => {/* Ignore prefetch failures */});
+        .catch(() => {/* ignore */});
     });
   }
 });
