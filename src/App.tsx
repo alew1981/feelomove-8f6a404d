@@ -184,7 +184,9 @@ const App = () => (
                 <Route path="/favoritos" element={<Favoritos />} />
                 
                 {/* SEO-friendly event routes - handles both new and legacy URLs */}
+                <Route path="/concierto" element={<RedirectToConciertos />} />
                 <Route path="/concierto/:slug" element={<RedirectLegacyEvent />} />
+                <Route path="/festival" element={<Navigate to="/festivales" replace />} />
                 <Route path="/festival/:slug" element={<RedirectLegacyEvent />} />
                 
                 {/* Legacy URL redirects (301) */}
