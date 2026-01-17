@@ -118,6 +118,33 @@ const Producto = () => {
         console.warn('Redirect check skipped:', redirectError);
       }
       
+      // If the slug exists but the route type is wrong (/concierto for a festival or vice-versa),
+      // redirect immediately to the correct canonical route.
+      // This prevents unnecessary view queries and fixes 404s for misclassified URLs.
+      try {
+        const { data: typeCheck } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug")
+          .eq("slug", slug)
+          .maybeSingle();
+
+        if (typeCheck?.event_type) {
+          const shouldBeFestival = typeCheck.event_type === "festival";
+          const isWrongRoute = shouldBeFestival ? !isFestivalRoute : !isConcierto;
+
+          if (isWrongRoute) {
+            const correctPath = shouldBeFestival
+              ? `/festival/${typeCheck.slug}`
+              : `/concierto/${typeCheck.slug}`;
+            navigate(correctPath, { replace: true });
+            return null;
+          }
+        }
+      } catch (e) {
+        // If this check fails (e.g. permissions), continue with the existing fallback logic.
+        console.warn("Route type check skipped:", e);
+      }
+
       // Use specific view based on route type
       const viewName = isFestivalRoute 
         ? "lovable_mv_event_product_page_festivales" 
