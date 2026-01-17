@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v5-20260117-fix';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `feelomove-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `feelomove-images-${CACHE_VERSION}`;
 const DATA_CACHE = `feelomove-data-${CACHE_VERSION}`;

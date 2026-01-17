@@ -19,29 +19,15 @@ export const optimizeImageUrl = (
   originalUrl: string | undefined | null,
   options: OptimizeOptions = {}
 ): string | undefined => {
-  if (!originalUrl) {
-    return undefined;
-  }
-
-  // Decode URL first in case it comes already encoded from database
-  let cleanUrl = originalUrl;
-  try {
-    // Check if URL is encoded (contains %3A or %2F which are : and /)
-    if (cleanUrl.includes('%3A') || cleanUrl.includes('%2F')) {
-      cleanUrl = decodeURIComponent(cleanUrl);
-    }
-  } catch (e) {
-    // If decode fails, use original
-    cleanUrl = originalUrl;
-  }
+  if (!originalUrl) return undefined;
 
   // Only optimize LiteAPI hotel images
   const isLiteApiImage = 
-    cleanUrl.includes('static.cupid.travel') || 
-    cleanUrl.includes('cupid.travel');
+    originalUrl.includes('static.cupid.travel') || 
+    originalUrl.includes('cupid.travel');
 
   if (!isLiteApiImage) {
-    return cleanUrl;
+    return originalUrl;
   }
 
   const {
@@ -51,21 +37,21 @@ export const optimizeImageUrl = (
   } = options;
 
   // Use Cloudinary's fetch API for optimization if configured
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const cloudName = (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME;
   
   if (cloudName) {
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/fetch`;
     const transformations = `f_${format},q_${quality},w_${width},c_limit`;
-
-    // CRITICAL: Cloudinary fetch API needs the URL WITHOUT encoding
-    // The URL must be plain: https://static.cupid.travel/hotels/123.jpg
-    // NOT encoded: https%3A%2F%2Fstatic.cupid.travel%2Fhotels%2F123.jpg
-
-    return `${baseUrl}/${transformations}/${cleanUrl}`;
+    return `${baseUrl}/${transformations}/${encodeURIComponent(originalUrl)}`;
   }
 
-  // Fallback: Return clean URL (static.cupid.travel should work directly)
-  return cleanUrl;
+  // Fallback: Use URL parameters if supported by the image server
+  // Most CDNs support these parameters
+  const url = new URL(originalUrl);
+  url.searchParams.set('w', width.toString());
+  url.searchParams.set('q', quality.toString());
+  
+  return url.toString();
 };
 
 /**
