@@ -418,13 +418,16 @@ export type Database = {
         Row: {
           attraction_ids: string[] | null
           attraction_names: string[] | null
+          attraction_urls: string[] | null
           cancelled: boolean | null
+          categories_data: Json | null
           created_at: string | null
           currency: string | null
           day_of_week: string | null
           domain: string | null
           door_opening_date: string | null
           event_date: string
+          event_date_format: string | null
           event_type: string | null
           exclude_from_sitemap: boolean | null
           external_url: boolean | null
@@ -441,6 +444,7 @@ export type Database = {
           is_package: boolean | null
           is_transport: boolean | null
           local_event_date: string | null
+          local_event_date_format: string | null
           minimum_age_required: number | null
           name: string
           needs_price_update: boolean | null
@@ -464,6 +468,7 @@ export type Database = {
           seats_available: boolean | null
           secondary_attraction_id: string | null
           secondary_attraction_name: string | null
+          secondary_attraction_url: string | null
           slug: string | null
           sold_out: boolean | null
           ticket_types: Json | null
@@ -483,13 +488,16 @@ export type Database = {
         Insert: {
           attraction_ids?: string[] | null
           attraction_names?: string[] | null
+          attraction_urls?: string[] | null
           cancelled?: boolean | null
+          categories_data?: Json | null
           created_at?: string | null
           currency?: string | null
           day_of_week?: string | null
           domain?: string | null
           door_opening_date?: string | null
           event_date: string
+          event_date_format?: string | null
           event_type?: string | null
           exclude_from_sitemap?: boolean | null
           external_url?: boolean | null
@@ -506,6 +514,7 @@ export type Database = {
           is_package?: boolean | null
           is_transport?: boolean | null
           local_event_date?: string | null
+          local_event_date_format?: string | null
           minimum_age_required?: number | null
           name: string
           needs_price_update?: boolean | null
@@ -529,6 +538,7 @@ export type Database = {
           seats_available?: boolean | null
           secondary_attraction_id?: string | null
           secondary_attraction_name?: string | null
+          secondary_attraction_url?: string | null
           slug?: string | null
           sold_out?: boolean | null
           ticket_types?: Json | null
@@ -548,13 +558,16 @@ export type Database = {
         Update: {
           attraction_ids?: string[] | null
           attraction_names?: string[] | null
+          attraction_urls?: string[] | null
           cancelled?: boolean | null
+          categories_data?: Json | null
           created_at?: string | null
           currency?: string | null
           day_of_week?: string | null
           domain?: string | null
           door_opening_date?: string | null
           event_date?: string
+          event_date_format?: string | null
           event_type?: string | null
           exclude_from_sitemap?: boolean | null
           external_url?: boolean | null
@@ -571,6 +584,7 @@ export type Database = {
           is_package?: boolean | null
           is_transport?: boolean | null
           local_event_date?: string | null
+          local_event_date_format?: string | null
           minimum_age_required?: number | null
           name?: string
           needs_price_update?: boolean | null
@@ -594,6 +608,7 @@ export type Database = {
           seats_available?: boolean | null
           secondary_attraction_id?: string | null
           secondary_attraction_name?: string | null
+          secondary_attraction_url?: string | null
           slug?: string | null
           sold_out?: boolean | null
           ticket_types?: Json | null
@@ -839,11 +854,14 @@ export type Database = {
         Row: {
           attraction_ids: string[] | null
           attraction_names: string[] | null
+          attraction_urls: string[] | null
           cancelled: boolean | null
+          categories_data: Json | null
           day_of_week: string | null
           destination_deeplink: string | null
           event_currency: string | null
           event_date: string | null
+          event_date_format: string | null
           event_id: string | null
           event_name: string | null
           event_season: string | null
@@ -857,6 +875,8 @@ export type Database = {
           image_standard_url: string | null
           is_package: boolean | null
           is_transport: boolean | null
+          local_event_date: string | null
+          local_event_date_format: string | null
           meta_description: string | null
           min_hotel_price: number | null
           minimum_age_required: number | null
@@ -868,8 +888,11 @@ export type Database = {
           primary_category_name: string | null
           primary_subcategory_name: string | null
           rescheduled: boolean | null
+          schedule_status: string | null
+          seatmap_static: boolean | null
           seats_available: boolean | null
           secondary_attraction_name: string | null
+          secondary_attraction_url: string | null
           seo_keywords: string[] | null
           seo_title: string | null
           sold_out: boolean | null
@@ -892,11 +915,14 @@ export type Database = {
         Row: {
           attraction_ids: string[] | null
           attraction_names: string[] | null
+          attraction_urls: string[] | null
           cancelled: boolean | null
+          categories_data: Json | null
           day_of_week: string | null
           destination_deeplink: string | null
           event_currency: string | null
           event_date: string | null
+          event_date_format: string | null
           event_id: string | null
           event_name: string | null
           event_season: string | null
@@ -927,6 +953,8 @@ export type Database = {
           image_standard_url: string | null
           is_package: boolean | null
           is_transport: boolean | null
+          local_event_date: string | null
+          local_event_date_format: string | null
           meta_description: string | null
           min_hotel_price: number | null
           minimum_age_required: number | null
@@ -938,8 +966,11 @@ export type Database = {
           primary_category_name: string | null
           primary_subcategory_name: string | null
           rescheduled: boolean | null
+          schedule_status: string | null
+          seatmap_static: boolean | null
           seats_available: boolean | null
           secondary_attraction_name: string | null
+          secondary_attraction_url: string | null
           seo_keywords: string[] | null
           seo_title: string | null
           sold_out: boolean | null
