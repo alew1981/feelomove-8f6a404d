@@ -95,7 +95,7 @@ const Producto = () => {
       if (!slug) throw new Error("No se proporcionó el identificador del evento");
       
       // Check for canonical slug redirect using slug_redirects table
-      // (Removed RPC call to non-existent get_canonical_slug function)
+      // If current slug is an OLD slug, redirect to new one
       try {
         const { data: redirectData } = await supabase
           .from('slug_redirects')
@@ -125,56 +125,57 @@ const Producto = () => {
           ? "lovable_mv_event_product_page_conciertos"
           : "lovable_mv_event_product_page"; // Fallback for legacy routes
       
-      const { data, error } = await supabase
-        .from(viewName)
-        .select("*")
-        .eq("event_slug", slug);
-      
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error(`Error al cargar el evento: ${error.message}`);
-      }
-      
-      // Event found - return data (cancelled/past events are kept accessible for SEO)
-      if (data && data.length > 0) {
-        return data;
-      }
-      
-      // No event found - try alternative views as fallback
-      // If we were looking in conciertos, try festivales (events might be mis-categorized)
-      if (viewName === "lovable_mv_event_product_page_conciertos") {
-        const { data: festivalData, error: festivalError } = await supabase
-          .from("lovable_mv_event_product_page_festivales")
+      // Helper function to search event in a specific view
+      const searchInView = async (
+        view: "lovable_mv_event_product_page" | "lovable_mv_event_product_page_conciertos" | "lovable_mv_event_product_page_festivales", 
+        searchSlug: string
+      ) => {
+        const { data, error } = await supabase
+          .from(view)
           .select("*")
-          .eq("event_slug", slug);
+          .eq("event_slug", searchSlug);
         
-        if (!festivalError && festivalData && festivalData.length > 0) {
-          return festivalData;
+        if (error) {
+          console.error(`Supabase error in ${view}:`, error);
+          return null;
         }
+        return data && data.length > 0 ? data : null;
+      };
+      
+      // Try to find event with current slug
+      let result = await searchInView(viewName, slug);
+      if (result) return result;
+      
+      // If not found, check if current slug is a NEW slug and the view has OLD slug
+      // This handles case where view wasn't refreshed after slug migration
+      try {
+        const { data: reverseRedirect } = await supabase
+          .from('slug_redirects')
+          .select('old_slug')
+          .eq('new_slug', slug)
+          .limit(1);
+        
+        if (reverseRedirect && reverseRedirect.length > 0) {
+          // Try searching with the old slug from the view
+          const oldSlug = reverseRedirect[0].old_slug;
+          result = await searchInView(viewName, oldSlug);
+          if (result) return result;
+        }
+      } catch (e) {
+        console.warn('Reverse redirect check failed:', e);
       }
       
-      // If we were looking in festivales, try conciertos
-      if (viewName === "lovable_mv_event_product_page_festivales") {
-        const { data: concertData, error: concertError } = await supabase
-          .from("lovable_mv_event_product_page_conciertos")
-          .select("*")
-          .eq("event_slug", slug);
-        
-        if (!concertError && concertData && concertData.length > 0) {
-          return concertData;
-        }
-      }
+      // Try alternative views as fallback
+      const alternativeViews: Array<"lovable_mv_event_product_page" | "lovable_mv_event_product_page_conciertos" | "lovable_mv_event_product_page_festivales"> = [
+        "lovable_mv_event_product_page_festivales",
+        "lovable_mv_event_product_page_conciertos",
+        "lovable_mv_event_product_page"
+      ];
       
-      // Final fallback - try general view
-      if (viewName !== "lovable_mv_event_product_page") {
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from("lovable_mv_event_product_page")
-          .select("*")
-          .eq("event_slug", slug);
-        
-        if (!fallbackError && fallbackData && fallbackData.length > 0) {
-          return fallbackData;
-        }
+      for (const altView of alternativeViews) {
+        if (altView === viewName) continue;
+        result = await searchInView(altView, slug);
+        if (result) return result;
       }
       
       // Still not found - try legacy redirect
