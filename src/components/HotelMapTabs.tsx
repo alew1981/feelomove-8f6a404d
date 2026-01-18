@@ -66,38 +66,52 @@ const HotelMapTabs = ({
   stay22Accommodations = null,
   stay22Activities = null,
 }: HotelMapTabsProps) => {
-  const [sortBy, setSortBy] = useState<string>("price-asc");
+  const [sortBy, setSortBy] = useState<string>("distance-asc");
   const [activeTab, setActiveTab] = useState<TabId>("hotels");
+  const [starFilter, setStarFilter] = useState<number | null>(null);
 
   const isMobile = useIsMobile();
   const cityDisplay = venueCity || "la zona";
 
-  const sortedHotels = useMemo(() => {
-    const sorted = [...hotels];
+  const filteredAndSortedHotels = useMemo(() => {
+    let filtered = [...hotels];
+    
+    // Apply star filter
+    if (starFilter !== null) {
+      filtered = filtered.filter((hotel) => hotel.hotel_stars === starFilter);
+    }
+    
+    // Apply sorting
     switch (sortBy) {
       case "price-asc":
-        sorted.sort((a, b) => (a.selling_price || a.price || 0) - (b.selling_price || b.price || 0));
+        filtered.sort((a, b) => (a.selling_price || a.price || 0) - (b.selling_price || b.price || 0));
         break;
       case "price-desc":
-        sorted.sort((a, b) => (b.selling_price || b.price || 0) - (a.selling_price || a.price || 0));
+        filtered.sort((a, b) => (b.selling_price || b.price || 0) - (a.selling_price || a.price || 0));
         break;
       case "distance-asc":
-        sorted.sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
+        filtered.sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
         break;
       case "rating-desc":
-        sorted.sort((a, b) => (b.hotel_rating || b.hotel_stars || 0) - (a.hotel_rating || a.hotel_stars || 0));
+        filtered.sort((a, b) => (b.hotel_rating || b.hotel_stars || 0) - (a.hotel_rating || a.hotel_stars || 0));
         break;
       case "stars-desc":
-        sorted.sort((a, b) => (b.hotel_stars || 0) - (a.hotel_stars || 0));
+        filtered.sort((a, b) => (b.hotel_stars || 0) - (a.hotel_stars || 0));
         break;
     }
-    return sorted;
-  }, [hotels, sortBy]);
+    return filtered;
+  }, [hotels, sortBy, starFilter]);
+
+  // Get available star ratings from hotels
+  const availableStars = useMemo(() => {
+    const stars = new Set(hotels.map((h) => h.hotel_stars).filter((s) => s > 0));
+    return Array.from(stars).sort((a, b) => b - a);
+  }, [hotels]);
 
   // Tab labels without icons
   const labels = {
-    hotels: "Feelomove Hoteles",
-    accommodations: `Hoteles en ${cityDisplay}`,
+    hotels: "Hoteles cerca",
+    accommodations: `+ Hoteles en ${cityDisplay}`,
     activities: `Actividades en ${cityDisplay}`,
     map: `Mapa a ${eventName || "evento"}`,
   };
@@ -127,10 +141,10 @@ const HotelMapTabs = ({
   const TabButton = ({ tabId, label, isActive }: { tabId: TabId; label: string; isActive: boolean }) => (
     <button
       onClick={() => setActiveTab(tabId)}
-      className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all duration-200 rounded-t-lg border-b-2 ${
+      className={`px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all duration-200 rounded-lg ${
         isActive
-          ? "border-accent bg-accent/10 text-accent font-semibold"
-          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          ? "bg-accent text-white shadow-lg"
+          : "bg-primary text-primary-foreground hover:bg-primary/90"
       }`}
       role="tab"
       aria-selected={isActive}
@@ -152,10 +166,10 @@ const HotelMapTabs = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg flex items-center justify-between gap-2 ${
+          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 rounded-lg flex items-center justify-between gap-2 ${
             isActive
-              ? "bg-accent text-accent-foreground shadow-sm"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              ? "bg-accent text-white shadow-lg"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
           <span className="truncate">{currentLabel}</span>
@@ -250,7 +264,7 @@ const HotelMapTabs = ({
           </div>
         ) : (
           /* Desktop: All tabs visible */
-          <div className="flex items-center gap-1 border-b border-border mb-4 overflow-x-auto">
+          <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
             <TabButton tabId="hotels" label={labels.hotels} isActive={activeTab === "hotels"} />
             {hasAccommodationsContent && (
               <TabButton tabId="accommodations" label={labels.accommodations} isActive={activeTab === "accommodations"} />
@@ -269,45 +283,85 @@ const HotelMapTabs = ({
           <div>
             {hotels.length > 0 ? (
               <>
-                <div className="flex items-center justify-end mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  {/* Star filter */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => setStarFilter(null)}
+                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                        starFilter === null
+                          ? "bg-accent text-white"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Todos
+                    </button>
+                    {availableStars.map((stars) => (
+                      <button
+                        key={stars}
+                        onClick={() => setStarFilter(stars)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-1 ${
+                          starFilter === stars
+                            ? "bg-accent text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {stars} {"★".repeat(stars)}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Sort selector */}
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-80 md:w-96 h-11 sm:h-12 text-sm sm:text-base border-2 border-border bg-card font-medium shadow-sm">
+                    <SelectTrigger className="w-full sm:w-64 h-11 text-sm border-2 border-border bg-card font-medium shadow-sm">
                       <SelectValue placeholder="Ordenar por" />
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-2 w-full min-w-[320px] z-50">
-                      <SelectItem value="price-asc" className="text-sm sm:text-base py-3">
-                        Precio (menor a mayor)
-                      </SelectItem>
-                      <SelectItem value="price-desc" className="text-sm sm:text-base py-3">
-                        Precio (mayor a menor)
-                      </SelectItem>
-                      <SelectItem value="distance-asc" className="text-sm sm:text-base py-3">
+                    <SelectContent className="bg-card border-2 w-full min-w-[240px] z-50">
+                      <SelectItem value="distance-asc" className="text-sm py-3">
                         Distancia (más cercano)
                       </SelectItem>
-                      <SelectItem value="rating-desc" className="text-sm sm:text-base py-3">
+                      <SelectItem value="price-asc" className="text-sm py-3">
+                        Precio (menor a mayor)
+                      </SelectItem>
+                      <SelectItem value="price-desc" className="text-sm py-3">
+                        Precio (mayor a menor)
+                      </SelectItem>
+                      <SelectItem value="rating-desc" className="text-sm py-3">
                         Valoración (mejor puntuada)
                       </SelectItem>
-                      <SelectItem value="stars-desc" className="text-sm sm:text-base py-3">
+                      <SelectItem value="stars-desc" className="text-sm py-3">
                         Estrellas (más estrellas)
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sortedHotels.map((hotel) => (
-                    <HotelCard
-                      key={hotel.hotel_id}
-                      hotel={hotel}
-                      onAddHotel={onAddHotel}
-                      checkinDate={checkinDate}
-                      checkoutDate={checkoutDate}
-                      eventName={eventName}
-                      showTicketHint={ticketsSelected}
-                      isAdded={selectedHotelId === hotel.hotel_id}
-                    />
-                  ))}
-                </div>
+                {filteredAndSortedHotels.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredAndSortedHotels.map((hotel) => (
+                      <HotelCard
+                        key={hotel.hotel_id}
+                        hotel={hotel}
+                        onAddHotel={onAddHotel}
+                        checkinDate={checkinDate}
+                        checkoutDate={checkoutDate}
+                        eventName={eventName}
+                        showTicketHint={ticketsSelected}
+                        isAdded={selectedHotelId === hotel.hotel_id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-muted/30 rounded-xl border-2 border-dashed border-border">
+                    <p className="text-muted-foreground font-medium">No hay hoteles de {starFilter} estrellas disponibles</p>
+                    <button
+                      onClick={() => setStarFilter(null)}
+                      className="mt-2 text-sm text-accent hover:underline"
+                    >
+                      Ver todos los hoteles
+                    </button>
+                  </div>
+                )}
               </>
             ) : hasMapContent ? (
               <div className="space-y-4">
