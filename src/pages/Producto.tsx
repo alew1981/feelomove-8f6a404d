@@ -1005,7 +1005,7 @@ const Producto = () => {
               )}
 
               {/* Hotels & Map Section with Tabs */}
-              {(hotels.length > 0 || mapWidgetHtml) && (
+              {(hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
                 <div id="hotels-section">
                   <HotelMapTabs 
                     hotels={hotels} 
@@ -1016,6 +1016,9 @@ const Producto = () => {
                     eventName={eventDetails.event_name || undefined}
                     ticketsSelected={isEventInCart && totalPersons > 0}
                     selectedHotelId={cart?.hotel?.hotel_id || null}
+                    venueCity={eventDetails.venue_city || ""}
+                    stay22Accommodations={(eventDetails as any)?.stay22_accommodations || null}
+                    stay22Activities={(eventDetails as any)?.stay22_activities || null}
                   />
                 </div>
               )}
