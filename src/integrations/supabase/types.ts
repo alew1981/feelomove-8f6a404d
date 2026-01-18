@@ -896,6 +896,8 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           sold_out: boolean | null
+          stay22_accommodations: string | null
+          stay22_activities: string | null
           stay22_map_general: string | null
           ticket_price_min: number | null
           ticket_types: Json | null
@@ -974,6 +976,8 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           sold_out: boolean | null
+          stay22_accommodations: string | null
+          stay22_activities: string | null
           stay22_map_general: string | null
           ticket_price_min: number | null
           ticket_types: Json | null
