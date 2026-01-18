@@ -40,12 +40,23 @@ interface HotelMapTabsProps {
 
 type TabId = "hotels" | "map" | "accommodations" | "activities";
 
+// SEO text block component
+const SeoTextBlock = ({ title, description }: { title: string; description: string }) => (
+  <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-start gap-3 mb-4">
+    <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+    <div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1">{description}</p>
+    </div>
+  </div>
+);
+
 const IframeBox = ({ src, title }: { src: string; title: string }) => (
   <div className="rounded-xl overflow-hidden border-2 border-border">
     <iframe
       src={src}
       title={title}
-      className="w-full h-[500px] sm:h-[600px] border-0"
+      className="w-full h-[600px] sm:h-[700px] border-0"
       allow="geolocation"
       allowFullScreen
       loading="lazy"
@@ -112,8 +123,28 @@ const HotelMapTabs = ({
   const labels = {
     hotels: "Hoteles cerca",
     accommodations: `+ Hoteles en ${cityDisplay}`,
-    activities: `Actividades en ${cityDisplay}`,
-    map: `Mapa a ${eventName || "evento"}`,
+    activities: "Actividades",
+    map: "Mapa",
+  };
+
+  // SEO texts for each tab
+  const seoTexts = {
+    hotels: {
+      title: "Hoteles cerca del evento",
+      description: `Encuentra los mejores hoteles cerca de ${eventName || "el evento"} ordenados por distancia al venue.`,
+    },
+    accommodations: {
+      title: `Buscar hoteles en ${cityDisplay}`,
+      description: `Explora más opciones de alojamiento en ${cityDisplay} directamente en el mapa interactivo.`,
+    },
+    activities: {
+      title: `Actividades y experiencias`,
+      description: `Descubre tours, actividades y experiencias únicas para complementar tu viaje a ${eventName || "el evento"}.`,
+    },
+    map: {
+      title: "Buscar hoteles en el mapa",
+      description: `Explora alojamientos cerca del evento directamente en el mapa interactivo.`,
+    },
   };
 
   const hasMapContent = !!mapWidgetHtml;
@@ -390,15 +421,24 @@ const HotelMapTabs = ({
         )}
 
         {activeTab === "map" && mapWidgetHtml && (
-          <IframeBox src={mapWidgetHtml} title={`Mapa de hoteles cerca de ${eventName || "el evento"}`} />
+          <div>
+            <SeoTextBlock title={seoTexts.map.title} description={seoTexts.map.description} />
+            <IframeBox src={mapWidgetHtml} title={`Mapa de hoteles cerca de ${eventName || "el evento"}`} />
+          </div>
         )}
 
         {activeTab === "accommodations" && stay22Accommodations && (
-          <IframeBox src={stay22Accommodations} title={`Hoteles y apartamentos en ${cityDisplay}`} />
+          <div>
+            <SeoTextBlock title={seoTexts.accommodations.title} description={seoTexts.accommodations.description} />
+            <IframeBox src={stay22Accommodations} title={`Hoteles y apartamentos en ${cityDisplay}`} />
+          </div>
         )}
 
         {activeTab === "activities" && stay22Activities && (
-          <IframeBox src={stay22Activities} title={`Actividades y experiencias en ${cityDisplay}`} />
+          <div>
+            <SeoTextBlock title={seoTexts.activities.title} description={seoTexts.activities.description} />
+            <IframeBox src={stay22Activities} title={`Actividades y experiencias en ${cityDisplay}`} />
+          </div>
         )}
       </div>
     </div>
