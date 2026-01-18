@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { Building2, MapPin, Check, ChevronDown, Hotel, Compass, AlertCircle, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Building2, MapPin, Check, ChevronDown, Hotel, Compass } from "lucide-react";
 import HotelCard from "./HotelCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface HotelData {
@@ -41,18 +40,25 @@ interface HotelMapTabsProps {
 
 type TabId = "hotels" | "map" | "accommodations" | "activities";
 
-interface ErrorState {
-  map: boolean;
-  accommodations: boolean;
-  activities: boolean;
-}
+const IframeBox = ({ src, title }: { src: string; title: string }) => (
+  <div className="rounded-xl overflow-hidden border-2 border-border">
+    <iframe
+      src={src}
+      title={title}
+      className="w-full h-[500px] sm:h-[600px] border-0"
+      allow="geolocation"
+      allowFullScreen
+      loading="lazy"
+    />
+  </div>
+);
 
-const HotelMapTabs = ({ 
-  hotels, 
-  mapWidgetHtml, 
-  onAddHotel, 
-  checkinDate, 
-  checkoutDate, 
+const HotelMapTabs = ({
+  hotels,
+  mapWidgetHtml,
+  onAddHotel,
+  checkinDate,
+  checkoutDate,
   eventName,
   ticketsSelected = false,
   selectedHotelId = null,
@@ -62,24 +68,10 @@ const HotelMapTabs = ({
 }: HotelMapTabsProps) => {
   const [sortBy, setSortBy] = useState<string>("price-asc");
   const [activeTab, setActiveTab] = useState<TabId>("hotels");
-  const [loadedIframes, setLoadedIframes] = useState<Set<TabId>>(new Set());
-  const [errorStates, setErrorStates] = useState<ErrorState>({
-    map: false,
-    accommodations: false,
-    activities: false,
-  });
-  
-  const isMobile = useIsMobile();
-  
-  // Determine if dropdown items are active
-  const isDropdownItemActive = activeTab === "accommodations" || activeTab === "activities";
-  
-  // Short city name for display
-  const cityDisplay = venueCity || "la zona";
 
-  useEffect(() => {
-    console.debug("[HotelMapTabs] activeTab:", activeTab);
-  }, [activeTab]);
+  const isMobile = useIsMobile();
+  const isDropdownItemActive = activeTab === "accommodations" || activeTab === "activities";
+  const cityDisplay = venueCity || "la zona";
 
   const sortedHotels = useMemo(() => {
     const sorted = [...hotels];
@@ -103,108 +95,14 @@ const HotelMapTabs = ({
     return sorted;
   }, [hotels, sortBy]);
 
-
-  // Handle tab change with lazy loading
-  const handleTabChange = (tabId: TabId) => {
-    setActiveTab(tabId);
-  };
-
-  // Handle dropdown option selection
-  const handleDropdownSelect = (tabId: TabId) => {
-    handleTabChange(tabId);
-  };
-
-  // Handle iframe load complete
-  const handleIframeLoad = (tabId: TabId) => {
-    setLoadedIframes((prev) => new Set(prev).add(tabId));
-    setErrorStates((prev) => ({ ...prev, [tabId]: false }));
-  };
-
-  // Retry loading iframe
-  const handleRetry = (tabId: TabId) => {
-    setErrorStates((prev) => ({ ...prev, [tabId]: false }));
-    setLoadedIframes((prev) => {
-      const next = new Set(prev);
-      next.delete(tabId);
-      return next;
-    });
-  };
-  
-  // Loading spinner component
-  const LoadingSpinner = ({ message }: { message: string }) => (
-    <div className="flex flex-col items-center justify-center h-[500px] sm:h-[600px] bg-muted/30 rounded-xl">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
-      <p className="text-muted-foreground">{message}</p>
-    </div>
-  );
-  
-  // Error component
-  const ErrorState = ({ onRetry, message }: { onRetry: () => void; message: string }) => (
-    <div className="flex flex-col items-center justify-center h-[500px] sm:h-[600px] bg-muted/30 rounded-xl">
-      <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-      <p className="text-foreground font-medium mb-2">{message}</p>
-      <p className="text-sm text-muted-foreground mb-4">Comprueba tu conexión e inténtalo de nuevo</p>
-      <Button onClick={onRetry} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
-        <RefreshCw className="h-4 w-4" />
-        Reintentar
-      </Button>
-    </div>
-  );
-  
-  // Iframe wrapper component with lazy loading
-  const IframeContent = ({ 
-    tabId, 
-    url, 
-    title 
-  }: { 
-    tabId: TabId; 
-    url: string; 
-    title: string;
-  }) => {
-    const shouldLoad = activeTab === tabId || loadedIframes.has(tabId);
-    const isLoaded = loadedIframes.has(tabId);
-    const hasError = errorStates[tabId as keyof ErrorState];
-    
-    // Show loading state only when we should load but haven't loaded yet
-    const showLoading = shouldLoad && !isLoaded && !hasError;
-    
-    if (hasError) {
-      return <ErrorState onRetry={() => handleRetry(tabId)} message="No se pudo cargar el contenido" />;
-    }
-    
-    return (
-      <div className="relative">
-        {showLoading && (
-          <div className="absolute inset-0 z-10">
-            <LoadingSpinner message={`Cargando ${title.toLowerCase()}...`} />
-          </div>
-        )}
-        {shouldLoad && (
-          <iframe
-            src={url}
-            className={`w-full h-[500px] sm:h-[600px] lg:h-[650px] border-0 rounded-xl ${showLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-            title={title}
-            allow="geolocation"
-            loading="lazy"
-            onLoad={() => handleIframeLoad(tabId)}
-          />
-        )}
-      </div>
-    );
-  };
-
-  // Tab labels based on screen size
-  const getTabLabels = () => ({
+  const labels = {
     hotels: isMobile ? "🏨 Hotel" : "🏨 Alojamiento",
-    map: isMobile ? "🗺️ Mapa" : `🗺️ Mapa`,
+    map: isMobile ? "🗺️ Mapa" : `🗺️ Mapa${eventName ? ` de ${eventName}` : ""}`,
     moreOptions: isMobile ? "⋯ Más" : "🎯 Más opciones",
     accommodations: `🌟 Hoteles en ${cityDisplay}`,
     activities: `🎯 Qué hacer en ${cityDisplay}`,
-  });
-  
-  const labels = getTabLabels();
-  
-  // Check if we have any Stay22 content
+  };
+
   const hasMapContent = !!mapWidgetHtml;
   const hasAccommodationsContent = !!stay22Accommodations;
   const hasActivitiesContent = !!stay22Activities;
@@ -215,11 +113,11 @@ const HotelMapTabs = ({
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-            selectedHotelId 
-              ? "bg-accent text-accent-foreground" 
-              : "bg-foreground text-background"
-          }`}>
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+              selectedHotelId ? "bg-accent text-accent-foreground" : "bg-foreground text-background"
+            }`}
+          >
             {selectedHotelId ? <Check className="h-4 w-4" /> : "2"}
           </div>
           <div>
@@ -234,41 +132,37 @@ const HotelMapTabs = ({
         </div>
       </div>
 
-      {/* Custom Tab Navigation */}
+      {/* Tabs */}
       <div className="w-full">
-        {/* Tab List */}
         <div className="flex items-stretch border-b border-border mb-4">
-          {/* Tab 1: Alojamiento */}
           <button
-            onClick={() => handleTabChange("hotels")}
+            onClick={() => setActiveTab("hotels")}
             className={`flex-1 sm:flex-none px-3 sm:px-6 py-3 text-sm sm:text-base font-medium transition-all duration-300 border-b-[3px] ${
               activeTab === "hotels"
                 ? "border-accent text-accent font-semibold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
-            aria-selected={activeTab === "hotels"}
             role="tab"
+            aria-selected={activeTab === "hotels"}
           >
             {labels.hotels}
           </button>
-          
-          {/* Tab 2: Mapa */}
+
           {hasMapContent && (
             <button
-              onClick={() => handleTabChange("map")}
+              onClick={() => setActiveTab("map")}
               className={`flex-1 sm:flex-none px-3 sm:px-6 py-3 text-sm sm:text-base font-medium transition-all duration-300 border-b-[3px] ${
                 activeTab === "map"
                   ? "border-accent text-accent font-semibold"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
-              aria-selected={activeTab === "map"}
               role="tab"
+              aria-selected={activeTab === "map"}
             >
-              {labels.map}
+              {isMobile ? "🗺️ Mapa" : "🗺️ Mapa"}
             </button>
           )}
-          
-          {/* Tab 3: Dropdown "Más opciones" */}
+
           {hasDropdownContent && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -278,26 +172,18 @@ const HotelMapTabs = ({
                       ? "border-accent text-accent font-semibold"
                       : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
-                  aria-haspopup="true"
                 >
-                  {isDropdownItemActive && (
-                    <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
-                  )}
+                  {isDropdownItemActive && <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />}
                   {labels.moreOptions}
-                  <ChevronDown className="h-4 w-4 transition-transform duration-300 data-[state=open]:rotate-180" />
+                  <ChevronDown className="h-4 w-4 transition-transform duration-300" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                className="min-w-[250px] bg-card border-2 border-border shadow-lg z-50"
-              >
+              <DropdownMenuContent align="end" className="min-w-[250px] bg-card border-2 border-border shadow-lg z-50">
                 {hasAccommodationsContent && (
                   <DropdownMenuItem
-                    onClick={() => handleDropdownSelect("accommodations")}
+                    onClick={() => setActiveTab("accommodations")}
                     className={`px-4 py-3 cursor-pointer transition-colors ${
-                      activeTab === "accommodations"
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-muted"
+                      activeTab === "accommodations" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                     }`}
                   >
                     <Hotel className="h-4 w-4 mr-2" />
@@ -306,11 +192,9 @@ const HotelMapTabs = ({
                 )}
                 {hasActivitiesContent && (
                   <DropdownMenuItem
-                    onClick={() => handleDropdownSelect("activities")}
+                    onClick={() => setActiveTab("activities")}
                     className={`px-4 py-3 cursor-pointer transition-colors ${
-                      activeTab === "activities"
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-muted"
+                      activeTab === "activities" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                     }`}
                   >
                     <Compass className="h-4 w-4 mr-2" />
@@ -322,32 +206,41 @@ const HotelMapTabs = ({
           )}
         </div>
 
-        {/* Tab Content */}
-        <div className="mt-4">
-          {/* Hotels Tab Content */}
-          <div className={activeTab === "hotels" ? "block" : "hidden"}>
+        {/* Content (same simple pattern as the old Map tab: render iframe directly when active) */}
+        {activeTab === "hotels" && (
+          <div>
             {hotels.length > 0 ? (
               <>
-                {/* Sorting dropdown */}
                 <div className="flex items-center justify-end mb-4">
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-full sm:w-80 md:w-96 h-11 sm:h-12 text-sm sm:text-base border-2 border-border bg-card font-medium shadow-sm">
                       <SelectValue placeholder="Ordenar por" />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-2 w-full min-w-[320px] z-50">
-                      <SelectItem value="price-asc" className="text-sm sm:text-base py-3">Precio (menor a mayor)</SelectItem>
-                      <SelectItem value="price-desc" className="text-sm sm:text-base py-3">Precio (mayor a menor)</SelectItem>
-                      <SelectItem value="distance-asc" className="text-sm sm:text-base py-3">Distancia (más cercano)</SelectItem>
-                      <SelectItem value="rating-desc" className="text-sm sm:text-base py-3">Valoración (mejor puntuada)</SelectItem>
-                      <SelectItem value="stars-desc" className="text-sm sm:text-base py-3">Estrellas (más estrellas)</SelectItem>
+                      <SelectItem value="price-asc" className="text-sm sm:text-base py-3">
+                        Precio (menor a mayor)
+                      </SelectItem>
+                      <SelectItem value="price-desc" className="text-sm sm:text-base py-3">
+                        Precio (mayor a menor)
+                      </SelectItem>
+                      <SelectItem value="distance-asc" className="text-sm sm:text-base py-3">
+                        Distancia (más cercano)
+                      </SelectItem>
+                      <SelectItem value="rating-desc" className="text-sm sm:text-base py-3">
+                        Valoración (mejor puntuada)
+                      </SelectItem>
+                      <SelectItem value="stars-desc" className="text-sm sm:text-base py-3">
+                        Estrellas (más estrellas)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sortedHotels.map((hotel) => (
-                    <HotelCard 
-                      key={hotel.hotel_id} 
-                      hotel={hotel} 
+                    <HotelCard
+                      key={hotel.hotel_id}
+                      hotel={hotel}
                       onAddHotel={onAddHotel}
                       checkinDate={checkinDate}
                       checkoutDate={checkoutDate}
@@ -358,8 +251,7 @@ const HotelMapTabs = ({
                   ))}
                 </div>
               </>
-            ) : mapWidgetHtml ? (
-              // Fallback: Show Stay22 map when no hotels available
+            ) : hasMapContent ? (
               <div className="space-y-4">
                 <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
@@ -370,10 +262,9 @@ const HotelMapTabs = ({
                     </p>
                   </div>
                 </div>
-                <IframeContent 
-                  tabId="map" 
-                  url={mapWidgetHtml} 
-                  title={`Mapa de hoteles cerca de ${eventName || 'el evento'}`} 
+                <IframeBox
+                  src={mapWidgetHtml!}
+                  title={`Mapa de hoteles cerca de ${eventName || "el evento"}`}
                 />
               </div>
             ) : (
@@ -384,46 +275,19 @@ const HotelMapTabs = ({
               </div>
             )}
           </div>
+        )}
 
-          {/* Map Tab Content (kept mounted after first load) */}
-          {mapWidgetHtml && (
-            <div className={activeTab === "map" ? "block" : "hidden"}>
-              <div className="rounded-xl overflow-hidden border-2 border-border">
-                <IframeContent 
-                  tabId="map" 
-                  url={mapWidgetHtml} 
-                  title={`Mapa de hoteles cerca de ${eventName || 'el evento'}`} 
-                />
-              </div>
-            </div>
-          )}
+        {activeTab === "map" && mapWidgetHtml && (
+          <IframeBox src={mapWidgetHtml} title={`Mapa de hoteles cerca de ${eventName || "el evento"}`} />
+        )}
 
-          {/* Accommodations Tab Content (kept mounted after first load) */}
-          {stay22Accommodations && (
-            <div className={activeTab === "accommodations" ? "block" : "hidden"}>
-              <div className="rounded-xl overflow-hidden border-2 border-border">
-                <IframeContent 
-                  tabId="accommodations" 
-                  url={stay22Accommodations} 
-                  title={`Hoteles y apartamentos en ${cityDisplay}`} 
-                />
-              </div>
-            </div>
-          )}
+        {activeTab === "accommodations" && stay22Accommodations && (
+          <IframeBox src={stay22Accommodations} title={`Hoteles y apartamentos en ${cityDisplay}`} />
+        )}
 
-          {/* Activities Tab Content (kept mounted after first load) */}
-          {stay22Activities && (
-            <div className={activeTab === "activities" ? "block" : "hidden"}>
-              <div className="rounded-xl overflow-hidden border-2 border-border">
-                <IframeContent 
-                  tabId="activities" 
-                  url={stay22Activities} 
-                  title={`Actividades y experiencias en ${cityDisplay}`} 
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        {activeTab === "activities" && stay22Activities && (
+          <IframeBox src={stay22Activities} title={`Actividades y experiencias en ${cityDisplay}`} />
+        )}
       </div>
     </div>
   );
