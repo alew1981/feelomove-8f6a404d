@@ -182,8 +182,11 @@ const HotelMapTabs = ({
     title: string;
   }) => {
     const shouldLoad = activeTab === tabId || loadedIframes.has(tabId);
-    const isLoading = loadingStates[tabId as keyof LoadingState];
+    const isLoaded = loadedIframes.has(tabId);
     const hasError = errorStates[tabId as keyof ErrorState];
+    
+    // Show loading state only when we should load but haven't loaded yet
+    const showLoading = shouldLoad && !isLoaded && !hasError;
     
     if (hasError) {
       return <ErrorState onRetry={() => handleRetry(tabId)} message="No se pudo cargar el contenido" />;
@@ -191,7 +194,7 @@ const HotelMapTabs = ({
     
     return (
       <div className="relative">
-        {isLoading && (
+        {showLoading && (
           <div className="absolute inset-0 z-10">
             <LoadingSpinner message={`Cargando ${title.toLowerCase()}...`} />
           </div>
@@ -199,12 +202,11 @@ const HotelMapTabs = ({
         {shouldLoad && (
           <iframe
             src={url}
-            className={`w-full h-[500px] sm:h-[600px] lg:h-[650px] border-0 rounded-xl ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            className={`w-full h-[500px] sm:h-[600px] lg:h-[650px] border-0 rounded-xl ${showLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             title={title}
             allow="geolocation"
             loading="lazy"
             onLoad={() => handleIframeLoad(tabId)}
-            onError={() => handleIframeError(tabId)}
           />
         )}
       </div>
