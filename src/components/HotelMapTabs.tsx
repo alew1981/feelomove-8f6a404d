@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Building2, MapPin, Check, ChevronDown, Hotel, Compass } from "lucide-react";
+import { Building2, MapPin, Check, ChevronDown } from "lucide-react";
 import HotelCard from "./HotelCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -70,7 +70,6 @@ const HotelMapTabs = ({
   const [activeTab, setActiveTab] = useState<TabId>("hotels");
 
   const isMobile = useIsMobile();
-  const isDropdownItemActive = activeTab === "accommodations" || activeTab === "activities";
   const cityDisplay = venueCity || "la zona";
 
   const sortedHotels = useMemo(() => {
@@ -95,18 +94,82 @@ const HotelMapTabs = ({
     return sorted;
   }, [hotels, sortBy]);
 
+  // Tab labels without icons
   const labels = {
-    hotels: isMobile ? "🏨 Hotel" : "🏨 Alojamiento",
-    map: isMobile ? "🗺️ Mapa" : `🗺️ Mapa${eventName ? ` de ${eventName}` : ""}`,
-    moreOptions: isMobile ? "⋯ Más" : "🎯 Más opciones",
-    accommodations: `🌟 Hoteles en ${cityDisplay}`,
-    activities: `🎯 Qué hacer en ${cityDisplay}`,
+    hotels: "Feelomove Hoteles",
+    accommodations: `Hoteles en ${cityDisplay}`,
+    activities: `Actividades en ${cityDisplay}`,
+    map: `Mapa a ${eventName || "evento"}`,
   };
 
   const hasMapContent = !!mapWidgetHtml;
   const hasAccommodationsContent = !!stay22Accommodations;
   const hasActivitiesContent = !!stay22Activities;
-  const hasDropdownContent = hasAccommodationsContent || hasActivitiesContent;
+
+  // Mobile: check which dropdown group is active
+  const isHotelsDropdownActive = activeTab === "hotels" || activeTab === "accommodations";
+  const isActivitiesDropdownActive = activeTab === "activities" || activeTab === "map";
+
+  // Get current label for mobile dropdowns
+  const getHotelsDropdownLabel = () => {
+    if (activeTab === "hotels") return labels.hotels;
+    if (activeTab === "accommodations") return labels.accommodations;
+    return labels.hotels;
+  };
+
+  const getActivitiesDropdownLabel = () => {
+    if (activeTab === "activities") return labels.activities;
+    if (activeTab === "map") return labels.map;
+    return labels.activities;
+  };
+
+  // Desktop tab button component
+  const TabButton = ({ tabId, label, isActive }: { tabId: TabId; label: string; isActive: boolean }) => (
+    <button
+      onClick={() => setActiveTab(tabId)}
+      className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all duration-200 rounded-t-lg border-b-2 ${
+        isActive
+          ? "border-accent bg-accent/10 text-accent font-semibold"
+          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      }`}
+      role="tab"
+      aria-selected={isActive}
+    >
+      {label}
+    </button>
+  );
+
+  // Mobile dropdown button component
+  const MobileDropdown = ({
+    isActive,
+    currentLabel,
+    children,
+  }: {
+    isActive: boolean;
+    currentLabel: string;
+    children: React.ReactNode;
+  }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-lg flex items-center justify-between gap-2 ${
+            isActive
+              ? "bg-accent text-accent-foreground shadow-sm"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          <span className="truncate">{currentLabel}</span>
+          <ChevronDown className="h-4 w-4 flex-shrink-0" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="start" 
+        className="min-w-[200px] bg-card border-2 border-border shadow-xl z-50"
+      >
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div className="space-y-4">
@@ -134,62 +197,34 @@ const HotelMapTabs = ({
 
       {/* Tabs */}
       <div className="w-full">
-        <div className="flex items-stretch border-b border-border mb-4">
-          <button
-            onClick={() => setActiveTab("hotels")}
-            className={`flex-1 sm:flex-none px-3 sm:px-6 py-3 text-sm sm:text-base font-medium transition-all duration-300 border-b-[3px] ${
-              activeTab === "hotels"
-                ? "border-accent text-accent font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            role="tab"
-            aria-selected={activeTab === "hotels"}
-          >
-            {labels.hotels}
-          </button>
-
-          {hasMapContent && (
-            <button
-              onClick={() => setActiveTab("map")}
-              className={`flex-1 sm:flex-none px-3 sm:px-6 py-3 text-sm sm:text-base font-medium transition-all duration-300 border-b-[3px] ${
-                activeTab === "map"
-                  ? "border-accent text-accent font-semibold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-              role="tab"
-              aria-selected={activeTab === "map"}
-            >
-              {isMobile ? "🗺️ Mapa" : "🗺️ Mapa"}
-            </button>
-          )}
-
-          {hasDropdownContent && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-3 text-sm sm:text-base font-medium transition-all duration-300 border-b-[3px] flex items-center justify-center gap-1.5 ${
-                    isDropdownItemActive
-                      ? "border-accent text-accent font-semibold"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+        {/* Mobile: Two dropdowns */}
+        {isMobile ? (
+          <div className="flex gap-2 mb-4">
+            {/* Dropdown 1: Feelomove Hoteles + Hoteles en ciudad */}
+            <MobileDropdown isActive={isHotelsDropdownActive} currentLabel={getHotelsDropdownLabel()}>
+              <DropdownMenuItem
+                onClick={() => setActiveTab("hotels")}
+                className={`px-4 py-3 cursor-pointer transition-colors ${
+                  activeTab === "hotels" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                }`}
+              >
+                {labels.hotels}
+              </DropdownMenuItem>
+              {hasAccommodationsContent && (
+                <DropdownMenuItem
+                  onClick={() => setActiveTab("accommodations")}
+                  className={`px-4 py-3 cursor-pointer transition-colors ${
+                    activeTab === "accommodations" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                   }`}
                 >
-                  {isDropdownItemActive && <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />}
-                  {labels.moreOptions}
-                  <ChevronDown className="h-4 w-4 transition-transform duration-300" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[250px] bg-card border-2 border-border shadow-lg z-50">
-                {hasAccommodationsContent && (
-                  <DropdownMenuItem
-                    onClick={() => setActiveTab("accommodations")}
-                    className={`px-4 py-3 cursor-pointer transition-colors ${
-                      activeTab === "accommodations" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
-                    }`}
-                  >
-                    <Hotel className="h-4 w-4 mr-2" />
-                    {labels.accommodations}
-                  </DropdownMenuItem>
-                )}
+                  {labels.accommodations}
+                </DropdownMenuItem>
+              )}
+            </MobileDropdown>
+
+            {/* Dropdown 2: Actividades + Mapa */}
+            {(hasActivitiesContent || hasMapContent) && (
+              <MobileDropdown isActive={isActivitiesDropdownActive} currentLabel={getActivitiesDropdownLabel()}>
                 {hasActivitiesContent && (
                   <DropdownMenuItem
                     onClick={() => setActiveTab("activities")}
@@ -197,16 +232,39 @@ const HotelMapTabs = ({
                       activeTab === "activities" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                     }`}
                   >
-                    <Compass className="h-4 w-4 mr-2" />
                     {labels.activities}
                   </DropdownMenuItem>
                 )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
+                {hasMapContent && (
+                  <DropdownMenuItem
+                    onClick={() => setActiveTab("map")}
+                    className={`px-4 py-3 cursor-pointer transition-colors ${
+                      activeTab === "map" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                    }`}
+                  >
+                    {labels.map}
+                  </DropdownMenuItem>
+                )}
+              </MobileDropdown>
+            )}
+          </div>
+        ) : (
+          /* Desktop: All tabs visible */
+          <div className="flex items-center gap-1 border-b border-border mb-4 overflow-x-auto">
+            <TabButton tabId="hotels" label={labels.hotels} isActive={activeTab === "hotels"} />
+            {hasAccommodationsContent && (
+              <TabButton tabId="accommodations" label={labels.accommodations} isActive={activeTab === "accommodations"} />
+            )}
+            {hasActivitiesContent && (
+              <TabButton tabId="activities" label={labels.activities} isActive={activeTab === "activities"} />
+            )}
+            {hasMapContent && (
+              <TabButton tabId="map" label={labels.map} isActive={activeTab === "map"} />
+            )}
+          </div>
+        )}
 
-        {/* Content (same simple pattern as the old Map tab: render iframe directly when active) */}
+        {/* Content */}
         {activeTab === "hotels" && (
           <div>
             {hotels.length > 0 ? (
