@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 // Schema.org is now handled directly by SEOHead component with dynamic jsonLd prop
 import { useMetaTags } from "@/hooks/useMetaTags";
 import Navbar from "@/components/Navbar";
@@ -302,12 +302,20 @@ const Producto = () => {
   // Get map widget HTML - only use Stay22 map
   const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || null;
 
-  // Clear cart when changing events
+  // Clear cart when changing to a different event
+  // Use a ref to track the previous event_id to avoid clearing on every cart update
+  const prevEventIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (cart && eventDetails && cart.event_id !== eventDetails.event_id) {
+    const currentEventId = eventDetails?.event_id;
+    if (!currentEventId) return;
+    
+    // Only clear cart if we navigated to a NEW event (not on cart updates)
+    if (prevEventIdRef.current && prevEventIdRef.current !== currentEventId) {
+      // We changed events - clear the cart
       clearCart();
     }
-  }, [eventDetails, cart, clearCart]);
+    prevEventIdRef.current = currentEventId;
+  }, [eventDetails?.event_id, clearCart]);
 
   // Redirect to 404 when event not found - MUST be before any conditional returns
   useEffect(() => {
