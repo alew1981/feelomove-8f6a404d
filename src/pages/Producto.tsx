@@ -106,14 +106,30 @@ const Producto = () => {
           .maybeSingle();
 
         const isPlaceholderSlug = (s: string) => /-9999(-\d{2})?(-\d{2})?$/.test(s);
+        const isLegacySuffixOnlyRedirect = (fromSlug: string, toSlug: string) => {
+          // Avoid redirect loops like:
+          // base-slug -> base-slug-2026 (year-only)
+          // base-slug -> base-slug-2026-04-04 (full date)
+          // base-slug -> base-slug-9999 (placeholder)
+          if (!toSlug || toSlug === fromSlug) return false;
+
+          const legacySuffixPattern = /-(\d{4})(-\d{2})?(-\d{2})?$/;
+          if (!legacySuffixPattern.test(toSlug)) return false;
+
+          // Remove the suffix and compare to original
+          const toBase = toSlug.replace(legacySuffixPattern, "");
+          return toBase === fromSlug;
+        };
 
         if (redirectData?.new_slug && redirectData.new_slug !== slug) {
-          if (isPlaceholderSlug(redirectData.new_slug)) {
-            // Skip placeholder redirects to avoid infinite loops like:
-            // clean-slug -> clean-slug-9999 -> clean-slug
-            console.warn('Ignoring placeholder slug_redirects entry:', {
+          if (isPlaceholderSlug(redirectData.new_slug) || isLegacySuffixOnlyRedirect(slug, redirectData.new_slug)) {
+            // Skip placeholder & legacy-suffix redirects to avoid infinite loops with our legacy-slug normalizer.
+            console.warn('Ignoring slug_redirects entry:', {
               old_slug: slug,
               new_slug: redirectData.new_slug,
+              reason: isPlaceholderSlug(redirectData.new_slug)
+                ? 'placeholder'
+                : 'legacy_suffix_only',
             });
           } else {
             // Store the canonical slug for SEO purposes
