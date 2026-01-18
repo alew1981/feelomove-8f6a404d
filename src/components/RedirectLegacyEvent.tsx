@@ -55,32 +55,45 @@ const RedirectLoader = ({ targetUrl }: { targetUrl: string }) => (
 /**
  * Detects if a slug ends with problematic date patterns:
  * 1. Full date: -YYYY-MM-DD (e.g., "event-slug-2026-01-14")
- * 2. Placeholder year: -9999 (e.g., "event-slug-9999")
- * 3. Placeholder date parts: -9999-12-31 or similar
+ * 2. Year only: -YYYY (e.g., "event-slug-2026")
+ * 3. Placeholder year: -9999 (e.g., "event-slug-9999")
+ * 4. Placeholder date parts: -9999-12-31 or similar
  * 
  * Example: "milo-j-la-vida-era-mas-corta-sevilla-2026-01-14"
  * Returns: { baseSlug: "milo-j-la-vida-era-mas-corta-sevilla", date: "2026-01-14", hasLegacySuffix: true }
+ * 
+ * Example: "matinee-easter-weekend-pervert-barcelona-2026"
+ * Returns: { baseSlug: "matinee-easter-weekend-pervert-barcelona", date: null, hasLegacySuffix: true, isYearOnly: true }
  */
-function parseLegacySlug(slug: string): { baseSlug: string; date: string | null; hasLegacySuffix: boolean; isPlaceholderDate: boolean } {
+function parseLegacySlug(slug: string): { baseSlug: string; date: string | null; hasLegacySuffix: boolean; isPlaceholderDate: boolean; isYearOnly: boolean } {
   // First check for placeholder year suffix: -9999 (with or without date parts)
   // Match: -9999, -9999-12, -9999-12-31
   const placeholderPattern = /-9999(-\d{2})?(-\d{2})?$/;
   if (placeholderPattern.test(slug)) {
     const baseSlug = slug.replace(placeholderPattern, '');
-    return { baseSlug, date: null, hasLegacySuffix: true, isPlaceholderDate: true };
+    return { baseSlug, date: null, hasLegacySuffix: true, isPlaceholderDate: true, isYearOnly: false };
   }
   
   // Match full date pattern at the end: -YYYY-MM-DD
-  const datePattern = /-(\d{4})-(\d{2})-(\d{2})$/;
-  const match = slug.match(datePattern);
+  const fullDatePattern = /-(\d{4})-(\d{2})-(\d{2})$/;
+  const fullDateMatch = slug.match(fullDatePattern);
   
-  if (match) {
-    const date = `${match[1]}-${match[2]}-${match[3]}`;
-    const baseSlug = slug.replace(datePattern, '');
-    return { baseSlug, date, hasLegacySuffix: true, isPlaceholderDate: false };
+  if (fullDateMatch) {
+    const date = `${fullDateMatch[1]}-${fullDateMatch[2]}-${fullDateMatch[3]}`;
+    const baseSlug = slug.replace(fullDatePattern, '');
+    return { baseSlug, date, hasLegacySuffix: true, isPlaceholderDate: false, isYearOnly: false };
   }
   
-  return { baseSlug: slug, date: null, hasLegacySuffix: false, isPlaceholderDate: false };
+  // Match year-only pattern at the end: -YYYY (where YYYY is 2020-2099)
+  const yearOnlyPattern = /-(20[2-9]\d)$/;
+  const yearOnlyMatch = slug.match(yearOnlyPattern);
+  
+  if (yearOnlyMatch) {
+    const baseSlug = slug.replace(yearOnlyPattern, '');
+    return { baseSlug, date: null, hasLegacySuffix: true, isPlaceholderDate: false, isYearOnly: true };
+  }
+  
+  return { baseSlug: slug, date: null, hasLegacySuffix: false, isPlaceholderDate: false, isYearOnly: false };
 }
 
 /**
@@ -95,16 +108,16 @@ const RedirectLegacyEvent = () => {
   const location = useLocation();
   
   // Parse the slug to check if it has a legacy date suffix or placeholder
-  const { baseSlug, date, hasLegacySuffix, isPlaceholderDate } = rawSlug 
+  const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly } = rawSlug 
     ? parseLegacySlug(rawSlug) 
-    : { baseSlug: '', date: null, hasLegacySuffix: false, isPlaceholderDate: false };
+    : { baseSlug: '', date: null, hasLegacySuffix: false, isPlaceholderDate: false, isYearOnly: false };
   
   // Determine if this is a festival or concert route
   const isFestivalRoute = location.pathname.startsWith('/festival');
 
-  // Query to find event type and correct slug - needed for both placeholder and regular legacy slugs
+  // Query to find event type and correct slug - needed for both placeholder, year-only, and regular legacy slugs
   const { data: eventData, isLoading, error, isFetched } = useQuery({
-    queryKey: ['legacy-event-redirect', baseSlug, date, isPlaceholderDate],
+    queryKey: ['legacy-event-redirect', baseSlug, date, isPlaceholderDate, isYearOnly],
     queryFn: async () => {
       // First, try exact match with base slug
       let query = supabase
@@ -112,8 +125,8 @@ const RedirectLegacyEvent = () => {
         .select("event_type, slug, name, venue_city, event_date")
         .eq("slug", baseSlug);
       
-      // If we have a date (not placeholder), also filter by date for more accuracy
-      if (date && !isPlaceholderDate) {
+      // If we have a date (not placeholder and not year-only), also filter by date for more accuracy
+      if (date && !isPlaceholderDate && !isYearOnly) {
         query = query.gte("event_date", `${date}T00:00:00`)
                      .lte("event_date", `${date}T23:59:59`);
       }
@@ -128,7 +141,7 @@ const RedirectLegacyEvent = () => {
       }
       
       // If no exact match found with date filter, try without date filter
-      if (date && !isPlaceholderDate) {
+      if (date && !isPlaceholderDate && !isYearOnly) {
         const { data: withoutDateData } = await supabase
           .from("tm_tbl_events")
           .select("event_type, slug, name, venue_city, event_date")
@@ -152,7 +165,7 @@ const RedirectLegacyEvent = () => {
             .select("event_type, slug, name, venue_city, event_date")
             .ilike("slug", `${possibleSlugWithoutCity}%`);
           
-          if (date && !isPlaceholderDate) {
+          if (date && !isPlaceholderDate && !isYearOnly) {
             fuzzyQuery = fuzzyQuery.gte("event_date", `${date}T00:00:00`)
                                    .lte("event_date", `${date}T23:59:59`);
           }
@@ -188,7 +201,7 @@ const RedirectLegacyEvent = () => {
       
       // Only redirect if the path is different
       if (location.pathname !== newPath) {
-        console.log(`Legacy redirect: ${location.pathname} → ${newPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}`);
+        console.log(`Legacy redirect: ${location.pathname} → ${newPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}${isYearOnly ? ' (year suffix removed)' : ''}`);
         navigate(newPath, { replace: true });
       }
     } else if (isFetched && !eventData) {
@@ -201,7 +214,7 @@ const RedirectLegacyEvent = () => {
         navigate('/conciertos', { replace: true });
       }
     }
-  }, [eventData, isLoading, isFetched, navigate, location.pathname, baseSlug, isFestivalRoute, hasLegacySuffix, isPlaceholderDate]);
+  }, [eventData, isLoading, isFetched, navigate, location.pathname, baseSlug, isFestivalRoute, hasLegacySuffix, isPlaceholderDate, isYearOnly]);
 
   // Handle query errors for legacy redirects
   if (hasLegacySuffix && error) {
@@ -216,7 +229,7 @@ const RedirectLegacyEvent = () => {
     const targetPath = isFestivalRoute ? `/festival/${baseSlug}` : `/concierto/${baseSlug}`;
     const targetUrl = `https://feelomove.com${targetPath}`;
     
-    console.log(`Legacy URL detected: ${rawSlug} → redirecting to ${targetPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}`);
+    console.log(`Legacy URL detected: ${rawSlug} → redirecting to ${targetPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}${isYearOnly ? ' (year suffix removed)' : ''}`);
     
     return <RedirectLoader targetUrl={targetUrl} />;
   }
