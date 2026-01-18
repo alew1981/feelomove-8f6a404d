@@ -41,32 +41,66 @@ const Index = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch concerts (increased limit for cities)
+  // Fetch concerts - ordered by newest first (created_at descending)
   const { data: concerts = [], isLoading: loadingConcerts } = useQuery({
-    queryKey: ["home-concerts"],
+    queryKey: ["home-concerts-newest"],
     queryFn: async () => {
+      // First get the newest event IDs from tm_tbl_events
+      const { data: newestEvents } = await supabase
+        .from('tm_tbl_events')
+        .select('id')
+        .neq('event_type', 'festival')
+        .eq('is_package', false)
+        .eq('is_transport', false)
+        .gte('event_date', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (!newestEvents?.length) return [];
+      
+      // Then fetch the card data for these IDs
       const { data } = await supabase
         .from('mv_concerts_cards')
         .select('*')
-        .gte('event_date', new Date().toISOString())
-        .order('event_date', { ascending: true })
-        .limit(50);
-      return data || [];
+        .in('id', newestEvents.map(e => e.id));
+      
+      // Maintain the order from tm_tbl_events (newest first)
+      const idOrder = newestEvents.map(e => e.id);
+      return (data || []).sort((a: any, b: any) => 
+        idOrder.indexOf(a.id) - idOrder.indexOf(b.id)
+      );
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch festivals (increased limit)
+  // Fetch festivals - ordered by newest first (created_at descending)
   const { data: festivals = [], isLoading: loadingFestivals } = useQuery({
-    queryKey: ["home-festivals"],
+    queryKey: ["home-festivals-newest"],
     queryFn: async () => {
+      // First get the newest festival IDs from tm_tbl_events
+      const { data: newestFestivals } = await supabase
+        .from('tm_tbl_events')
+        .select('id')
+        .eq('event_type', 'festival')
+        .eq('is_package', false)
+        .eq('is_transport', false)
+        .gte('event_date', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (!newestFestivals?.length) return [];
+      
+      // Then fetch the card data for these IDs
       const { data } = await supabase
         .from('mv_festivals_cards')
         .select('*')
-        .gte('event_date', new Date().toISOString())
-        .order('event_date', { ascending: true })
-        .limit(20);
-      return data || [];
+        .in('id', newestFestivals.map(e => e.id));
+      
+      // Maintain the order from tm_tbl_events (newest first)
+      const idOrder = newestFestivals.map(e => e.id);
+      return (data || []).sort((a: any, b: any) => 
+        idOrder.indexOf(a.id) - idOrder.indexOf(b.id)
+      );
     },
     staleTime: 5 * 60 * 1000,
   });
