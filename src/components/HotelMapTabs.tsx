@@ -1,6 +1,5 @@
-import { useState, useMemo, useRef, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, MapPin, Check, ChevronDown, Map, Hotel, Compass, AlertCircle, RefreshCw } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Building2, MapPin, Check, ChevronDown, Hotel, Compass, AlertCircle, RefreshCw } from "lucide-react";
 import HotelCard from "./HotelCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -42,12 +41,6 @@ interface HotelMapTabsProps {
 
 type TabId = "hotels" | "map" | "accommodations" | "activities";
 
-interface LoadingState {
-  map: boolean;
-  accommodations: boolean;
-  activities: boolean;
-}
-
 interface ErrorState {
   map: boolean;
   accommodations: boolean;
@@ -70,11 +63,6 @@ const HotelMapTabs = ({
   const [sortBy, setSortBy] = useState<string>("price-asc");
   const [activeTab, setActiveTab] = useState<TabId>("hotels");
   const [loadedIframes, setLoadedIframes] = useState<Set<TabId>>(new Set());
-  const [loadingStates, setLoadingStates] = useState<LoadingState>({
-    map: false,
-    accommodations: false,
-    activities: false,
-  });
   const [errorStates, setErrorStates] = useState<ErrorState>({
     map: false,
     accommodations: false,
@@ -88,7 +76,11 @@ const HotelMapTabs = ({
   
   // Short city name for display
   const cityDisplay = venueCity || "la zona";
-  
+
+  useEffect(() => {
+    console.debug("[HotelMapTabs] activeTab:", activeTab);
+  }, [activeTab]);
+
   const sortedHotels = useMemo(() => {
     const sorted = [...hotels];
     switch (sortBy) {
@@ -111,42 +103,30 @@ const HotelMapTabs = ({
     return sorted;
   }, [hotels, sortBy]);
 
+
   // Handle tab change with lazy loading
   const handleTabChange = (tabId: TabId) => {
     setActiveTab(tabId);
-    
-    // Mark iframe as loading if not already loaded
-    if (tabId !== "hotels" && !loadedIframes.has(tabId)) {
-      setLoadingStates(prev => ({ ...prev, [tabId]: true }));
-    }
   };
-  
+
   // Handle dropdown option selection
   const handleDropdownSelect = (tabId: TabId) => {
     handleTabChange(tabId);
   };
-  
+
   // Handle iframe load complete
   const handleIframeLoad = (tabId: TabId) => {
-    setLoadedIframes(prev => new Set(prev).add(tabId));
-    setLoadingStates(prev => ({ ...prev, [tabId]: false }));
-    setErrorStates(prev => ({ ...prev, [tabId]: false }));
+    setLoadedIframes((prev) => new Set(prev).add(tabId));
+    setErrorStates((prev) => ({ ...prev, [tabId]: false }));
   };
-  
-  // Handle iframe error
-  const handleIframeError = (tabId: TabId) => {
-    setLoadingStates(prev => ({ ...prev, [tabId]: false }));
-    setErrorStates(prev => ({ ...prev, [tabId]: true }));
-  };
-  
+
   // Retry loading iframe
   const handleRetry = (tabId: TabId) => {
-    setErrorStates(prev => ({ ...prev, [tabId]: false }));
-    setLoadingStates(prev => ({ ...prev, [tabId]: true }));
-    setLoadedIframes(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(tabId);
-      return newSet;
+    setErrorStates((prev) => ({ ...prev, [tabId]: false }));
+    setLoadedIframes((prev) => {
+      const next = new Set(prev);
+      next.delete(tabId);
+      return next;
     });
   };
   
@@ -299,13 +279,12 @@ const HotelMapTabs = ({
                       : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                   aria-haspopup="true"
-                  aria-expanded={false}
                 >
                   {isDropdownItemActive && (
                     <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
                   )}
                   {labels.moreOptions}
-                  <ChevronDown className="h-4 w-4 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                  <ChevronDown className="h-4 w-4 transition-transform duration-300 data-[state=open]:rotate-180" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -346,98 +325,102 @@ const HotelMapTabs = ({
         {/* Tab Content */}
         <div className="mt-4">
           {/* Hotels Tab Content */}
-          {activeTab === "hotels" && (
-            <div>
-              {hotels.length > 0 ? (
-                <>
-                  {/* Sorting dropdown */}
-                  <div className="flex items-center justify-end mb-4">
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-full sm:w-80 md:w-96 h-11 sm:h-12 text-sm sm:text-base border-2 border-border bg-card font-medium shadow-sm">
-                        <SelectValue placeholder="Ordenar por" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-2 w-full min-w-[320px] z-50">
-                        <SelectItem value="price-asc" className="text-sm sm:text-base py-3">Precio (menor a mayor)</SelectItem>
-                        <SelectItem value="price-desc" className="text-sm sm:text-base py-3">Precio (mayor a menor)</SelectItem>
-                        <SelectItem value="distance-asc" className="text-sm sm:text-base py-3">Distancia (más cercano)</SelectItem>
-                        <SelectItem value="rating-desc" className="text-sm sm:text-base py-3">Valoración (mejor puntuada)</SelectItem>
-                        <SelectItem value="stars-desc" className="text-sm sm:text-base py-3">Estrellas (más estrellas)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sortedHotels.map((hotel) => (
-                      <HotelCard 
-                        key={hotel.hotel_id} 
-                        hotel={hotel} 
-                        onAddHotel={onAddHotel}
-                        checkinDate={checkinDate}
-                        checkoutDate={checkoutDate}
-                        eventName={eventName}
-                        showTicketHint={ticketsSelected}
-                        isAdded={selectedHotelId === hotel.hotel_id}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : mapWidgetHtml ? (
-                // Fallback: Show Stay22 map when no hotels available
-                <div className="space-y-4">
-                  <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Buscar hoteles en el mapa</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Explora alojamientos cerca del evento directamente en el mapa interactivo.
-                      </p>
-                    </div>
-                  </div>
-                  <IframeContent 
-                    tabId="map" 
-                    url={mapWidgetHtml} 
-                    title={`Mapa de hoteles cerca de ${eventName || 'el evento'}`} 
-                  />
+          <div className={activeTab === "hotels" ? "block" : "hidden"}>
+            {hotels.length > 0 ? (
+              <>
+                {/* Sorting dropdown */}
+                <div className="flex items-center justify-end mb-4">
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-80 md:w-96 h-11 sm:h-12 text-sm sm:text-base border-2 border-border bg-card font-medium shadow-sm">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-2 w-full min-w-[320px] z-50">
+                      <SelectItem value="price-asc" className="text-sm sm:text-base py-3">Precio (menor a mayor)</SelectItem>
+                      <SelectItem value="price-desc" className="text-sm sm:text-base py-3">Precio (mayor a menor)</SelectItem>
+                      <SelectItem value="distance-asc" className="text-sm sm:text-base py-3">Distancia (más cercano)</SelectItem>
+                      <SelectItem value="rating-desc" className="text-sm sm:text-base py-3">Valoración (mejor puntuada)</SelectItem>
+                      <SelectItem value="stars-desc" className="text-sm sm:text-base py-3">Estrellas (más estrellas)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : (
-                <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed border-border">
-                  <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-medium">No hay hoteles disponibles para este evento</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Los hoteles se añadirán próximamente</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sortedHotels.map((hotel) => (
+                    <HotelCard 
+                      key={hotel.hotel_id} 
+                      hotel={hotel} 
+                      onAddHotel={onAddHotel}
+                      checkinDate={checkinDate}
+                      checkoutDate={checkoutDate}
+                      eventName={eventName}
+                      showTicketHint={ticketsSelected}
+                      isAdded={selectedHotelId === hotel.hotel_id}
+                    />
+                  ))}
                 </div>
-              )}
+              </>
+            ) : mapWidgetHtml ? (
+              // Fallback: Show Stay22 map when no hotels available
+              <div className="space-y-4">
+                <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Buscar hoteles en el mapa</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Explora alojamientos cerca del evento directamente en el mapa interactivo.
+                    </p>
+                  </div>
+                </div>
+                <IframeContent 
+                  tabId="map" 
+                  url={mapWidgetHtml} 
+                  title={`Mapa de hoteles cerca de ${eventName || 'el evento'}`} 
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed border-border">
+                <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No hay hoteles disponibles para este evento</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Los hoteles se añadirán próximamente</p>
+              </div>
+            )}
+          </div>
+
+          {/* Map Tab Content (kept mounted after first load) */}
+          {mapWidgetHtml && (
+            <div className={activeTab === "map" ? "block" : "hidden"}>
+              <div className="rounded-xl overflow-hidden border-2 border-border">
+                <IframeContent 
+                  tabId="map" 
+                  url={mapWidgetHtml} 
+                  title={`Mapa de hoteles cerca de ${eventName || 'el evento'}`} 
+                />
+              </div>
             </div>
           )}
-          
-          {/* Map Tab Content */}
-          {activeTab === "map" && mapWidgetHtml && (
-            <div className="rounded-xl overflow-hidden border-2 border-border">
-              <IframeContent 
-                tabId="map" 
-                url={mapWidgetHtml} 
-                title={`Mapa de hoteles cerca de ${eventName || 'el evento'}`} 
-              />
+
+          {/* Accommodations Tab Content (kept mounted after first load) */}
+          {stay22Accommodations && (
+            <div className={activeTab === "accommodations" ? "block" : "hidden"}>
+              <div className="rounded-xl overflow-hidden border-2 border-border">
+                <IframeContent 
+                  tabId="accommodations" 
+                  url={stay22Accommodations} 
+                  title={`Hoteles y apartamentos en ${cityDisplay}`} 
+                />
+              </div>
             </div>
           )}
-          
-          {/* Accommodations Tab Content (from dropdown) */}
-          {activeTab === "accommodations" && stay22Accommodations && (
-            <div className="rounded-xl overflow-hidden border-2 border-border">
-              <IframeContent 
-                tabId="accommodations" 
-                url={stay22Accommodations} 
-                title={`Hoteles y apartamentos en ${cityDisplay}`} 
-              />
-            </div>
-          )}
-          
-          {/* Activities Tab Content (from dropdown) */}
-          {activeTab === "activities" && stay22Activities && (
-            <div className="rounded-xl overflow-hidden border-2 border-border">
-              <IframeContent 
-                tabId="activities" 
-                url={stay22Activities} 
-                title={`Actividades y experiencias en ${cityDisplay}`} 
-              />
+
+          {/* Activities Tab Content (kept mounted after first load) */}
+          {stay22Activities && (
+            <div className={activeTab === "activities" ? "block" : "hidden"}>
+              <div className="rounded-xl overflow-hidden border-2 border-border">
+                <IframeContent 
+                  tabId="activities" 
+                  url={stay22Activities} 
+                  title={`Actividades y experiencias en ${cityDisplay}`} 
+                />
+              </div>
             </div>
           )}
         </div>
