@@ -15,12 +15,22 @@ interface RelatedLink {
 interface CityWithDeeplink {
   id: number;
   ticketmaster_city: string;
-  liteapi_city: string;
   place_id: string;
   imagen_ciudad: string | null;
-  verified: boolean;
   nuitee_deeplink: string;
 }
+
+// Helper to build Nuitee deeplink with dynamic dates
+const buildNuiteeDeeplink = (placeId: string): string => {
+  const checkin = new Date();
+  checkin.setDate(checkin.getDate() + 7);
+  const checkout = new Date();
+  checkout.setDate(checkout.getDate() + 8);
+  
+  const formatDate = (d: Date) => d.toISOString().split('T')[0];
+  
+  return `https://feelomove.nuitee.link/hotels?placeId=${placeId}&checkin=${formatDate(checkin)}&checkout=${formatDate(checkout)}&language=es&currency=EUR`;
+};
 
 interface RelatedLinksData {
   cities?: RelatedLink[];
@@ -194,15 +204,26 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
       if (type !== 'artist') return;
 
       try {
-        const { data, error } = await supabase.rpc('get_cities_with_deeplinks');
+        const { data, error } = await supabase
+          .from('lite_tbl_city_mapping')
+          .select('id, ticketmaster_city, place_id, imagen_ciudad')
+          .not('place_id', 'is', null)
+          .limit(6);
 
         if (error) {
-          console.error('Error fetching cities with deeplinks:', error);
+          console.error('Error fetching cities:', error);
           return;
         }
 
         if (data) {
-          setCitiesWithDeeplinks((data as CityWithDeeplink[]).slice(0, 6));
+          const citiesWithLinks = data.map(city => ({
+            id: city.id,
+            ticketmaster_city: city.ticketmaster_city,
+            place_id: city.place_id!,
+            imagen_ciudad: city.imagen_ciudad,
+            nuitee_deeplink: buildNuiteeDeeplink(city.place_id!)
+          }));
+          setCitiesWithDeeplinks(citiesWithLinks);
         }
       } catch (error) {
         console.error('Error fetching cities with deeplinks:', error);
