@@ -188,7 +188,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
           
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
-            <div className="relative h-64 overflow-hidden bg-muted">
+            <div className="relative h-56 overflow-hidden bg-muted">
               {/* Background Image - Lazy loaded with IntersectionObserver */}
               {isInView ? (
                 <>
@@ -203,7 +203,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     decoding={priority ? "sync" : "async"}
                     fetchPriority={priority ? "high" : "auto"}
                     width={400}
-                    height={256}
+                    height={224}
                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     onLoad={() => setImageLoaded(true)}
                     onError={(e) => {
@@ -218,8 +218,8 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                 <Skeleton className="absolute inset-0 w-full h-full" />
               )}
               
-              {/* Gradient Overlay - stronger at bottom for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              {/* Minimal Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
               {/* Badge "Disponible" - Top Left above Date Card */}
               {badgeText && badgeVariant && (
@@ -239,16 +239,9 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                 </div>
               )}
               
-              {/* Category Badge - Above event name */}
-              <div className="absolute bottom-14 left-3 z-10">
+              {/* Category Badge - Bottom Left */}
+              <div className="absolute bottom-3 left-3 z-10">
                 <CategoryBadge badges={badges} />
-              </div>
-
-              {/* Event Name - Overlaid at bottom of image */}
-              <div className="absolute bottom-3 left-3 right-3 z-10">
-                <h3 className="text-white text-lg font-bold leading-tight tracking-tight font-['Poppins'] line-clamp-2 drop-shadow-lg" itemProp="name">
-                  {eventName}
-                </h3>
               </div>
 
               {/* Date Card - Absolute positioned on the left */}
@@ -328,6 +321,13 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Event Name Below Image */}
+            <div className="bg-background px-4 pt-4 pb-2">
+              <h3 className="text-foreground text-xl font-bold truncate leading-tight tracking-tight font-['Poppins']" itemProp="name">
+                {eventName}
+              </h3>
             </div>
 
             {/* Bottom Section with Button */}
