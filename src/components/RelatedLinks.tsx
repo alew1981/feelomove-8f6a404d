@@ -16,7 +16,7 @@ interface DestinationWithHotels {
   city_name: string;
   city_slug: string;
   hotels_count: number | null;
-  sample_image_url: string | null;
+  imagen_ciudad: string | null;
   place_id: string | null;
 }
 
@@ -199,7 +199,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
   }, [type, slug]);
 
-  // Fetch destinations with hotel counts for artist pages (with place_id for deeplinks)
+  // Fetch destinations with hotel counts for artist pages (with place_id and imagen_ciudad for deeplinks)
   useEffect(() => {
     const fetchArtistDestinationsWithHotels = async () => {
       if (type !== 'artist') return;
@@ -208,24 +208,27 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         // First get destinations with hotels
         const { data: destinations } = await supabase
           .from('mv_destinations_cards')
-          .select('city_name, city_slug, hotels_count, sample_image_url')
+          .select('city_name, city_slug, hotels_count')
           .gt('hotels_count', 0)
           .order('hotels_count', { ascending: false })
           .limit(6);
 
         if (destinations && destinations.length > 0) {
-          // Then get place_ids from city mapping
+          // Then get place_ids AND imagen_ciudad from city mapping
           const cityNames = destinations.map(d => d.city_name);
           const { data: cityMappings } = await supabase
             .from('lite_tbl_city_mapping')
-            .select('ticketmaster_city, place_id')
+            .select('ticketmaster_city, place_id, imagen_ciudad')
             .in('ticketmaster_city', cityNames);
 
           // Merge the data
           const merged = destinations.map(dest => {
             const mapping = cityMappings?.find(m => m.ticketmaster_city === dest.city_name);
             return {
-              ...dest,
+              city_name: dest.city_name,
+              city_slug: dest.city_slug,
+              hotels_count: dest.hotels_count,
+              imagen_ciudad: mapping?.imagen_ciudad || null,
               place_id: mapping?.place_id || null
             } as DestinationWithHotels;
           });
@@ -521,9 +524,9 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   rel="noopener noreferrer"
                   className="group relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
-                  {destination.sample_image_url ? (
+                  {destination.imagen_ciudad ? (
                     <img 
-                      src={destination.sample_image_url} 
+                      src={destination.imagen_ciudad} 
                       alt={`Hoteles en ${destination.city_name}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
@@ -547,9 +550,9 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   to={linkUrl}
                   className="group relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
-                  {destination.sample_image_url ? (
+                  {destination.imagen_ciudad ? (
                     <img 
-                      src={destination.sample_image_url} 
+                      src={destination.imagen_ciudad} 
                       alt={`Hoteles en ${destination.city_name}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
