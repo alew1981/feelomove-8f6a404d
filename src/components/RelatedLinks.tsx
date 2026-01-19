@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { MapPin, Music, Users, Ticket } from 'lucide-react';
+import { MapPin, Music, Users, Ticket, ChevronRight } from 'lucide-react';
 
 interface RelatedLink {
   type: string;
@@ -296,12 +296,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
 
     if (type === 'artist') {
-      // For artists: show genres and destinations
+      // For artists: ONLY show genres (destinations already shown in "Destinos de X" section)
       return {
         genres: fallbackGenres.slice(0, 4),
-        destinations: fallbackDestinations.slice(0, 4),
         showGenres: true,
-        showDestinations: true
+        showDestinations: false // Avoid redundancy with "Destinos de X"
       };
     }
 
@@ -382,12 +381,34 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         renderLinkSection('Géneros relacionados', contextLinks.genres, 'Explorar')
       )}
 
-      {/* Context-aware links for artists */}
-      {type === 'artist' && (
-        <>
-          {contextLinks.showGenres && renderLinkSection('Géneros musicales', contextLinks.genres, 'Explorar')}
-          {contextLinks.showDestinations && renderLinkSection('Destinos con eventos', contextLinks.destinations, 'Ver conciertos en')}
-        </>
+      {/* Context-aware links for artists - Genres only with visual cards */}
+      {type === 'artist' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
+        <div className="mb-6">
+          <h4 className="text-lg font-bold text-foreground mb-4">Géneros musicales</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {contextLinks.genres.slice(0, 4).map((genre, index) => (
+              <Link
+                key={genre.slug}
+                to={genre.url}
+                className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
+                  <Music className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="font-bold text-white text-base line-clamp-2">
+                    {genre.label.replace('Explorar música ', '')}
+                  </h3>
+                  {genre.event_count && genre.event_count > 0 && (
+                    <span className="text-xs text-white/70">{genre.event_count} eventos</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Original links from mv_internal_links as fallback/supplement */}
@@ -407,13 +428,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </div>
       )}
 
-      {/* Additional artist links from database */}
-      {type === 'artist' && !Array.isArray(links) && links && (
-        <>
-          {links.cities && links.cities.length > 0 && 
-            renderLinkSection('Ciudades donde toca', links.cities, 'Ver conciertos en')}
-        </>
-      )}
+      {/* Additional artist links from database - Skip cities (already shown in Destinos section) */}
 
       {/* Additional city links from database */}
       {type === 'city' && !Array.isArray(links) && links && (
