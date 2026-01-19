@@ -86,7 +86,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
   };
 
   return (
-    <div className={`rounded-lg shadow-lg bg-card overflow-visible relative max-w-[350px] transition-all ${isAdded ? 'ring-2 ring-accent' : ''}`}>
+    <div className={`rounded-lg shadow-lg bg-card overflow-visible relative w-full transition-all ${isAdded ? 'ring-2 ring-accent' : ''}`}>
       {/* Added badge */}
       {isAdded && (
         <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground rounded-full p-1">
@@ -114,7 +114,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
       )}
 
       {/* Hotel Image - Optimized for performance */}
-      <div className="h-[200px] overflow-hidden rounded-t-lg bg-muted">
+      <div className="h-[140px] sm:h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <img
           src={optimizedImageUrl || "/placeholder.svg"}
           alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ' estrellas' : ''} en ${hotel.hotel_city || 'España'} para eventos`}
@@ -136,7 +136,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
         )}
 
         {/* Hotel Name */}
-        <h3 className="text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2 min-h-[2.4em]">
+        <h3 className="text-base sm:text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2 min-h-[2.4em]">
           {hotel.hotel_name}
         </h3>
 
@@ -193,9 +193,9 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
       </div>
 
       {/* Footer with Price */}
-      <div className="bg-muted p-4 flex justify-end">
+      <div className="bg-muted p-3 sm:p-4 flex justify-end">
         <div className="text-right flex flex-col items-end w-full">
-          <span className="text-3xl font-bold text-foreground block mb-0.5">
+          <span className="text-2xl sm:text-3xl font-bold text-foreground block mb-0.5">
             €{pricePerNight.toFixed(0)}
           </span>
           <span className="text-xs text-muted-foreground block leading-tight">
