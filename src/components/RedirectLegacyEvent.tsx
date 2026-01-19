@@ -98,49 +98,70 @@ function parseLegacySlug(slug: string): { baseSlug: string; date: string | null;
 
 /**
  * Smart event router component that:
- * 1. Detects legacy URLs with date suffix (e.g., /concierto/event-slug-2026-01-14)
- * 2. Redirects legacy URLs to the correct current URL
- * 3. Renders the Producto page for normal event URLs
+ * 1. First checks if the EXACT slug exists in the database
+ * 2. Only if not found, checks for legacy date suffixes and redirects
+ * 3. Renders the Producto page for valid event URLs
  */
 const RedirectLegacyEvent = () => {
   const { slug: rawSlug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Parse the slug to check if it has a legacy date suffix or placeholder
-  const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly } = rawSlug 
-    ? parseLegacySlug(rawSlug) 
-    : { baseSlug: '', date: null, hasLegacySuffix: false, isPlaceholderDate: false, isYearOnly: false };
+  // Parse the slug to check if it has a potential legacy date suffix or placeholder
+  const parsedSlug = rawSlug ? parseLegacySlug(rawSlug) : { baseSlug: '', date: null, hasLegacySuffix: false, isPlaceholderDate: false, isYearOnly: false };
   
   // Determine if this is a festival or concert route
   const isFestivalRoute = location.pathname.startsWith('/festival');
 
-  // Query to find event type and correct slug - needed for both placeholder, year-only, and regular legacy slugs
+  // Query to check if the EXACT slug exists first, then handle legacy redirects
   const { data: eventData, isLoading, error, isFetched } = useQuery({
-    queryKey: ['legacy-event-redirect', baseSlug, date, isPlaceholderDate, isYearOnly],
+    queryKey: ['event-redirect-check', rawSlug],
     queryFn: async () => {
-      // First, try exact match with base slug
+      if (!rawSlug) return null;
+      
+      // STEP 1: Check if the EXACT slug exists in the database
+      const { data: exactMatch, error: exactError } = await supabase
+        .from("tm_tbl_events")
+        .select("event_type, slug, name, venue_city, event_date")
+        .eq("slug", rawSlug)
+        .maybeSingle();
+      
+      if (exactError) throw exactError;
+      
+      // If exact match found, return it with a flag indicating no redirect needed
+      if (exactMatch) {
+        return { ...exactMatch, needsRedirect: false, isExactMatch: true };
+      }
+      
+      // STEP 2: If no exact match and slug has legacy suffix, try to find the base event
+      const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly } = parsedSlug;
+      
+      if (!hasLegacySuffix || !baseSlug) {
+        // No legacy suffix pattern detected and no exact match - event doesn't exist
+        return null;
+      }
+      
+      // Try to find event with the base slug (without date/year suffix)
       let query = supabase
         .from("tm_tbl_events")
         .select("event_type, slug, name, venue_city, event_date")
         .eq("slug", baseSlug);
       
-      // If we have a date (not placeholder and not year-only), also filter by date for more accuracy
+      // If we have a full date (not placeholder and not year-only), also filter by date
       if (date && !isPlaceholderDate && !isYearOnly) {
         query = query.gte("event_date", `${date}T00:00:00`)
                      .lte("event_date", `${date}T23:59:59`);
       }
       
-      const { data, error } = await query.maybeSingle();
+      const { data, error: baseError } = await query.maybeSingle();
       
-      if (error) throw error;
+      if (baseError) throw baseError;
       
-      // If we found an exact match, return it
       if (data) {
-        return data;
+        return { ...data, needsRedirect: true, isExactMatch: false };
       }
       
-      // If no exact match found with date filter, try without date filter
+      // Try without date filter if we had one
       if (date && !isPlaceholderDate && !isYearOnly) {
         const { data: withoutDateData } = await supabase
           .from("tm_tbl_events")
@@ -149,11 +170,11 @@ const RedirectLegacyEvent = () => {
           .maybeSingle();
         
         if (withoutDateData) {
-          return withoutDateData;
+          return { ...withoutDateData, needsRedirect: true, isExactMatch: false };
         }
       }
       
-      // Try finding an event that matches the slug pattern without the last segment (usually city)
+      // Try fuzzy match as last resort
       if (baseSlug) {
         const slugParts = baseSlug.split('-');
         
@@ -173,40 +194,51 @@ const RedirectLegacyEvent = () => {
           const fuzzyResult = await fuzzyQuery.limit(1).maybeSingle();
           
           if (fuzzyResult.data) {
-            return fuzzyResult.data;
+            return { ...fuzzyResult.data, needsRedirect: true, isExactMatch: false };
           }
         }
       }
       
       return null;
     },
-    enabled: hasLegacySuffix && !!baseSlug, // Always query when legacy suffix detected
-    staleTime: Infinity, // Cache indefinitely for redirects
-    gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
+    enabled: !!rawSlug,
+    staleTime: Infinity,
+    gcTime: 60 * 60 * 1000,
   });
 
   useEffect(() => {
-    // Only process redirects for legacy URLs with date suffix or placeholder
-    if (!hasLegacySuffix) return;
-    
     // Wait for data to be fetched
     if (isLoading) return;
     
     if (eventData) {
-      // Redirect to the correct URL based on event type from DB
-      const isFestival = eventData.event_type === 'festival';
-      const newPath = isFestival 
-        ? `/festival/${eventData.slug}` 
-        : `/concierto/${eventData.slug}`;
+      // If exact match found, check if we need to redirect due to wrong route type
+      if (eventData.isExactMatch) {
+        const isFestival = eventData.event_type === 'festival';
+        const expectedPath = isFestival 
+          ? `/festival/${eventData.slug}` 
+          : `/concierto/${eventData.slug}`;
+        
+        // Redirect only if wrong route type (e.g., concert on /festival route)
+        if (location.pathname !== expectedPath) {
+          console.log(`Route type redirect: ${location.pathname} → ${expectedPath}`);
+          navigate(expectedPath, { replace: true });
+        }
+        return;
+      }
       
-      // Only redirect if the path is different
-      if (location.pathname !== newPath) {
-        console.log(`Legacy redirect: ${location.pathname} → ${newPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}${isYearOnly ? ' (year suffix removed)' : ''}`);
+      // Legacy URL - needs redirect to the correct slug
+      if (eventData.needsRedirect) {
+        const isFestival = eventData.event_type === 'festival';
+        const newPath = isFestival 
+          ? `/festival/${eventData.slug}` 
+          : `/concierto/${eventData.slug}`;
+        
+        console.log(`Legacy redirect: ${location.pathname} → ${newPath}`);
         navigate(newPath, { replace: true });
       }
     } else if (isFetched && !eventData) {
       // No event found - redirect to list page based on current route
-      console.warn(`Legacy redirect: No event found for slug "${baseSlug}", redirecting to list page`);
+      console.warn(`Event not found: "${rawSlug}", redirecting to list page`);
       
       if (isFestivalRoute) {
         navigate('/festivales', { replace: true });
@@ -214,27 +246,45 @@ const RedirectLegacyEvent = () => {
         navigate('/conciertos', { replace: true });
       }
     }
-  }, [eventData, isLoading, isFetched, navigate, location.pathname, baseSlug, isFestivalRoute, hasLegacySuffix, isPlaceholderDate, isYearOnly]);
+  }, [eventData, isLoading, isFetched, navigate, location.pathname, rawSlug, isFestivalRoute]);
 
-  // Handle query errors for legacy redirects
-  if (hasLegacySuffix && error) {
-    console.error('Legacy redirect error:', error);
+  // Handle query errors
+  if (error) {
+    console.error('Event redirect error:', error);
     navigate(isFestivalRoute ? '/festivales' : '/conciertos', { replace: true });
     return null;
   }
 
-  // For legacy URLs (date suffix or placeholder), show minimal redirect loader with SEO meta tags
-  if (hasLegacySuffix) {
-    // Calculate target URL for SEO meta tags
-    const targetPath = isFestivalRoute ? `/festival/${baseSlug}` : `/concierto/${baseSlug}`;
-    const targetUrl = `https://feelomove.com${targetPath}`;
+  // If still loading, show loader
+  if (isLoading) {
+    return <PageLoader />;
+  }
+
+  // If event found with exact match and correct route, render Producto directly
+  if (eventData?.isExactMatch) {
+    const isFestival = eventData.event_type === 'festival';
+    const expectedPath = isFestival ? `/festival/${eventData.slug}` : `/concierto/${eventData.slug}`;
     
-    console.log(`Legacy URL detected: ${rawSlug} → redirecting to ${targetPath}${isPlaceholderDate ? ' (placeholder date removed)' : ''}${isYearOnly ? ' (year suffix removed)' : ''}`);
+    // Only render if on correct route
+    if (location.pathname === expectedPath) {
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <Producto />
+        </Suspense>
+      );
+    }
+  }
+
+  // For legacy URLs that need redirect, show redirect loader with SEO meta tags
+  if (eventData?.needsRedirect) {
+    const isFestival = eventData.event_type === 'festival';
+    const targetPath = isFestival ? `/festival/${eventData.slug}` : `/concierto/${eventData.slug}`;
+    const targetUrl = `https://feelomove.com${targetPath}`;
     
     return <RedirectLoader targetUrl={targetUrl} />;
   }
 
-  // For normal URLs (no date suffix), render the Producto page directly
+  // Default: render Producto (for cases where exact match exists but redirect hasn't happened yet)
   return (
     <Suspense fallback={<PageLoader />}>
       <Producto />
