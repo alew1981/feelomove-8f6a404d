@@ -17,6 +17,7 @@ interface DestinationWithHotels {
   city_slug: string;
   hotels_count: number | null;
   imagen_ciudad: string | null;
+  sample_image_url?: string | null;
   place_id: string | null;
 }
 
@@ -172,19 +173,29 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
 
         if (data) {
           const currentSlug = normalizeSlug(slug);
+
+          // For genres where mv_genres_cards has no image (e.g. "Latino"), fallback to known storage assets.
+          const imageFallbackByGenreName: Record<string, string> = {
+            latino:
+              'https://wcyjuytpxxqailtixept.supabase.co/storage/v1/object/sign/Generos/world.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wZDZlYWM3Mi05NWIwLTQ2MDItYTZiNC01NWRmY2U1YmUyMWIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJHZW5lcm9zL3dvcmxkLmpwZyIsImlhdCI6MTc2NTg4NjQwOCwiZXhwIjoxNzk3NDIyNDA4fQ.d_WNdfAS3PGVb59oyezVR7-QZMm2hQBnAY1HM9nuR2k'
+          };
+
           setFallbackGenres(
             data
               .filter(g => normalizeSlug(g.genre_name || '') !== currentSlug)
               .slice(0, 6)
               .map(g => {
-                const genreSlug = normalizeSlug(g.genre_name || '');
+                const genreName = g.genre_name || '';
+                const genreSlug = normalizeSlug(genreName);
+                const normalizedName = normalizeSlug(genreName);
+
                 return {
                   type: 'genre',
-                  label: `Explorar música ${g.genre_name}`,
+                  label: `Explorar música ${genreName}`,
                   url: `/generos/${genreSlug}`,
                   slug: genreSlug,
                   event_count: g.event_count || 0,
-                  image: g.image_genres || undefined
+                  image: g.image_genres || imageFallbackByGenreName[normalizedName] || undefined
                 };
               })
           );
@@ -205,31 +216,34 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
       if (type !== 'artist') return;
 
       try {
-        // Fetch both sources in parallel
-        const [destinationsResult, cityMappingsResult] = await Promise.all([
-          supabase
-            .from('mv_destinations_cards')
-            .select('city_name, city_slug, hotels_count')
-            .gt('hotels_count', 0)
-            .order('hotels_count', { ascending: false })
-            .limit(6),
-          supabase
-            .from('lite_tbl_city_mapping')
-            .select('ticketmaster_city, place_id, imagen_ciudad')
-        ]);
-
-        const destinations = destinationsResult.data;
-        const cityMappings = cityMappingsResult.data;
+        // Fetch destinations
+        const { data: destinations } = await supabase
+          .from('mv_destinations_cards')
+          .select('city_name, city_slug, hotels_count, sample_image_url')
+          .gt('hotels_count', 0)
+          .order('hotels_count', { ascending: false })
+          .limit(6);
 
         if (destinations && destinations.length > 0) {
-          // Merge the data - match in memory to avoid issues with special characters
-          const merged = destinations.map(dest => {
-            const mapping = cityMappings?.find(m => m.ticketmaster_city === dest.city_name);
+          // Fetch mapping per-city to avoid PostgREST encoding issues and default 1000-row limits
+          const mappingResults = await Promise.all(
+            destinations.map((d) =>
+              supabase
+                .from('lite_tbl_city_mapping')
+                .select('ticketmaster_city, place_id, imagen_ciudad')
+                .eq('ticketmaster_city', d.city_name)
+                .maybeSingle()
+            )
+          );
+
+          const merged = destinations.map((dest, idx) => {
+            const mapping = mappingResults[idx].data;
             return {
               city_name: dest.city_name,
               city_slug: dest.city_slug,
               hotels_count: dest.hotels_count,
               imagen_ciudad: mapping?.imagen_ciudad || null,
+              sample_image_url: (dest as any).sample_image_url || null,
               place_id: mapping?.place_id || null
             } as DestinationWithHotels;
           });
@@ -525,9 +539,9 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   rel="noopener noreferrer"
                   className="group relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
-                  {destination.imagen_ciudad ? (
+                  {destination.imagen_ciudad || destination.sample_image_url ? (
                     <img 
-                      src={destination.imagen_ciudad} 
+                      src={(destination.imagen_ciudad || destination.sample_image_url) as string} 
                       alt={`Hoteles en ${destination.city_name}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
@@ -551,9 +565,9 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   to={linkUrl}
                   className="group relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
-                  {destination.imagen_ciudad ? (
+                  {destination.imagen_ciudad || destination.sample_image_url ? (
                     <img 
-                      src={destination.imagen_ciudad} 
+                      src={(destination.imagen_ciudad || destination.sample_image_url) as string} 
                       alt={`Hoteles en ${destination.city_name}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
