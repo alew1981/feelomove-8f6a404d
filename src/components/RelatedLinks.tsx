@@ -205,23 +205,24 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
       if (type !== 'artist') return;
 
       try {
-        // First get destinations with hotels
-        const { data: destinations } = await supabase
-          .from('mv_destinations_cards')
-          .select('city_name, city_slug, hotels_count')
-          .gt('hotels_count', 0)
-          .order('hotels_count', { ascending: false })
-          .limit(6);
-
-        if (destinations && destinations.length > 0) {
-          // Then get place_ids AND imagen_ciudad from city mapping
-          const cityNames = destinations.map(d => d.city_name);
-          const { data: cityMappings } = await supabase
+        // Fetch both sources in parallel
+        const [destinationsResult, cityMappingsResult] = await Promise.all([
+          supabase
+            .from('mv_destinations_cards')
+            .select('city_name, city_slug, hotels_count')
+            .gt('hotels_count', 0)
+            .order('hotels_count', { ascending: false })
+            .limit(6),
+          supabase
             .from('lite_tbl_city_mapping')
             .select('ticketmaster_city, place_id, imagen_ciudad')
-            .in('ticketmaster_city', cityNames);
+        ]);
 
-          // Merge the data
+        const destinations = destinationsResult.data;
+        const cityMappings = cityMappingsResult.data;
+
+        if (destinations && destinations.length > 0) {
+          // Merge the data - match in memory to avoid issues with special characters
           const merged = destinations.map(dest => {
             const mapping = cityMappings?.find(m => m.ticketmaster_city === dest.city_name);
             return {
