@@ -12,11 +12,14 @@ interface RelatedLink {
   image?: string;
 }
 
-interface DestinationWithHotels {
-  city_name: string;
-  city_slug: string;
-  hotels_count: number | null;
-  sample_image_url: string | null;
+interface CityWithDeeplink {
+  id: number;
+  ticketmaster_city: string;
+  liteapi_city: string;
+  place_id: string;
+  imagen_ciudad: string | null;
+  verified: boolean;
+  nuitee_deeplink: string;
 }
 
 interface RelatedLinksData {
@@ -67,7 +70,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
   const [fallbackGenres, setFallbackGenres] = useState<RelatedLink[]>([]);
   const [relatedGenres, setRelatedGenres] = useState<RelatedLink[]>([]);
   const [nearbyDestinations, setNearbyDestinations] = useState<RelatedLink[]>([]);
-  const [artistDestinationsWithHotels, setArtistDestinationsWithHotels] = useState<DestinationWithHotels[]>([]);
+  const [citiesWithDeeplinks, setCitiesWithDeeplinks] = useState<CityWithDeeplink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Normalize slug for comparison and URL generation
@@ -185,28 +188,28 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
   }, [type, slug]);
 
-  // Fetch destinations with hotel counts for artist pages
+  // Fetch cities with Nuitee deeplinks for artist pages
   useEffect(() => {
-    const fetchArtistDestinationsWithHotels = async () => {
+    const fetchCitiesWithDeeplinks = async () => {
       if (type !== 'artist') return;
 
       try {
-        const { data } = await supabase
-          .from('mv_destinations_cards')
-          .select('city_name, city_slug, hotels_count, sample_image_url')
-          .gt('hotels_count', 0)
-          .order('hotels_count', { ascending: false })
-          .limit(6);
+        const { data, error } = await supabase.rpc('get_cities_with_deeplinks');
+
+        if (error) {
+          console.error('Error fetching cities with deeplinks:', error);
+          return;
+        }
 
         if (data) {
-          setArtistDestinationsWithHotels(data as DestinationWithHotels[]);
+          setCitiesWithDeeplinks((data as CityWithDeeplink[]).slice(0, 6));
         }
       } catch (error) {
-        console.error('Error fetching artist destinations with hotels:', error);
+        console.error('Error fetching cities with deeplinks:', error);
       }
     };
 
-    fetchArtistDestinationsWithHotels();
+    fetchCitiesWithDeeplinks();
   }, [type]);
 
   // Fetch semantically related genres
@@ -454,21 +457,23 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </div>
       )}
 
-      {/* Hotels by destination section for artists - SEO internal linking */}
-      {type === 'artist' && artistDestinationsWithHotels.length > 0 && (
+      {/* Hotels by destination section for artists - External Nuitee deeplinks */}
+      {type === 'artist' && citiesWithDeeplinks.length > 0 && (
         <div className="mb-6">
           <h4 className="text-lg font-bold text-foreground mb-4">🏨 Hoteles en destinos con eventos</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {artistDestinationsWithHotels.slice(0, 6).map((destination) => (
-              <Link
-                key={destination.city_slug}
-                to={`/destinos/${destination.city_slug}`}
+            {citiesWithDeeplinks.map((city) => (
+              <a
+                key={city.id}
+                href={city.nuitee_deeplink}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-border/50"
               >
-                {destination.sample_image_url ? (
+                {city.imagen_ciudad ? (
                   <img 
-                    src={destination.sample_image_url} 
-                    alt={`Hoteles en ${destination.city_name}`}
+                    src={city.imagen_ciudad} 
+                    alt={`Hoteles en ${city.ticketmaster_city}`}
                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                     loading="lazy"
                   />
@@ -479,18 +484,18 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                 )}
                 <div className="flex-1 min-w-0">
                   <h5 className="font-semibold text-foreground text-sm truncate">
-                    {destination.city_name}
+                    {city.ticketmaster_city}
                   </h5>
                   <p className="text-xs text-muted-foreground">
-                    {destination.hotels_count} hoteles disponibles
+                    Ver hoteles disponibles
                   </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
-              </Link>
+              </a>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            Encuentra alojamiento cerca de los conciertos • Compara precios y reserva
+            Reserva alojamiento cerca de los conciertos • Los enlaces abren en nueva pestaña
           </p>
         </div>
       )}
