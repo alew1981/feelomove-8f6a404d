@@ -987,10 +987,11 @@ const Producto = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
+                                    className="ticket-qty-decrease h-7 w-7 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
                                     onClick={() => handleTicketQuantityChange(ticket.id, -1)}
                                     disabled={quantity === 0 || isSoldOut}
                                     aria-label={`Reducir cantidad de ${ticket.type}`}
+                                    data-ticket-type={ticket.type}
                                   >
                                     <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
@@ -998,10 +999,11 @@ const Producto = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
+                                    className="ticket-qty-increase h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
                                     onClick={() => handleTicketQuantityChange(ticket.id, 1)}
                                     disabled={quantity >= 10 || isSoldOut}
                                     aria-label={`Aumentar cantidad de ${ticket.type}`}
+                                    data-ticket-type={ticket.type}
                                   >
                                     <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
