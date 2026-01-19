@@ -9,6 +9,14 @@ interface RelatedLink {
   url: string;
   slug: string;
   event_count?: number;
+  image?: string;
+}
+
+interface DestinationWithHotels {
+  city_name: string;
+  city_slug: string;
+  hotels_count: number | null;
+  sample_image_url: string | null;
 }
 
 interface RelatedLinksData {
@@ -59,6 +67,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
   const [fallbackGenres, setFallbackGenres] = useState<RelatedLink[]>([]);
   const [relatedGenres, setRelatedGenres] = useState<RelatedLink[]>([]);
   const [nearbyDestinations, setNearbyDestinations] = useState<RelatedLink[]>([]);
+  const [artistDestinationsWithHotels, setArtistDestinationsWithHotels] = useState<DestinationWithHotels[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Normalize slug for comparison and URL generation
@@ -137,13 +146,13 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
   }, [type, slug]);
 
-  // Fetch fallback genres (top 6 by event count)
+  // Fetch fallback genres (top 6 by event count) WITH images
   useEffect(() => {
     const fetchFallbackGenres = async () => {
       try {
         const { data } = await supabase
           .from('mv_genres_cards')
-          .select('genre_name, event_count')
+          .select('genre_name, event_count, image_genres')
           .order('event_count', { ascending: false })
           .limit(8);
 
@@ -160,7 +169,8 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   label: `Explorar música ${g.genre_name}`,
                   url: `/generos/${genreSlug}`,
                   slug: genreSlug,
-                  event_count: g.event_count || 0
+                  event_count: g.event_count || 0,
+                  image: g.image_genres || undefined
                 };
               })
           );
@@ -174,6 +184,30 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
       fetchFallbackGenres();
     }
   }, [type, slug]);
+
+  // Fetch destinations with hotel counts for artist pages
+  useEffect(() => {
+    const fetchArtistDestinationsWithHotels = async () => {
+      if (type !== 'artist') return;
+
+      try {
+        const { data } = await supabase
+          .from('mv_destinations_cards')
+          .select('city_name, city_slug, hotels_count, sample_image_url')
+          .gt('hotels_count', 0)
+          .order('hotels_count', { ascending: false })
+          .limit(6);
+
+        if (data) {
+          setArtistDestinationsWithHotels(data as DestinationWithHotels[]);
+        }
+      } catch (error) {
+        console.error('Error fetching artist destinations with hotels:', error);
+      }
+    };
+
+    fetchArtistDestinationsWithHotels();
+  }, [type]);
 
   // Fetch semantically related genres
   useEffect(() => {
@@ -381,7 +415,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         renderLinkSection('Géneros relacionados', contextLinks.genres, 'Explorar')
       )}
 
-      {/* Context-aware links for artists - Genres only with visual cards */}
+      {/* Context-aware links for artists - Genres with visual cards and real images */}
       {type === 'artist' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
         <div className="mb-6">
           <h4 className="text-lg font-bold text-foreground mb-4">Géneros musicales</h4>
@@ -393,9 +427,18 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                 className="group relative aspect-[4/3] rounded-xl overflow-hidden"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
-                  <Music className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
-                </div>
+                {genre.image ? (
+                  <img 
+                    src={genre.image} 
+                    alt={genre.label.replace('Explorar música ', '')}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
+                    <Music className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <h3 className="font-bold text-white text-base line-clamp-2">
@@ -408,6 +451,47 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
               </Link>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Hotels by destination section for artists - SEO internal linking */}
+      {type === 'artist' && artistDestinationsWithHotels.length > 0 && (
+        <div className="mb-6">
+          <h4 className="text-lg font-bold text-foreground mb-4">🏨 Hoteles en destinos con eventos</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {artistDestinationsWithHotels.slice(0, 6).map((destination) => (
+              <Link
+                key={destination.city_slug}
+                to={`/destinos/${destination.city_slug}`}
+                className="group flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-border/50"
+              >
+                {destination.sample_image_url ? (
+                  <img 
+                    src={destination.sample_image_url} 
+                    alt={`Hoteles en ${destination.city_name}`}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h5 className="font-semibold text-foreground text-sm truncate">
+                    {destination.city_name}
+                  </h5>
+                  <p className="text-xs text-muted-foreground">
+                    {destination.hotels_count} hoteles disponibles
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+              </Link>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Encuentra alojamiento cerca de los conciertos • Compara precios y reserva
+          </p>
         </div>
       )}
 
