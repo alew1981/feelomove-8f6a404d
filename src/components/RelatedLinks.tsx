@@ -12,25 +12,12 @@ interface RelatedLink {
   image?: string;
 }
 
-interface CityWithDeeplink {
-  id: number;
-  ticketmaster_city: string;
-  place_id: string;
-  imagen_ciudad: string | null;
-  nuitee_deeplink: string;
+interface DestinationWithHotels {
+  city_name: string;
+  city_slug: string;
+  hotels_count: number | null;
+  sample_image_url: string | null;
 }
-
-// Helper to build Nuitee deeplink with dynamic dates
-const buildNuiteeDeeplink = (placeId: string): string => {
-  const checkin = new Date();
-  checkin.setDate(checkin.getDate() + 7);
-  const checkout = new Date();
-  checkout.setDate(checkout.getDate() + 8);
-  
-  const formatDate = (d: Date) => d.toISOString().split('T')[0];
-  
-  return `https://feelomove.nuitee.link/hotels?placeId=${placeId}&checkin=${formatDate(checkin)}&checkout=${formatDate(checkout)}&language=es&currency=EUR`;
-};
 
 interface RelatedLinksData {
   cities?: RelatedLink[];
@@ -80,7 +67,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
   const [fallbackGenres, setFallbackGenres] = useState<RelatedLink[]>([]);
   const [relatedGenres, setRelatedGenres] = useState<RelatedLink[]>([]);
   const [nearbyDestinations, setNearbyDestinations] = useState<RelatedLink[]>([]);
-  const [citiesWithDeeplinks, setCitiesWithDeeplinks] = useState<CityWithDeeplink[]>([]);
+  const [artistDestinationsWithHotels, setArtistDestinationsWithHotels] = useState<DestinationWithHotels[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Normalize slug for comparison and URL generation
@@ -198,39 +185,28 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
   }, [type, slug]);
 
-  // Fetch cities with Nuitee deeplinks for artist pages
+  // Fetch destinations with hotel counts for artist pages
   useEffect(() => {
-    const fetchCitiesWithDeeplinks = async () => {
+    const fetchArtistDestinationsWithHotels = async () => {
       if (type !== 'artist') return;
 
       try {
-        const { data, error } = await supabase
-          .from('lite_tbl_city_mapping')
-          .select('id, ticketmaster_city, place_id, imagen_ciudad')
-          .not('place_id', 'is', null)
+        const { data } = await supabase
+          .from('mv_destinations_cards')
+          .select('city_name, city_slug, hotels_count, sample_image_url')
+          .gt('hotels_count', 0)
+          .order('hotels_count', { ascending: false })
           .limit(6);
 
-        if (error) {
-          console.error('Error fetching cities:', error);
-          return;
-        }
-
         if (data) {
-          const citiesWithLinks = data.map(city => ({
-            id: city.id,
-            ticketmaster_city: city.ticketmaster_city,
-            place_id: city.place_id!,
-            imagen_ciudad: city.imagen_ciudad,
-            nuitee_deeplink: buildNuiteeDeeplink(city.place_id!)
-          }));
-          setCitiesWithDeeplinks(citiesWithLinks);
+          setArtistDestinationsWithHotels(data as DestinationWithHotels[]);
         }
       } catch (error) {
-        console.error('Error fetching cities with deeplinks:', error);
+        console.error('Error fetching artist destinations with hotels:', error);
       }
     };
 
-    fetchCitiesWithDeeplinks();
+    fetchArtistDestinationsWithHotels();
   }, [type]);
 
   // Fetch semantically related genres
@@ -478,23 +454,21 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </div>
       )}
 
-      {/* Hotels by destination section for artists - External Nuitee deeplinks */}
-      {type === 'artist' && citiesWithDeeplinks.length > 0 && (
+      {/* Hotels by destination section for artists - SEO internal linking */}
+      {type === 'artist' && artistDestinationsWithHotels.length > 0 && (
         <div className="mb-6">
           <h4 className="text-lg font-bold text-foreground mb-4">🏨 Hoteles en destinos con eventos</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {citiesWithDeeplinks.map((city) => (
-              <a
-                key={city.id}
-                href={city.nuitee_deeplink}
-                target="_blank"
-                rel="noopener noreferrer"
+            {artistDestinationsWithHotels.slice(0, 6).map((destination) => (
+              <Link
+                key={destination.city_slug}
+                to={`/destinos/${destination.city_slug}`}
                 className="group flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-border/50"
               >
-                {city.imagen_ciudad ? (
+                {destination.sample_image_url ? (
                   <img 
-                    src={city.imagen_ciudad} 
-                    alt={`Hoteles en ${city.ticketmaster_city}`}
+                    src={destination.sample_image_url} 
+                    alt={`Hoteles en ${destination.city_name}`}
                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                     loading="lazy"
                   />
@@ -505,18 +479,18 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                 )}
                 <div className="flex-1 min-w-0">
                   <h5 className="font-semibold text-foreground text-sm truncate">
-                    {city.ticketmaster_city}
+                    {destination.city_name}
                   </h5>
                   <p className="text-xs text-muted-foreground">
-                    Ver hoteles disponibles
+                    {destination.hotels_count} hoteles disponibles
                   </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
-              </a>
+              </Link>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            Reserva alojamiento cerca de los conciertos • Los enlaces abren en nueva pestaña
+            Encuentra alojamiento cerca de los conciertos • Compara precios y reserva
           </p>
         </div>
       )}
