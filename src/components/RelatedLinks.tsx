@@ -210,24 +210,59 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
   }, [type, slug]);
 
-  // Fetch destinations with hotel counts for artist pages (with place_id and imagen_ciudad for deeplinks)
+  // Fetch destinations with hotel counts for artist pages - ONLY cities where this artist performs
   useEffect(() => {
     const fetchArtistDestinationsWithHotels = async () => {
       if (type !== 'artist') return;
 
       try {
-        // Fetch destinations
-        const { data: destinations } = await supabase
-          .from('mv_destinations_cards')
-          .select('city_name, city_slug, hotels_count, sample_image_url')
-          .gt('hotels_count', 0)
-          .order('hotels_count', { ascending: false })
-          .limit(6);
+        // First get artist name from slug to find their events
+        const artistSlug = slug;
+        
+        // Find all unique cities where this artist has events (check both concerts and festivals)
+        const [concertsResult, festivalsResult] = await Promise.all([
+          supabase
+            .from('mv_concerts_cards')
+            .select('venue_city, artist_name')
+            .ilike('artist_name', `%${artistSlug.replace(/-/g, '%')}%`),
+          supabase
+            .from('mv_festivals_cards')
+            .select('venue_city, main_attraction')
+            .ilike('main_attraction', `%${artistSlug.replace(/-/g, '%')}%`)
+        ]);
 
-        if (destinations && destinations.length > 0) {
-          // Fetch mapping per-city to avoid PostgREST encoding issues and default 1000-row limits
+        // Combine unique cities from both sources
+        const citiesSet = new Set<string>();
+        concertsResult.data?.forEach(e => {
+          if (e.venue_city) citiesSet.add(e.venue_city);
+        });
+        festivalsResult.data?.forEach(e => {
+          if (e.venue_city) citiesSet.add(e.venue_city);
+        });
+
+        const artistCities = Array.from(citiesSet);
+        
+        if (artistCities.length === 0) return;
+
+        // Fetch destination data for only these cities
+        const destinationsResults = await Promise.all(
+          artistCities.map(city =>
+            supabase
+              .from('mv_destinations_cards')
+              .select('city_name, city_slug, hotels_count, sample_image_url')
+              .eq('city_name', city)
+              .maybeSingle()
+          )
+        );
+
+        const validDestinations = destinationsResults
+          .map(r => r.data)
+          .filter((d): d is NonNullable<typeof d> => d !== null && (d.hotels_count || 0) > 0);
+
+        if (validDestinations.length > 0) {
+          // Fetch city mappings for images and place_id
           const mappingResults = await Promise.all(
-            destinations.map((d) =>
+            validDestinations.map((d) =>
               supabase
                 .from('lite_tbl_city_mapping')
                 .select('ticketmaster_city, place_id, imagen_ciudad')
@@ -236,14 +271,14 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
             )
           );
 
-          const merged = destinations.map((dest, idx) => {
+          const merged = validDestinations.map((dest, idx) => {
             const mapping = mappingResults[idx].data;
             return {
               city_name: dest.city_name,
               city_slug: dest.city_slug,
               hotels_count: dest.hotels_count,
               imagen_ciudad: mapping?.imagen_ciudad || null,
-              sample_image_url: (dest as any).sample_image_url || null,
+              sample_image_url: dest.sample_image_url || null,
               place_id: mapping?.place_id || null
             } as DestinationWithHotels;
           });
@@ -256,7 +291,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     };
 
     fetchArtistDestinationsWithHotels();
-  }, [type]);
+  }, [type, slug]);
 
   // Fetch semantically related genres
   useEffect(() => {
