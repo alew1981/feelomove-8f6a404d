@@ -494,9 +494,50 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         renderLinkSection('Otros destinos populares', contextLinks.destinations, 'Ver conciertos en')
       )}
 
-      {/* Context-aware links for genres */}
-      {type === 'genre' && contextLinks.showGenres && (
-        renderLinkSection('Géneros relacionados', contextLinks.genres, 'Explorar')
+      {/* Context-aware links for genres - Visual cards like artist page */}
+      {type === 'genre' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-bold text-foreground">Géneros relacionados</h4>
+            <Link 
+              to="/musica" 
+              className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
+            >
+              Ver todos <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {contextLinks.genres.slice(0, 4).map((genre) => (
+              <Link
+                key={genre.slug}
+                to={genre.url}
+                className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+              >
+                {genre.image ? (
+                  <img 
+                    src={genre.image} 
+                    alt={genre.label.replace('Explorar música ', '')}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
+                    <Music className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h5 className="font-semibold text-white text-sm line-clamp-1">
+                    {genre.label.replace('Explorar música ', '')}
+                  </h5>
+                  {genre.event_count && genre.event_count > 0 && (
+                    <span className="text-xs text-white/70">{genre.event_count} eventos</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Context-aware links for artists - Genres with visual cards */}
@@ -655,11 +696,9 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </>
       )}
 
-      {/* Additional genre links from database */}
+      {/* Additional genre links from database - Ciudades only (artistas shown as visual cards) */}
       {type === 'genre' && !Array.isArray(links) && links && (
         <>
-          {links.top_artists && links.top_artists.length > 0 && 
-            renderLinkSection('Artistas destacados', links.top_artists, 'Ver conciertos de')}
           {links.top_cities && links.top_cities.length > 0 && 
             renderLinkSection('Ciudades con eventos', links.top_cities, 'Ver conciertos en')}
         </>

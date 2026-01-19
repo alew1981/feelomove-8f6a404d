@@ -16,6 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
+import { normalizeSearch } from "@/lib/searchUtils";
 
 // Keywords that should redirect to /festivales
 const FESTIVAL_GENRE_KEYWORDS = ['festival-de-musica', 'festival de musica', 'festivales'];
@@ -118,6 +121,42 @@ const GeneroDetalle = () => {
       
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!genreName,
+  });
+
+  // Fetch top artists for this genre with images
+  const { data: topArtists } = useQuery({
+    queryKey: ["genre-top-artists", genreName],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mv_concerts_cards")
+        .select("artist_id, artist_name, image_standard_url, genre")
+        .eq("genre", genreName)
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true })
+        .limit(100);
+      
+      if (error) throw error;
+      
+      // Group by artist and get unique artists with images
+      const artistMap = new Map<string, { name: string; image: string | null; slug: string }>();
+      (data || []).forEach((event: any) => {
+        if (event.artist_name && !artistMap.has(event.artist_name)) {
+          artistMap.set(event.artist_name, {
+            name: event.artist_name,
+            image: event.image_standard_url,
+            slug: normalizeSearch(event.artist_name)
+              .replace(/&/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '')
+          });
+        }
+      });
+      
+      return Array.from(artistMap.values()).slice(0, 4);
     },
     enabled: !!genreName,
   });
@@ -484,6 +523,47 @@ const GeneroDetalle = () => {
                 </div>
               </div>
             )}
+            
+            {/* Top Artists Section - Visual Cards */}
+            {topArtists && topArtists.length > 0 && (
+              <div className="mt-12 mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-foreground">Artistas destacados</h2>
+                  <Link
+                    to="/artistas"
+                    className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
+                  >
+                    Ver todos <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {topArtists.map((artist, index) => (
+                    <Link
+                      key={artist.slug}
+                      to={`/conciertos/${artist.slug}`}
+                      className="group relative aspect-square rounded-xl overflow-hidden animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      {artist.image ? (
+                        <img
+                          src={artist.image}
+                          alt={artist.name}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <h3 className="font-bold text-white text-lg line-clamp-2">{artist.name}</h3>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Related Links for SEO */}
             <RelatedLinks slug={genreParam} type="genre" />
           </>
