@@ -17,7 +17,21 @@ interface DestinationWithHotels {
   city_slug: string;
   hotels_count: number | null;
   sample_image_url: string | null;
+  place_id: string | null;
 }
+
+// Helper function to generate Nuitee deeplink with dynamic dates
+const generateNuiteeDeeplink = (placeId: string): string => {
+  const today = new Date();
+  const checkin = new Date(today);
+  checkin.setDate(today.getDate() + 7);
+  const checkout = new Date(checkin);
+  checkout.setDate(checkin.getDate() + 1);
+  
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  
+  return `https://feelomove.nuitee.link/hotels?placeId=${placeId}&checkin=${formatDate(checkin)}&checkout=${formatDate(checkout)}&language=es&currency=EUR`;
+};
 
 interface RelatedLinksData {
   cities?: RelatedLink[];
@@ -185,21 +199,38 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     }
   }, [type, slug]);
 
-  // Fetch destinations with hotel counts for artist pages
+  // Fetch destinations with hotel counts for artist pages (with place_id for deeplinks)
   useEffect(() => {
     const fetchArtistDestinationsWithHotels = async () => {
       if (type !== 'artist') return;
 
       try {
-        const { data } = await supabase
+        // First get destinations with hotels
+        const { data: destinations } = await supabase
           .from('mv_destinations_cards')
           .select('city_name, city_slug, hotels_count, sample_image_url')
           .gt('hotels_count', 0)
           .order('hotels_count', { ascending: false })
           .limit(6);
 
-        if (data) {
-          setArtistDestinationsWithHotels(data as DestinationWithHotels[]);
+        if (destinations && destinations.length > 0) {
+          // Then get place_ids from city mapping
+          const cityNames = destinations.map(d => d.city_name);
+          const { data: cityMappings } = await supabase
+            .from('lite_tbl_city_mapping')
+            .select('ticketmaster_city, place_id')
+            .in('ticketmaster_city', cityNames);
+
+          // Merge the data
+          const merged = destinations.map(dest => {
+            const mapping = cityMappings?.find(m => m.ticketmaster_city === dest.city_name);
+            return {
+              ...dest,
+              place_id: mapping?.place_id || null
+            } as DestinationWithHotels;
+          });
+
+          setArtistDestinationsWithHotels(merged);
         }
       } catch (error) {
         console.error('Error fetching artist destinations with hotels:', error);
@@ -401,8 +432,8 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
 
   return (
     <div className="mt-10 pt-8 border-t border-border">
-      <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-        🔗 También te puede interesar
+      <h3 className="text-xl font-bold text-foreground mb-6">
+        También te puede interesar
       </h3>
 
       {/* Context-aware links for destinations */}
@@ -415,17 +446,24 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         renderLinkSection('Géneros relacionados', contextLinks.genres, 'Explorar')
       )}
 
-      {/* Context-aware links for artists - Genres with visual cards and real images */}
+      {/* Context-aware links for artists - Genres with visual cards */}
       {type === 'artist' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-lg font-bold text-foreground mb-4">Géneros musicales</h4>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-bold text-foreground">Géneros musicales</h4>
+            <Link 
+              to="/musica" 
+              className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              Ver todos
+            </Link>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {contextLinks.genres.slice(0, 4).map((genre, index) => (
+            {contextLinks.genres.slice(0, 4).map((genre) => (
               <Link
                 key={genre.slug}
                 to={genre.url}
                 className="group relative aspect-[4/3] rounded-xl overflow-hidden"
-                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {genre.image ? (
                   <img 
@@ -440,10 +478,10 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="font-bold text-white text-base line-clamp-2">
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h5 className="font-semibold text-white text-sm line-clamp-1">
                     {genre.label.replace('Explorar música ', '')}
-                  </h3>
+                  </h5>
                   {genre.event_count && genre.event_count > 0 && (
                     <span className="text-xs text-white/70">{genre.event_count} eventos</span>
                   )}
@@ -454,44 +492,84 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </div>
       )}
 
-      {/* Hotels by destination section for artists - SEO internal linking */}
+      {/* Hotels by destination section for artists - External Nuitee deeplinks */}
       {type === 'artist' && artistDestinationsWithHotels.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-lg font-bold text-foreground mb-4">🏨 Hoteles en destinos con eventos</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {artistDestinationsWithHotels.slice(0, 6).map((destination) => (
-              <Link
-                key={destination.city_slug}
-                to={`/destinos/${destination.city_slug}`}
-                className="group flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-border/50"
-              >
-                {destination.sample_image_url ? (
-                  <img 
-                    src={destination.sample_image_url} 
-                    alt={`Hoteles en ${destination.city_name}`}
-                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-primary" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h5 className="font-semibold text-foreground text-sm truncate">
-                    {destination.city_name}
-                  </h5>
-                  <p className="text-xs text-muted-foreground">
-                    {destination.hotels_count} hoteles disponibles
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
-              </Link>
-            ))}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-bold text-foreground">Hoteles en destinos con eventos</h4>
+            <a 
+              href="https://feelomove.nuitee.link/?language=es&currency=EUR" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              Ver todos
+            </a>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            Encuentra alojamiento cerca de los conciertos • Compara precios y reserva
-          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {artistDestinationsWithHotels.slice(0, 4).map((destination) => {
+              const linkUrl = destination.place_id 
+                ? generateNuiteeDeeplink(destination.place_id)
+                : `/destinos/${destination.city_slug}`;
+              const isExternal = !!destination.place_id;
+              
+              return isExternal ? (
+                <a
+                  key={destination.city_slug}
+                  href={linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                >
+                  {destination.sample_image_url ? (
+                    <img 
+                      src={destination.sample_image_url} 
+                      alt={`Hoteles en ${destination.city_name}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                      <MapPin className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <h5 className="font-semibold text-white text-sm line-clamp-1">
+                      {destination.city_name}
+                    </h5>
+                    <span className="text-xs text-white/70">{destination.hotels_count} hoteles</span>
+                  </div>
+                </a>
+              ) : (
+                <Link
+                  key={destination.city_slug}
+                  to={linkUrl}
+                  className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                >
+                  {destination.sample_image_url ? (
+                    <img 
+                      src={destination.sample_image_url} 
+                      alt={`Hoteles en ${destination.city_name}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                      <MapPin className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <h5 className="font-semibold text-white text-sm line-clamp-1">
+                      {destination.city_name}
+                    </h5>
+                    <span className="text-xs text-white/70">{destination.hotels_count} hoteles</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
 

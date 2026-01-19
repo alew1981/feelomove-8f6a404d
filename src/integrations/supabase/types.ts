@@ -1544,6 +1544,18 @@ export type Database = {
           url_type: string
         }[]
       }
+      get_cities_with_deeplinks: {
+        Args: never
+        Returns: {
+          id: number
+          imagen_ciudad: string
+          liteapi_city: string
+          nuitee_deeplink: string
+          place_id: string
+          ticketmaster_city: string
+          verified: boolean
+        }[]
+      }
       get_event_badges: { Args: { event_id: string }; Returns: string[] }
       get_facility_names_es: {
         Args: { facility_id_array: number[] }
