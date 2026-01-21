@@ -179,34 +179,7 @@ export const generateSitemap = async (): Promise<string> => {
   console.log(`Generated ${destinationUrls.length} destination URLs`);
 
   // ========================================
-  // 5. GENERATE sitemap-genres.xml
-  // ========================================
-  console.log('Generating sitemap-genres.xml...');
-  const { data: genres } = await supabase
-    .from("mv_genres_cards")
-    .select("genre_name");
-
-  const genreUrls: SitemapUrl[] = [];
-  if (genres) {
-    genres.forEach((genre) => {
-      if (genre.genre_name) {
-        const genreSlug = genre.genre_name.toLowerCase()
-          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '');
-        genreUrls.push({
-          loc: `${baseUrl}/generos/${genreSlug}`,
-          changefreq: 'weekly',
-          priority: 0.6
-        });
-      }
-    });
-  }
-  const genresSitemapXml = wrapInUrlset(genreUrls.map(generateUrlXml).join('\n'));
-  console.log(`Generated ${genreUrls.length} genre URLs`);
-
-  // ========================================
-  // 6. GENERATE sitemap-pages.xml (static pages)
+  // 5. GENERATE sitemap-pages.xml (static pages)
   // ========================================
   console.log('Generating sitemap-pages.xml...');
   const staticPages: SitemapUrl[] = [
@@ -215,14 +188,13 @@ export const generateSitemap = async (): Promise<string> => {
     { loc: `${baseUrl}/festivales`, changefreq: 'daily', priority: 0.9 },
     { loc: `${baseUrl}/artistas`, changefreq: 'daily', priority: 0.9 },
     { loc: `${baseUrl}/destinos`, changefreq: 'weekly', priority: 0.8 },
-    { loc: `${baseUrl}/generos`, changefreq: 'weekly', priority: 0.8 },
     { loc: `${baseUrl}/about`, changefreq: 'monthly', priority: 0.5 },
   ];
   const pagesSitemapXml = wrapInUrlset(staticPages.map(generateUrlXml).join('\n'));
   console.log(`Generated ${staticPages.length} static page URLs`);
 
   // ========================================
-  // 7. GENERATE sitemap_index.xml
+  // 6. GENERATE sitemap_index.xml
   // ========================================
   console.log('Generating sitemap_index.xml...');
   const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
@@ -247,10 +219,6 @@ export const generateSitemap = async (): Promise<string> => {
     <loc>${baseUrl}/sitemap-destinations.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
-  <sitemap>
-    <loc>${baseUrl}/sitemap-genres.xml</loc>
-    <lastmod>${today}</lastmod>
-  </sitemap>
 </sitemapindex>`;
 
   // ========================================
@@ -265,7 +233,6 @@ export const generateSitemap = async (): Promise<string> => {
     writeFileSync(resolve(dir, 'sitemap-festivals.xml'), festivalsSitemapXml);
     writeFileSync(resolve(dir, 'sitemap-artists.xml'), artistsSitemapXml);
     writeFileSync(resolve(dir, 'sitemap-destinations.xml'), destinationsSitemapXml);
-    writeFileSync(resolve(dir, 'sitemap-genres.xml'), genresSitemapXml);
     writeFileSync(resolve(dir, 'sitemap-pages.xml'), pagesSitemapXml);
     writeFileSync(resolve(dir, 'sitemap_index.xml'), sitemapIndex);
   };
