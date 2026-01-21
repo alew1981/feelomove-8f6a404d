@@ -585,15 +585,34 @@ const Producto = () => {
   // Get image - prioritize image_large_url
   const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
 
-  // Build canonical URL using RPC canonical slug, VIP variant detection, or current slug
+  // Build canonical URL using RPC canonical slug, VIP/Upgrade variant detection, or current slug
   const currentSlug = eventDetails.event_slug || '';
-  const isVipVariant = currentSlug.includes('-paquetes-vip') || currentSlug.includes('-vip');
+  const eventName = eventDetails.event_name?.toLowerCase() || '';
   
-  // Priority: 1. RPC canonical slug, 2. VIP variant cleanup, 3. Current slug
+  // Detect VIP/Upgrade variants by slug patterns AND event name keywords
+  const vipSlugPatterns = [
+    '-paquetes-vip', '-vip', '-upgrade', '-meet-greet', '-pack', '-parking'
+  ];
+  const vipNameKeywords = [
+    'vip', 'upgrade', 'meet & greet', 'meet and greet', 'paquete', 
+    'pack', 'parking', 'golden circle', 'premium', 'platinum'
+  ];
+  
+  const hasVipSlugPattern = vipSlugPatterns.some(pattern => currentSlug.includes(pattern));
+  const hasVipNameKeyword = vipNameKeywords.some(keyword => eventName.includes(keyword));
+  const isVipVariant = hasVipSlugPattern || hasVipNameKeyword;
+  
+  // Priority: 1. RPC canonical slug, 2. VIP variant cleanup (remove suffix), 3. Current slug
+  // For VIP variants, the canonical should point to the main event (same artist, same day)
+  const cleanedVipSlug = vipSlugPatterns.reduce(
+    (slug, pattern) => slug.replace(new RegExp(pattern + '(-\\d+)?$', 'g'), ''),
+    currentSlug
+  );
+  
   const canonicalSlug = rpcCanonicalSlug 
     ? rpcCanonicalSlug 
     : isVipVariant 
-      ? currentSlug.replace(/-paquetes-vip|-vip/g, '') 
+      ? cleanedVipSlug
       : currentSlug;
   
   // Build canonical URL - always use the canonical slug
@@ -664,8 +683,14 @@ const Producto = () => {
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           { name: eventDetails.is_festival ? "Festivales" : "Conciertos", url: eventDetails.is_festival ? "/festivales" : "/conciertos" },
-          { name: eventDetails.venue_city || "", url: `/destinos/${(eventDetails.venue_city || "").toLowerCase().replace(/\s+/g, '-')}` },
-          { name: eventDetails.event_name || "" }
+          // For concerts: link to artist profile; for festivals: link to destination
+          ...(eventDetails.is_festival 
+            ? [{ name: eventDetails.venue_city || "", url: `/destinos/${(eventDetails.venue_city || "").toLowerCase().replace(/\s+/g, '-')}` }]
+            : mainArtist 
+              ? [{ name: mainArtist, url: `/artista/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}` }]
+              : []
+          ),
+          { name: eventDetails.is_festival ? eventDetails.event_name || "" : eventDetails.venue_city || "" }
         ]}
       />
       <div className="min-h-screen bg-background">
