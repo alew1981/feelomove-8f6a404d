@@ -53,47 +53,181 @@ const RedirectLoader = ({ targetUrl }: { targetUrl: string }) => (
 );
 
 /**
- * Detects if a slug ends with problematic date patterns:
+ * Detects if a slug ends with problematic patterns:
  * 1. Full date: -YYYY-MM-DD (e.g., "event-slug-2026-01-14")
  * 2. Year only: -YYYY (e.g., "event-slug-2026")
  * 3. Placeholder year: -9999 (e.g., "event-slug-9999")
- * 4. Placeholder date parts: -9999-12-31 or similar
- * 
- * Example: "milo-j-la-vida-era-mas-corta-sevilla-2026-01-14"
- * Returns: { baseSlug: "milo-j-la-vida-era-mas-corta-sevilla", date: "2026-01-14", hasLegacySuffix: true }
- * 
- * Example: "matinee-easter-weekend-pervert-barcelona-2026"
- * Returns: { baseSlug: "matinee-easter-weekend-pervert-barcelona", date: null, hasLegacySuffix: true, isYearOnly: true }
+ * 4. Numeric suffix: -1, -2, -3 etc. (legacy duplicate handling)
+ * 5. Long tour names that should be simplified
  */
-function parseLegacySlug(slug: string): { baseSlug: string; date: string | null; hasLegacySuffix: boolean; isPlaceholderDate: boolean; isYearOnly: boolean } {
-  // First check for placeholder year suffix: -9999 (with or without date parts)
-  // Match: -9999, -9999-12, -9999-12-31
+interface ParsedSlug {
+  baseSlug: string;
+  date: string | null;
+  hasLegacySuffix: boolean;
+  isPlaceholderDate: boolean;
+  isYearOnly: boolean;
+  hasNumericSuffix: boolean;
+  simplifiedSlug: string | null;
+}
+
+/**
+ * Extract city from a slug by matching known Spanish city patterns
+ */
+const SPANISH_CITIES = [
+  'madrid', 'barcelona', 'valencia', 'sevilla', 'bilbao', 'malaga', 'zaragoza',
+  'murcia', 'palma', 'las-palmas', 'alicante', 'cordoba', 'valladolid', 'vigo',
+  'gijon', 'hospitalet', 'vitoria', 'granada', 'elche', 'oviedo', 'terrassa',
+  'badalona', 'cartagena', 'jerez', 'sabadell', 'mostoles', 'santa-cruz',
+  'pamplona', 'almeria', 'san-sebastian', 'donostia', 'santander', 'burgos',
+  'castellon', 'albacete', 'alcorcon', 'getafe', 'salamanca', 'logrono',
+  'badajoz', 'huelva', 'lleida', 'tarragona', 'leon', 'cadiz', 'jaen', 'ourense',
+  'lugo', 'caceres', 'melilla', 'ceuta', 'guadalajara', 'toledo', 'pontevedra',
+  'palencia', 'ciudad-real', 'zamora', 'avila', 'cuenca', 'huesca', 'segovia',
+  'soria', 'teruel', 'chiclana', 'chiclana-de-la-frontera', 'marbella', 'benidorm',
+  'torremolinos', 'fuengirola', 'estepona', 'algeciras', 'ronda', 'antequera',
+  'velez-malaga', 'mijas', 'roquetas-de-mar', 'el-ejido', 'motril', 'linares',
+  'ubeda', 'baeza', 'martos', 'andujar', 'mancha-real', 'la-carolina',
+  'puerto-real', 'san-fernando', 'rota', 'conil', 'sanlucar', 'chipiona',
+  'el-puerto-de-santa-maria', 'arcos-de-la-frontera', 'utrera', 'dos-hermanas',
+  'ecija', 'carmona', 'lebrija', 'osuna', 'moron-de-la-frontera', 'arahal',
+  'marchena', 'alcala-de-guadaira', 'la-rinconada', 'camas', 'tomares', 'mairena',
+  'la-algaba', 'bormujos', 'gines', 'castilleja', 'espartinas', 'san-juan'
+];
+
+function extractCityFromSlug(slug: string): string | null {
+  const parts = slug.split('-');
+  
+  // Try to find a city at the end of the slug
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const possibleCity = parts.slice(i).join('-');
+    if (SPANISH_CITIES.includes(possibleCity.toLowerCase())) {
+      return possibleCity;
+    }
+    // Also check single word
+    if (SPANISH_CITIES.includes(parts[i].toLowerCase())) {
+      return parts[i];
+    }
+  }
+  return null;
+}
+
+function parseLegacySlug(slug: string): ParsedSlug {
+  let workingSlug = slug;
+  let hasNumericSuffix = false;
+  let simplifiedSlug: string | null = null;
+  
+  // Check for numeric suffix (-1, -2, -3, etc.) at the very end
+  const numericSuffixPattern = /-(\d{1,2})$/;
+  const numericMatch = workingSlug.match(numericSuffixPattern);
+  if (numericMatch && parseInt(numericMatch[1]) <= 99) {
+    hasNumericSuffix = true;
+    workingSlug = workingSlug.replace(numericSuffixPattern, '');
+  }
+  
+  // Check for placeholder year suffix: -9999 (with or without date parts)
   const placeholderPattern = /-9999(-\d{2})?(-\d{2})?$/;
-  if (placeholderPattern.test(slug)) {
-    const baseSlug = slug.replace(placeholderPattern, '');
-    return { baseSlug, date: null, hasLegacySuffix: true, isPlaceholderDate: true, isYearOnly: false };
+  if (placeholderPattern.test(workingSlug)) {
+    const baseSlug = workingSlug.replace(placeholderPattern, '');
+    return { 
+      baseSlug, 
+      date: null, 
+      hasLegacySuffix: true, 
+      isPlaceholderDate: true, 
+      isYearOnly: false,
+      hasNumericSuffix,
+      simplifiedSlug: null
+    };
   }
   
   // Match full date pattern at the end: -YYYY-MM-DD
   const fullDatePattern = /-(\d{4})-(\d{2})-(\d{2})$/;
-  const fullDateMatch = slug.match(fullDatePattern);
+  const fullDateMatch = workingSlug.match(fullDatePattern);
   
   if (fullDateMatch) {
     const date = `${fullDateMatch[1]}-${fullDateMatch[2]}-${fullDateMatch[3]}`;
-    const baseSlug = slug.replace(fullDatePattern, '');
-    return { baseSlug, date, hasLegacySuffix: true, isPlaceholderDate: false, isYearOnly: false };
+    const baseSlug = workingSlug.replace(fullDatePattern, '');
+    return { 
+      baseSlug, 
+      date, 
+      hasLegacySuffix: true, 
+      isPlaceholderDate: false, 
+      isYearOnly: false,
+      hasNumericSuffix,
+      simplifiedSlug: null
+    };
   }
   
   // Match year-only pattern at the end: -YYYY (where YYYY is 2020-2099)
   const yearOnlyPattern = /-(20[2-9]\d)$/;
-  const yearOnlyMatch = slug.match(yearOnlyPattern);
+  const yearOnlyMatch = workingSlug.match(yearOnlyPattern);
   
   if (yearOnlyMatch) {
-    const baseSlug = slug.replace(yearOnlyPattern, '');
-    return { baseSlug, date: null, hasLegacySuffix: true, isPlaceholderDate: false, isYearOnly: true };
+    const baseSlug = workingSlug.replace(yearOnlyPattern, '');
+    return { 
+      baseSlug, 
+      date: null, 
+      hasLegacySuffix: true, 
+      isPlaceholderDate: false, 
+      isYearOnly: true,
+      hasNumericSuffix,
+      simplifiedSlug: null
+    };
   }
   
-  return { baseSlug: slug, date: null, hasLegacySuffix: false, isPlaceholderDate: false, isYearOnly: false };
+  // Check for long tour name patterns that should be simplified
+  // Pattern: [artist]-[tour-name-words]-[city] → [artist]-[city]
+  const tourKeywords = [
+    'world-tour', 'tour', 'live', 'concert', 'en-concierto', 'gira', 
+    'the-tour', 'experience', 'show', 'festival', 'everyone-s', 'everyones'
+  ];
+  
+  const city = extractCityFromSlug(workingSlug);
+  if (city) {
+    const slugWithoutCity = workingSlug.replace(new RegExp(`-${city}$`, 'i'), '');
+    const slugParts = slugWithoutCity.split('-');
+    
+    // If slug has more than 4 parts (likely includes tour name), try to simplify
+    if (slugParts.length > 4) {
+      // Find where tour keywords start
+      let tourStartIndex = -1;
+      for (let i = 0; i < slugParts.length; i++) {
+        const part = slugParts[i].toLowerCase();
+        if (tourKeywords.some(kw => kw.includes(part) || part.includes(kw.replace('-', '')))) {
+          tourStartIndex = i;
+          break;
+        }
+      }
+      
+      if (tourStartIndex > 0) {
+        // Artist name is before tour keywords
+        const artistParts = slugParts.slice(0, tourStartIndex);
+        simplifiedSlug = `${artistParts.join('-')}-${city}`;
+      }
+    }
+  }
+  
+  // If we found a numeric suffix, it's a legacy pattern
+  if (hasNumericSuffix) {
+    return { 
+      baseSlug: workingSlug, 
+      date: null, 
+      hasLegacySuffix: true, 
+      isPlaceholderDate: false, 
+      isYearOnly: false,
+      hasNumericSuffix: true,
+      simplifiedSlug
+    };
+  }
+  
+  return { 
+    baseSlug: slug, 
+    date: null, 
+    hasLegacySuffix: simplifiedSlug !== null, 
+    isPlaceholderDate: false, 
+    isYearOnly: false,
+    hasNumericSuffix: false,
+    simplifiedSlug
+  };
 }
 
 /**
@@ -108,7 +242,15 @@ const RedirectLegacyEvent = () => {
   const location = useLocation();
   
   // Parse the slug to check if it has a potential legacy date suffix or placeholder
-  const parsedSlug = rawSlug ? parseLegacySlug(rawSlug) : { baseSlug: '', date: null, hasLegacySuffix: false, isPlaceholderDate: false, isYearOnly: false };
+  const parsedSlug = rawSlug ? parseLegacySlug(rawSlug) : { 
+    baseSlug: '', 
+    date: null, 
+    hasLegacySuffix: false, 
+    isPlaceholderDate: false, 
+    isYearOnly: false,
+    hasNumericSuffix: false,
+    simplifiedSlug: null
+  };
   
   // Determine if this is a festival or concert route
   const isFestivalRoute = location.pathname.startsWith('/festival');
@@ -167,15 +309,31 @@ const RedirectLegacyEvent = () => {
         return { ...exactMatch, needsRedirect: false, isExactMatch: true };
       }
       
-      // STEP 2: If no exact match and slug has legacy suffix, try to find the base event
-      const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly } = parsedSlug;
+      // STEP 2: If no exact match and slug has legacy patterns, try to find the event
+      const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly, hasNumericSuffix, simplifiedSlug } = parsedSlug;
       
-      if (!hasLegacySuffix || !baseSlug) {
-        // No legacy suffix pattern detected and no exact match - event doesn't exist
+      if (!hasLegacySuffix && !hasNumericSuffix && !simplifiedSlug) {
+        // No legacy pattern detected and no exact match - event doesn't exist
         return null;
       }
       
-      // Try to find event with the base slug (without date/year suffix)
+      // STEP 2a: If we have a simplified slug (long tour name → short), try that first
+      if (simplifiedSlug) {
+        const { data: simplifiedMatch } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug, name, venue_city, event_date")
+          .ilike("slug", `${simplifiedSlug}%`)
+          .order("event_date", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (simplifiedMatch) {
+          console.log(`Simplified slug match: ${rawSlug} → ${simplifiedMatch.slug}`);
+          return { ...simplifiedMatch, needsRedirect: true, isExactMatch: false, redirectSource: 'simplified' };
+        }
+      }
+      
+      // STEP 2b: Try to find event with the base slug (without suffix)
       let query = supabase
         .from("tm_tbl_events")
         .select("event_type, slug, name, venue_city, event_date")
@@ -192,10 +350,10 @@ const RedirectLegacyEvent = () => {
       if (baseError) throw baseError;
       
       if (data) {
-        return { ...data, needsRedirect: true, isExactMatch: false };
+        return { ...data, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug' };
       }
       
-      // Try without date filter if we had one
+      // STEP 2c: Try without date filter if we had one
       if (date && !isPlaceholderDate && !isYearOnly) {
         const { data: withoutDateData } = await supabase
           .from("tm_tbl_events")
@@ -204,31 +362,71 @@ const RedirectLegacyEvent = () => {
           .maybeSingle();
         
         if (withoutDateData) {
-          return { ...withoutDateData, needsRedirect: true, isExactMatch: false };
+          return { ...withoutDateData, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug_no_date' };
         }
       }
       
-      // Try fuzzy match as last resort
+      // STEP 2d: For numeric suffixes (-1, -2), search by ILIKE with base slug
+      if (hasNumericSuffix && baseSlug) {
+        const { data: numericMatch } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug, name, venue_city, event_date")
+          .ilike("slug", `${baseSlug}%`)
+          .order("event_date", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (numericMatch) {
+          console.log(`Numeric suffix match: ${rawSlug} → ${numericMatch.slug}`);
+          return { ...numericMatch, needsRedirect: true, isExactMatch: false, redirectSource: 'numeric_suffix' };
+        }
+      }
+      
+      // STEP 2e: Try fuzzy match by extracting artist and city
       if (baseSlug) {
         const slugParts = baseSlug.split('-');
         
         if (slugParts.length > 2) {
-          const possibleSlugWithoutCity = slugParts.slice(0, -1).join('-');
+          // Try artist + city pattern (first 2-3 parts + last part)
+          const city = extractCityFromSlug(baseSlug);
           
-          let fuzzyQuery = supabase
-            .from("tm_tbl_events")
-            .select("event_type, slug, name, venue_city, event_date")
-            .ilike("slug", `${possibleSlugWithoutCity}%`);
-          
-          if (date && !isPlaceholderDate && !isYearOnly) {
-            fuzzyQuery = fuzzyQuery.gte("event_date", `${date}T00:00:00`)
-                                   .lte("event_date", `${date}T23:59:59`);
+          if (city) {
+            // Extract potential artist name (first few parts before city)
+            const cityIndex = baseSlug.lastIndexOf(city);
+            const artistPart = baseSlug.substring(0, cityIndex).replace(/-$/, '');
+            
+            if (artistPart) {
+              // Search for events matching artist pattern in this city
+              const { data: artistCityMatch } = await supabase
+                .from("tm_tbl_events")
+                .select("event_type, slug, name, venue_city, event_date")
+                .ilike("slug", `${artistPart.split('-').slice(0, 3).join('-')}%`)
+                .ilike("venue_city", `%${city.replace(/-/g, ' ')}%`)
+                .order("event_date", { ascending: true })
+                .limit(1)
+                .maybeSingle();
+              
+              if (artistCityMatch) {
+                console.log(`Artist+city match: ${rawSlug} → ${artistCityMatch.slug}`);
+                return { ...artistCityMatch, needsRedirect: true, isExactMatch: false, redirectSource: 'artist_city' };
+              }
+            }
           }
           
-          const fuzzyResult = await fuzzyQuery.limit(1).maybeSingle();
+          // Last resort: try with just the beginning of the slug
+          const possibleSlugPrefix = slugParts.slice(0, 3).join('-');
           
-          if (fuzzyResult.data) {
-            return { ...fuzzyResult.data, needsRedirect: true, isExactMatch: false };
+          const { data: fuzzyResult } = await supabase
+            .from("tm_tbl_events")
+            .select("event_type, slug, name, venue_city, event_date")
+            .ilike("slug", `${possibleSlugPrefix}%`)
+            .order("event_date", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          
+          if (fuzzyResult) {
+            console.log(`Fuzzy prefix match: ${rawSlug} → ${fuzzyResult.slug}`);
+            return { ...fuzzyResult, needsRedirect: true, isExactMatch: false, redirectSource: 'fuzzy' };
           }
         }
       }

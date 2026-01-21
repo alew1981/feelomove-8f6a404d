@@ -11,6 +11,16 @@
       "permanent": true
     },
     {
+      "source": "/concierto/:event-:num(\\d{1,2})",
+      "destination": "/concierto/:event",
+      "permanent": true
+    },
+    {
+      "source": "/festival/:event-:num(\\d{1,2})",
+      "destination": "/festival/:event",
+      "permanent": true
+    },
+    {
       "source": "/concierto/servicio-de-autobus-dani-fernandez-concert-music-festival-chiclana-de-la-frontera",
       "destination": "/concierto/dani-fernandez-concert-music-festival-chiclana",
       "permanent": true
@@ -28,37 +38,47 @@
     {
       "source": "/events/:id",
       "destination": "/",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/product/:slug/feed/",
       "destination": "/",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/product/:slug/",
       "destination": "/producto/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/product/:slug",
       "destination": "/producto/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/attractions",
       "destination": "/artistas",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/user-profile/",
       "destination": "/",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/_next/:path*",
       "destination": "/",
-      "statusCode": 301
+      "permanent": true
+    },
+    {
+      "source": "/genero",
+      "destination": "/conciertos",
+      "permanent": true
+    },
+    {
+      "source": "/genero/:path*",
+      "destination": "/conciertos",
+      "permanent": true
     },
     {
       "source": "/generos",
@@ -67,6 +87,11 @@
     },
     {
       "source": "/generos/:genero",
+      "destination": "/conciertos",
+      "permanent": true
+    },
+    {
+      "source": "/generos/:genero/:path*",
       "destination": "/conciertos",
       "permanent": true
     },
@@ -81,29 +106,34 @@
       "permanent": true
     },
     {
+      "source": "/musica/:genero/:path*",
+      "destination": "/conciertos",
+      "permanent": true
+    },
+    {
       "source": "/artista/:slug",
       "destination": "/conciertos/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/conciertos/:slug/:city",
       "destination": "/conciertos/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/festivales/:slug/:city",
       "destination": "/festivales/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/conciertos/:slug(.*u.*u.*)",
       "destination": "/eventos",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/festivales/:slug(.*u.*u.*)",
       "destination": "/eventos",
-      "statusCode": 301
+      "permanent": true
     }
   ],
   "headers": [
