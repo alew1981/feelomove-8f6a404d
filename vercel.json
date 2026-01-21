@@ -329,10 +329,6 @@
       "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations"
     },
     {
-      "source": "/sitemap-genres.xml",
-      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=genres"
-    },
-    {
       "source": "/((?!api|sitemap.*\\.xml|robots\\.txt).*)",
       "destination": "/index.html"
     }

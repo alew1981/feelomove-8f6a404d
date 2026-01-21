@@ -57,10 +57,6 @@ Deno.serve(async (req) => {
     <loc>${BASE_URL}/sitemap-destinations.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
-  <sitemap>
-    <loc>${BASE_URL}/sitemap-genres.xml</loc>
-    <lastmod>${today}</lastmod>
-  </sitemap>
 </sitemapindex>`;
 
       return new Response(xml, {
@@ -94,11 +90,6 @@ Deno.serve(async (req) => {
   </url>
   <url>
     <loc>${BASE_URL}/destinos</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${BASE_URL}/generos</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -247,40 +238,6 @@ ${urlsXml}
         headers: { ...corsHeaders, "Content-Type": "application/xml" },
       });
     }
-
-    // Genres Sitemap - using URL structure /generos/:genre
-    if (type === "genres") {
-      const { data: genres, error } = await supabase
-        .from("mv_genres_cards")
-        .select("genre_name")
-        .not("genre_name", "is", null)
-        .limit(500);
-
-      if (error) throw error;
-
-      const urlsXml = (genres || [])
-        .filter(g => g.genre_name)
-        .map(g => {
-          const genreSlug = normalizeSlug(g.genre_name);
-          return `  <url>
-    <loc>${BASE_URL}/generos/${genreSlug}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>`;
-        })
-        .join('\n');
-
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urlsXml}
-</urlset>`;
-
-      return new Response(xml, {
-        headers: { ...corsHeaders, "Content-Type": "application/xml" },
-      });
-    }
-
     // Festivals Sitemap (individual festival events using /festival/ and /concierto/, excluding VIP variants)
     if (type === "festivals") {
       // Get individual festival events (INCLUDING festivals without confirmed date - 9999)
