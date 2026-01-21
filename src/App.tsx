@@ -104,37 +104,14 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Redirect components for old URLs (301 redirects)
-const RedirectMusica = () => <Navigate to="/generos" replace />;
-const RedirectMusicaGenero = () => {
-  const { genero } = useParams();
-  return <Navigate to={`/generos/${genero}`} replace />;
-};
+// Genres now redirect to /conciertos
+const RedirectMusica = () => <Navigate to="/conciertos" replace />;
+const RedirectMusicaGenero = () => <Navigate to="/conciertos" replace />;
+const RedirectGeneros = () => <Navigate to="/conciertos" replace />;
+const RedirectGenerosSlug = () => <Navigate to="/conciertos" replace />;
 
-// Redirect legacy/malformed genre URLs that include extra path segments, e.g. /generos/Hard%20Rock/Metal
-// We collapse the extra segments into a single slug: hard-rock-metal
-const RedirectGeneroCatchAll = () => {
-  const params = useParams();
-  const splat = (params["*"] ?? "") as string;
-  const normalized = splat
-    .split("/")
-    .map((seg) => {
-      try {
-        return decodeURIComponent(seg);
-      } catch {
-        return seg;
-      }
-    })
-    .filter(Boolean)
-    .join("-")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return <Navigate to={`/generos/${normalized}`} replace />;
-};
+// Redirect legacy/malformed genre URLs
+const RedirectGeneroCatchAll = () => <Navigate to="/conciertos" replace />;
 
 const RedirectArtista = () => {
   const { slug } = useParams();
@@ -171,9 +148,9 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/destinos" element={<Destinos />} />
                 <Route path="/destinos/:destino" element={<DestinoDetalle />} />
-                <Route path="/generos" element={<Generos />} />
-                <Route path="/generos/:genero" element={<GeneroDetalle />} />
-                {/* Catch malformed legacy genre URLs that contain extra segments */}
+                {/* Genre routes now redirect to conciertos */}
+                <Route path="/generos" element={<RedirectGeneros />} />
+                <Route path="/generos/:genero" element={<RedirectGenerosSlug />} />
                 <Route path="/generos/*" element={<RedirectGeneroCatchAll />} />
                 <Route path="/artistas" element={<Artistas />} />
                 <Route path="/conciertos/:artistSlug" element={<ArtistaDetalle />} />
