@@ -91,7 +91,13 @@ const SPANISH_CITIES = [
   'el-puerto-de-santa-maria', 'arcos-de-la-frontera', 'utrera', 'dos-hermanas',
   'ecija', 'carmona', 'lebrija', 'osuna', 'moron-de-la-frontera', 'arahal',
   'marchena', 'alcala-de-guadaira', 'la-rinconada', 'camas', 'tomares', 'mairena',
-  'la-algaba', 'bormujos', 'gines', 'castilleja', 'espartinas', 'san-juan'
+  'la-algaba', 'bormujos', 'gines', 'castilleja', 'espartinas', 'san-juan',
+  // Galicia
+  'a-coruna', 'coruna', 'la-coruna', 'santiago', 'santiago-de-compostela', 'ferrol',
+  // Cataluña adicionales
+  'girona', 'reus', 'mataro', 'santa-coloma', 'cornella',
+  // País Vasco adicionales
+  'irun', 'barakaldo', 'getxo', 'portugalete'
 ];
 
 function extractCityFromSlug(slug: string): string | null {
@@ -366,12 +372,60 @@ const RedirectLegacyEvent = () => {
         }
       }
       
-      // STEP 2d: For numeric suffixes (-1, -2), search by ILIKE with base slug
+      // STEP 2d: For numeric suffixes (-1, -2), search by extracting artist and city
+      // and finding the next upcoming event for that combination
+      const city = extractCityFromSlug(baseSlug || rawSlug);
+      
+      if (city) {
+        // Extract artist name from the slug (everything before the city)
+        const slugToSearch = baseSlug || rawSlug;
+        const cityIndex = slugToSearch.lastIndexOf(`-${city}`);
+        const artistPart = cityIndex > 0 ? slugToSearch.substring(0, cityIndex) : null;
+        
+        if (artistPart) {
+          // Normalize city name for search (handle compound cities like "a-coruna" → "A Coruña")
+          const citySearchPattern = city.replace(/-/g, ' ');
+          
+          // Search for upcoming events with this artist prefix in this city
+          // Use flexible matching: artist prefix + city name (case insensitive)
+          const { data: artistCityMatches } = await supabase
+            .from("tm_tbl_events")
+            .select("event_type, slug, name, venue_city, event_date")
+            .ilike("slug", `${artistPart}%`)
+            .ilike("venue_city", `%${citySearchPattern}%`)
+            .gte("event_date", new Date().toISOString())
+            .order("event_date", { ascending: true })
+            .limit(5);
+          
+          if (artistCityMatches && artistCityMatches.length > 0) {
+            // Return the closest upcoming event
+            console.log(`Artist+city flexible match: ${rawSlug} → ${artistCityMatches[0].slug}`);
+            return { ...artistCityMatches[0], needsRedirect: true, isExactMatch: false, redirectSource: 'artist_city_flexible' };
+          }
+          
+          // Also try without venue_city filter (maybe city is in the slug differently)
+          const { data: artistOnlyMatches } = await supabase
+            .from("tm_tbl_events")
+            .select("event_type, slug, name, venue_city, event_date")
+            .ilike("slug", `${artistPart}-${city}%`)
+            .gte("event_date", new Date().toISOString())
+            .order("event_date", { ascending: true })
+            .limit(1);
+          
+          if (artistOnlyMatches && artistOnlyMatches.length > 0) {
+            console.log(`Artist+city slug match: ${rawSlug} → ${artistOnlyMatches[0].slug}`);
+            return { ...artistOnlyMatches[0], needsRedirect: true, isExactMatch: false, redirectSource: 'artist_city_slug' };
+          }
+        }
+      }
+      
+      // STEP 2e: For numeric suffixes, also try base slug pattern matching
       if (hasNumericSuffix && baseSlug) {
         const { data: numericMatch } = await supabase
           .from("tm_tbl_events")
           .select("event_type, slug, name, venue_city, event_date")
           .ilike("slug", `${baseSlug}%`)
+          .gte("event_date", new Date().toISOString())
           .order("event_date", { ascending: true })
           .limit(1)
           .maybeSingle();
@@ -382,44 +436,19 @@ const RedirectLegacyEvent = () => {
         }
       }
       
-      // STEP 2e: Try fuzzy match by extracting artist and city
+      // STEP 2f: Last resort fuzzy match by slug prefix
       if (baseSlug) {
         const slugParts = baseSlug.split('-');
         
         if (slugParts.length > 2) {
-          // Try artist + city pattern (first 2-3 parts + last part)
-          const city = extractCityFromSlug(baseSlug);
-          
-          if (city) {
-            // Extract potential artist name (first few parts before city)
-            const cityIndex = baseSlug.lastIndexOf(city);
-            const artistPart = baseSlug.substring(0, cityIndex).replace(/-$/, '');
-            
-            if (artistPart) {
-              // Search for events matching artist pattern in this city
-              const { data: artistCityMatch } = await supabase
-                .from("tm_tbl_events")
-                .select("event_type, slug, name, venue_city, event_date")
-                .ilike("slug", `${artistPart.split('-').slice(0, 3).join('-')}%`)
-                .ilike("venue_city", `%${city.replace(/-/g, ' ')}%`)
-                .order("event_date", { ascending: true })
-                .limit(1)
-                .maybeSingle();
-              
-              if (artistCityMatch) {
-                console.log(`Artist+city match: ${rawSlug} → ${artistCityMatch.slug}`);
-                return { ...artistCityMatch, needsRedirect: true, isExactMatch: false, redirectSource: 'artist_city' };
-              }
-            }
-          }
-          
-          // Last resort: try with just the beginning of the slug
+          // Try with first 3 parts of the slug
           const possibleSlugPrefix = slugParts.slice(0, 3).join('-');
           
           const { data: fuzzyResult } = await supabase
             .from("tm_tbl_events")
             .select("event_type, slug, name, venue_city, event_date")
             .ilike("slug", `${possibleSlugPrefix}%`)
+            .gte("event_date", new Date().toISOString())
             .order("event_date", { ascending: true })
             .limit(1)
             .maybeSingle();
