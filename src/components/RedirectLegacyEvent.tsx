@@ -119,6 +119,40 @@ const RedirectLegacyEvent = () => {
     queryFn: async () => {
       if (!rawSlug) return null;
       
+      // STEP 0: Check slug_redirects table first for migrated URLs
+      // This handles the old → new slug mapping from our migration
+      try {
+        const { data: redirectData } = await supabase
+          .from('slug_redirects')
+          .select('new_slug, event_id')
+          .eq('old_slug', rawSlug)
+          .maybeSingle();
+        
+        if (redirectData?.new_slug && redirectData.new_slug !== rawSlug) {
+          // Ignore placeholder slugs to prevent loops
+          const isPlaceholderTarget = /-9999(-\d{2})?(-\d{2})?$/.test(redirectData.new_slug);
+          if (!isPlaceholderTarget) {
+            // Fetch the event type for proper routing
+            const { data: eventInfo } = await supabase
+              .from('tm_tbl_events')
+              .select('event_type, slug')
+              .eq('slug', redirectData.new_slug)
+              .maybeSingle();
+            
+            if (eventInfo) {
+              return { 
+                ...eventInfo, 
+                needsRedirect: true, 
+                isExactMatch: false,
+                redirectSource: 'slug_redirects'
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('slug_redirects check failed:', e);
+      }
+      
       // STEP 1: Check if the EXACT slug exists in the database
       const { data: exactMatch, error: exactError } = await supabase
         .from("tm_tbl_events")

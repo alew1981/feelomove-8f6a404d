@@ -62,13 +62,23 @@
     },
     {
       "source": "/generos",
-      "destination": "/musica",
-      "statusCode": 301
+      "destination": "/conciertos",
+      "permanent": true
     },
     {
       "source": "/generos/:genero",
-      "destination": "/musica/:genero",
-      "statusCode": 301
+      "destination": "/conciertos",
+      "permanent": true
+    },
+    {
+      "source": "/musica",
+      "destination": "/conciertos",
+      "permanent": true
+    },
+    {
+      "source": "/musica/:genero",
+      "destination": "/conciertos",
+      "permanent": true
     },
     {
       "source": "/artista/:slug",
