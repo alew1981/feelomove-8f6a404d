@@ -51,7 +51,7 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
-function generateHTML(event: EventData, slug: string, routeType: "conciertos" | "festivales"): string {
+function generateHTML(event: EventData, slug: string, routeType: "concierto" | "festival"): string {
   const title = event.seo_title || `${event.event_name} - Entradas y Hotel | FEELOMOVE+`;
   const description = event.meta_description || 
     `Compra entradas para ${event.event_name} en ${event.venue_city}. ${formatDate(event.event_date)} en ${event.venue_name}. Reserva hotel cercano incluido.`;
@@ -650,8 +650,8 @@ serve(async (req) => {
       });
     }
     
-    // Parse the path: /conciertos/slug, /festivales/slug o /destinos/slug
-    const pathMatch = path.match(/^\/(conciertos|festivales|destinos)\/(.+)$/);
+    // Parse the path: /conciertos/slug, /concierto/slug, /festivales/slug, /festival/slug o /destinos/slug
+    const pathMatch = path.match(/^\/(conciertos?|festivales?|destinos)\/(.+)$/);
     
     if (!pathMatch) {
       return new Response("Invalid path", { 
@@ -660,7 +660,11 @@ serve(async (req) => {
       });
     }
 
-    const [, routeType, slug] = pathMatch;
+    const [, routeTypeParsed, slug] = pathMatch;
+    // Normalize to singular form for canonical URLs
+    const routeType = routeTypeParsed.endsWith('s') && routeTypeParsed !== 'destinos' 
+      ? routeTypeParsed.slice(0, -1) 
+      : routeTypeParsed;
 
     // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -764,7 +768,7 @@ serve(async (req) => {
       });
     }
 
-    const viewName = routeType === "festivales" 
+    const viewName = routeType === "festival" 
       ? "lovable_mv_event_product_page_festivales" 
       : "lovable_mv_event_product_page_conciertos";
 
@@ -802,7 +806,7 @@ serve(async (req) => {
       });
     }
 
-    const html = generateHTML(data as EventData, slug, routeType as "conciertos" | "festivales");
+    const html = generateHTML(data as EventData, slug, routeType as "concierto" | "festival");
 
     return new Response(html, {
       status: 200,
