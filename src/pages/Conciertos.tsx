@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -43,8 +44,14 @@ const getMonthYearOptions = (events: any[]) => {
 };
 
 const Conciertos = () => {
-  const [filterCity, setFilterCity] = useState<string>("all");
-  const [filterGenre, setFilterGenre] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize filters from URL params
+  const initialGenre = searchParams.get("genero") || "all";
+  const initialCity = searchParams.get("ciudad") || "all";
+  
+  const [filterCity, setFilterCity] = useState<string>(initialCity);
+  const [filterGenre, setFilterGenre] = useState<string>(initialGenre);
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
   const [filterRecent, setFilterRecent] = useState<string>("all");
@@ -53,6 +60,20 @@ const Conciertos = () => {
   const [displayCount, setDisplayCount] = useState<number>(30);
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
+  
+  // Sync URL params with filter state
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    if (filterGenre !== "all") newParams.set("genero", filterGenre);
+    if (filterCity !== "all") newParams.set("ciudad", filterCity);
+    
+    // Only update if params changed to avoid loops
+    const currentParams = searchParams.toString();
+    const newParamsString = newParams.toString();
+    if (currentParams !== newParamsString) {
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [filterGenre, filterCity, searchParams, setSearchParams]);
 
   // Fetch conciertos using mv_concerts_cards (excluding transport services)
   const { data: events, isLoading } = useQuery({
