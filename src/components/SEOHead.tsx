@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { useLocation } from "react-router-dom";
 
 interface BreadcrumbItem {
   name: string;
@@ -16,7 +17,50 @@ interface SEOHeadProps {
   pageType?: "WebPage" | "ItemPage" | "CollectionPage" | "SearchResultsPage" | "AboutPage" | "ContactPage";
   breadcrumbs?: BreadcrumbItem[];
   preloadImage?: string; // LCP image URL for preloading
+  forceNoIndex?: boolean; // Force noindex regardless of URL params
 }
+
+// Parameters that should trigger noindex when present
+const NOINDEX_PARAMS = ['sort', 'order', 'orderBy', 'page'];
+// Filter parameters - noindex if more than one is present
+const FILTER_PARAMS = ['ciudad', 'city', 'genero', 'genre', 'artista', 'artist', 'mes', 'month', 'fecha', 'date', 'precio', 'price', 'duracion', 'duration'];
+
+/**
+ * Determines if the current URL should be noindexed based on query parameters
+ */
+const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean => {
+  // Search pages should not be indexed
+  if (pathname === '/buscar' || pathname.startsWith('/buscar')) {
+    return true;
+  }
+  
+  // Check for sorting/pagination params - always noindex
+  for (const param of NOINDEX_PARAMS) {
+    if (searchParams.has(param)) {
+      return true;
+    }
+  }
+  
+  // Count filter parameters - noindex if more than 1
+  let filterCount = 0;
+  for (const param of FILTER_PARAMS) {
+    if (searchParams.has(param) && searchParams.get(param)) {
+      filterCount++;
+    }
+  }
+  
+  return filterCount > 1;
+};
+
+/**
+ * Gets the canonical URL for search pages
+ */
+const getSearchCanonical = (pathname: string): string | null => {
+  if (pathname === '/buscar' || pathname.startsWith('/buscar')) {
+    return 'https://feelomove.com/conciertos';
+  }
+  return null;
+};
 
 // Organization schema - global for all pages
 const organizationSchema = {
@@ -69,11 +113,6 @@ const siteNavigationSchema = {
     },
     {
       "@type": "SiteNavigationElement",
-      "name": "Géneros",
-      "url": "https://feelomove.com/musica"
-    },
-    {
-      "@type": "SiteNavigationElement",
       "name": "Destinos",
       "url": "https://feelomove.com/destinos"
     },
@@ -111,16 +150,28 @@ export const SEOHead = ({
   jsonLd,
   pageType = "WebPage",
   breadcrumbs,
-  preloadImage
+  preloadImage,
+  forceNoIndex = false
 }: SEOHeadProps) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  
+  // Determine if page should be noindexed
+  const isNoIndex = forceNoIndex || shouldNoIndex(searchParams, location.pathname);
+  
+  // Get canonical - search pages point to /conciertos
+  const searchCanonical = getSearchCanonical(location.pathname);
+  
   const fullTitle = `${title} | FEELOMOVE+`;
   const siteUrl = "https://feelomove.com";
-  // Ensure canonical is always absolute URL
-  const fullCanonical = canonical 
-    ? canonical.startsWith('http') 
-      ? canonical 
-      : `${siteUrl}${canonical.startsWith('/') ? canonical : `/${canonical}`}`
-    : `${siteUrl}/`;
+  
+  // Ensure canonical is always absolute URL and strips query params
+  const baseCanonical = searchCanonical || canonical;
+  const fullCanonical = baseCanonical 
+    ? baseCanonical.startsWith('http') 
+      ? baseCanonical.split('?')[0] // Strip query params from canonical
+      : `${siteUrl}${baseCanonical.startsWith('/') ? baseCanonical : `/${baseCanonical}`}`.split('?')[0]
+    : `${siteUrl}${location.pathname}`;
 
   // Build WebPage schema
   const webPageSchema = {
@@ -188,8 +239,14 @@ export const SEOHead = ({
       <meta name="twitter:image" content={ogImage} />
       <meta name="twitter:image:alt" content={title} />
       
-      {/* Additional SEO */}
-      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+      {/* Dynamic robots meta - noindex for filtered/sorted/search pages */}
+      <meta 
+        name="robots" 
+        content={isNoIndex 
+          ? "noindex, follow" 
+          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        } 
+      />
       <meta name="revisit-after" content="7 days" />
       <meta name="geo.region" content="ES" />
       <meta name="geo.placename" content="España" />
