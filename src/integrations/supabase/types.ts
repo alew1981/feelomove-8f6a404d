@@ -1426,6 +1426,15 @@ export type Database = {
       earth: { Args: never; Returns: number }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      generate_concert_slug: {
+        Args: {
+          p_artist_name: string
+          p_city: string
+          p_event_date: string
+          p_event_name: string
+        }
+        Returns: string
+      }
       generate_event_schema_org: { Args: { p_event_id: string }; Returns: Json }
       generate_event_slug: {
         Args: {
@@ -1581,8 +1590,16 @@ export type Database = {
           name: string
         }[]
       }
+      get_spanish_month_name: { Args: { month_num: number }; Returns: string }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      migrate_concert_slugs: {
+        Args: never
+        Returns: {
+          redirect_count: number
+          updated_count: number
+        }[]
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -1630,6 +1647,7 @@ export type Database = {
       refresh_product_page_view: { Args: never; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      slugify: { Args: { text_input: string }; Returns: string }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
