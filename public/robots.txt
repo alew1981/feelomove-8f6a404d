@@ -1,10 +1,39 @@
-User-agent: *
-Allow: /
+# FEELOMOVE+ Robots.txt
+# Optimizado para SEO y control de presupuesto de rastreo
 
-# Sitemap Index
-Sitemap: https://feelomove.com/sitemap.xml
-Sitemap: https://feelomove.com/sitemap-concerts.xml
-Sitemap: https://feelomove.com/sitemap-festivals.xml
+User-agent: *
+
+# Permitir rastreo de secciones clave
+Allow: /conciertos
+Allow: /festivales
+Allow: /artistas
+Allow: /destinos
+Allow: /concierto/
+Allow: /festival/
+
+# Bloquear búsquedas y contenido duplicado
+Disallow: /buscar
+Disallow: /buscar?
+Disallow: /search
+Disallow: /api/
+Disallow: /admin/
+Disallow: /checkout/
+Disallow: /404
+
+# Bloquear parámetros que consumen presupuesto de rastreo
+Disallow: /*?sort=
+Disallow: /*?order=
+Disallow: /*?orderBy=
+Disallow: /*?price=
+Disallow: /*?filter=
+Disallow: /*?page=
+
+# Bloquear combinaciones de múltiples filtros
+Disallow: /*?ciudad=*&genero=
+Disallow: /*?ciudad=*&artista=
+Disallow: /*?genero=*&artista=
+Disallow: /*?ciudad=*&mes=
+Disallow: /*?artista=*&mes=
 
 # Bloquear parámetros de tracking
 Disallow: /*?utm_
@@ -12,21 +41,16 @@ Disallow: /*?fbclid=
 Disallow: /*&utm_
 Disallow: /*&fbclid=
 
-# Bloquear áreas privadas
-Disallow: /admin/
-Disallow: /api/private/
-Disallow: /404
+# Bloquear rutas legacy redirigidas (ahora 301 a /conciertos)
+Disallow: /generos
+Disallow: /generos/
+Disallow: /musica
+Disallow: /musica/
 
-# Permitir todas las páginas de eventos
-Allow: /concierto/
-Allow: /festival/
-Allow: /conciertos/
-Allow: /festivales/
-Allow: /destinos/
-Allow: /generos/
-Allow: /artistas/
-
-# Permitir crawling de JavaScript y CSS
+# Googlebot específico - permitir JS/CSS
 User-agent: Googlebot
 Allow: /*.js
 Allow: /*.css
+
+# Sitemap principal con URLs de conciertos con fecha
+Sitemap: https://feelomove.com/sitemap_index.xml
