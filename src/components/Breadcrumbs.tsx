@@ -252,6 +252,8 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
           event_slug,
           primary_subcategory_name, 
           primary_category_name, 
+          primary_attraction_name,
+          primary_attraction_id,
           venue_city,
           event_type
         `)
@@ -267,6 +269,8 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
             event_slug,
             primary_subcategory_name, 
             primary_category_name, 
+            primary_attraction_name,
+            primary_attraction_id,
             venue_city,
             event_type
           `)
@@ -401,8 +405,8 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     ];
 
     // ----------------------------------------
-    // CONCERT PRODUCT PAGE (5 levels)
-    // Inicio > Conciertos > Género > Ciudad > Evento
+    // CONCERT PRODUCT PAGE (4 levels)
+    // Inicio > Conciertos > Artista (link) > Ciudad
     // ----------------------------------------
     if (isConcertProductPage && eventDetails) {
       // Level 2: Conciertos
@@ -411,29 +415,23 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
         url: "/conciertos"
       });
       
-      // Level 3: Genre (if available)
-      if (eventGenre) {
-        const genreSlug = getGenreSlug(eventGenre);
+      // Level 3: Artist (linked to profile)
+      const artistName = (eventDetails as any).primary_attraction_name;
+      if (artistName) {
+        const artistSlug = generateSlug(artistName);
         items.push({
-          name: cleanGenreName(eventGenre),
-          url: `/generos/${genreSlug}`
+          name: artistName,
+          url: `/artista/${artistSlug}`
         });
       }
       
-      // Level 4: City (if available)
+      // Level 4: City (current page - no link)
       if (cityMapping || eventDetails.venue_city) {
         const cityName = cityMapping?.cityName || eventDetails.venue_city;
-        const citySlug = cityMapping?.citySlug || generateSlug(eventDetails.venue_city);
         items.push({
-          name: cleanCityName(cityName),
-          url: `/destinos/${citySlug}`
+          name: cleanCityName(cityName)
         });
       }
-      
-      // Level 5: Event name (no URL - current page)
-      items.push({
-        name: eventDetails.event_name || ''
-      });
       
       return items;
     }
