@@ -87,12 +87,12 @@
     },
     {
       "source": "/generos/:genero",
-      "destination": "/conciertos",
+      "destination": "/conciertos?genero=:genero",
       "permanent": true
     },
     {
       "source": "/generos/:genero/:path*",
-      "destination": "/conciertos",
+      "destination": "/conciertos?genero=:genero",
       "permanent": true
     },
     {
@@ -102,12 +102,12 @@
     },
     {
       "source": "/musica/:genero",
-      "destination": "/conciertos",
+      "destination": "/conciertos?genero=:genero",
       "permanent": true
     },
     {
       "source": "/musica/:genero/:path*",
-      "destination": "/conciertos",
+      "destination": "/conciertos?genero=:genero",
       "permanent": true
     },
     {
