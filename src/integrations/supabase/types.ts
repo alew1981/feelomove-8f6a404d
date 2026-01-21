@@ -1447,6 +1447,16 @@ export type Database = {
         Returns: string
       }
       generate_seo_slug: { Args: { text_input: string }; Returns: string }
+      generate_unique_concert_slug: {
+        Args: {
+          p_artist_name: string
+          p_city: string
+          p_event_date: string
+          p_event_id: string
+          p_event_name: string
+        }
+        Returns: string
+      }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown }
