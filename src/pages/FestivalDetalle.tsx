@@ -157,7 +157,10 @@ const FestivalDetalle = () => {
     const festivalEndDate = isPlaceholder(rawEndDate) ? null : rawEndDate;
     const festivalDuration = firstEvent.festival_duration_days || 1;
     const headliners = firstEvent.festival_headliners || [];
-    const lineupArtists = firstEvent.festival_lineup_artists || concertEvents.flatMap(e => e.attraction_names || []);
+    // Priority: manual lineup > automatic lineup > attractions from events
+    const lineupArtists = firstEvent.festival_lineup_artists_manual 
+      || firstEvent.festival_lineup_artists 
+      || concertEvents.flatMap(e => e.attraction_names || []);
     const uniqueArtists = [...new Set(lineupArtists)];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
     const validPrices = allEvents.map(e => Number(e.price_min_incl_fees) || 0).filter(p => p > 0);

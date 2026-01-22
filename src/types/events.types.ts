@@ -184,6 +184,7 @@ export interface FestivalProductPage extends BaseEventProductPage {
   festival_end_date: string;
   festival_duration_days: number;
   festival_lineup_artists: string[];
+  festival_lineup_artists_manual?: string[] | null;
   festival_lineup_artist_ids: string[];
   festival_headliners: string[] | null;
   festival_total_artists: number;
