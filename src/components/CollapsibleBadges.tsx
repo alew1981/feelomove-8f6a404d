@@ -57,18 +57,7 @@ const CollapsibleBadges = ({
     });
   }
 
-  // Urgency Badge
-  if (daysUntil >= 0 && daysUntil < 7) {
-    badges.push({
-      key: "urgency",
-      priority: 3,
-      content: (
-        <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs animate-pulse rounded-full shadow-md whitespace-nowrap">
-          ¡ÚLTIMA SEMANA!
-        </Badge>
-      )
-    });
-  }
+
 
   // Day of Week
   if (eventDetails.day_of_week) {
