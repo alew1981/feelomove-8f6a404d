@@ -314,15 +314,6 @@ const FestivalDetalle = () => {
             isFestival={true}
           />
           
-          {/* Back Link */}
-          <Link 
-            to="/festivales" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-[#00FF8F] transition-colors mt-4 mb-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Volver a Festivales
-          </Link>
-          
           {/* Services Section - Compact */}
           {festivalData && (
             <div className="mb-6">
@@ -336,15 +327,27 @@ const FestivalDetalle = () => {
                 totalStages={festivalData.totalStages}
                 variant="badge"
               />
-              {/* Price Range */}
-              {festivalData.minPrice > 0 && (
-                <p className="text-muted-foreground text-sm mt-3">
-                  Entradas desde <span className="text-accent font-bold text-lg">€{Math.round(festivalData.minPrice)}</span>
-                  {festivalData.maxPrice > festivalData.minPrice && (
-                    <span className="text-muted-foreground"> - €{Math.round(festivalData.maxPrice)}</span>
-                  )}
-                </p>
-              )}
+            </div>
+          )}
+          
+          {/* Lineup Section */}
+          {festivalData && festivalData.lineupArtists && festivalData.lineupArtists.length > 0 && (
+            <div className="mb-8 p-6 bg-card rounded-xl border border-border">
+              <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-accent" />
+                Line-up del Festival
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {festivalData.lineupArtists.map((artist, index) => (
+                  <Badge 
+                    key={`${artist}-${index}`} 
+                    variant="secondary" 
+                    className="text-sm px-3 py-1.5"
+                  >
+                    {artist}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
 
@@ -371,7 +374,7 @@ const FestivalDetalle = () => {
               <TabsList className="mb-6">
                 <TabsTrigger value="conciertos" className="flex items-center gap-2">
                   <Play className="h-4 w-4" />
-                  Conciertos del Festival
+                  Entradas
                 </TabsTrigger>
                 {transportEvents.length > 0 && (
                   <TabsTrigger value="transporte" className="flex items-center gap-2">
