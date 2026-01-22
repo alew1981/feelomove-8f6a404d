@@ -5,15 +5,19 @@ import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
 
 interface MobileCartBarProps {
+  eventId?: string;
   eventUrl?: string;
   hotelUrl?: string;
   eventName?: string;
 }
 
-const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) => {
+const MobileCartBar = ({ eventId, eventUrl, hotelUrl, eventName }: MobileCartBarProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { cart, removeTicket, removeHotel, getTotalPrice, getTotalTickets } = useCart();
 
+  // Only show cart if it belongs to the current event
+  const isCurrentEventCart = cart && eventId && cart.event_id === eventId;
+  
   const totalTickets = getTotalTickets();
   const totalPrice = getTotalPrice();
   const hasHotel = !!cart?.hotel;
@@ -21,8 +25,8 @@ const MobileCartBar = ({ eventUrl, hotelUrl, eventName }: MobileCartBarProps) =>
   const hasItems = hasTickets || hasHotel;
   const pricePerPerson = totalTickets > 0 ? totalPrice / totalTickets : (hasHotel ? totalPrice : 0);
 
-  // Show cart bar if there are any items (tickets OR hotel)
-  if (!cart || !hasItems) return null;
+  // Show cart bar only if cart belongs to current event and has items
+  if (!isCurrentEventCart || !hasItems) return null;
 
   return (
     <>

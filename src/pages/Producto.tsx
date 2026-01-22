@@ -302,20 +302,21 @@ const Producto = () => {
   // Get map widget HTML - only use Stay22 map
   const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || null;
 
-  // Clear cart when changing to a different event
-  // Use a ref to track the previous event_id to avoid clearing on every cart update
+  // Clear cart when viewing a different event than what's in the cart
+  // This handles both: navigation between events AND page load with stale cart in localStorage
   const prevEventIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentEventId = eventDetails?.event_id;
     if (!currentEventId) return;
     
-    // Only clear cart if we navigated to a NEW event (not on cart updates)
-    if (prevEventIdRef.current && prevEventIdRef.current !== currentEventId) {
-      // We changed events - clear the cart
+    // Check if cart belongs to a different event
+    if (cart && cart.event_id !== currentEventId) {
+      // Cart has items from a different event - clear it
       clearCart();
     }
+    
     prevEventIdRef.current = currentEventId;
-  }, [eventDetails?.event_id, clearCart]);
+  }, [eventDetails?.event_id, cart, clearCart]);
 
   // Redirect to 404 when event not found - MUST be before any conditional returns
   useEffect(() => {
@@ -1236,6 +1237,7 @@ const Producto = () => {
 
         {/* Mobile Cart Bar */}
         <MobileCartBar 
+          eventId={eventDetails.event_id || undefined}
           eventUrl={(eventDetails as any).event_url}
           hotelUrl={(eventDetails as any).destination_deeplink}
           eventName={eventDetails.event_name || undefined}
