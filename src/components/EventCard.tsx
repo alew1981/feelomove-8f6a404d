@@ -287,7 +287,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               {/* VIP Badge and Countdown Timer - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                 {hasVIP && (
-                  <div className="bg-foreground text-background text-[10px] font-bold px-2.5 py-1 rounded shadow-lg">
+                  <div className="bg-foreground text-background text-xs font-bold px-3 py-1.5 rounded shadow-lg">
                     VIP
                   </div>
                 )}
