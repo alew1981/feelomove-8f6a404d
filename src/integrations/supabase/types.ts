@@ -942,6 +942,7 @@ export type Database = {
           festival_headliners: string[] | null
           festival_lineup_artist_ids: string[] | null
           festival_lineup_artists: string[] | null
+          festival_lineup_artists_manual: string[] | null
           festival_stages: string[] | null
           festival_start_date: string | null
           festival_total_artists: number | null
