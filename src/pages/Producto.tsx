@@ -833,7 +833,7 @@ const Producto = () => {
                   {/* Lineup for festivals - below event name */}
                   {isFestivalRoute && festivalLineupArtists.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full mt-3">
-                      {festivalLineupArtists.slice(0, 6).map((artist, idx) => (
+                      {festivalLineupArtists.map((artist, idx) => (
                         <span 
                           key={idx} 
                           className="text-xs sm:text-sm md:text-base text-white/90 font-semibold drop-shadow-md px-2 py-0.5 bg-white/10 backdrop-blur-sm rounded-full"
@@ -841,11 +841,6 @@ const Producto = () => {
                           {artist}
                         </span>
                       ))}
-                      {festivalLineupArtists.length > 6 && (
-                        <span className="text-xs sm:text-sm md:text-base text-white/70 font-medium drop-shadow-md px-2 py-0.5 bg-white/10 backdrop-blur-sm rounded-full">
-                          +{festivalLineupArtists.length - 6} más
-                        </span>
-                      )}
                     </div>
                   )}
                 </div>
