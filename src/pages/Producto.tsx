@@ -710,25 +710,8 @@ const Producto = () => {
             eventDate={eventDetails.event_date || ''}
           />
           
-          {/* Mobile: Countdown + Event Name above hero */}
+          {/* Mobile: Event Name above hero */}
           <div className="md:hidden mb-3">
-            {/* Countdown timer if last week - mobile */}
-            {daysUntil >= 0 && daysUntil < 7 && (
-              <div className="bg-accent/10 rounded-lg px-3 py-2 flex items-center justify-center gap-3 border border-accent/30 mb-2">
-                <span className="text-xs font-medium text-muted-foreground">Faltan</span>
-                <div className="flex items-center gap-2">
-                  <div className="text-center">
-                    <span className="text-lg font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                    <span className="text-[9px] uppercase text-muted-foreground ml-0.5">días</span>
-                  </div>
-                  <span className="text-accent font-bold">:</span>
-                  <div className="text-center">
-                    <span className="text-lg font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                    <span className="text-[9px] uppercase text-muted-foreground ml-0.5">hrs</span>
-                  </div>
-                </div>
-              </div>
-            )}
             {/* Event title - mobile */}
             <h1 className="text-xl font-black text-foreground leading-tight">
               {displayTitle}
@@ -871,9 +854,7 @@ const Producto = () => {
                   {eventDetails.sold_out && (
                     <Badge className="bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5">AGOTADO</Badge>
                   )}
-                  {!eventDetails.sold_out && daysUntil >= 0 && daysUntil <= 7 && (
-                    <Badge className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5">¡ÚLTIMA SEMANA!</Badge>
-                  )}
+
                   {hasVipTickets && (
                     <Badge variant="outline" className="bg-background/80 text-[9px] px-1.5 py-0.5">VIP</Badge>
                   )}
@@ -886,22 +867,7 @@ const Producto = () => {
                 <CollapsibleBadges eventDetails={eventDetails} hasVipTickets={hasVipTickets} isEventAvailable={isEventAvailable} daysUntil={daysUntil} />
                 
                 {/* Event Image with hover zoom */}
-                <div className="flex flex-col items-end gap-2">
-                  {/* Countdown timer if last week */}
-                  {daysUntil >= 0 && daysUntil < 7 && (
-                    <div className="bg-background/90 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-2 border-accent">
-                      <div className="text-center">
-                        <span className="text-base sm:text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(daysUntil).padStart(2, '0')}</span>
-                        <p className="text-[7px] sm:text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Días</p>
-                      </div>
-                      <span className="text-base sm:text-lg md:text-2xl text-accent font-bold">:</span>
-                      <div className="text-center">
-                        <span className="text-base sm:text-lg md:text-2xl lg:text-3xl font-black text-accent">{String(hoursUntil).padStart(2, '0')}</span>
-                        <p className="text-[7px] sm:text-[8px] md:text-[10px] uppercase text-muted-foreground font-medium">Hrs</p>
-                      </div>
-                    </div>
-                  )}
-                  
+                <div className="flex flex-col items-end gap-2 mb-6">
                   <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-background group">
                     <img
                       src={(eventDetails as any).image_large_url || eventImage}
