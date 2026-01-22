@@ -1183,7 +1183,7 @@ const Producto = () => {
                                   {new Date(cart.hotel.checkin_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(cart.hotel.checkout_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                 </p>
                               )}
-                              <p>{cart.hotel.nights} noches · {getTotalTickets()} huéspedes</p>
+                              <p>{cart.hotel.nights} noches · 2 huéspedes</p>
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold">€{cart.hotel.total_price.toFixed(2)}</div>
