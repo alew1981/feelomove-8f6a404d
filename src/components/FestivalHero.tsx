@@ -15,6 +15,7 @@ interface FestivalHeroProps {
   venue?: string;
   genre?: string;
   headliners?: string[];
+  lineup?: string[];
   eventId?: string;
   eventSlug?: string;
   isFestival?: boolean;
@@ -32,6 +33,7 @@ const FestivalHero = ({
   venue,
   genre,
   headliners = [],
+  lineup = [],
   eventId,
   eventSlug,
   isFestival = true,
@@ -229,7 +231,7 @@ const FestivalHero = ({
         </div>
       )}
       
-      {/* Bottom Center - Title */}
+      {/* Bottom Center - Title + Lineup */}
       <div className="absolute bottom-4 md:bottom-6 left-0 right-0 z-10">
         <div className="text-center px-4 md:px-6">
           {/* Headliners */}
@@ -252,6 +254,29 @@ const FestivalHero = ({
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white drop-shadow-lg leading-tight">
             {title}
           </h1>
+          
+          {/* Lineup preview - below title */}
+          {lineup.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1.5 mt-3 max-w-3xl mx-auto">
+              {lineup.slice(0, 8).map((artist, index) => (
+                <Badge 
+                  key={`${artist}-${index}`} 
+                  variant="secondary" 
+                  className="bg-white/20 text-white border-none text-xs backdrop-blur-sm"
+                >
+                  {artist}
+                </Badge>
+              ))}
+              {lineup.length > 8 && (
+                <Badge 
+                  variant="secondary" 
+                  className="bg-accent/80 text-accent-foreground border-none text-xs"
+                >
+                  +{lineup.length - 8} artistas
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
