@@ -23,7 +23,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <NavLink to="/" className="flex items-center text-2xl font-bold tracking-tight hover:opacity-80 transition-opacity mr-6 md:mr-0" title="Ir a la página de inicio de FEELOMOVE+">
+          <NavLink to="/" className="flex items-center text-2xl font-bold tracking-tight hover:opacity-80 transition-opacity" title="Ir a la página de inicio de FEELOMOVE+">
             <span className="text-[#121212] dark:text-white">feelomove</span>
             <span className="text-[#00FF8F]">+</span>
           </NavLink>

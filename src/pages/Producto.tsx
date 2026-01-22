@@ -938,7 +938,7 @@ const Producto = () => {
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="flex flex-col gap-3">
                     {displayedTickets.map((ticket: any) => {
                       const quantity = getTicketQuantity(ticket.id);
                       const isSoldOut = ticket.availability === "none";
@@ -948,7 +948,7 @@ const Producto = () => {
                       return (
                         <Card 
                           key={ticket.id} 
-                          className={`border-2 overflow-hidden transition-all flex flex-col ${
+                          className={`border-2 overflow-hidden transition-all ${
                             isSoldOut 
                               ? 'opacity-60 border-muted' 
                               : quantity > 0 
@@ -956,71 +956,81 @@ const Producto = () => {
                                 : 'hover:border-accent/50'
                           }`}
                         >
-                          <CardContent className="p-3 flex flex-col flex-1">
-                            {/* Status badges */}
-                            <div className="flex items-center gap-1 flex-wrap mb-2">
-                              {isVIP && (
-                                <span className="text-[9px] font-bold text-white bg-foreground px-1.5 py-0.5 rounded">
-                                  VIP
-                                </span>
-                              )}
-                              {isSoldOut ? (
-                                <span className="text-[9px] font-bold text-destructive bg-destructive/15 px-1.5 py-0.5 rounded border border-destructive/30">
-                                  AGOTADO
-                                </span>
-                              ) : isLimited ? (
-                                <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
-                                  ÚLTIMAS
-                                </span>
-                              ) : (
-                                <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
-                                  DISPONIBLE
-                                </span>
-                              )}
-                            </div>
-                            
-                            {/* Ticket name */}
-                            <p className="text-xs font-bold uppercase text-foreground line-clamp-2 mb-1 flex-1">
-                              {ticket.type}
-                            </p>
-                            
-                            {/* Price */}
-                            <div className="mb-2">
-                              <span className="text-lg font-black text-foreground">
-                                €{ticket.price.toFixed(0)}
-                              </span>
-                              {ticket.fees > 0 && (
-                                <p className="text-[9px] text-muted-foreground">
-                                  + €{ticket.fees.toFixed(2)} gastos
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex items-start sm:items-center justify-between gap-3">
+                              {/* Left: Ticket info */}
+                              <div className="flex-1 min-w-0 pr-2">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  {isVIP && (
+                                    <span className="text-[10px] font-bold text-white bg-foreground px-2 py-0.5 rounded">
+                                      VIP
+                                    </span>
+                                  )}
+                                  {isSoldOut ? (
+                                    <span className="text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded border border-destructive/30">
+                                      AGOTADO
+                                    </span>
+                                  ) : isLimited ? (
+                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
+                                      ÚLTIMAS
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
+                                      DISPONIBLE
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm sm:text-base font-bold uppercase text-foreground">
+                                  {ticket.type}
                                 </p>
-                              )}
-                            </div>
+                                {ticket.description && ticket.description !== ticket.type && (
+                                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 sm:line-clamp-1">
+                                    {ticket.description}
+                                  </p>
+                                )}
+                              </div>
 
-                            {/* Quantity Selector */}
-                            <div className="flex items-center justify-center gap-1 bg-muted/50 rounded-full p-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="ticket-qty-decrease h-7 w-7 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
-                                onClick={() => handleTicketQuantityChange(ticket.id, -1)}
-                                disabled={quantity === 0 || isSoldOut}
-                                aria-label={`Reducir cantidad de ${ticket.type}`}
-                                data-ticket-type={ticket.type}
-                              >
-                                <Minus className="h-3.5 w-3.5" />
-                              </Button>
-                              <span className="w-6 text-center font-bold text-sm">{quantity}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="ticket-qty-increase h-7 w-7 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
-                                onClick={() => handleTicketQuantityChange(ticket.id, 1)}
-                                disabled={quantity >= 10 || isSoldOut}
-                                aria-label={`Aumentar cantidad de ${ticket.type}`}
-                                data-ticket-type={ticket.type}
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                              </Button>
+                              {/* Right: Price stacked above Quantity Selector */}
+                              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                                {/* Price */}
+                                <div className="text-center">
+                                  <span className="text-xl sm:text-2xl font-black text-foreground">
+                                    €{ticket.price.toFixed(0)}
+                                  </span>
+                                  {ticket.fees > 0 && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                      + €{ticket.fees.toFixed(2)} gastos
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Quantity Selector */}
+                                <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="ticket-qty-decrease h-7 w-7 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
+                                    onClick={() => handleTicketQuantityChange(ticket.id, -1)}
+                                    disabled={quantity === 0 || isSoldOut}
+                                    aria-label={`Reducir cantidad de ${ticket.type}`}
+                                    data-ticket-type={ticket.type}
+                                  >
+                                    <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                  </Button>
+                                  <span className="w-6 sm:w-8 text-center font-bold text-base sm:text-lg">{quantity}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="ticket-qty-increase h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
+                                    onClick={() => handleTicketQuantityChange(ticket.id, 1)}
+                                    disabled={quantity >= 10 || isSoldOut}
+                                    aria-label={`Aumentar cantidad de ${ticket.type}`}
+                                    data-ticket-type={ticket.type}
+                                  >
+                                    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
