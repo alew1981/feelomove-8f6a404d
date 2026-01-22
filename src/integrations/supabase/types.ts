@@ -639,6 +639,7 @@ export type Database = {
           last_manual_edit_at: string | null
           lineup_artist_ids: string[] | null
           lineup_artists: string[] | null
+          lineup_artists_manual: string[] | null
           manually_edited: boolean | null
           start_date: string
           transport_event_ids: string[] | null
@@ -655,6 +656,7 @@ export type Database = {
           last_manual_edit_at?: string | null
           lineup_artist_ids?: string[] | null
           lineup_artists?: string[] | null
+          lineup_artists_manual?: string[] | null
           manually_edited?: boolean | null
           start_date: string
           transport_event_ids?: string[] | null
@@ -671,6 +673,7 @@ export type Database = {
           last_manual_edit_at?: string | null
           lineup_artist_ids?: string[] | null
           lineup_artists?: string[] | null
+          lineup_artists_manual?: string[] | null
           manually_edited?: boolean | null
           start_date?: string
           transport_event_ids?: string[] | null
