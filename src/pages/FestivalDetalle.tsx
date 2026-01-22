@@ -312,6 +312,7 @@ const FestivalDetalle = () => {
             venue={festivalData?.venue || undefined}
             genre={festivalData?.genre || undefined}
             headliners={festivalData?.headliners || []}
+            lineup={festivalData?.lineupArtists || []}
             eventId={events?.[0]?.event_id || undefined}
             eventSlug={festivalSlug}
             isFestival={true}
