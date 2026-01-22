@@ -28,22 +28,6 @@ const EventCardSkeleton = () => {
             </div>
           </div>
 
-          {/* Countdown Skeleton - top right */}
-          <div className="absolute top-3 right-3">
-            <div className="bg-black/90 backdrop-blur-md rounded-md px-3 py-2 border border-accent/30">
-              <div className="flex gap-2">
-                <div className="flex flex-col items-center">
-                  <Skeleton className="h-5 w-6 bg-accent/30" />
-                  <Skeleton className="h-1.5 w-6 mt-1 bg-white/20" />
-                </div>
-                <Skeleton className="h-5 w-2 self-center bg-white/20" />
-                <div className="flex flex-col items-center">
-                  <Skeleton className="h-5 w-6 bg-accent/30" />
-                  <Skeleton className="h-1.5 w-6 mt-1 bg-white/20" />
-                </div>
-              </div>
-            </div>
-          </div>
           
           {/* Category badge skeleton - bottom left */}
           <div className="absolute bottom-3 left-3">

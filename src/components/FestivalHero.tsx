@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
-import { format, differenceInDays, differenceInHours } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -50,15 +50,6 @@ const FestivalHero = ({
   const parsedDate = hasValidDate ? new Date(eventDate) : null;
   const parsedEndDate = endDate && !endDate.startsWith('9999') ? new Date(endDate) : null;
   
-  // Countdown calculation
-  const countdown = useMemo(() => {
-    if (!parsedDate) return null;
-    const now = new Date();
-    const days = differenceInDays(parsedDate, now);
-    const hours = differenceInHours(parsedDate, now) % 24;
-    if (days < 0) return null;
-    return { days, hours };
-  }, [parsedDate]);
 
   // Parallax effect on scroll
   useEffect(() => {
@@ -117,22 +108,8 @@ const FestivalHero = ({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       
-      {/* Left Side - Countdown (top) + Date Badge (below) */}
+      {/* Left Side - Date Badge */}
       <div className="absolute left-4 md:left-6 top-4 md:top-6 z-10 flex flex-col items-start gap-3">
-        {/* Countdown - Top Left */}
-        {countdown && (
-          <div className="bg-accent/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 text-accent-foreground">
-            <div className="text-center">
-              <div className="text-lg md:text-xl font-black leading-none">{String(countdown.days).padStart(2, '0')}</div>
-              <div className="text-[8px] md:text-[10px] uppercase">DÍAS</div>
-            </div>
-            <div className="text-lg md:text-xl font-bold">:</div>
-            <div className="text-center">
-              <div className="text-lg md:text-xl font-black leading-none">{String(countdown.hours).padStart(2, '0')}</div>
-              <div className="text-[8px] md:text-[10px] uppercase">HRS</div>
-            </div>
-          </div>
-        )}
         
         {/* Date Badge - Same structure as concerts but without time */}
         <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 md:p-5 text-center shadow-lg min-w-[140px] md:min-w-[180px]">
@@ -176,11 +153,6 @@ const FestivalHero = ({
           <Badge className="bg-accent text-accent-foreground text-[10px] md:text-xs font-bold px-3 py-1">
             DISPONIBLE
           </Badge>
-          {countdown && countdown.days <= 7 && (
-            <Badge className="bg-destructive text-destructive-foreground text-[10px] md:text-xs font-bold px-3 py-1">
-              ¡ÚLTIMA SEMANA!
-            </Badge>
-          )}
           {dateInfo.weekday && !dateInfo.pendiente && (
             <Badge variant="secondary" className="text-[10px] md:text-xs px-3 py-1">
               {dateInfo.weekday}
@@ -255,8 +227,8 @@ const FestivalHero = ({
         </div>
       </div>
       
-      {/* Right Side - Small Event Image */}
-      <div className="hidden md:block absolute right-4 bottom-4 w-24 h-24 lg:w-28 lg:h-28 rounded-lg overflow-hidden shadow-xl border-2 border-white/20">
+      {/* Right Side - Small Event Image - positioned higher */}
+      <div className="hidden md:block absolute right-4 bottom-12 w-24 h-24 lg:w-28 lg:h-28 rounded-lg overflow-hidden shadow-xl border-2 border-white/20">
         <img
           src={finalImage}
           alt={`Miniatura de ${title}`}
