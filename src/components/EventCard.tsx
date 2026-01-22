@@ -246,13 +246,13 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
 
               {/* Event Name - Overlaid at bottom of image */}
               <div className="absolute bottom-3 left-3 right-3 z-10">
-                <h3 className="text-white text-lg font-bold leading-tight tracking-tight font-['Poppins'] line-clamp-2 drop-shadow-lg" itemProp="name">
+                <h3 className="text-white text-xl font-bold leading-tight tracking-tight font-['Poppins'] line-clamp-2 drop-shadow-lg" itemProp="name">
                   {eventName}
                 </h3>
               </div>
 
-              {/* Date Card - Absolute positioned on the left */}
-              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
+              {/* Date Card - Absolute positioned on the left, aligned with countdown */}
+              <div className="absolute left-2 top-3 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
                 <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
                   {hasDate && eventDate ? (
                     <time dateTime={isoDate} itemProp="startDate" content={isoDate}>
@@ -330,10 +330,10 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               </div>
             </div>
 
-            {/* Bottom Section with Button */}
-            <div className="bg-background px-4 pb-4 flex justify-center items-center">
+            {/* Bottom Section with Button - vertical padding for centering */}
+            <div className="bg-background px-4 py-4 flex justify-center items-center">
               <Button variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 py-3 h-auto transition-all duration-300">
-                <span>Ver entradas</span>
+                <span>VER ENTRADAS</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Button>
             </div>
