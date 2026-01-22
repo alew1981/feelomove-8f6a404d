@@ -430,9 +430,11 @@ const Producto = () => {
   const artistNames = eventDetails.attraction_names || [];
   const mainArtist = artistNames[0] || eventDetails.event_name;
   
-  // Festival lineup artists - use festival_lineup_artists from the festival view
-  const festivalLineupArtists = isFestivalRoute && (eventDetails as any).festival_lineup_artists 
-    ? (eventDetails as any).festival_lineup_artists as string[]
+  // Festival lineup artists - prioritize manual lineup over automatic
+  const festivalLineupArtists = isFestivalRoute 
+    ? ((eventDetails as any).festival_lineup_artists_manual as string[] | null) 
+      || ((eventDetails as any).festival_lineup_artists as string[] | null) 
+      || []
     : [];
   
   // Display logic for festivals based on primary/secondary attraction
