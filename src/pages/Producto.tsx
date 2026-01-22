@@ -821,9 +821,18 @@ const Producto = () => {
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
-                  {/* Lineup for festivals - prominent display above event name */}
+                  {/* Title and optional subtitle for artist entries */}
+                  <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
+                    {displayTitle}
+                  </h1>
+                  {displaySubtitle && (
+                    <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium drop-shadow-md">
+                      {displaySubtitle}
+                    </p>
+                  )}
+                  {/* Lineup for festivals - below event name */}
                   {isFestivalRoute && festivalLineupArtists.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full">
+                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full mt-3">
                       {festivalLineupArtists.slice(0, 6).map((artist, idx) => (
                         <span 
                           key={idx} 
@@ -838,15 +847,6 @@ const Producto = () => {
                         </span>
                       )}
                     </div>
-                  )}
-                  {/* Title and optional subtitle for artist entries */}
-                  <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
-                    {displayTitle}
-                  </h1>
-                  {displaySubtitle && (
-                    <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium drop-shadow-md">
-                      {displaySubtitle}
-                    </p>
                   )}
                 </div>
               </div>
