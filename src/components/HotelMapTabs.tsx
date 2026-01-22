@@ -121,7 +121,7 @@ const HotelMapTabs = ({
 
   // Tab labels without icons
   const labels = {
-    hotels: "Hoteles cerca",
+    hotels: "Feelomove recomienda",
     accommodations: `+ Hoteles en ${cityDisplay}`,
     activities: "Actividades",
     map: "Mapa",
