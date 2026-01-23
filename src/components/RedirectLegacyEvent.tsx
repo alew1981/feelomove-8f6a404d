@@ -71,6 +71,74 @@ interface ParsedSlug {
 }
 
 /**
+ * Known festival names for forced festival route detection
+ * These keywords in a slug indicate it should use /festival/ route
+ */
+const KNOWN_FESTIVAL_NAMES = [
+  'sonorama', 'sonorama-ribera', 'primavera-sound', 'mad-cool', 'madcool',
+  'bbk-live', 'bilbao-bbk', 'arenal-sound', 'viña-rock', 'vina-rock',
+  'resurrection-fest', 'low-festival', 'dcode', 'cabo-de-plata',
+  'cruilla', 'vida-festival', 'festival-de-les-arts', 'les-arts',
+  'tomorrowland', 'ultra', 'medusa', 'weekend-beach', 'dream-beach',
+  'rototom', 'barcelona-beach', 'starlite', 'festival-jardins',
+  'porta-ferrada', 'cap-roig', 'concert-music-festival', 'cmf',
+  'o-gozo', 'festival-noroeste', 'atlantic-fest', 'canela-party',
+  'warm-up', 'interestelar', 'tomavistas', 'mulafest', 'sansan',
+  'granada-sound', 'alrumbo', 'sun-festival', 'brisa-festival',
+  'iboga-summer', 'festival-internacional', 'share-festival',
+  'intro-music', 'mallorca-live', 'son-estrella', 'cala-mijas',
+  'cabaret-festival', 'festival-de-guitarra', 'jazz-festival',
+  'heineken-jazzaldia', 'jazz-vitoria', 'getxo-jazz', 'terrassa-jazz',
+  'leyendas-del-rock', 'rock-imperium', 'amnesia-festival', 'monegros',
+  'electrobeach', 'a-summer-story', 'medusa-sunbeach', 'aquasella',
+  'tomorrowland', 'dreambeach', 'marenostrum', 'festival-sol',
+  'boombastic', 'festival-gigante', 'gigante', 'conexion-valladolid',
+  'festival-rio-babel', 'rio-babel', 'coca-cola-music', 'ccme',
+  'festival-cultura-inquieta', 'cultura-inquieta', 'festival-de-musica',
+  'iberdrola-music', 'nos-alive', 'alive', 'aupa-lumbreiras', 'lumbreiras',
+  'ezcaray-fest', 'degusta-fest', 'festival-vive-latino', 'vive-latino',
+  'matinee-easter', 'circuit-festival', 'gran-illa', 'cranc-illa',
+  'festial', 'amusufest', 'fuck-censorship', 'f-ck-censorship',
+  'leon-solo-musica', 'ginetarock', 'glory', 'can-reon',
+  'abono', 'bono-festival', 'pase-festival', 'entrada-festival'
+];
+
+/**
+ * Festival keyword patterns that indicate an event is a festival
+ */
+const FESTIVAL_KEYWORDS = [
+  'festival', 'fest', 'sound', 'music-festival', 'rock-festival',
+  'jazz-festival', 'summer-festival', 'beach-festival', 'live-festival',
+  'electronic-festival', 'indie-festival', 'abono', 'bono-general',
+  'camping', 'glamping'
+];
+
+/**
+ * Detects if a slug represents a festival event
+ */
+function isFestivalSlug(slug: string): boolean {
+  const slugLower = slug.toLowerCase();
+  
+  // Check against known festival names
+  for (const festivalName of KNOWN_FESTIVAL_NAMES) {
+    if (slugLower.includes(festivalName)) {
+      return true;
+    }
+  }
+  
+  // Check for festival keywords
+  for (const keyword of FESTIVAL_KEYWORDS) {
+    // Match as whole word to avoid false positives
+    const keywordPattern = new RegExp(`(^|-)${keyword}(-|$)`, 'i');
+    if (keywordPattern.test(slug)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * Extract city from a slug by matching known Spanish city patterns
  */
 const SPANISH_CITIES = [
@@ -92,10 +160,15 @@ const SPANISH_CITIES = [
   'ecija', 'carmona', 'lebrija', 'osuna', 'moron-de-la-frontera', 'arahal',
   'marchena', 'alcala-de-guadaira', 'la-rinconada', 'camas', 'tomares', 'mairena',
   'la-algaba', 'bormujos', 'gines', 'castilleja', 'espartinas', 'san-juan',
+  // Festival cities
+  'aranda-de-duero', 'aranda', 'benicassim', 'benicasim', 'villarrobledo',
+  'viveiro', 'vilagarcia', 'vilagarcia-de-arousa', 'sanxenxo', 'cangas',
+  'villena', 'aguilas', 'la-manga', 'mazarron', 'jumilla', 'caravaca',
   // Galicia
   'a-coruna', 'coruna', 'la-coruna', 'santiago', 'santiago-de-compostela', 'ferrol',
   // Cataluña adicionales
-  'girona', 'reus', 'mataro', 'santa-coloma', 'cornella',
+  'girona', 'reus', 'mataro', 'santa-coloma', 'cornella', 'vilanova-i-la-geltru',
+  'vilanova', 'sitges', 'calella', 'lloret', 'lloret-de-mar', 'blanes',
   // País Vasco adicionales
   'irun', 'barakaldo', 'getxo', 'portugalete'
 ];
@@ -300,6 +373,11 @@ const RedirectLegacyEvent = () => {
   
   // Determine if this is a festival or concert route
   const isFestivalRoute = location.pathname.startsWith('/festival');
+  const isConciertRoute = location.pathname.startsWith('/concierto');
+  const isArtistaRoute = location.pathname.startsWith('/artista');
+  
+  // Early detection: Check if slug looks like a festival (for wrong route redirects)
+  const slugLooksLikeFestival = rawSlug ? isFestivalSlug(rawSlug) : false;
 
   // Query to check if the EXACT slug exists first, then handle legacy redirects
   const { data: eventData, isLoading, error, isFetched } = useQuery({
@@ -307,7 +385,55 @@ const RedirectLegacyEvent = () => {
     queryFn: async () => {
       if (!rawSlug) return null;
       
-      // STEP 0: Check slug_redirects table first for migrated URLs
+      // STEP 0a: Festival detection from slug keywords
+      // If accessing /concierto/ or /artista/ with a festival-like slug, 
+      // search for the festival and force redirect
+      if ((isConciertRoute || isArtistaRoute) && isFestivalSlug(rawSlug)) {
+        console.log(`[Festival Detection] Slug "${rawSlug}" looks like a festival, searching in festivals...`);
+        
+        // Try to find the festival by matching slug patterns
+        const { data: festivalMatch } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug, name, venue_city, event_date")
+          .eq("event_type", "festival")
+          .ilike("slug", `%${rawSlug.split('-').slice(0, 3).join('-')}%`)
+          .gte("event_date", new Date().toISOString())
+          .order("event_date", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (festivalMatch) {
+          console.log(`[Festival Detection] Found festival: ${festivalMatch.slug}`);
+          return { 
+            ...festivalMatch, 
+            needsRedirect: true, 
+            isExactMatch: false,
+            redirectSource: 'festival_keyword_detection',
+            forceFestivalRoute: true
+          };
+        }
+        
+        // Also try exact slug match in festivals
+        const { data: exactFestival } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug, name, venue_city, event_date")
+          .eq("event_type", "festival")
+          .eq("slug", rawSlug)
+          .maybeSingle();
+        
+        if (exactFestival) {
+          console.log(`[Festival Detection] Exact festival match: ${exactFestival.slug}`);
+          return { 
+            ...exactFestival, 
+            needsRedirect: true, 
+            isExactMatch: false,
+            redirectSource: 'festival_exact_wrong_route',
+            forceFestivalRoute: true
+          };
+        }
+      }
+      
+      // STEP 0b: Check slug_redirects table first for migrated URLs
       // This handles the old → new slug mapping from our migration
       try {
         const { data: redirectData } = await supabase
@@ -350,11 +476,25 @@ const RedirectLegacyEvent = () => {
       
       if (exactError) throw exactError;
       
-      // If exact match found, return it with a flag indicating no redirect needed
+      // If exact match found, check if it's a festival accessed via wrong route
       if (exactMatch) {
+        const isFestival = exactMatch.event_type === 'festival';
+        const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
+        
+        if (needsRouteCorrection) {
+          console.log(`[Festival Detection] Exact match is festival but accessed via wrong route`);
+          return { 
+            ...exactMatch, 
+            needsRedirect: true, 
+            isExactMatch: false, 
+            redirectSource: 'festival_wrong_route',
+            forceFestivalRoute: true
+          };
+        }
+        
         return { ...exactMatch, needsRedirect: false, isExactMatch: true };
       }
-      
+
       // STEP 2: If no exact match and slug has legacy patterns, try to find the event
       const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly, hasNumericSuffix, simplifiedSlug } = parsedSlug;
       
@@ -571,25 +711,28 @@ const RedirectLegacyEvent = () => {
       
       // Legacy URL - needs redirect to the correct slug
       if (eventData.needsRedirect) {
-        const isFestival = eventData.event_type === 'festival';
+        // Check for forced festival route (festival accessed via /concierto or /artista)
+        const forceFestival = 'forceFestivalRoute' in eventData && eventData.forceFestivalRoute;
+        const isFestival = forceFestival || eventData.event_type === 'festival';
         const newPath = isFestival 
           ? `/festival/${eventData.slug}` 
           : `/concierto/${eventData.slug}`;
         
-        console.log(`Legacy redirect: ${location.pathname} → ${newPath}`);
+        console.log(`Legacy redirect: ${location.pathname} → ${newPath} (forceFestival: ${forceFestival})`);
         navigate(newPath, { replace: true });
       }
     } else if (isFetched && !eventData) {
-      // No event found - redirect to list page based on current route
+      // No event found - redirect to list page based on current route or slug pattern
       console.warn(`Event not found: "${rawSlug}", redirecting to list page`);
       
-      if (isFestivalRoute) {
+      // If slug looks like a festival, redirect to festivals page
+      if (isFestivalRoute || slugLooksLikeFestival) {
         navigate('/festivales', { replace: true });
       } else {
         navigate('/conciertos', { replace: true });
       }
     }
-  }, [eventData, isLoading, isFetched, navigate, location.pathname, rawSlug, isFestivalRoute]);
+  }, [eventData, isLoading, isFetched, navigate, location.pathname, rawSlug, isFestivalRoute, slugLooksLikeFestival]);
 
   // Handle query errors
   if (error) {
@@ -631,7 +774,8 @@ const RedirectLegacyEvent = () => {
 
   // For legacy URLs that need redirect, show redirect loader with SEO meta tags
   if (eventData?.needsRedirect) {
-    const isFestival = eventData.event_type === 'festival';
+    const forceFestival = 'forceFestivalRoute' in eventData && eventData.forceFestivalRoute;
+    const isFestival = forceFestival || eventData.event_type === 'festival';
     const targetPath = isFestival ? `/festival/${eventData.slug}` : `/concierto/${eventData.slug}`;
     const targetUrl = `https://feelomove.com${targetPath}`;
     
