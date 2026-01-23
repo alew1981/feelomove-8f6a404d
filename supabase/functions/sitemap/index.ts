@@ -138,7 +138,7 @@ ${urlsXml}
       });
     }
 
-    // Artists Sitemap - ONLY artists with future events (using existing slug field)
+    // Artists Sitemap - ONLY artists with future events (excluding festivals)
     if (type === "artists") {
       // Query from mv_attractions which has proper slugs, then filter by future events
       const { data: attractions, error: attractionsError } = await supabase
@@ -154,7 +154,7 @@ ${urlsXml}
         throw attractionsError;
       }
 
-      // Exclusion patterns for non-artist entries
+      // Exclusion patterns for non-artist entries AND festivals
       const excludePatterns = [
         'servicio de autobus',
         'servicio-de-autobus',
@@ -166,7 +166,34 @@ ${urlsXml}
         'alojamiento',
         'camping',
         'upgrade',
-        'transporte'
+        'transporte',
+        // Festival-related patterns to exclude from artists sitemap
+        'festival',
+        'fest',
+        'sound',
+        'sonorama',
+        'primavera',
+        'mad-cool',
+        'madcool',
+        'bbk-live',
+        'arenal',
+        'viña-rock',
+        'vina-rock',
+        'resurrection',
+        'low-festival',
+        'dcode',
+        'tomorrowland',
+        'medusa',
+        'rototom',
+        'starlite',
+        'cruilla',
+        'vida-festival',
+        'les-arts',
+        'cap-roig',
+        'porta-ferrada',
+        'abono',
+        'bono-general',
+        'bono-festival'
       ];
 
       // Filter and generate URLs
@@ -177,7 +204,7 @@ ${urlsXml}
           const nameLower = (a.attraction_name || '').toLowerCase();
           const slugLower = a.attraction_slug.toLowerCase();
           
-          // Skip excluded patterns
+          // Skip excluded patterns (including festivals)
           for (const pattern of excludePatterns) {
             if (nameLower.includes(pattern) || slugLower.includes(pattern)) {
               return false;
@@ -197,7 +224,7 @@ ${urlsXml}
         })
         .join('\n');
 
-      console.log(`Generated ${(attractions || []).length} artist URLs for sitemap`);
+      console.log(`Generated ${(attractions || []).length} artist URLs for sitemap (festivals excluded)`);
 
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
