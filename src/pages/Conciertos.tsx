@@ -174,12 +174,8 @@ const Conciertos = () => {
         return eventDate <= thirtyDaysFromNow;
       });
     } else if (filterRecent === "added") {
-      // Sort by created_at descending (most recently added first)
-      filtered = [...filtered].sort((a, b) => {
-        const aCreated = (a as any).created_at || '1970-01-01';
-        const bCreated = (b as any).created_at || '1970-01-01';
-        return new Date(bCreated).getTime() - new Date(aCreated).getTime();
-      });
+      // Data already comes sorted by created_at DESC from DB, no need to re-sort
+      // Only sort if filters were applied that might have changed the order
     }
     
     // Apply VIP filter (check badges for VIP or name contains VIP)
@@ -192,7 +188,7 @@ const Conciertos = () => {
       });
     }
 
-    // Sort by date ascending by default (unless already sorted by recently added)
+    // Sort by date ascending only when explicitly selected (not "added" mode)
     if (filterRecent !== "added") {
       filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
     }
