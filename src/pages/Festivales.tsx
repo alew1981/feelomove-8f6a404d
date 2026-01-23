@@ -499,7 +499,7 @@ const Festivales = () => {
         ]}
       />
       
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-20 md:pb-0">
         <Navbar />
         <div className="container mx-auto px-4 py-8 mt-16">
           
@@ -516,13 +516,13 @@ const Festivales = () => {
             priority={true}
           />
           
-          {/* H2 for proper heading hierarchy */}
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+          {/* H2 for proper heading hierarchy - reduced margins on mobile */}
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-4 md:mt-6 mb-2 md:mb-4">
             Próximos festivales y eventos musicales destacados en España
           </h2>
           
-          {/* Description - with content-visibility for below-fold optimization */}
-          <div className="prose prose-lg max-w-none mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
+          {/* Description - hidden on mobile for compactness */}
+          <div className="hidden md:block prose prose-lg max-w-none mb-6" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
               Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. 
               Encuentra tu festival perfecto y reserva hotel cerca del recinto.
@@ -550,12 +550,9 @@ const Festivales = () => {
               )}
             </div>
           </div>
-          
-          {/* Spacer for mobile floating search at bottom */}
-          <div className="md:hidden h-[72px] mt-auto" />
 
           {/* Search and Filters */}
-          <div className="space-y-3 mb-8">
+          <div className="space-y-3 mb-6">
             {/* Search Bar - Desktop only */}
             <div className="relative hidden md:block">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
