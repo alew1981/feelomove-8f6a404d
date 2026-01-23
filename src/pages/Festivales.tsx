@@ -234,7 +234,7 @@ const Festivales = () => {
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page_festivales")
         .select("*")
-        .order("festival_start_date", { ascending: true });
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       return (data || []) as unknown as FestivalProductPage[];
