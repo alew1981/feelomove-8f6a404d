@@ -7,7 +7,7 @@ import { format, parseISO, isPast, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { memo, useRef, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { getFestivalUrl } from "@/lib/eventUtils";
 interface FestivalCardProps {
   festival: {
     event_id?: string;
@@ -68,7 +68,14 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   }, [priority]);
 
   const imageUrl = festival.image_large_url || festival.image_standard_url || "/placeholder.svg";
-  const slug = festival.event_slug || festival.event_name?.toLowerCase().replace(/\s+/g, "-") || "";
+  
+  // Use existing slug if available, otherwise generate a proper festival URL
+  const festivalUrl = getFestivalUrl(
+    festival.event_name || festival.primary_attraction_name || '',
+    festival.venue_city || '',
+    festival.festival_start_date || festival.event_date,
+    festival.event_slug
+  );
   
   // Display title - use event_name or primary_attraction_name
   const displayTitle = festival.event_name || festival.primary_attraction_name || "";
@@ -126,7 +133,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   }
 
   return (
-    <Link to={`/festival/${slug}`} className="block group" title={`Ver entradas y detalles de ${displayTitle}`}>
+    <Link to={festivalUrl} className="block group" title={`Ver entradas y detalles de ${displayTitle}`}>
       <Card
         ref={cardRef}
         className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg"
