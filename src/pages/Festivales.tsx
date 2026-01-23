@@ -408,17 +408,14 @@ const Festivales = () => {
     
     // Sort
     if (filterSort === "recientes") {
-      // Sort by created_at descending (most recently added first)
-      filteredStandalone.sort((a, b) => {
-        const aCreated = (a as any).created_at || '1970-01-01';
-        const bCreated = (b as any).created_at || '1970-01-01';
-        return new Date(bCreated).getTime() - new Date(aCreated).getTime();
-      });
+      // Data already comes sorted by created_at DESC from DB
+      // Only re-sort parent festivals by their newest event's created_at
       filteredParents.sort((a, b) => {
         const aLatest = Math.max(...a.events.map(e => new Date((e as any).created_at || '1970-01-01').getTime()));
         const bLatest = Math.max(...b.events.map(e => new Date((e as any).created_at || '1970-01-01').getTime()));
         return bLatest - aLatest;
       });
+      // Standalone festivals keep DB order (already sorted by created_at DESC)
     } else {
       filteredStandalone.sort((a, b) => 
         new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
