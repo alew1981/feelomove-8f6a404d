@@ -385,6 +385,9 @@ const RedirectLegacyEvent = () => {
     queryFn: async () => {
       if (!rawSlug) return null;
       
+      console.log(`[RedirectLegacyEvent] Starting lookup for slug: "${rawSlug}"`);
+      console.log(`[RedirectLegacyEvent] Route info: isFestival=${isFestivalRoute}, isConcierto=${isConciertRoute}`);
+      
       // STEP 0a: Festival detection from slug keywords
       // If accessing /concierto/ or /artista/ with a festival-like slug, 
       // search for the festival and force redirect
@@ -494,11 +497,14 @@ const RedirectLegacyEvent = () => {
       }
       
       // STEP 1: Check if the EXACT slug exists in the database
+      console.log(`[RedirectLegacyEvent] STEP 1: Checking exact match for slug: "${rawSlug}"`);
       const { data: exactMatch, error: exactError } = await supabase
         .from("tm_tbl_events")
         .select("event_type, slug, name, venue_city, event_date")
         .eq("slug", rawSlug)
         .maybeSingle();
+      
+      console.log(`[RedirectLegacyEvent] Exact match result:`, exactMatch ? `Found: ${exactMatch.slug}` : 'Not found');
       
       if (exactError) throw exactError;
       
