@@ -496,30 +496,72 @@ const RedirectLegacyEvent = () => {
         }
       }
       
-      // STEP 0b: FIRST check if the EXACT slug exists in the database
-      // This prevents unnecessary redirect lookups for valid slugs
-      const { data: directMatch } = await supabase
-        .from("tm_tbl_events")
-        .select("event_type, slug, name, venue_city, event_date")
-        .eq("slug", rawSlug)
-        .maybeSingle();
-      
-      if (directMatch) {
-        console.log(`[RedirectLegacyEvent] Direct match found for "${rawSlug}", skipping redirect checks`);
-        const isFestival = directMatch.event_type === 'festival';
-        const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
+      // STEP 0b-NUMERIC: CRITICAL - If slug has numeric suffix (-1, -2, etc.), 
+      // we must ALWAYS redirect to the proper SEO-friendly URL with date.
+      // The event exists in DB with the -1 slug, but we want URLs like morat-barcelona-17-octubre-2026
+      if (parsedSlug.hasNumericSuffix) {
+        console.log(`[Numeric Suffix] Slug "${rawSlug}" has numeric suffix, looking up event for SEO redirect...`);
         
-        if (needsRouteCorrection) {
+        // Find the actual event by its current slug (including the -1 suffix)
+        const { data: numericEvent } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug, name, venue_city, event_date")
+          .eq("slug", rawSlug)
+          .maybeSingle();
+        
+        if (numericEvent) {
+          // Generate the SEO-friendly slug with Spanish date
+          const eventDate = new Date(numericEvent.event_date);
+          const day = eventDate.getDate();
+          const monthName = SPANISH_MONTHS[eventDate.getMonth()];
+          const year = eventDate.getFullYear();
+          
+          // Use the base slug (without numeric suffix) + date
+          const seoSlug = `${parsedSlug.baseSlug}-${day}-${monthName}-${year}`;
+          
+          console.log(`[Numeric Suffix] Redirecting ${rawSlug} → ${seoSlug}`);
+          
           return { 
-            ...directMatch, 
+            ...numericEvent, 
+            slug: seoSlug, // Override with SEO-friendly slug
             needsRedirect: true, 
-            isExactMatch: false, 
-            redirectSource: 'festival_wrong_route',
-            forceFestivalRoute: true
+            isExactMatch: false,
+            redirectSource: 'numeric_suffix_to_seo_date',
+            originalDbSlug: numericEvent.slug // Keep track of actual DB slug
           };
         }
         
-        return { ...directMatch, needsRedirect: false, isExactMatch: true };
+        // If event not found with exact slug, fall through to other strategies
+        console.log(`[Numeric Suffix] Event not found for "${rawSlug}", continuing...`);
+      }
+      
+      // STEP 0b: FIRST check if the EXACT slug exists in the database
+      // This prevents unnecessary redirect lookups for valid slugs
+      // SKIP this for numeric suffixes (handled above)
+      if (!parsedSlug.hasNumericSuffix) {
+        const { data: directMatch } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug, name, venue_city, event_date")
+          .eq("slug", rawSlug)
+          .maybeSingle();
+        
+        if (directMatch) {
+          console.log(`[RedirectLegacyEvent] Direct match found for "${rawSlug}", skipping redirect checks`);
+          const isFestival = directMatch.event_type === 'festival';
+          const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
+          
+          if (needsRouteCorrection) {
+            return { 
+              ...directMatch, 
+              needsRedirect: true, 
+              isExactMatch: false, 
+              redirectSource: 'festival_wrong_route',
+              forceFestivalRoute: true
+            };
+          }
+          
+          return { ...directMatch, needsRedirect: false, isExactMatch: true };
+        }
       }
       
       // STEP 0c: Only check slug_redirects if no direct match found
