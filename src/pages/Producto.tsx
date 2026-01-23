@@ -98,6 +98,7 @@ const Producto = () => {
       // If current slug is an OLD slug, redirect to new one.
       // IMPORTANT: Ignore redirects that point to placeholder slugs (e.g. ending in -9999),
       // because they create redirect loops with our legacy-slug normalizer.
+      // ALSO: Verify the new_slug actually exists in tm_tbl_events before navigating.
       try {
         const { data: redirectData } = await supabase
           .from('slug_redirects')
@@ -132,6 +133,20 @@ const Producto = () => {
                 : 'legacy_suffix_only',
             });
           } else {
+            // Safety: only redirect if the target slug exists.
+            const { data: targetExists } = await supabase
+              .from('tm_tbl_events')
+              .select('id')
+              .eq('slug', redirectData.new_slug)
+              .maybeSingle();
+
+            if (!targetExists) {
+              console.warn('Ignoring slug_redirects entry (target slug not found):', {
+                old_slug: slug,
+                new_slug: redirectData.new_slug,
+              });
+              // Continue with normal lookup flow using the current slug.
+            } else {
             // Store the canonical slug for SEO purposes
             setRpcCanonicalSlug(redirectData.new_slug);
 
@@ -142,6 +157,7 @@ const Producto = () => {
 
             navigate(redirectPath, { replace: true });
             return null; // Stop execution, redirect will happen
+            }
           }
         }
       } catch (redirectError) {
