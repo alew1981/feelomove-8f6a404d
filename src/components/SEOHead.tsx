@@ -62,6 +62,17 @@ const getSearchCanonical = (pathname: string): string | null => {
   return null;
 };
 
+/**
+ * Gets the clean canonical URL for festival pages (strips query params)
+ */
+const getFestivalCanonical = (pathname: string): string | null => {
+  if (pathname.startsWith('/festival/')) {
+    // Return clean URL without query parameters
+    return `https://feelomove.com${pathname}`;
+  }
+  return null;
+};
+
 // Organization schema - global for all pages
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -159,14 +170,16 @@ export const SEOHead = ({
   // Determine if page should be noindexed
   const isNoIndex = forceNoIndex || shouldNoIndex(searchParams, location.pathname);
   
-  // Get canonical - search pages point to /conciertos
+  // Get canonical - special handling for search and festival pages
   const searchCanonical = getSearchCanonical(location.pathname);
+  const festivalCanonical = getFestivalCanonical(location.pathname);
   
   const fullTitle = `${title} | FEELOMOVE+`;
   const siteUrl = "https://feelomove.com";
   
   // Ensure canonical is always absolute URL and strips query params
-  const baseCanonical = searchCanonical || canonical;
+  // Priority: festival canonical > search canonical > provided canonical > current path
+  const baseCanonical = festivalCanonical || searchCanonical || canonical;
   const fullCanonical = baseCanonical 
     ? baseCanonical.startsWith('http') 
       ? baseCanonical.split('?')[0] // Strip query params from canonical

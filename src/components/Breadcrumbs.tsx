@@ -437,8 +437,8 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     }
 
     // ----------------------------------------
-    // FESTIVAL PRODUCT PAGE (5 levels)
-    // Inicio > Festivales > Género > Ciudad > Evento
+    // FESTIVAL PRODUCT PAGE (4 levels)
+    // Inicio > Festivales > [Nombre del Festival] (link) > [Ciudad]
     // ----------------------------------------
     if (isFestivalProductPage && eventDetails) {
       // Level 2: Festivales
@@ -447,29 +447,23 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
         url: "/festivales"
       });
       
-      // Level 3: Genre (if available)
-      if (eventGenre) {
-        const genreSlug = getGenreSlug(eventGenre);
+      // Level 3: Festival Name (linked to festival profile)
+      const festivalName = eventDetails.event_name || (eventDetails as any).primary_attraction_name;
+      if (festivalName) {
+        const festivalSlug = eventDetails.event_slug || generateSlug(festivalName);
         items.push({
-          name: cleanGenreName(eventGenre),
-          url: `/generos/${genreSlug}`
+          name: festivalName,
+          url: `/festival/${festivalSlug}`
         });
       }
       
-      // Level 4: City (if available)
+      // Level 4: City (current page - no link)
       if (cityMapping || eventDetails.venue_city) {
         const cityName = cityMapping?.cityName || eventDetails.venue_city;
-        const citySlug = cityMapping?.citySlug || generateSlug(eventDetails.venue_city);
         items.push({
-          name: cleanCityName(cityName),
-          url: `/destinos/${citySlug}`
+          name: cleanCityName(cityName)
         });
       }
-      
-      // Level 5: Event name (no URL - current page)
-      items.push({
-        name: eventDetails.event_name || ''
-      });
       
       return items;
     }
