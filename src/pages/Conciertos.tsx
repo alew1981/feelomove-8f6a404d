@@ -306,8 +306,8 @@ const Conciertos = () => {
             </p>
           </div>
 
-          {/* Floating Search Bar - Mobile */}
-          <div className="md:hidden fixed top-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 shadow-sm">
+          {/* Floating Search Bar - Mobile (Bottom) */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
@@ -328,8 +328,8 @@ const Conciertos = () => {
             </div>
           </div>
           
-          {/* Spacer for mobile floating search */}
-          <div className="md:hidden h-[72px]" />
+          {/* Spacer for mobile floating search at bottom */}
+          <div className="md:hidden h-[72px] mt-auto" />
 
           {/* Search and Filters */}
           <div className="space-y-3 mb-8">
