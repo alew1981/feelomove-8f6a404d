@@ -195,11 +195,11 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               {/* Gradient Overlay - stronger at bottom for text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-              {/* Badge "On Sale Soon" - Top Left above Date Card (priority over availability) */}
+              {/* Badge "On Sale Soon" - Top Right (priority over availability) */}
               {isNotYetOnSale ? (
-                <div className="absolute left-2 top-0.5 z-20">
-                  <Badge className="text-[10px] font-bold px-2 py-1 bg-amber-500 text-white flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
+                <div className="absolute right-2 top-2 z-20">
+                  <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
+                    <Clock className="h-3.5 w-3.5" />
                     A la venta {onSaleDateFormatted}
                   </Badge>
                 </div>
@@ -210,15 +210,6 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                   </Badge>
                 </div>
               ) : null}
-              
-              {/* Festival Badge - Top Right (when this is a day entry for a festival) */}
-              {festivalBadgeName && (
-                <div className="absolute right-2 top-2 z-20">
-                  <Badge variant="secondary" className="text-[9px] font-bold bg-black/70 text-white border-0 px-2 py-0.5 max-w-[120px] truncate">
-                    {festivalBadgeName}
-                  </Badge>
-                </div>
-              )}
               
               {/* Category Badge - Above event name */}
               <div className="absolute bottom-14 left-3 z-10">

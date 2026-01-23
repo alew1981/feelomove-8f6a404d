@@ -179,11 +179,11 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
             {/* Minimal Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-            {/* On Sale Soon Badge - Top Right (priority over other badges) */}
+            {/* On Sale Soon Badge - Top Right */}
             {isNotYetOnSale ? (
               <div className="absolute right-2 top-2 z-20">
-                <Badge className="text-[10px] font-bold px-2 py-1 bg-amber-500 text-white flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
+                  <Clock className="h-3.5 w-3.5" />
                   A la venta {onSaleDateFormatted}
                 </Badge>
               </div>
