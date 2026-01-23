@@ -529,10 +529,35 @@ const Festivales = () => {
             </p>
           </div>
 
+          {/* Floating Search Bar - Mobile */}
+          <div className="md:hidden fixed top-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 shadow-sm">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar festivales..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Spacer for mobile floating search */}
+          <div className="md:hidden h-[72px]" />
+
           {/* Search and Filters */}
           <div className="space-y-3 mb-8">
-            {/* Search Bar */}
-            <div className="relative">
+            {/* Search Bar - Desktop only */}
+            <div className="relative hidden md:block">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
