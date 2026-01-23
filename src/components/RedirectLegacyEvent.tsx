@@ -446,20 +446,46 @@ const RedirectLegacyEvent = () => {
           // Ignore placeholder slugs to prevent loops
           const isPlaceholderTarget = /-9999(-\d{2})?(-\d{2})?$/.test(redirectData.new_slug);
           if (!isPlaceholderTarget) {
-            // Fetch the event type for proper routing
+            // Fetch the event type for proper routing - MUST verify new_slug exists
             const { data: eventInfo } = await supabase
               .from('tm_tbl_events')
               .select('event_type, slug')
               .eq('slug', redirectData.new_slug)
               .maybeSingle();
             
+            // Only redirect if the target slug actually exists in the database
             if (eventInfo) {
+              console.log(`[slug_redirects] Valid redirect: ${rawSlug} → ${eventInfo.slug}`);
               return { 
                 ...eventInfo, 
                 needsRedirect: true, 
                 isExactMatch: false,
                 redirectSource: 'slug_redirects'
               };
+            } else {
+              // Target slug doesn't exist - check if event exists by event_id with a DIFFERENT slug
+              console.warn(`[slug_redirects] Target slug "${redirectData.new_slug}" not found, checking event_id...`);
+              const { data: eventById } = await supabase
+                .from('tm_tbl_events')
+                .select('event_type, slug')
+                .eq('id', redirectData.event_id)
+                .maybeSingle();
+              
+              if (eventById && eventById.slug !== rawSlug) {
+                // Event exists with a different slug - redirect to the actual slug
+                console.log(`[slug_redirects] Event found by ID with slug: ${eventById.slug}`);
+                return { 
+                  ...eventById, 
+                  needsRedirect: true, 
+                  isExactMatch: false,
+                  redirectSource: 'slug_redirects_by_event_id'
+                };
+              } else if (eventById && eventById.slug === rawSlug) {
+                // Event's actual slug matches what user requested - it's an exact match!
+                console.log(`[slug_redirects] Event's actual slug matches request, treating as exact match`);
+                return { ...eventById, needsRedirect: false, isExactMatch: true };
+              }
+              // If event_id lookup also fails, continue to exact match check
             }
           }
         }
