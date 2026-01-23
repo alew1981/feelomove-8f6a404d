@@ -83,7 +83,7 @@ const Conciertos = () => {
         .from("mv_concerts_cards")
         .select("*")
         .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       
