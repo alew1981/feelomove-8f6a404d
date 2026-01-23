@@ -20,13 +20,27 @@ Disallow: /admin/
 Disallow: /checkout/
 Disallow: /404
 
-# Bloquear parámetros que consumen presupuesto de rastreo
+# Bloquear parámetros que consumen presupuesto de rastreo (global)
 Disallow: /*?sort=
 Disallow: /*?order=
 Disallow: /*?orderBy=
 Disallow: /*?price=
 Disallow: /*?filter=
 Disallow: /*?page=
+
+# Bloquear parámetros de ordenación específicos en /festival/
+Disallow: /festival/*?sort=
+Disallow: /festival/*?order=
+Disallow: /festival/*?orderBy=
+Disallow: /festival/*?filter=
+Disallow: /festival/*?page=
+
+# Bloquear parámetros de ordenación específicos en /concierto/
+Disallow: /concierto/*?sort=
+Disallow: /concierto/*?order=
+Disallow: /concierto/*?orderBy=
+Disallow: /concierto/*?filter=
+Disallow: /concierto/*?page=
 
 # Bloquear combinaciones de múltiples filtros
 Disallow: /*?ciudad=*&genero=
@@ -52,5 +66,5 @@ User-agent: Googlebot
 Allow: /*.js
 Allow: /*.css
 
-# Sitemap principal con URLs de conciertos con fecha
+# Sitemap principal con URLs de conciertos y festivales
 Sitemap: https://feelomove.com/sitemap_index.xml
