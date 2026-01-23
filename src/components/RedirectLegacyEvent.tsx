@@ -436,7 +436,33 @@ const RedirectLegacyEvent = () => {
         }
       }
       
-      // STEP 0b: Check slug_redirects table first for migrated URLs
+      // STEP 0b: FIRST check if the EXACT slug exists in the database
+      // This prevents unnecessary redirect lookups for valid slugs
+      const { data: directMatch } = await supabase
+        .from("tm_tbl_events")
+        .select("event_type, slug, name, venue_city, event_date")
+        .eq("slug", rawSlug)
+        .maybeSingle();
+      
+      if (directMatch) {
+        console.log(`[RedirectLegacyEvent] Direct match found for "${rawSlug}", skipping redirect checks`);
+        const isFestival = directMatch.event_type === 'festival';
+        const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
+        
+        if (needsRouteCorrection) {
+          return { 
+            ...directMatch, 
+            needsRedirect: true, 
+            isExactMatch: false, 
+            redirectSource: 'festival_wrong_route',
+            forceFestivalRoute: true
+          };
+        }
+        
+        return { ...directMatch, needsRedirect: false, isExactMatch: true };
+      }
+      
+      // STEP 0c: Only check slug_redirects if no direct match found
       // This handles the old → new slug mapping from our migration
       try {
         const { data: redirectData } = await supabase
@@ -466,7 +492,7 @@ const RedirectLegacyEvent = () => {
                 redirectSource: 'slug_redirects'
               };
             } else {
-              // Target slug doesn't exist - check if event exists by event_id with a DIFFERENT slug
+              // Target slug doesn't exist - check if event exists by event_id
               console.warn(`[slug_redirects] Target slug "${redirectData.new_slug}" not found, checking event_id: ${redirectData.event_id}`);
               const { data: eventById } = await supabase
                 .from('tm_tbl_events')
@@ -474,29 +500,18 @@ const RedirectLegacyEvent = () => {
                 .eq('id', redirectData.event_id)
                 .maybeSingle();
               
-              console.log(`[slug_redirects] Event by ID result:`, eventById ? `Found: slug="${eventById.slug}", name="${eventById.name}"` : 'Not found');
-              
               if (eventById) {
-                const slugsMatch = eventById.slug === rawSlug;
-                console.log(`[slug_redirects] Comparing slugs: eventById.slug="${eventById.slug}" vs rawSlug="${rawSlug}" → match=${slugsMatch}`);
-                
-                if (slugsMatch) {
-                  // Event's actual slug matches what user requested - it's an exact match!
-                  console.log(`[slug_redirects] EXACT MATCH! Event's actual slug matches request, returning as exact match`);
-                  return { ...eventById, needsRedirect: false, isExactMatch: true };
-                } else {
-                  // Event exists with a different slug - redirect to the actual slug
-                  console.log(`[slug_redirects] Event found by ID with DIFFERENT slug: ${eventById.slug}, redirecting...`);
-                  return { 
-                    ...eventById, 
-                    needsRedirect: true, 
-                    isExactMatch: false,
-                    redirectSource: 'slug_redirects_by_event_id'
-                  };
-                }
+                console.log(`[slug_redirects] Event found by ID with slug: ${eventById.slug}`);
+                // Redirect to the actual current slug of the event
+                return { 
+                  ...eventById, 
+                  needsRedirect: true, 
+                  isExactMatch: false,
+                  redirectSource: 'slug_redirects_by_event_id'
+                };
               }
-              // If event_id lookup also fails, continue to exact match check
-              console.log(`[slug_redirects] Event not found by ID, continuing to STEP 1...`);
+              // If event_id lookup also fails, continue to legacy pattern matching
+              console.log(`[slug_redirects] Event not found by ID, continuing to legacy matching...`);
             }
           }
         }
@@ -504,36 +519,8 @@ const RedirectLegacyEvent = () => {
         console.warn('slug_redirects check failed:', e);
       }
       
-      // STEP 1: Check if the EXACT slug exists in the database
-      console.log(`[RedirectLegacyEvent] STEP 1: Checking exact match for slug: "${rawSlug}"`);
-      const { data: exactMatch, error: exactError } = await supabase
-        .from("tm_tbl_events")
-        .select("event_type, slug, name, venue_city, event_date")
-        .eq("slug", rawSlug)
-        .maybeSingle();
-      
-      console.log(`[RedirectLegacyEvent] Exact match result:`, exactMatch ? `Found: ${exactMatch.slug}` : 'Not found');
-      
-      if (exactError) throw exactError;
-      
-      // If exact match found, check if it's a festival accessed via wrong route
-      if (exactMatch) {
-        const isFestival = exactMatch.event_type === 'festival';
-        const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
-        
-        if (needsRouteCorrection) {
-          console.log(`[Festival Detection] Exact match is festival but accessed via wrong route`);
-          return { 
-            ...exactMatch, 
-            needsRedirect: true, 
-            isExactMatch: false, 
-            redirectSource: 'festival_wrong_route',
-            forceFestivalRoute: true
-          };
-        }
-        
-        return { ...exactMatch, needsRedirect: false, isExactMatch: true };
-      }
+      // STEP 1: Already checked exact match above in STEP 0b, so now handle legacy patterns
+      // If we reached here, no direct match was found
 
       // STEP 2: If no exact match and slug has legacy patterns, try to find the event
       const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly, hasNumericSuffix, simplifiedSlug } = parsedSlug;
