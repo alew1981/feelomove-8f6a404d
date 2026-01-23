@@ -216,9 +216,69 @@ const Producto = () => {
         return data && data.length > 0 ? data : null;
       };
       
+      // Spanish month names for parsing SEO-friendly URLs
+      const SPANISH_MONTHS = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+      ];
+      
+      // Helper function to parse SEO-friendly slug with Spanish date
+      const parseSeoSlug = (seoSlug: string): { baseSlug: string; date: string | null } | null => {
+        const spanishMonthPattern = new RegExp(
+          `-(\\d{1,2})-(${SPANISH_MONTHS.join('|')})-(20[2-9]\\d)$`,
+          'i'
+        );
+        const match = seoSlug.match(spanishMonthPattern);
+        
+        if (match) {
+          const baseSlug = seoSlug.replace(spanishMonthPattern, '');
+          const day = match[1].padStart(2, '0');
+          const monthName = match[2].toLowerCase();
+          const year = match[3];
+          const monthNum = String(SPANISH_MONTHS.indexOf(monthName) + 1).padStart(2, '0');
+          return { baseSlug, date: `${year}-${monthNum}-${day}` };
+        }
+        return null;
+      };
+      
       // Try to find event with current slug
       let result = await searchInView(viewName, slug);
       if (result) return result;
+      
+      // STRATEGY: If slug looks like SEO-friendly format (artist-city-DD-month-YYYY),
+      // parse it and find the event by base slug + date matching
+      const seoParseResult = parseSeoSlug(slug);
+      if (seoParseResult) {
+        console.log(`[Producto] SEO slug detected: "${slug}" → baseSlug: "${seoParseResult.baseSlug}", date: "${seoParseResult.date}"`);
+        
+        // Search for events matching the base slug pattern
+        const { data: matchingEvents } = await supabase
+          .from("tm_tbl_events")
+          .select("slug, event_date")
+          .ilike("slug", `${seoParseResult.baseSlug}%`)
+          .limit(10);
+        
+        if (matchingEvents && matchingEvents.length > 0) {
+          // Find the event with matching date
+          const matchedEvent = matchingEvents.find(e => {
+            const eventDateStr = new Date(e.event_date).toISOString().split('T')[0];
+            return eventDateStr === seoParseResult.date;
+          });
+          
+          if (matchedEvent) {
+            console.log(`[Producto] Found event by SEO date matching: ${matchedEvent.slug}`);
+            // Search in the view with the actual DB slug
+            result = await searchInView(viewName, matchedEvent.slug);
+            if (result) return result;
+            
+            // Try all views
+            for (const altView of ["lovable_mv_event_product_page_festivales", "lovable_mv_event_product_page_conciertos", "lovable_mv_event_product_page"] as const) {
+              result = await searchInView(altView, matchedEvent.slug);
+              if (result) return result;
+            }
+          }
+        }
+      }
       
       // If not found, check if current slug is a NEW slug and the view has OLD slug
       // This handles case where view wasn't refreshed after slug migration
