@@ -11,7 +11,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
@@ -58,6 +58,7 @@ const Conciertos = () => {
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
   
@@ -278,27 +279,35 @@ const Conciertos = () => {
       
       <div className="min-h-screen bg-background pb-20 md:pb-0">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 mt-16">
+        <div className="container mx-auto px-4 py-4 md:py-8 mt-16">
           
-          {/* Breadcrumbs */}
-          <div className="mb-4">
+          {/* Breadcrumbs - hidden on mobile */}
+          <div className="hidden md:block mb-4">
             <Breadcrumbs />
           </div>
           
-          {/* Hero Image - LCP optimized */}
-          <PageHero 
-            title="Conciertos en España" 
-            subtitle="Entradas y hoteles para los mejores conciertos"
-            imageUrl={heroImage} 
-            priority={true}
-          />
+          {/* Hero Image - hidden on mobile for faster content access */}
+          <div className="hidden md:block">
+            <PageHero 
+              title="Conciertos en España" 
+              subtitle="Entradas y hoteles para los mejores conciertos"
+              imageUrl={heroImage} 
+              priority={true}
+            />
+          </div>
           
-          {/* H2 for proper heading hierarchy - reduced margins on mobile */}
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-4 md:mt-6 mb-2 md:mb-4">
+          {/* Mobile Header - compact */}
+          <div className="md:hidden mb-3">
+            <h1 className="text-xl font-bold text-foreground">Conciertos en España</h1>
+            <p className="text-sm text-muted-foreground">{filteredAndSortedEvents.length} conciertos disponibles</p>
+          </div>
+          
+          {/* Desktop H2 */}
+          <h2 className="hidden md:block text-2xl font-semibold text-foreground mt-6 mb-4">
             Próximos eventos y conciertos destacados en España
           </h2>
           
-          {/* Description - hidden on mobile for compactness */}
+          {/* Description - desktop only */}
           <div className="hidden md:block prose prose-lg max-w-none mb-6" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
               Descubre todos los conciertos en España. Desde rock y pop hasta indie y electrónica. 
@@ -328,10 +337,98 @@ const Conciertos = () => {
             </div>
           </div>
 
-          {/* Search and Filters */}
-          <div className="space-y-3 mb-6">
-            {/* Search Bar - Desktop only */}
-            <div className="relative hidden md:block">
+          {/* Mobile Filters - Collapsible */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center justify-between w-full px-4 py-3 bg-card border border-border rounded-lg text-sm font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filtros</span>
+                {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterVip !== "all") && (
+                  <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
+                    {[filterCity !== "all", filterGenre !== "all", filterArtist !== "all", filterMonthYear !== "all", filterVip !== "all"].filter(Boolean).length}
+                  </span>
+                )}
+              </div>
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            
+            {showFilters && (
+              <div className="mt-2 p-3 bg-card border border-border rounded-lg space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={filterCity} onValueChange={setFilterCity}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las ciudades</SelectItem>
+                      {cities.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterGenre} onValueChange={setFilterGenre}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterGenre === "all" ? "Género" : filterGenre}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los géneros</SelectItem>
+                      {genres.map(genre => (
+                        <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterMonthYear} onValueChange={setFilterMonthYear}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterMonthYear === "all" ? "Mes" : monthYearOptions.find(m => m.value === filterMonthYear)?.label}</span>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectItem value="all">Todos los meses</SelectItem>
+                      {monthYearOptions.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterVip} onValueChange={setFilterVip}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterVip === "all" ? "Tipo" : "VIP"}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="vip">Solo VIP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterVip !== "all") && (
+                  <button
+                    onClick={() => {
+                      setFilterCity("all");
+                      setFilterGenre("all");
+                      setFilterArtist("all");
+                      setFilterMonthYear("all");
+                      setFilterRecent("added");
+                      setFilterVip("all");
+                      setShowFilters(false);
+                    }}
+                    className="text-xs text-destructive hover:underline w-full text-center pt-1"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Search and Filters */}
+          <div className="hidden md:block space-y-3 mb-6">
+            {/* Search Bar */}
+            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
@@ -350,8 +447,8 @@ const Conciertos = () => {
               )}
             </div>
 
-            {/* Filters Row - ciudad, genero, artista, mes, próximos, VIP */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {/* Filters Row */}
+            <div className="grid grid-cols-6 gap-2">
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>

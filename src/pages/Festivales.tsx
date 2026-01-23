@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X, Calendar } from "lucide-react";
+import { Search, X, Calendar, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
@@ -228,6 +228,7 @@ const Festivales = () => {
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterSort, setFilterSort] = useState<string>("recientes");
   const [filterDuration, setFilterDuration] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   // Fetch festivals using the new dedicated festivals view
   const { data: festivals, isLoading } = useQuery({
@@ -501,27 +502,35 @@ const Festivales = () => {
       
       <div className="min-h-screen bg-background pb-20 md:pb-0">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 mt-16">
+        <div className="container mx-auto px-4 py-4 md:py-8 mt-16">
           
-          {/* Breadcrumbs */}
-          <div className="mb-4">
+          {/* Breadcrumbs - hidden on mobile */}
+          <div className="hidden md:block mb-4">
             <Breadcrumbs />
           </div>
           
-          {/* Hero Image - LCP optimized with priority loading */}
-          <PageHero 
-            title="Festivales de Música en España" 
-            subtitle="Entradas + Hotel para los mejores festivales de 2025"
-            imageUrl={heroImage} 
-            priority={true}
-          />
+          {/* Hero Image - hidden on mobile for faster content access */}
+          <div className="hidden md:block">
+            <PageHero 
+              title="Festivales de Música en España" 
+              subtitle="Entradas + Hotel para los mejores festivales de 2025"
+              imageUrl={heroImage} 
+              priority={true}
+            />
+          </div>
           
-          {/* H2 for proper heading hierarchy - reduced margins on mobile */}
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-4 md:mt-6 mb-2 md:mb-4">
+          {/* Mobile Header - compact */}
+          <div className="md:hidden mb-3">
+            <h1 className="text-xl font-bold text-foreground">Festivales en España</h1>
+            <p className="text-sm text-muted-foreground">{totalCount} festivales disponibles</p>
+          </div>
+          
+          {/* Desktop H2 */}
+          <h2 className="hidden md:block text-2xl font-semibold text-foreground mt-6 mb-4">
             Próximos festivales y eventos musicales destacados en España
           </h2>
           
-          {/* Description - hidden on mobile for compactness */}
+          {/* Description - desktop only */}
           <div className="hidden md:block prose prose-lg max-w-none mb-6" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
               Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. 
@@ -551,10 +560,111 @@ const Festivales = () => {
             </div>
           </div>
 
-          {/* Search and Filters */}
-          <div className="space-y-3 mb-6">
-            {/* Search Bar - Desktop only */}
-            <div className="relative hidden md:block">
+          {/* Mobile Filters - Collapsible */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center justify-between w-full px-4 py-3 bg-card border border-border rounded-lg text-sm font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filtros</span>
+                {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterDuration !== "all") && (
+                  <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
+                    {[filterCity !== "all", filterGenre !== "all", filterMonth !== "all", filterDuration !== "all"].filter(Boolean).length}
+                  </span>
+                )}
+              </div>
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            
+            {showFilters && (
+              <div className="mt-2 p-3 bg-card border border-border rounded-lg space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={filterSort} onValueChange={setFilterSort}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterSort === "proximos" ? "Próximos" : "Recientes"}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="proximos">Próximos</SelectItem>
+                      <SelectItem value="recientes">Añadidos recientemente</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterCity} onValueChange={setFilterCity}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las ciudades</SelectItem>
+                      {cities.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterGenre} onValueChange={setFilterGenre}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterGenre === "all" ? "Género" : filterGenre}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los géneros</SelectItem>
+                      {genres.map(genre => (
+                        <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterDuration} onValueChange={setFilterDuration}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">
+                        {filterDuration === "all" ? "Duración" : filterDuration === "1" ? "1 día" : filterDuration === "2-3" ? "2-3 días" : "4+ días"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Cualquier duración</SelectItem>
+                      <SelectItem value="1">1 día</SelectItem>
+                      <SelectItem value="2-3">2-3 días</SelectItem>
+                      <SelectItem value="4+">4 o más días</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filterMonth} onValueChange={setFilterMonth}>
+                    <SelectTrigger className="h-9 text-xs col-span-2">
+                      <span className="truncate">{filterMonth === "all" ? "Todos los meses" : months.find(m => m.value === filterMonth)?.label}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los meses</SelectItem>
+                      {months.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterDuration !== "all") && (
+                  <button
+                    onClick={() => {
+                      setFilterCity("all");
+                      setFilterGenre("all");
+                      setFilterMonth("all");
+                      setFilterSort("recientes");
+                      setFilterDuration("all");
+                      setShowFilters(false);
+                    }}
+                    className="text-xs text-destructive hover:underline w-full text-center pt-1"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Search and Filters */}
+          <div className="hidden md:block space-y-3 mb-6">
+            {/* Search Bar */}
+            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
@@ -573,8 +683,8 @@ const Festivales = () => {
               )}
             </div>
 
-            {/* Basic Filters Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {/* Filters Row */}
+            <div className="grid grid-cols-5 gap-2">
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterSort === "proximos" ? "Próximos" : "Recientes"}</span>
