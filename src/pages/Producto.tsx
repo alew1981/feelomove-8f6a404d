@@ -73,7 +73,7 @@ interface HotelData {
 }
 
 const Producto = () => {
-  const { slug } = useParams();
+  const { slug: rawSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -82,6 +82,34 @@ const Producto = () => {
   // Detect route type for canonical URL
   const isConcierto = location.pathname.startsWith('/concierto/');
   const isFestivalRoute = location.pathname.startsWith('/festival/');
+  
+  // Spanish month names for parsing SEO-friendly slugs
+  const SPANISH_MONTHS = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+  
+  // Extract base slug from SEO-friendly URLs with Spanish date format
+  // Pattern: artist-city-DD-month-YYYY → artist-city
+  const extractBaseSlug = (urlSlug: string): { baseSlug: string; date: string | null } => {
+    const spanishMonthPattern = new RegExp(
+      `-(\\d{1,2})-(${SPANISH_MONTHS.join('|')})-(20[2-9]\\d)$`,
+      'i'
+    );
+    const match = urlSlug.match(spanishMonthPattern);
+    if (match) {
+      const baseSlug = urlSlug.replace(spanishMonthPattern, '');
+      const day = match[1];
+      const monthName = match[2].toLowerCase();
+      const year = match[3];
+      const monthNum = String(SPANISH_MONTHS.indexOf(monthName) + 1).padStart(2, '0');
+      return { baseSlug, date: `${year}-${monthNum}-${day.padStart(2, '0')}` };
+    }
+    return { baseSlug: urlSlug, date: null };
+  };
+  
+  // Parse slug - might have Spanish date format that needs to be stripped for DB lookup
+  const { baseSlug: slug, date: urlDate } = rawSlug ? extractBaseSlug(rawSlug) : { baseSlug: rawSlug || '', date: null };
   
   const [showAllTickets, setShowAllTickets] = useState(false);
 

@@ -117,10 +117,47 @@ function extractCityFromSlug(slug: string): string | null {
   return null;
 }
 
+// Spanish month names for parsing new-format slugs
+const SPANISH_MONTHS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+];
+
 function parseLegacySlug(slug: string): ParsedSlug {
   let workingSlug = slug;
   let hasNumericSuffix = false;
   let simplifiedSlug: string | null = null;
+  
+  // PRIORITY CHECK: Detect new SEO format with Spanish month names: artist-city-DD-month-YYYY
+  // Pattern: [artist]-[city]-[day]-[spanish-month]-[year]
+  // Example: morat-barcelona-16-octubre-2026
+  const spanishMonthPattern = new RegExp(
+    `-?(\\d{1,2})-(${SPANISH_MONTHS.join('|')})-(20[2-9]\\d)$`,
+    'i'
+  );
+  const spanishMonthMatch = workingSlug.match(spanishMonthPattern);
+  
+  if (spanishMonthMatch) {
+    // This is the new SEO-friendly format - extract base slug
+    const baseSlug = workingSlug.replace(spanishMonthPattern, '');
+    const day = spanishMonthMatch[1];
+    const monthName = spanishMonthMatch[2].toLowerCase();
+    const year = spanishMonthMatch[3];
+    const monthNum = String(SPANISH_MONTHS.indexOf(monthName) + 1).padStart(2, '0');
+    const dateStr = `${year}-${monthNum}-${day.padStart(2, '0')}`;
+    
+    console.log(`Spanish date format detected: ${slug} → baseSlug: ${baseSlug}, date: ${dateStr}`);
+    
+    return {
+      baseSlug,
+      date: dateStr,
+      hasLegacySuffix: true,
+      isPlaceholderDate: false,
+      isYearOnly: false,
+      hasNumericSuffix: false,
+      simplifiedSlug: null
+    };
+  }
   
   // Check for numeric suffix (-1, -2, -3, etc.) at the very end
   const numericSuffixPattern = /-(\d{1,2})$/;
@@ -340,6 +377,7 @@ const RedirectLegacyEvent = () => {
       }
       
       // STEP 2b: Try to find event with the base slug (without suffix)
+      // For SEO-friendly URLs with Spanish date (artist-city-DD-month-YYYY), this will find the base event
       let query = supabase
         .from("tm_tbl_events")
         .select("event_type, slug, name, venue_city, event_date")
@@ -356,10 +394,29 @@ const RedirectLegacyEvent = () => {
       if (baseError) throw baseError;
       
       if (data) {
+        // Check if the incoming URL already matches what we'd redirect to
+        // For SEO URLs with Spanish date format, we should show the page, not redirect
+        // The format matches if: incoming URL = baseSlug + date formatted
+        // Since the URL already points to this specific event (with date), treat as exact match
+        const isSeoFriendlyUrl = date && !isPlaceholderDate && !isYearOnly;
+        
+        if (isSeoFriendlyUrl) {
+          // SEO-friendly URL with Spanish date: show page directly without redirect
+          console.log(`SEO-friendly URL match: ${rawSlug} → event ${data.slug} (no redirect needed)`);
+          return { 
+            ...data, 
+            needsRedirect: false, 
+            isExactMatch: true, 
+            redirectSource: 'seo_date_format',
+            // Store the original SEO slug for proper rendering
+            originalSlug: rawSlug 
+          };
+        }
+        
         return { ...data, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug' };
       }
       
-      // STEP 2c: Try without date filter if we had one
+      // STEP 2c: Try without date filter if we had one (for when exact date doesn't match)
       if (date && !isPlaceholderDate && !isYearOnly) {
         const { data: withoutDateData } = await supabase
           .from("tm_tbl_events")
@@ -368,6 +425,7 @@ const RedirectLegacyEvent = () => {
           .maybeSingle();
         
         if (withoutDateData) {
+          // Found the base event but date doesn't match - redirect to the actual event
           return { ...withoutDateData, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug_no_date' };
         }
       }
@@ -484,14 +542,31 @@ const RedirectLegacyEvent = () => {
       // If exact match found, check if we need to redirect due to wrong route type
       if (eventData.isExactMatch) {
         const isFestival = eventData.event_type === 'festival';
-        const expectedPath = isFestival 
+        const basePath = isFestival 
           ? `/festival/${eventData.slug}` 
           : `/concierto/${eventData.slug}`;
         
-        // Redirect only if wrong route type (e.g., concert on /festival route)
-        if (location.pathname !== expectedPath) {
-          console.log(`Route type redirect: ${location.pathname} → ${expectedPath}`);
-          navigate(expectedPath, { replace: true });
+        // Check if current path is valid for this event:
+        // 1. Exact match with base slug
+        // 2. SEO-friendly format (base slug + date suffix)
+        const redirectSource = 'redirectSource' in eventData ? eventData.redirectSource : null;
+        const isValidPath = location.pathname === basePath || 
+          location.pathname.startsWith(`${basePath}-`) ||
+          redirectSource === 'seo_date_format';
+        
+        // Only redirect if on completely wrong route
+        if (!isValidPath) {
+          // Check if at least on correct route type
+          const isCorrectRouteType = isFestival 
+            ? location.pathname.startsWith('/festival/')
+            : location.pathname.startsWith('/concierto/');
+          
+          // If wrong route type, redirect to correct one
+          if (!isCorrectRouteType) {
+            console.log(`Route type redirect: ${location.pathname} → ${basePath}`);
+            navigate(basePath, { replace: true });
+          }
+          // If correct route type but path doesn't match, SEO format is being used - don't redirect
         }
         return;
       }
@@ -533,10 +608,21 @@ const RedirectLegacyEvent = () => {
   // If event found with exact match and correct route, render Producto directly
   if (eventData?.isExactMatch) {
     const isFestival = eventData.event_type === 'festival';
-    const expectedPath = isFestival ? `/festival/${eventData.slug}` : `/concierto/${eventData.slug}`;
+    const basePath = isFestival ? `/festival/${eventData.slug}` : `/concierto/${eventData.slug}`;
     
-    // Only render if on correct route
-    if (location.pathname === expectedPath) {
+    // Check if current path matches expected route type
+    const isCorrectRouteType = isFestival 
+      ? location.pathname.startsWith('/festival/')
+      : location.pathname.startsWith('/concierto/');
+    
+    // For SEO-friendly URLs, check if the path starts with the base path pattern
+    // Accept: exact match, path with date suffix, or SEO date format matches
+    const redirectSource = 'redirectSource' in eventData ? eventData.redirectSource : null;
+    const pathMatchesEvent = location.pathname === basePath || 
+      location.pathname.startsWith(`${basePath}-`) ||
+      (redirectSource === 'seo_date_format' && isCorrectRouteType);
+    
+    if (pathMatchesEvent) {
       return (
         <Suspense fallback={<PageLoader />}>
           <Producto />
