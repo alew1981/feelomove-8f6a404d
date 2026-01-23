@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X, Calendar, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
@@ -227,7 +227,6 @@ const Festivales = () => {
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterSort, setFilterSort] = useState<string>("recientes");
-  const [filterDuration, setFilterDuration] = useState<string>("all");
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
   // Fetch festivals using the new dedicated festivals view
@@ -395,14 +394,6 @@ const Festivales = () => {
         if (eventMonth !== filterMonth) return false;
       }
       
-      // Duration filter
-      if (filterDuration !== "all") {
-        const days = festival.festival_duration_days || 1;
-        if (filterDuration === "1" && days !== 1) return false;
-        if (filterDuration === "2-3" && (days < 2 || days > 3)) return false;
-        if (filterDuration === "4+" && days < 4) return false;
-      }
-      
       return true;
     };
     
@@ -436,16 +427,13 @@ const Festivales = () => {
     }
     
     return { parentFestivals: filteredParents, standaloneFestivals: filteredStandalone };
-  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort, filterDuration]);
+  }, [groupedFestivals, searchQuery, filterCity, filterGenre, filterMonth, filterSort]);
 
   // Get hero image from first festival
   const heroImage = festivals?.[0]?.image_large_url || "/placeholder.svg";
 
   // Total count - count parent festivals as 1 festival each, plus standalone
   const totalCount = filteredData.parentFestivals.length + filteredData.standaloneFestivals.length;
-
-  // Check if any advanced filter is active
-  const hasAdvancedFilters = filterDuration !== "all";
 
   // Generate JSON-LD for festivals list
   const allFilteredFestivals = [...filteredData.standaloneFestivals, ...filteredData.parentFestivals.flatMap(p => p.events)];
@@ -569,9 +557,9 @@ const Festivales = () => {
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
                 <span>Filtros</span>
-                {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterDuration !== "all") && (
+                {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all") && (
                   <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
-                    {[filterCity !== "all", filterGenre !== "all", filterMonth !== "all", filterDuration !== "all"].filter(Boolean).length}
+                    {[filterCity !== "all", filterGenre !== "all", filterMonth !== "all"].filter(Boolean).length}
                   </span>
                 )}
               </div>
@@ -612,21 +600,7 @@ const Festivales = () => {
                       {genres.map(genre => (
                         <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterDuration} onValueChange={setFilterDuration}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">
-                        {filterDuration === "all" ? "Duración" : filterDuration === "1" ? "1 día" : filterDuration === "2-3" ? "2-3 días" : "4+ días"}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Cualquier duración</SelectItem>
-                      <SelectItem value="1">1 día</SelectItem>
-                      <SelectItem value="2-3">2-3 días</SelectItem>
-                      <SelectItem value="4+">4 o más días</SelectItem>
-                    </SelectContent>
+                  </SelectContent>
                   </Select>
 
                   <Select value={filterMonth} onValueChange={setFilterMonth}>
@@ -642,14 +616,13 @@ const Festivales = () => {
                   </Select>
                 </div>
 
-                {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterDuration !== "all") && (
+                {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all") && (
                   <button
                     onClick={() => {
                       setFilterCity("all");
                       setFilterGenre("all");
                       setFilterMonth("all");
                       setFilterSort("recientes");
-                      setFilterDuration("all");
                       setShowFilters(false);
                     }}
                     className="text-xs text-destructive hover:underline w-full text-center pt-1"
@@ -719,21 +692,6 @@ const Festivales = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterDuration} onValueChange={setFilterDuration}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterDuration !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
-                  <span className="truncate text-sm">
-                    {filterDuration === "all" ? "Duración" : filterDuration === "1" ? "1 día" : filterDuration === "2-3" ? "2-3 días" : "4+ días"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Cualquier duración</SelectItem>
-                  <SelectItem value="1">1 día</SelectItem>
-                  <SelectItem value="2-3">2-3 días</SelectItem>
-                  <SelectItem value="4+">4 o más días</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={filterMonth} onValueChange={setFilterMonth}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
@@ -747,7 +705,7 @@ const Festivales = () => {
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterSort !== "proximos" || hasAdvancedFilters) && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all" || filterSort !== "proximos") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
@@ -755,7 +713,6 @@ const Festivales = () => {
                     setFilterGenre("all");
                     setFilterMonth("all");
                     setFilterSort("proximos");
-                    setFilterDuration("all");
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
