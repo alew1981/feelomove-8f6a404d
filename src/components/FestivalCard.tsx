@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
-import { format, parseISO, isPast, startOfDay } from "date-fns";
+import { MapPin, Clock } from "lucide-react";
+import { format, parseISO, isPast, startOfDay, isFuture } from "date-fns";
 import { es } from "date-fns/locale";
 import { memo, useRef, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +27,8 @@ interface FestivalCardProps {
     // Primary/Secondary attraction fields for display logic
     primary_attraction_name?: string | null;
     secondary_attraction_name?: string | null;
+    // On sale date for "coming soon" badge
+    on_sale_date?: string | null;
   };
   priority?: boolean;
 }
@@ -95,6 +97,11 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   // Check if event is in the past
   const eventDateForCheck = endDate || startDate;
   const isEventPast = eventDateForCheck ? isPast(startOfDay(eventDateForCheck)) : false;
+  
+  // Check if tickets are not yet on sale
+  const onSaleDate = festival.on_sale_date ? parseISO(festival.on_sale_date) : null;
+  const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
+  const onSaleDateFormatted = onSaleDate ? format(onSaleDate, "d MMM yyyy", { locale: es }) : '';
   
   // Format dates for badge
   let dateDisplay: React.ReactNode;
@@ -171,6 +178,16 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
             
             {/* Minimal Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+            {/* On Sale Soon Badge - Top Right (priority over other badges) */}
+            {isNotYetOnSale ? (
+              <div className="absolute right-2 top-2 z-20">
+                <Badge className="text-[10px] font-bold px-2 py-1 bg-amber-500 text-white flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  A la venta {onSaleDateFormatted}
+                </Badge>
+              </div>
+            ) : null}
 
             {/* Past Event Badge - Top Left */}
             {isEventPast && (

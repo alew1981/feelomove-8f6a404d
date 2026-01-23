@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MapPin } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { MapPin, Clock } from "lucide-react";
+import { format, parseISO, isFuture } from "date-fns";
 import { es } from "date-fns/locale";
 import { useEffect, useState, memo, useRef } from "react";
 import { CategoryBadge } from "./CategoryBadge";
@@ -40,6 +40,8 @@ interface EventCardProps {
     // Festival parent info for "day entry" events
     primary_attraction_name?: string | null;
     secondary_attraction_name?: string | null;
+    // On sale date for "coming soon" badge
+    on_sale_date?: string | null;
   };
   // Optional: name of parent festival to show as badge (for artist day entries)
   festivalName?: string;
@@ -107,6 +109,11 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
       ? format(eventDate, "HH:mm") 
       : '';
 
+
+  // Check if tickets are not yet on sale
+  const onSaleDate = event.on_sale_date ? parseISO(event.on_sale_date) : null;
+  const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
+  const onSaleDateFormatted = onSaleDate ? format(onSaleDate, "d MMM yyyy", { locale: es }) : '';
 
   // Determine badge - show SOLD OUT if sold_out OR seats_available is explicitly false
   // seats_available = false means actually sold out; seats_available = undefined/null means we don't know
@@ -188,14 +195,21 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               {/* Gradient Overlay - stronger at bottom for text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-              {/* Badge "Disponible" - Top Left above Date Card */}
-              {badgeText && badgeVariant && (
+              {/* Badge "On Sale Soon" - Top Left above Date Card (priority over availability) */}
+              {isNotYetOnSale ? (
+                <div className="absolute left-2 top-0.5 z-20">
+                  <Badge className="text-[10px] font-bold px-2 py-1 bg-amber-500 text-white flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    A la venta {onSaleDateFormatted}
+                  </Badge>
+                </div>
+              ) : badgeText && badgeVariant ? (
                 <div className="absolute left-2 top-0.5 z-20">
                   <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
                     {badgeText}
                   </Badge>
                 </div>
-              )}
+              ) : null}
               
               {/* Festival Badge - Top Right (when this is a day entry for a festival) */}
               {festivalBadgeName && (

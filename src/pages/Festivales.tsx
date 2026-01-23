@@ -51,6 +51,8 @@ interface ParentFestival {
   min_start_date: string;
   max_end_date: string;
   total_artists: number;
+  // On sale date for "coming soon" badge
+  earliest_on_sale_date?: string | null;
 }
 
 // Interface for consolidated artist entries (same artist + date = same concert with different prices)
@@ -320,6 +322,13 @@ const Festivales = () => {
         const artistFromEntries = consolidatedEntradasDia.map(e => e.artista_nombre).filter(Boolean);
         const uniqueArtists = [...new Set([...allArtists, ...artistFromEntries])];
         
+        // Find earliest on_sale_date for "coming soon" badge
+        const onSaleDates = events
+          .map(e => e.on_sale_date)
+          .filter(d => d && !d.startsWith('9999'))
+          .sort();
+        const earliestOnSaleDate = onSaleDates.length > 0 ? onSaleDates[0] : null;
+        
         parentFestivals.push({
           primary_attraction_id: firstEvent.primary_attraction_id,
           festival_nombre: festivalName,
@@ -331,7 +340,8 @@ const Festivales = () => {
           image_large_url: firstEvent.image_large_url,
           min_start_date: minDate,
           max_end_date: maxDate,
-          total_artists: uniqueArtists.length
+          total_artists: uniqueArtists.length,
+          earliest_on_sale_date: earliestOnSaleDate
         });
       } else {
         // Single event standalone festival
