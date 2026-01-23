@@ -120,12 +120,13 @@ const NotFound = () => {
 
   return (
     <>
-      {/* SEO: Tell search engines not to index 404 pages */}
+      {/* SEO: Tell search engines not to index 404 pages and NO canonical tag */}
       <Helmet>
         <title>404 - Página no encontrada | Feelomove</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="googlebot" content="noindex, nofollow" />
         <meta name="description" content="La página que buscas no existe o ha sido movida. Explora nuestros conciertos y festivales disponibles." />
+        {/* IMPORTANT: No canonical tag on 404 pages - prevents Google from associating error pages with URLs */}
       </Helmet>
       <Navbar />
       <div className="flex min-h-screen flex-col pt-16">
