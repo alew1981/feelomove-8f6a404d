@@ -54,7 +54,7 @@ const Conciertos = () => {
   const [filterGenre, setFilterGenre] = useState<string>(initialGenre);
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
-  const [filterRecent, setFilterRecent] = useState<string>("all");
+  const [filterRecent, setFilterRecent] = useState<string>("added");
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
@@ -174,11 +174,11 @@ const Conciertos = () => {
         return eventDate <= thirtyDaysFromNow;
       });
     } else if (filterRecent === "added") {
-      // Sort by recently added (we'll reverse the order to show most recent first)
-      // Since we don't have created_at, we'll sort by id descending as a proxy
+      // Sort by created_at descending (most recently added first)
       filtered = [...filtered].sort((a, b) => {
-        // Compare IDs as strings - higher IDs are typically newer
-        return String(b.id).localeCompare(String(a.id));
+        const aCreated = (a as any).created_at || '1970-01-01';
+        const bCreated = (b as any).created_at || '1970-01-01';
+        return new Date(bCreated).getTime() - new Date(aCreated).getTime();
       });
     }
     
