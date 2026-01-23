@@ -83,7 +83,7 @@ const Conciertos = () => {
         .from("mv_concerts_cards")
         .select("*")
         .gte("event_date", new Date().toISOString())
-        .order("created_at", { ascending: false });
+        .order("event_date", { ascending: true });
       
       if (error) throw error;
       
@@ -174,8 +174,8 @@ const Conciertos = () => {
         return eventDate <= thirtyDaysFromNow;
       });
     } else if (filterRecent === "added") {
-      // Data already comes sorted by created_at DESC from DB, no need to re-sort
-      // Only sort if filters were applied that might have changed the order
+      // Sort by ID descending as proxy for recently added (higher IDs = newer)
+      filtered = [...filtered].sort((a, b) => String(b.id).localeCompare(String(a.id)));
     }
     
     // Apply VIP filter (check badges for VIP or name contains VIP)

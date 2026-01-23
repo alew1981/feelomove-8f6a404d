@@ -234,7 +234,7 @@ const Festivales = () => {
       const { data, error } = await supabase
         .from("lovable_mv_event_product_page_festivales")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("festival_start_date", { ascending: true });
       
       if (error) throw error;
       return (data || []) as unknown as FestivalProductPage[];
@@ -408,14 +408,13 @@ const Festivales = () => {
     
     // Sort
     if (filterSort === "recientes") {
-      // Data already comes sorted by created_at DESC from DB
-      // Only re-sort parent festivals by their newest event's created_at
+      // Sort by event_id descending as proxy for recently added (higher IDs = newer)
+      filteredStandalone.sort((a, b) => String(b.event_id).localeCompare(String(a.event_id)));
       filteredParents.sort((a, b) => {
-        const aLatest = Math.max(...a.events.map(e => new Date((e as any).created_at || '1970-01-01').getTime()));
-        const bLatest = Math.max(...b.events.map(e => new Date((e as any).created_at || '1970-01-01').getTime()));
-        return bLatest - aLatest;
+        const aMaxId = Math.max(...a.events.map(e => parseInt(e.event_id) || 0));
+        const bMaxId = Math.max(...b.events.map(e => parseInt(e.event_id) || 0));
+        return bMaxId - aMaxId;
       });
-      // Standalone festivals keep DB order (already sorted by created_at DESC)
     } else {
       filteredStandalone.sort((a, b) => 
         new Date(a.festival_start_date).getTime() - new Date(b.festival_start_date).getTime()
