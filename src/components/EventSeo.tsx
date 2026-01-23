@@ -302,14 +302,21 @@ export const EventSeo = ({
       // End date (defaults to startDate if not provided)
       endDate: formattedEndDate,
       eventStatus: getSchemaEventStatus(status),
+      // Festival-specific: OfflineEventAttendanceMode indicates in-person attendance
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       url: absoluteUrl,
       inLanguage: 'es',
+      // For festivals, use a more descriptive organizer structure
       organizer: {
         '@type': 'Organization',
         name: organizerName,
         url: organizerUrl,
       },
+      // Festival-specific: add typicalAgeRange for festivals
+      ...(isFestival && {
+        typicalAgeRange: '16+',
+        isAccessibleForFree: false,
+      }),
     };
     
     // Add optional fields
