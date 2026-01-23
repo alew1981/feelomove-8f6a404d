@@ -131,11 +131,14 @@ function parseLegacySlug(slug: string): ParsedSlug {
   // PRIORITY CHECK: Detect new SEO format with Spanish month names: artist-city-DD-month-YYYY
   // Pattern: [artist]-[city]-[day]-[spanish-month]-[year]
   // Example: morat-barcelona-16-octubre-2026
+  // The hyphen before the day is REQUIRED to properly separate from the city/artist
   const spanishMonthPattern = new RegExp(
-    `-?(\\d{1,2})-(${SPANISH_MONTHS.join('|')})-(20[2-9]\\d)$`,
+    `-(\\d{1,2})-(${SPANISH_MONTHS.join('|')})-(20[2-9]\\d)$`,
     'i'
   );
   const spanishMonthMatch = workingSlug.match(spanishMonthPattern);
+  
+  console.log(`[parseLegacySlug] Input: "${slug}", Spanish month match: ${spanishMonthMatch ? 'YES' : 'NO'}`);
   
   if (spanishMonthMatch) {
     // This is the new SEO-friendly format - extract base slug
@@ -146,7 +149,7 @@ function parseLegacySlug(slug: string): ParsedSlug {
     const monthNum = String(SPANISH_MONTHS.indexOf(monthName) + 1).padStart(2, '0');
     const dateStr = `${year}-${monthNum}-${day.padStart(2, '0')}`;
     
-    console.log(`Spanish date format detected: ${slug} → baseSlug: ${baseSlug}, date: ${dateStr}`);
+    console.log(`[parseLegacySlug] SEO format detected: "${slug}" → baseSlug: "${baseSlug}", date: "${dateStr}"`);
     
     return {
       baseSlug,
@@ -378,57 +381,52 @@ const RedirectLegacyEvent = () => {
       
       // STEP 2b: Try to find event with the base slug (without suffix)
       // For SEO-friendly URLs with Spanish date (artist-city-DD-month-YYYY), this will find the base event
-      let query = supabase
+      console.log(`[RedirectLegacyEvent] STEP 2b: Searching for baseSlug="${baseSlug}", date="${date}"`);
+      
+      // First, try to find by exact base slug
+      const { data: baseSlugData, error: baseError } = await supabase
         .from("tm_tbl_events")
         .select("event_type, slug, name, venue_city, event_date")
-        .eq("slug", baseSlug);
+        .eq("slug", baseSlug)
+        .maybeSingle();
       
-      // If we have a full date (not placeholder and not year-only), also filter by date
-      if (date && !isPlaceholderDate && !isYearOnly) {
-        query = query.gte("event_date", `${date}T00:00:00`)
-                     .lte("event_date", `${date}T23:59:59`);
+      if (baseError) {
+        console.error('[RedirectLegacyEvent] baseSlug query error:', baseError);
+        throw baseError;
       }
       
-      const { data, error: baseError } = await query.maybeSingle();
+      console.log(`[RedirectLegacyEvent] baseSlug query result:`, baseSlugData);
       
-      if (baseError) throw baseError;
-      
-      if (data) {
-        // Check if the incoming URL already matches what we'd redirect to
-        // For SEO URLs with Spanish date format, we should show the page, not redirect
-        // The format matches if: incoming URL = baseSlug + date formatted
-        // Since the URL already points to this specific event (with date), treat as exact match
-        const isSeoFriendlyUrl = date && !isPlaceholderDate && !isYearOnly;
-        
-        if (isSeoFriendlyUrl) {
-          // SEO-friendly URL with Spanish date: show page directly without redirect
-          console.log(`SEO-friendly URL match: ${rawSlug} → event ${data.slug} (no redirect needed)`);
-          return { 
-            ...data, 
-            needsRedirect: false, 
-            isExactMatch: true, 
-            redirectSource: 'seo_date_format',
-            // Store the original SEO slug for proper rendering
-            originalSlug: rawSlug 
-          };
+      if (baseSlugData) {
+        // Check if date matches (if we have one)
+        if (date && !isPlaceholderDate && !isYearOnly) {
+          // Compare dates (ignoring time)
+          const eventDate = new Date(baseSlugData.event_date).toISOString().split('T')[0];
+          const urlDate = date;
+          console.log(`[RedirectLegacyEvent] Date comparison: eventDate="${eventDate}", urlDate="${urlDate}"`);
+          
+          if (eventDate === urlDate) {
+            // SEO-friendly URL with Spanish date: show page directly without redirect
+            console.log(`[RedirectLegacyEvent] SEO-friendly URL match: ${rawSlug} → event ${baseSlugData.slug} (no redirect needed)`);
+            return { 
+              ...baseSlugData, 
+              needsRedirect: false, 
+              isExactMatch: true, 
+              redirectSource: 'seo_date_format',
+              originalSlug: rawSlug 
+            };
+          } else {
+            // Date doesn't match - might be wrong event, redirect to actual event
+            console.log(`[RedirectLegacyEvent] Date mismatch, redirecting to actual event`);
+            return { ...baseSlugData, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug_wrong_date' };
+          }
         }
         
-        return { ...data, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug' };
+        // No date in URL, just return the base slug match
+        return { ...baseSlugData, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug' };
       }
       
-      // STEP 2c: Try without date filter if we had one (for when exact date doesn't match)
-      if (date && !isPlaceholderDate && !isYearOnly) {
-        const { data: withoutDateData } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug, name, venue_city, event_date")
-          .eq("slug", baseSlug)
-          .maybeSingle();
-        
-        if (withoutDateData) {
-          // Found the base event but date doesn't match - redirect to the actual event
-          return { ...withoutDateData, needsRedirect: true, isExactMatch: false, redirectSource: 'base_slug_no_date' };
-        }
-      }
+      // STEP 2c: If baseSlug wasn't found, log and continue to other strategies
       
       // STEP 2d: For numeric suffixes (-1, -2) and legacy URLs, search by extracting artist and city
       // and finding the next upcoming event for that combination
