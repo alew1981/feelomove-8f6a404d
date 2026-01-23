@@ -224,7 +224,7 @@ const Festivales = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
-  const [filterSort, setFilterSort] = useState<string>("proximos");
+  const [filterSort, setFilterSort] = useState<string>("recientes");
   const [filterDuration, setFilterDuration] = useState<string>("all");
 
   // Fetch festivals using the new dedicated festivals view
@@ -408,11 +408,15 @@ const Festivales = () => {
     
     // Sort
     if (filterSort === "recientes") {
-      // Sort by event_date descending (most recent dates first) as proxy for "recently added"
-      filteredStandalone.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+      // Sort by created_at descending (most recently added first)
+      filteredStandalone.sort((a, b) => {
+        const aCreated = (a as any).created_at || '1970-01-01';
+        const bCreated = (b as any).created_at || '1970-01-01';
+        return new Date(bCreated).getTime() - new Date(aCreated).getTime();
+      });
       filteredParents.sort((a, b) => {
-        const aLatest = Math.max(...a.events.map(e => new Date(e.event_date).getTime()));
-        const bLatest = Math.max(...b.events.map(e => new Date(e.event_date).getTime()));
+        const aLatest = Math.max(...a.events.map(e => new Date((e as any).created_at || '1970-01-01').getTime()));
+        const bLatest = Math.max(...b.events.map(e => new Date((e as any).created_at || '1970-01-01').getTime()));
         return bLatest - aLatest;
       });
     } else {
