@@ -277,7 +277,7 @@ const Conciertos = () => {
         ]}
       />
       
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-4 md:py-8 mt-16">
           
@@ -301,6 +301,28 @@ const Conciertos = () => {
             <h1 className="text-xl font-bold text-foreground">Conciertos en España</h1>
             <p className="text-sm text-muted-foreground">{filteredAndSortedEvents.length} conciertos disponibles</p>
           </div>
+
+          {/* Mobile Search Bar - Above Filters */}
+          <div className="md:hidden mb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar artista, ciudad..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10 h-11 text-sm bg-card border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
           
           {/* Desktop H2 */}
           <h2 className="hidden md:block text-2xl font-semibold text-foreground mt-6 mb-4">
@@ -313,28 +335,6 @@ const Conciertos = () => {
               Descubre todos los conciertos en España. Desde rock y pop hasta indie y electrónica. 
               Encuentra tu concierto perfecto y reserva hotel en la misma ciudad.
             </p>
-          </div>
-
-          {/* Floating Search Bar - Mobile (Bottom) */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar conciertos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Mobile Filters - Collapsible */}
