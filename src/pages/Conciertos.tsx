@@ -346,9 +346,9 @@ const Conciertos = () => {
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
                 <span>Filtros</span>
-                {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterVip !== "all") && (
+                {(filterArtist !== "all" || filterCity !== "all") && (
                   <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
-                    {[filterCity !== "all", filterGenre !== "all", filterArtist !== "all", filterMonthYear !== "all", filterVip !== "all"].filter(Boolean).length}
+                    {[filterArtist !== "all", filterCity !== "all"].filter(Boolean).length}
                   </span>
                 )}
               </div>
@@ -358,62 +358,36 @@ const Conciertos = () => {
             {showFilters && (
               <div className="mt-2 p-3 bg-card border border-border rounded-lg space-y-2">
                 <div className="grid grid-cols-2 gap-2">
+                  <Select value={filterArtist} onValueChange={setFilterArtist}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <span className="truncate">{filterArtist === "all" ? "Artista" : filterArtist}</span>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectItem value="all">Todos los artistas</SelectItem>
+                      {artists.map(artist => (
+                        <SelectItem key={artist} value={artist}>{artist}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select value={filterCity} onValueChange={setFilterCity}>
                     <SelectTrigger className="h-9 text-xs">
                       <span className="truncate">{filterCity === "all" ? "Ciudad" : filterCity}</span>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-60">
                       <SelectItem value="all">Todas las ciudades</SelectItem>
                       {cities.map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-
-                  <Select value={filterGenre} onValueChange={setFilterGenre}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterGenre === "all" ? "Género" : filterGenre}</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los géneros</SelectItem>
-                      {genres.map(genre => (
-                        <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterMonthYear} onValueChange={setFilterMonthYear}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterMonthYear === "all" ? "Mes" : monthYearOptions.find(m => m.value === filterMonthYear)?.label}</span>
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      <SelectItem value="all">Todos los meses</SelectItem>
-                      {monthYearOptions.map((month) => (
-                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterVip} onValueChange={setFilterVip}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterVip === "all" ? "Tipo" : "VIP"}</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="vip">Solo VIP</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
 
-                {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterVip !== "all") && (
+                {(filterArtist !== "all" || filterCity !== "all") && (
                   <button
                     onClick={() => {
-                      setFilterCity("all");
-                      setFilterGenre("all");
                       setFilterArtist("all");
-                      setFilterMonthYear("all");
-                      setFilterRecent("added");
-                      setFilterVip("all");
+                      setFilterCity("all");
                       setShowFilters(false);
                     }}
                     className="text-xs text-destructive hover:underline w-full text-center pt-1"
