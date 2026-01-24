@@ -19,9 +19,18 @@ import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
 import { buildDestinationSeoDescription } from "@/lib/seoDescriptions";
 
+// Normalize slug by removing accents for DB matching
+const normalizeSlug = (slug: string): string => {
+  return slug
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+};
+
 const DestinoDetalle = () => {
   const { destino } = useParams<{ destino: string }>();
-  const citySlug = destino ? decodeURIComponent(destino) : "";
+  const rawSlug = destino ? decodeURIComponent(destino) : "";
+  const citySlug = normalizeSlug(rawSlug);
   
   // Fetch SEO content from materialized view
   const { seoContent } = useAggregationSEO(citySlug, 'city');
