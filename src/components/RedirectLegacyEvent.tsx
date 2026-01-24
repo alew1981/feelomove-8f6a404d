@@ -57,7 +57,7 @@ const RedirectLoader = ({ targetUrl }: { targetUrl: string }) => (
  * 1. Full date: -YYYY-MM-DD (e.g., "event-slug-2026-01-14")
  * 2. Year only: -YYYY (e.g., "event-slug-2026")
  * 3. Placeholder year: -9999 (e.g., "event-slug-9999")
- * 4. Numeric suffix: -1, -2, -3 etc. (legacy duplicate handling) - CRITICAL FIX
+ * 4. Numeric suffix: -1, -2, -3 etc. (legacy duplicate handling)
  * 5. Long tour names that should be simplified
  */
 interface ParsedSlug {
@@ -68,23 +68,6 @@ interface ParsedSlug {
   isYearOnly: boolean;
   hasNumericSuffix: boolean;
   simplifiedSlug: string | null;
-  needsCaseNormalization: boolean;
-  normalizedSlug: string;
-}
-
-/**
- * Normalize a slug to lowercase and clean characters
- */
-function normalizeSlugCase(slug: string): string {
-  return slug
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-    .replace(/[ñ]/g, 'n')
-    .replace(/[ç]/g, 'c')
-    .replace(/[^a-z0-9-]/g, '-') // Replace invalid chars with hyphen
-    .replace(/-+/g, '-') // Collapse multiple hyphens
-    .replace(/^-|-$/g, ''); // Trim leading/trailing hyphens
 }
 
 /**
@@ -92,7 +75,7 @@ function normalizeSlugCase(slug: string): string {
  * These keywords in a slug indicate it should use /festival/ route
  */
 const KNOWN_FESTIVAL_NAMES = [
-  'sonorama', 'sonorama-ribera', 'ribera', 'primavera-sound', 'mad-cool', 'madcool',
+  'sonorama', 'sonorama-ribera', 'primavera-sound', 'mad-cool', 'madcool',
   'bbk-live', 'bilbao-bbk', 'arenal-sound', 'viña-rock', 'vina-rock',
   'resurrection-fest', 'low-festival', 'dcode', 'cabo-de-plata',
   'cruilla', 'vida-festival', 'festival-de-les-arts', 'les-arts',
@@ -108,7 +91,7 @@ const KNOWN_FESTIVAL_NAMES = [
   'heineken-jazzaldia', 'jazz-vitoria', 'getxo-jazz', 'terrassa-jazz',
   'leyendas-del-rock', 'rock-imperium', 'amnesia-festival', 'monegros',
   'electrobeach', 'a-summer-story', 'medusa-sunbeach', 'aquasella',
-  'dreambeach', 'marenostrum', 'festival-sol',
+  'tomorrowland', 'dreambeach', 'marenostrum', 'festival-sol',
   'boombastic', 'festival-gigante', 'gigante', 'conexion-valladolid',
   'festival-rio-babel', 'rio-babel', 'coca-cola-music', 'ccme',
   'festival-cultura-inquieta', 'cultura-inquieta', 'festival-de-musica',
@@ -214,11 +197,7 @@ const SPANISH_MONTHS = [
 ];
 
 function parseLegacySlug(slug: string): ParsedSlug {
-  // STEP 0: Check if case normalization is needed
-  const normalizedSlug = normalizeSlugCase(slug);
-  const needsCaseNormalization = slug !== normalizedSlug;
-  
-  let workingSlug = normalizedSlug; // Always work with normalized slug
+  let workingSlug = slug;
   let hasNumericSuffix = false;
   let simplifiedSlug: string | null = null;
   
@@ -232,7 +211,7 @@ function parseLegacySlug(slug: string): ParsedSlug {
   );
   const spanishMonthMatch = workingSlug.match(spanishMonthPattern);
   
-  console.log(`[parseLegacySlug] Input: "${slug}", Normalized: "${normalizedSlug}", Spanish month match: ${spanishMonthMatch ? 'YES' : 'NO'}`);
+  console.log(`[parseLegacySlug] Input: "${slug}", Spanish month match: ${spanishMonthMatch ? 'YES' : 'NO'}`);
   
   if (spanishMonthMatch) {
     // This is the new SEO-friendly format - extract base slug
@@ -252,28 +231,16 @@ function parseLegacySlug(slug: string): ParsedSlug {
       isPlaceholderDate: false,
       isYearOnly: false,
       hasNumericSuffix: false,
-      simplifiedSlug: null,
-      needsCaseNormalization,
-      normalizedSlug
+      simplifiedSlug: null
     };
   }
   
-  // CRITICAL FIX: Check for numeric suffix (-1, -2, -3, etc.) at the very end
-  // This catches URLs like "morat-barcelona-1" → should redirect to "morat-barcelona-[date]"
+  // Check for numeric suffix (-1, -2, -3, etc.) at the very end
   const numericSuffixPattern = /-(\d{1,2})$/;
   const numericMatch = workingSlug.match(numericSuffixPattern);
-  if (numericMatch) {
-    const suffixNum = parseInt(numericMatch[1], 10);
-    // Only treat as legacy numeric suffix if it's 1-31 (not part of a date like day 1-31)
-    // To distinguish, check if preceded by a month pattern
-    const beforeSuffix = workingSlug.replace(numericSuffixPattern, '');
-    const endsWithMonth = SPANISH_MONTHS.some(m => beforeSuffix.toLowerCase().endsWith(`-${m}`));
-    
-    if (!endsWithMonth && suffixNum >= 1 && suffixNum <= 99) {
-      hasNumericSuffix = true;
-      workingSlug = beforeSuffix;
-      console.log(`[parseLegacySlug] Numeric suffix detected: -${suffixNum}, cleaned slug: "${workingSlug}"`);
-    }
+  if (numericMatch && parseInt(numericMatch[1]) <= 99) {
+    hasNumericSuffix = true;
+    workingSlug = workingSlug.replace(numericSuffixPattern, '');
   }
   
   // Check for placeholder year suffix: -9999 (with or without date parts)
@@ -287,9 +254,7 @@ function parseLegacySlug(slug: string): ParsedSlug {
       isPlaceholderDate: true, 
       isYearOnly: false,
       hasNumericSuffix,
-      simplifiedSlug: null,
-      needsCaseNormalization,
-      normalizedSlug
+      simplifiedSlug: null
     };
   }
   
@@ -307,9 +272,7 @@ function parseLegacySlug(slug: string): ParsedSlug {
       isPlaceholderDate: false, 
       isYearOnly: false,
       hasNumericSuffix,
-      simplifiedSlug: null,
-      needsCaseNormalization,
-      normalizedSlug
+      simplifiedSlug: null
     };
   }
   
@@ -326,9 +289,7 @@ function parseLegacySlug(slug: string): ParsedSlug {
       isPlaceholderDate: false, 
       isYearOnly: true,
       hasNumericSuffix,
-      simplifiedSlug: null,
-      needsCaseNormalization,
-      normalizedSlug
+      simplifiedSlug: null
     };
   }
   
@@ -364,7 +325,7 @@ function parseLegacySlug(slug: string): ParsedSlug {
     }
   }
   
-  // If we found a numeric suffix, it's a legacy pattern that needs redirect
+  // If we found a numeric suffix, it's a legacy pattern
   if (hasNumericSuffix) {
     return { 
       baseSlug: workingSlug, 
@@ -373,37 +334,18 @@ function parseLegacySlug(slug: string): ParsedSlug {
       isPlaceholderDate: false, 
       isYearOnly: false,
       hasNumericSuffix: true,
-      simplifiedSlug,
-      needsCaseNormalization,
-      normalizedSlug
-    };
-  }
-  
-  // If case normalization is needed, it's a legacy pattern
-  if (needsCaseNormalization) {
-    return { 
-      baseSlug: normalizedSlug, 
-      date: null, 
-      hasLegacySuffix: true, 
-      isPlaceholderDate: false, 
-      isYearOnly: false,
-      hasNumericSuffix: false,
-      simplifiedSlug,
-      needsCaseNormalization,
-      normalizedSlug
+      simplifiedSlug
     };
   }
   
   return { 
-    baseSlug: normalizedSlug, 
+    baseSlug: slug, 
     date: null, 
     hasLegacySuffix: simplifiedSlug !== null, 
     isPlaceholderDate: false, 
     isYearOnly: false,
     hasNumericSuffix: false,
-    simplifiedSlug,
-    needsCaseNormalization,
-    normalizedSlug
+    simplifiedSlug
   };
 }
 
@@ -426,9 +368,7 @@ const RedirectLegacyEvent = () => {
     isPlaceholderDate: false, 
     isYearOnly: false,
     hasNumericSuffix: false,
-    simplifiedSlug: null,
-    needsCaseNormalization: false,
-    normalizedSlug: ''
+    simplifiedSlug: null
   };
   
   // Determine if this is a festival or concert route
@@ -444,9 +384,6 @@ const RedirectLegacyEvent = () => {
     queryKey: ['event-redirect-check', rawSlug],
     queryFn: async () => {
       if (!rawSlug) return null;
-      
-      console.log(`[RedirectLegacyEvent] Starting lookup for slug: "${rawSlug}"`);
-      console.log(`[RedirectLegacyEvent] Route info: isFestival=${isFestivalRoute}, isConcierto=${isConciertRoute}`);
       
       // STEP 0a: Festival detection from slug keywords
       // If accessing /concierto/ or /artista/ with a festival-like slug, 
@@ -496,75 +433,7 @@ const RedirectLegacyEvent = () => {
         }
       }
       
-      // STEP 0b-NUMERIC: CRITICAL - If slug has numeric suffix (-1, -2, etc.), 
-      // we must ALWAYS redirect to the proper SEO-friendly URL with date.
-      // The event exists in DB with the -1 slug, but we want URLs like morat-barcelona-17-octubre-2026
-      if (parsedSlug.hasNumericSuffix) {
-        console.log(`[Numeric Suffix] Slug "${rawSlug}" has numeric suffix, looking up event for SEO redirect...`);
-        
-        // Find the actual event by its current slug (including the -1 suffix)
-        const { data: numericEvent } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug, name, venue_city, event_date")
-          .eq("slug", rawSlug)
-          .maybeSingle();
-        
-        if (numericEvent) {
-          // Generate the SEO-friendly slug with Spanish date
-          const eventDate = new Date(numericEvent.event_date);
-          const day = eventDate.getDate();
-          const monthName = SPANISH_MONTHS[eventDate.getMonth()];
-          const year = eventDate.getFullYear();
-          
-          // Use the base slug (without numeric suffix) + date
-          const seoSlug = `${parsedSlug.baseSlug}-${day}-${monthName}-${year}`;
-          
-          console.log(`[Numeric Suffix] Redirecting ${rawSlug} → ${seoSlug}`);
-          
-          return { 
-            ...numericEvent, 
-            slug: seoSlug, // Override with SEO-friendly slug
-            needsRedirect: true, 
-            isExactMatch: false,
-            redirectSource: 'numeric_suffix_to_seo_date',
-            originalDbSlug: numericEvent.slug // Keep track of actual DB slug
-          };
-        }
-        
-        // If event not found with exact slug, fall through to other strategies
-        console.log(`[Numeric Suffix] Event not found for "${rawSlug}", continuing...`);
-      }
-      
-      // STEP 0b: FIRST check if the EXACT slug exists in the database
-      // This prevents unnecessary redirect lookups for valid slugs
-      // SKIP this for numeric suffixes (handled above)
-      if (!parsedSlug.hasNumericSuffix) {
-        const { data: directMatch } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug, name, venue_city, event_date")
-          .eq("slug", rawSlug)
-          .maybeSingle();
-        
-        if (directMatch) {
-          console.log(`[RedirectLegacyEvent] Direct match found for "${rawSlug}", skipping redirect checks`);
-          const isFestival = directMatch.event_type === 'festival';
-          const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
-          
-          if (needsRouteCorrection) {
-            return { 
-              ...directMatch, 
-              needsRedirect: true, 
-              isExactMatch: false, 
-              redirectSource: 'festival_wrong_route',
-              forceFestivalRoute: true
-            };
-          }
-          
-          return { ...directMatch, needsRedirect: false, isExactMatch: true };
-        }
-      }
-      
-      // STEP 0c: Only check slug_redirects if no direct match found
+      // STEP 0b: Check slug_redirects table first for migrated URLs
       // This handles the old → new slug mapping from our migration
       try {
         const { data: redirectData } = await supabase
@@ -577,43 +446,20 @@ const RedirectLegacyEvent = () => {
           // Ignore placeholder slugs to prevent loops
           const isPlaceholderTarget = /-9999(-\d{2})?(-\d{2})?$/.test(redirectData.new_slug);
           if (!isPlaceholderTarget) {
-            // Fetch the event type for proper routing - MUST verify new_slug exists
+            // Fetch the event type for proper routing
             const { data: eventInfo } = await supabase
               .from('tm_tbl_events')
               .select('event_type, slug')
               .eq('slug', redirectData.new_slug)
               .maybeSingle();
             
-            // Only redirect if the target slug actually exists in the database
             if (eventInfo) {
-              console.log(`[slug_redirects] Valid redirect: ${rawSlug} → ${eventInfo.slug}`);
               return { 
                 ...eventInfo, 
                 needsRedirect: true, 
                 isExactMatch: false,
                 redirectSource: 'slug_redirects'
               };
-            } else {
-              // Target slug doesn't exist - check if event exists by event_id
-              console.warn(`[slug_redirects] Target slug "${redirectData.new_slug}" not found, checking event_id: ${redirectData.event_id}`);
-              const { data: eventById } = await supabase
-                .from('tm_tbl_events')
-                .select('event_type, slug, name')
-                .eq('id', redirectData.event_id)
-                .maybeSingle();
-              
-              if (eventById) {
-                console.log(`[slug_redirects] Event found by ID with slug: ${eventById.slug}`);
-                // Redirect to the actual current slug of the event
-                return { 
-                  ...eventById, 
-                  needsRedirect: true, 
-                  isExactMatch: false,
-                  redirectSource: 'slug_redirects_by_event_id'
-                };
-              }
-              // If event_id lookup also fails, continue to legacy pattern matching
-              console.log(`[slug_redirects] Event not found by ID, continuing to legacy matching...`);
             }
           }
         }
@@ -621,28 +467,38 @@ const RedirectLegacyEvent = () => {
         console.warn('slug_redirects check failed:', e);
       }
       
-      // STEP 1: Already checked exact match above in STEP 0b, so now handle legacy patterns
-      // If we reached here, no direct match was found
+      // STEP 1: Check if the EXACT slug exists in the database
+      const { data: exactMatch, error: exactError } = await supabase
+        .from("tm_tbl_events")
+        .select("event_type, slug, name, venue_city, event_date")
+        .eq("slug", rawSlug)
+        .maybeSingle();
+      
+      if (exactError) throw exactError;
+      
+      // If exact match found, check if it's a festival accessed via wrong route
+      if (exactMatch) {
+        const isFestival = exactMatch.event_type === 'festival';
+        const needsRouteCorrection = isFestival && (isConciertRoute || isArtistaRoute);
+        
+        if (needsRouteCorrection) {
+          console.log(`[Festival Detection] Exact match is festival but accessed via wrong route`);
+          return { 
+            ...exactMatch, 
+            needsRedirect: true, 
+            isExactMatch: false, 
+            redirectSource: 'festival_wrong_route',
+            forceFestivalRoute: true
+          };
+        }
+        
+        return { ...exactMatch, needsRedirect: false, isExactMatch: true };
+      }
 
       // STEP 2: If no exact match and slug has legacy patterns, try to find the event
-      const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly, hasNumericSuffix, simplifiedSlug, needsCaseNormalization, normalizedSlug } = parsedSlug;
+      const { baseSlug, date, hasLegacySuffix, isPlaceholderDate, isYearOnly, hasNumericSuffix, simplifiedSlug } = parsedSlug;
       
-      // STEP 2-CASE: If slug has uppercase or special chars, try normalized version first
-      if (needsCaseNormalization) {
-        console.log(`[Case Normalization] Slug needs normalization: "${rawSlug}" → "${normalizedSlug}"`);
-        const { data: normalizedMatch } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug, name, venue_city, event_date")
-          .eq("slug", normalizedSlug)
-          .maybeSingle();
-        
-        if (normalizedMatch) {
-          console.log(`[Case Normalization] Found match for normalized slug: ${normalizedMatch.slug}`);
-          return { ...normalizedMatch, needsRedirect: true, isExactMatch: false, redirectSource: 'case_normalization' };
-        }
-      }
-      
-      if (!hasLegacySuffix && !hasNumericSuffix && !simplifiedSlug && !needsCaseNormalization) {
+      if (!hasLegacySuffix && !hasNumericSuffix && !simplifiedSlug) {
         // No legacy pattern detected and no exact match - event doesn't exist
         return null;
       }

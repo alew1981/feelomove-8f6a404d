@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import Index from "./pages/Index";
 import { Skeleton } from "@/components/ui/skeleton";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -50,25 +50,6 @@ const ScrollToTop = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-  return null;
-};
-
-// Normalize accidental double (or more) slashes in paths: "//concierto/..." -> "/concierto/..."
-// This prevents React Router from missing route matches and showing 404.
-const NormalizePath = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const normalizedPathname = location.pathname.replace(/\/{2,}/g, "/");
-    if (normalizedPathname !== location.pathname) {
-      navigate(
-        `${normalizedPathname}${location.search ?? ""}${location.hash ?? ""}`,
-        { replace: true }
-      );
-    }
-  }, [location.pathname, location.search, location.hash, navigate]);
-
   return null;
 };
 
@@ -159,7 +140,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
-          <NormalizePath />
           <Suspense fallback={<PageLoader />}>
             <PageWrapper>
               <Routes>

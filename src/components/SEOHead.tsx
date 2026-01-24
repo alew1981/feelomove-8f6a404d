@@ -18,7 +18,6 @@ interface SEOHeadProps {
   breadcrumbs?: BreadcrumbItem[];
   preloadImage?: string; // LCP image URL for preloading
   forceNoIndex?: boolean; // Force noindex regardless of URL params
-  is404?: boolean; // If true, don't render canonical (404 pages should not have canonical)
 }
 
 // Parameters that should trigger noindex when present
@@ -163,8 +162,7 @@ export const SEOHead = ({
   pageType = "WebPage",
   breadcrumbs,
   preloadImage,
-  forceNoIndex = false,
-  is404 = false
+  forceNoIndex = false
 }: SEOHeadProps) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -179,26 +177,14 @@ export const SEOHead = ({
   const fullTitle = `${title} | FEELOMOVE+`;
   const siteUrl = "https://feelomove.com";
   
-  // For 404 pages, don't generate a canonical URL at all
-  // This prevents Google from associating the error page with any URL
-  let fullCanonical: string | null = null;
-  
-  if (!is404) {
-    // Ensure canonical is always absolute URL and strips ALL query params
-    // Priority: festival canonical > search canonical > provided canonical > current path (WITHOUT params)
-    const baseCanonical = festivalCanonical || searchCanonical || canonical;
-    
-    if (baseCanonical) {
-      // Always strip query params from canonical
-      const cleanedCanonical = baseCanonical.split('?')[0];
-      fullCanonical = cleanedCanonical.startsWith('http') 
-        ? cleanedCanonical
-        : `${siteUrl}${cleanedCanonical.startsWith('/') ? cleanedCanonical : `/${cleanedCanonical}`}`;
-    } else {
-      // Use current path without query params
-      fullCanonical = `${siteUrl}${location.pathname}`;
-    }
-  }
+  // Ensure canonical is always absolute URL and strips query params
+  // Priority: festival canonical > search canonical > provided canonical > current path
+  const baseCanonical = festivalCanonical || searchCanonical || canonical;
+  const fullCanonical = baseCanonical 
+    ? baseCanonical.startsWith('http') 
+      ? baseCanonical.split('?')[0] // Strip query params from canonical
+      : `${siteUrl}${baseCanonical.startsWith('/') ? baseCanonical : `/${baseCanonical}`}`.split('?')[0]
+    : `${siteUrl}${location.pathname}`;
 
   // Build WebPage schema
   const webPageSchema = {
