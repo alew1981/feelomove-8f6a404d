@@ -246,10 +246,11 @@ const RedirectLegacyEvent = () => {
       if (redirect) {
         // Anti-loop: if old_slug === new_slug, don't redirect
         if (redirect.new_slug === rawSlug) {
-          console.log(`[SEO Debug] Anti-loop: slug redirects to itself`);
+          console.log(`[SEO Debug] Anti-loop: slug redirects to itself, skipping`);
           setCachedRedirect(rawSlug, null);
         } else {
-          // SINGLE-HOP: Get event by ID to get current canonical slug
+          // SINGLE-HOP: ALWAYS get event by ID to get CURRENT canonical slug
+          // This prevents using stale/dirty new_slug values from the redirect table
           const { data: eventFromId } = await supabase
             .from('tm_tbl_events')
             .select('id, slug, event_type, name, venue_city, event_date')
@@ -257,22 +258,36 @@ const RedirectLegacyEvent = () => {
             .maybeSingle();
           
           if (eventFromId) {
-            const targetPath = getEventUrl(eventFromId.slug, eventFromId.event_type);
-            console.log(`[SEO Debug] Found via slug_redirects, redirigiendo a: ${targetPath}`);
+            // CRITICAL: Use event's current slug, NOT the new_slug from redirect table
+            // The event table slug is the source of truth
+            const canonicalSlug = eventFromId.slug;
             
-            setCachedRedirect(rawSlug, {
-              new_slug: eventFromId.slug,
-              event_id: eventFromId.id,
-              event_type: eventFromId.event_type
-            });
+            // Double-check: if event's slug is STILL dirty, clean it
+            const isEventSlugClean = !hasNoisePatterns(canonicalSlug);
+            const finalSlug = isEventSlugClean ? canonicalSlug : cleanSlugClientSide(canonicalSlug).cleanedSlug;
             
-            return {
-              event: eventFromId as EventData,
-              needsRedirect: true,
-              targetSlug: eventFromId.slug,
-              targetPath,
-              source: 'slug_redirects'
-            };
+            // If final slug equals original, we found a loop - skip
+            if (finalSlug === rawSlug) {
+              console.log(`[SEO Debug] Anti-loop: cleaned slug equals original, skipping redirect`);
+              setCachedRedirect(rawSlug, null);
+            } else {
+              const targetPath = getEventUrl(finalSlug, eventFromId.event_type);
+              console.log(`[SEO Debug] Found via slug_redirects (event_id lookup), redirigiendo a: ${targetPath}`);
+              
+              setCachedRedirect(rawSlug, {
+                new_slug: finalSlug,
+                event_id: eventFromId.id,
+                event_type: eventFromId.event_type
+              });
+              
+              return {
+                event: { ...eventFromId, slug: finalSlug } as EventData,
+                needsRedirect: true,
+                targetSlug: finalSlug,
+                targetPath,
+                source: 'slug_redirects'
+              };
+            }
           }
         }
       }
