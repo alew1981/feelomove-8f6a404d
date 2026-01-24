@@ -366,6 +366,27 @@ export type Database = {
         }
         Relationships: []
       }
+      slug_migration_log: {
+        Row: {
+          event_id: string
+          migrated_at: string | null
+          new_slug: string | null
+          old_slug: string | null
+        }
+        Insert: {
+          event_id: string
+          migrated_at?: string | null
+          new_slug?: string | null
+          old_slug?: string | null
+        }
+        Update: {
+          event_id?: string
+          migrated_at?: string | null
+          new_slug?: string | null
+          old_slug?: string | null
+        }
+        Relationships: []
+      }
       slug_redirects: {
         Row: {
           created_at: string | null
@@ -1451,6 +1472,17 @@ export type Database = {
         Returns: string
       }
       generate_seo_slug: { Args: { text_input: string }; Returns: string }
+      generate_seo_slug_with_spanish_date_v2: {
+        Args: {
+          p_event_date: string
+          p_event_hour?: number
+          p_is_vip?: boolean
+          p_name: string
+          p_primary_attraction_name?: string
+          p_venue_city: string
+        }
+        Returns: string
+      }
       generate_unique_concert_slug: {
         Args: {
           p_artist_name: string
