@@ -293,37 +293,10 @@ function parseLegacySlug(slug: string): ParsedSlug {
     };
   }
   
-  // Check for long tour name patterns that should be simplified
-  // Pattern: [artist]-[tour-name-words]-[city] → [artist]-[city]
-  const tourKeywords = [
-    'world-tour', 'tour', 'live', 'concert', 'en-concierto', 'gira', 
-    'the-tour', 'experience', 'show', 'festival', 'everyone-s', 'everyones'
-  ];
-  
-  const city = extractCityFromSlug(workingSlug);
-  if (city) {
-    const slugWithoutCity = workingSlug.replace(new RegExp(`-${city}$`, 'i'), '');
-    const slugParts = slugWithoutCity.split('-');
-    
-    // If slug has more than 4 parts (likely includes tour name), try to simplify
-    if (slugParts.length > 4) {
-      // Find where tour keywords start
-      let tourStartIndex = -1;
-      for (let i = 0; i < slugParts.length; i++) {
-        const part = slugParts[i].toLowerCase();
-        if (tourKeywords.some(kw => kw.includes(part) || part.includes(kw.replace('-', '')))) {
-          tourStartIndex = i;
-          break;
-        }
-      }
-      
-      if (tourStartIndex > 0) {
-        // Artist name is before tour keywords
-        const artistParts = slugParts.slice(0, tourStartIndex);
-        simplifiedSlug = `${artistParts.join('-')}-${city}`;
-      }
-    }
-  }
+  // IMPORTANT: DO NOT set hasLegacySuffix just because slug is "long"
+  // The simplified slug logic should ONLY be used as a fallback search strategy,
+  // NOT to determine if a slug needs redirect. This was causing exact matches
+  // to be treated as legacy URLs.
   
   // If we found a numeric suffix, it's a legacy pattern
   if (hasNumericSuffix) {
@@ -334,18 +307,19 @@ function parseLegacySlug(slug: string): ParsedSlug {
       isPlaceholderDate: false, 
       isYearOnly: false,
       hasNumericSuffix: true,
-      simplifiedSlug
+      simplifiedSlug: null // Don't pre-compute - let fallback logic handle it
     };
   }
   
+  // No legacy pattern detected
   return { 
     baseSlug: slug, 
     date: null, 
-    hasLegacySuffix: simplifiedSlug !== null, 
+    hasLegacySuffix: false, 
     isPlaceholderDate: false, 
     isYearOnly: false,
     hasNumericSuffix: false,
-    simplifiedSlug
+    simplifiedSlug: null
   };
 }
 
