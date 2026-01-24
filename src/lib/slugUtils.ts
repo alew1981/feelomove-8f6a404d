@@ -37,8 +37,169 @@ const SPANISH_CITIES = [
   'badajoz', 'huelva', 'lleida', 'tarragona', 'leon', 'cadiz', 'jaen',
   'a-coruna', 'coruna', 'santiago', 'ferrol', 'girona', 'reus', 'mataro',
   'sitges', 'irun', 'barakaldo', 'getxo', 'fuengirola', 'marbella', 'benidorm',
-  'aranda-de-duero', 'benicassim', 'villarrobledo', 'pamplona-iruna'
+  'aranda-de-duero', 'benicassim', 'villarrobledo', 'pamplona-iruna', 'chiclana'
 ];
+
+/**
+ * Noise words to strip from slugs (client-side cleanup)
+ */
+const NOISE_PATTERNS = [
+  /-paquetes?-vip$/i,
+  /-tickets?$/i,
+  /-entradas?$/i,
+  /-parking$/i,
+  /-bus$/i,
+  /-feed\/?$/i,
+  /-vip$/i,
+  /-premium$/i,
+  /-general$/i,
+  /-zona-\w+$/i
+];
+
+// ============================================
+// PERFORMANCE: FAST PATH VALIDATORS
+// ============================================
+
+/**
+ * FAST CHECK: Is this a clean SEO URL that needs no processing?
+ * Pattern: /concierto/*-2026 or /festival/*-2026 with Spanish month
+ */
+const VALID_SEO_PATTERN = /^[a-z0-9-]+-(20[2-9]\d)$|^[a-z0-9-]+-\d{1,2}-(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)-(20[2-9]\d)$/;
+
+export const isCleanSeoUrl = (slug: string): boolean => {
+  // Quick fail conditions
+  if (!slug || slug.includes('--') || /[A-Z]/.test(slug)) return false;
+  
+  // Check for prohibited numeric suffixes (not years)
+  if (/-\d{1,2}$/.test(slug) && !/-20[2-9]\d$/.test(slug)) return false;
+  
+  // Check for placeholder dates
+  if (slug.includes('-9999')) return false;
+  
+  // Check for noise patterns
+  if (NOISE_PATTERNS.some(p => p.test(slug))) return false;
+  
+  // Valid pattern check
+  return VALID_SEO_PATTERN.test(slug);
+};
+
+/**
+ * FAST CHECK: Does the URL have tracking parameters?
+ */
+export const hasTrackingParams = (search: string): boolean => {
+  if (!search) return false;
+  const trackingParams = ['utm_', 'fbclid', 'gclid', 'msclkid', 'ref', 'source'];
+  const lower = search.toLowerCase();
+  return trackingParams.some(p => lower.includes(p));
+};
+
+// ============================================
+// CLIENT-SIDE SLUG CLEANUP (NO DB QUERIES)
+// ============================================
+
+/**
+ * Cleans slug without database queries
+ * Returns { cleanedSlug, wasModified }
+ */
+export interface CleanedSlugResult {
+  cleanedSlug: string;
+  wasModified: boolean;
+  removedSuffix: string | null;
+}
+
+export const cleanSlugClientSide = (slug: string): CleanedSlugResult => {
+  let working = slug.toLowerCase();
+  let wasModified = false;
+  let removedSuffix: string | null = null;
+  
+  // Remove trailing feed (WordPress legacy)
+  if (/\/feed\/?$/.test(working)) {
+    working = working.replace(/\/feed\/?$/, '');
+    wasModified = true;
+    removedSuffix = '/feed';
+  }
+  
+  // Remove numeric suffix (-1, -2, -99) but NOT years
+  const numericSuffix = working.match(/-(\d{1,2})$/);
+  if (numericSuffix && !/-20[2-9]\d$/.test(working)) {
+    working = working.replace(/-\d{1,2}$/, '');
+    wasModified = true;
+    removedSuffix = `-${numericSuffix[1]}`;
+  }
+  
+  // Remove noise patterns
+  for (const pattern of NOISE_PATTERNS) {
+    if (pattern.test(working)) {
+      const match = working.match(pattern);
+      working = working.replace(pattern, '');
+      wasModified = true;
+      removedSuffix = match?.[0] || null;
+    }
+  }
+  
+  // Remove placeholder years
+  if (working.includes('-9999')) {
+    working = working.replace(/-9999(-\d{2})?(-\d{2})?$/, '');
+    wasModified = true;
+    removedSuffix = '-9999';
+  }
+  
+  // Clean double hyphens
+  if (working.includes('--')) {
+    working = working.replace(/--+/g, '-');
+    wasModified = true;
+  }
+  
+  // Trim edge hyphens
+  if (working.startsWith('-') || working.endsWith('-')) {
+    working = working.replace(/^-|-$/g, '');
+    wasModified = true;
+  }
+  
+  return { cleanedSlug: working, wasModified, removedSuffix };
+};
+
+// ============================================
+// REDIRECT CACHE (MEMOIZATION)
+// ============================================
+
+/**
+ * In-memory cache for common redirects (avoids DB lookup)
+ * Key: old_slug, Value: { new_slug, event_id, event_type }
+ */
+interface CachedRedirect {
+  new_slug: string;
+  event_id: string;
+  event_type: string;
+}
+
+const redirectCache = new Map<string, CachedRedirect | null>();
+const CACHE_MAX_SIZE = 500;
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+let cacheTimestamp = Date.now();
+
+export const getCachedRedirect = (slug: string): CachedRedirect | null | undefined => {
+  // Check if cache is stale
+  if (Date.now() - cacheTimestamp > CACHE_TTL) {
+    redirectCache.clear();
+    cacheTimestamp = Date.now();
+    return undefined;
+  }
+  return redirectCache.get(slug);
+};
+
+export const setCachedRedirect = (slug: string, redirect: CachedRedirect | null): void => {
+  // Prevent cache from growing too large
+  if (redirectCache.size >= CACHE_MAX_SIZE) {
+    const firstKey = redirectCache.keys().next().value;
+    if (firstKey) redirectCache.delete(firstKey);
+  }
+  redirectCache.set(slug, redirect);
+};
+
+// ============================================
+// EXISTING UTILITIES (OPTIMIZED)
+// ============================================
 
 /**
  * Normalizes text to slug format (lowercase, no accents, hyphens)
@@ -94,23 +255,25 @@ export const isFestivalSlug = (slug: string): boolean => {
 };
 
 /**
- * Extracts city from slug
+ * Extracts city from slug (optimized with early exit)
  */
 export const extractCityFromSlug = (slug: string): string | null => {
-  const parts = slug.split('-');
+  const parts = slug.toLowerCase().split('-');
+  const partsLen = parts.length;
   
-  for (let i = parts.length - 1; i >= 0; i--) {
-    // Check multi-word city (e.g., "pamplona-iruna")
-    for (let j = 1; j <= 2 && i - j >= 0; j++) {
-      const possibleCity = parts.slice(i - j, i + 1).join('-');
-      if (SPANISH_CITIES.includes(possibleCity.toLowerCase())) {
-        return possibleCity;
-      }
+  // Start from the end (cities usually at end)
+  for (let i = partsLen - 1; i >= Math.max(0, partsLen - 5); i--) {
+    // Check multi-word city (e.g., "pamplona-iruna", "aranda-de-duero")
+    if (i >= 2) {
+      const threeWord = parts.slice(i - 2, i + 1).join('-');
+      if (SPANISH_CITIES.includes(threeWord)) return threeWord;
     }
-    // Check single word city
-    if (SPANISH_CITIES.includes(parts[i].toLowerCase())) {
-      return parts[i];
+    if (i >= 1) {
+      const twoWord = parts.slice(i - 1, i + 1).join('-');
+      if (SPANISH_CITIES.includes(twoWord)) return twoWord;
     }
+    // Single word city
+    if (SPANISH_CITIES.includes(parts[i])) return parts[i];
   }
   return null;
 };
@@ -158,7 +321,7 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
   // Check for numeric suffix (-1, -2, etc.) - PROHIBITED
   const numericSuffixPattern = /-(\d{1,2})$/;
   const numericMatch = workingSlug.match(numericSuffixPattern);
-  if (numericMatch && parseInt(numericMatch[1]) <= 99) {
+  if (numericMatch && parseInt(numericMatch[1]) <= 99 && !/-20[2-9]\d$/.test(workingSlug)) {
     hasNumericSuffix = true;
     workingSlug = workingSlug.replace(numericSuffixPattern, '');
   }
@@ -197,7 +360,7 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
     return {
       baseSlug: workingSlug.replace(yearPattern, ''),
       date: null,
-      hasLegacySuffix: true,
+      hasLegacySuffix: false, // Year-only is valid
       hasNumericSuffix,
       isPlaceholderDate: false,
       isSpanishDateFormat: false
