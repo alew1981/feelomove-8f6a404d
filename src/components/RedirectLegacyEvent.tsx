@@ -1,15 +1,18 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, useMemo, lazy, Suspense } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  parseLegacySlug, 
+  isCleanSeoUrl,
+  hasTrackingParams,
+  cleanSlugClientSide,
+  getCachedRedirect,
+  setCachedRedirect,
   isFestivalSlug, 
   extractCityFromSlug, 
-  getEventUrl,
-  isValidSeoSlug 
+  getEventUrl
 } from "@/lib/slugUtils";
 
 // Lazy load Producto for normal event rendering
@@ -71,15 +74,18 @@ interface RedirectResult {
   targetSlug: string | null;
   targetPath: string | null;
   source: string;
+  fastPath: boolean;
 }
 
 /**
- * Smart event router that implements SEO URL standards:
+ * Optimized event router with fast-path for clean URLs
  * 
- * 1. Anti-Loop: If old_slug = new_slug, load page directly
- * 2. Single-Hop: Use event_id from slug_redirects to generate current URL
- * 3. Auto-Clean Suffixes: Remove -1, -2 and search by artist+city
- * 4. Festival Detection: Force /festival/ route for festival content
+ * Execution hierarchy:
+ * 1. EARLY EXIT: Clean SEO URLs pass through immediately
+ * 2. CLIENT-SIDE CLEANUP: Regex cleanup before any DB queries
+ * 3. CACHE CHECK: In-memory cache for common redirects
+ * 4. INDEXED DB SEARCH: Only slug/event_id fields
+ * 5. FUZZY SEARCH: Only as last resort
  */
 const RedirectLegacyEvent = () => {
   const { slug: rawSlug } = useParams<{ slug: string }>();
@@ -88,175 +94,265 @@ const RedirectLegacyEvent = () => {
   
   const isFestivalRoute = location.pathname.startsWith('/festival');
   const isConciertRoute = location.pathname.startsWith('/concierto');
-  const slugLooksLikeFestival = rawSlug ? isFestivalSlug(rawSlug) : false;
   
+  // ============================================
+  // STEP 1: EARLY EXIT CHECK (NO DB QUERY)
+  // ============================================
+  const earlyExitResult = useMemo(() => {
+    if (!rawSlug) return null;
+    
+    // If URL has tracking params, strip them but don't treat as redirect
+    const hasTracking = hasTrackingParams(location.search);
+    
+    // Check if slug is already clean SEO format
+    const isClean = isCleanSeoUrl(rawSlug);
+    
+    // Quick festival/concierto route check based on slug keywords
+    const slugIsFestival = isFestivalSlug(rawSlug);
+    const routeMismatch = (slugIsFestival && isConciertRoute) || (!slugIsFestival && isFestivalRoute && !slugIsFestival);
+    
+    if (isClean && !routeMismatch && !hasTracking) {
+      // FAST PATH: Clean URL, correct route, no tracking - proceed directly
+      return { 
+        canFastPath: true, 
+        needsRouteCorrection: false,
+        cleanedSlug: rawSlug 
+      };
+    }
+    
+    // Check if route needs correction
+    if (isClean && routeMismatch) {
+      return {
+        canFastPath: false,
+        needsRouteCorrection: true,
+        correctRoute: slugIsFestival ? '/festival' : '/concierto',
+        cleanedSlug: rawSlug
+      };
+    }
+    
+    return null;
+  }, [rawSlug, location.search, isFestivalRoute, isConciertRoute]);
+  
+  // ============================================
+  // STEP 2: CLIENT-SIDE CLEANUP
+  // ============================================
+  const clientCleanup = useMemo(() => {
+    if (!rawSlug) return null;
+    
+    const result = cleanSlugClientSide(rawSlug);
+    return result;
+  }, [rawSlug]);
+  
+  // ============================================
+  // MAIN QUERY (ONLY RUNS IF NEEDED)
+  // ============================================
   const { data: result, isLoading, error, isFetched } = useQuery({
-    queryKey: ['event-redirect', rawSlug],
+    queryKey: ['event-redirect-v2', rawSlug],
     queryFn: async (): Promise<RedirectResult> => {
       if (!rawSlug) {
-        return { event: null, needsRedirect: false, targetSlug: null, targetPath: null, source: 'no_slug' };
+        return { event: null, needsRedirect: false, targetSlug: null, targetPath: null, source: 'no_slug', fastPath: false };
       }
       
-      const parsedSlug = parseLegacySlug(rawSlug);
-      console.log(`[RedirectLegacyEvent] Parsing "${rawSlug}":`, parsedSlug);
+      // Use cleaned slug from client-side processing
+      const workingSlug = clientCleanup?.wasModified ? clientCleanup.cleanedSlug : rawSlug;
       
-      // RULE 1: Check slug_redirects table first (uses event_id for single-hop)
-      try {
-        const { data: redirect } = await supabase
-          .from('slug_redirects')
-          .select('new_slug, event_id')
-          .eq('old_slug', rawSlug)
-          .maybeSingle();
-        
-        if (redirect) {
-          // Anti-loop: if old_slug = new_slug, skip redirect
-          if (redirect.new_slug === rawSlug) {
-            console.log(`[RedirectLegacyEvent] Anti-loop detected, loading directly`);
-          } else {
-            // Single-hop: use event_id to get current event data
-            const { data: eventFromId } = await supabase
-              .from('tm_tbl_events')
-              .select('id, slug, event_type, name, venue_city, event_date')
-              .eq('id', redirect.event_id)
-              .maybeSingle();
+      // ============================================
+      // STEP 3: CHECK MEMORY CACHE
+      // ============================================
+      const cachedRedirect = getCachedRedirect(rawSlug);
+      if (cachedRedirect !== undefined) {
+        if (cachedRedirect === null) {
+          // Cached as "no redirect needed" - check if exact match exists
+          console.log(`[Redirect] Cache hit (no redirect): ${rawSlug}`);
+        } else {
+          // Cached redirect found
+          const targetPath = getEventUrl(cachedRedirect.new_slug, cachedRedirect.event_type);
+          console.log(`[Redirect] Cache hit: ${rawSlug} → ${targetPath}`);
+          return {
+            event: { 
+              id: cachedRedirect.event_id, 
+              slug: cachedRedirect.new_slug, 
+              event_type: cachedRedirect.event_type,
+              name: '', venue_city: '', event_date: ''
+            },
+            needsRedirect: true,
+            targetSlug: cachedRedirect.new_slug,
+            targetPath,
+            source: 'cache',
+            fastPath: true
+          };
+        }
+      }
+      
+      // ============================================
+      // STEP 4: INDEXED DB LOOKUPS (slug, event_id only)
+      // ============================================
+      
+      // 4a: Check slug_redirects table
+      const { data: redirect } = await supabase
+        .from('slug_redirects')
+        .select('new_slug, event_id')
+        .eq('old_slug', rawSlug)
+        .maybeSingle();
+      
+      if (redirect) {
+        // Anti-loop check
+        if (redirect.new_slug === rawSlug) {
+          setCachedRedirect(rawSlug, null);
+        } else {
+          // Single-hop: get event by ID (indexed)
+          const { data: eventFromId } = await supabase
+            .from('tm_tbl_events')
+            .select('id, slug, event_type, name, venue_city, event_date')
+            .eq('id', redirect.event_id)
+            .maybeSingle();
+          
+          if (eventFromId) {
+            const targetPath = getEventUrl(eventFromId.slug, eventFromId.event_type);
             
-            if (eventFromId) {
-              const targetPath = getEventUrl(eventFromId.slug, eventFromId.event_type);
-              console.log(`[RedirectLegacyEvent] Single-hop redirect via event_id: ${rawSlug} → ${targetPath}`);
-              return {
-                event: eventFromId as EventData,
-                needsRedirect: true,
-                targetSlug: eventFromId.slug,
-                targetPath,
-                source: 'slug_redirects_event_id'
-              };
-            }
+            // Cache the redirect
+            setCachedRedirect(rawSlug, {
+              new_slug: eventFromId.slug,
+              event_id: eventFromId.id,
+              event_type: eventFromId.event_type
+            });
+            
+            return {
+              event: eventFromId as EventData,
+              needsRedirect: true,
+              targetSlug: eventFromId.slug,
+              targetPath,
+              source: 'slug_redirects',
+              fastPath: false
+            };
           }
         }
-      } catch (e) {
-        console.warn('[RedirectLegacyEvent] slug_redirects lookup failed:', e);
       }
       
-      // RULE 2: Check exact slug match in events
+      // 4b: Check exact slug match (indexed)
       const { data: exactMatch } = await supabase
         .from('tm_tbl_events')
         .select('id, slug, event_type, name, venue_city, event_date')
-        .eq('slug', rawSlug)
+        .eq('slug', workingSlug)
         .maybeSingle();
       
       if (exactMatch) {
         const isFestival = exactMatch.event_type === 'festival';
-        const correctRoute = isFestival ? '/festival/' : '/concierto/';
         const wrongRoute = (isFestival && isConciertRoute) || (!isFestival && isFestivalRoute);
         
-        // Festival detection: content is festival but accessed via /concierto/
+        // Route type correction
         if (wrongRoute) {
           const targetPath = getEventUrl(exactMatch.slug, exactMatch.event_type);
-          console.log(`[RedirectLegacyEvent] Route type correction: ${location.pathname} → ${targetPath}`);
           return {
             event: exactMatch as EventData,
             needsRedirect: true,
             targetSlug: exactMatch.slug,
             targetPath,
-            source: 'route_type_correction'
+            source: 'route_correction',
+            fastPath: false
           };
         }
         
-        // Check if slug is valid SEO format
-        if (!isValidSeoSlug(rawSlug)) {
-          // Slug has prohibited patterns, but we found the event - serve it anyway
-          console.log(`[RedirectLegacyEvent] Slug not ideal SEO but event exists, serving directly`);
+        // Slug was cleaned - redirect to clean version
+        if (clientCleanup?.wasModified) {
+          const targetPath = getEventUrl(exactMatch.slug, exactMatch.event_type);
+          return {
+            event: exactMatch as EventData,
+            needsRedirect: true,
+            targetSlug: exactMatch.slug,
+            targetPath,
+            source: 'client_cleanup',
+            fastPath: false
+          };
         }
+        
+        // Cache as "no redirect"
+        setCachedRedirect(rawSlug, null);
         
         return {
           event: exactMatch as EventData,
           needsRedirect: false,
           targetSlug: null,
           targetPath: null,
-          source: 'exact_match'
+          source: 'exact_match',
+          fastPath: true
         };
       }
       
-      // RULE 3: Spanish date format in URL - parse and find event
-      if (parsedSlug.isSpanishDateFormat && parsedSlug.date) {
-        const { data: dateMatch } = await supabase
+      // 4c: If cleaned slug is different, try that
+      if (clientCleanup?.wasModified && clientCleanup.cleanedSlug !== workingSlug) {
+        const { data: cleanedMatch } = await supabase
           .from('tm_tbl_events')
           .select('id, slug, event_type, name, venue_city, event_date')
-          .ilike('slug', `${parsedSlug.baseSlug}%`)
-          .gte('event_date', `${parsedSlug.date}T00:00:00`)
-          .lt('event_date', `${parsedSlug.date}T23:59:59`)
+          .eq('slug', clientCleanup.cleanedSlug)
           .maybeSingle();
         
-        if (dateMatch) {
-          // Check if the URL slug matches the DB slug
-          if (dateMatch.slug !== rawSlug) {
-            const targetPath = getEventUrl(dateMatch.slug, dateMatch.event_type);
-            console.log(`[RedirectLegacyEvent] Spanish date format redirect: ${rawSlug} → ${targetPath}`);
-            return {
-              event: dateMatch as EventData,
-              needsRedirect: true,
-              targetSlug: dateMatch.slug,
-              targetPath,
-              source: 'spanish_date_match'
-            };
-          }
+        if (cleanedMatch) {
+          const targetPath = getEventUrl(cleanedMatch.slug, cleanedMatch.event_type);
           return {
-            event: dateMatch as EventData,
-            needsRedirect: false,
-            targetSlug: null,
-            targetPath: null,
-            source: 'spanish_date_exact'
+            event: cleanedMatch as EventData,
+            needsRedirect: true,
+            targetSlug: cleanedMatch.slug,
+            targetPath,
+            source: 'cleaned_slug_match',
+            fastPath: false
           };
         }
       }
       
-      // RULE 4: Auto-clean numeric suffixes and search by artist+city
-      if (parsedSlug.hasNumericSuffix || parsedSlug.hasLegacySuffix) {
-        const city = extractCityFromSlug(parsedSlug.baseSlug);
+      // ============================================
+      // STEP 5: LIGHTWEIGHT FUZZY SEARCH (ONLY IF NEEDED)
+      // ============================================
+      const city = extractCityFromSlug(workingSlug);
+      
+      if (city) {
+        // Extract artist part (everything before city)
+        const slugLower = workingSlug.toLowerCase();
+        const cityIndex = slugLower.lastIndexOf(`-${city}`);
+        const artistPart = cityIndex > 0 ? workingSlug.substring(0, cityIndex) : null;
         
-        if (city) {
-          const cityLower = city.toLowerCase();
-          const slugLower = parsedSlug.baseSlug.toLowerCase();
-          const cityIndex = slugLower.lastIndexOf(`-${cityLower}`);
-          const artistPart = cityIndex > 0 ? parsedSlug.baseSlug.substring(0, cityIndex) : null;
+        if (artistPart && artistPart.length >= 3) {
+          // Search by slug prefix (indexed via LIKE with prefix)
+          const { data: artistMatch } = await supabase
+            .from('tm_tbl_events')
+            .select('id, slug, event_type, name, venue_city, event_date')
+            .ilike('slug', `${artistPart}-${city}%`)
+            .gte('event_date', new Date().toISOString())
+            .order('event_date', { ascending: true })
+            .limit(1)
+            .maybeSingle();
           
-          if (artistPart) {
-            // Search by artist prefix + city
-            const citySearchPattern = city.replace(/-/g, ' ');
+          if (artistMatch) {
+            const targetPath = getEventUrl(artistMatch.slug, artistMatch.event_type);
             
-            const { data: artistCityMatches } = await supabase
-              .from('tm_tbl_events')
-              .select('id, slug, event_type, name, venue_city, event_date')
-              .ilike('slug', `${artistPart}-%`)
-              .ilike('venue_city', `%${citySearchPattern}%`)
-              .gte('event_date', new Date().toISOString())
-              .order('event_date', { ascending: true })
-              .limit(5);
+            // Cache the result
+            setCachedRedirect(rawSlug, {
+              new_slug: artistMatch.slug,
+              event_id: artistMatch.id,
+              event_type: artistMatch.event_type
+            });
             
-            if (artistCityMatches && artistCityMatches.length > 0) {
-              // Find the best match (preferably upcoming, not VIP)
-              const bestMatch = artistCityMatches.find(e => 
-                !e.slug.includes('-paquetes-vip') && !e.slug.includes('-parking')
-              ) || artistCityMatches[0];
-              
-              const targetPath = getEventUrl(bestMatch.slug, bestMatch.event_type);
-              console.log(`[RedirectLegacyEvent] Artist+city match: ${rawSlug} → ${targetPath}`);
-              return {
-                event: bestMatch as EventData,
-                needsRedirect: true,
-                targetSlug: bestMatch.slug,
-                targetPath,
-                source: 'artist_city_search'
-              };
-            }
+            return {
+              event: artistMatch as EventData,
+              needsRedirect: true,
+              targetSlug: artistMatch.slug,
+              targetPath,
+              source: 'artist_city_prefix',
+              fastPath: false
+            };
           }
         }
+      }
+      
+      // Last resort: prefix search with first 2-3 parts
+      const slugParts = workingSlug.split('-');
+      if (slugParts.length >= 2) {
+        const prefix = slugParts.slice(0, Math.min(3, slugParts.length)).join('-');
         
-        // Fallback: search by base slug prefix
         const { data: prefixMatch } = await supabase
           .from('tm_tbl_events')
           .select('id, slug, event_type, name, venue_city, event_date')
-          .ilike('slug', `${parsedSlug.baseSlug}-%`)
+          .ilike('slug', `${prefix}%`)
           .gte('event_date', new Date().toISOString())
           .order('event_date', { ascending: true })
           .limit(1)
@@ -264,82 +360,42 @@ const RedirectLegacyEvent = () => {
         
         if (prefixMatch) {
           const targetPath = getEventUrl(prefixMatch.slug, prefixMatch.event_type);
-          console.log(`[RedirectLegacyEvent] Prefix match: ${rawSlug} → ${targetPath}`);
           return {
             event: prefixMatch as EventData,
             needsRedirect: true,
             targetSlug: prefixMatch.slug,
             targetPath,
-            source: 'prefix_search'
-          };
-        }
-      }
-      
-      // RULE 5: Festival keyword detection - search in festivals
-      if (slugLooksLikeFestival && !isFestivalRoute) {
-        const slugParts = rawSlug.split('-').slice(0, 3).join('-');
-        
-        const { data: festivalMatch } = await supabase
-          .from('tm_tbl_events')
-          .select('id, slug, event_type, name, venue_city, event_date')
-          .eq('event_type', 'festival')
-          .ilike('slug', `%${slugParts}%`)
-          .gte('event_date', new Date().toISOString())
-          .order('event_date', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        
-        if (festivalMatch) {
-          const targetPath = getEventUrl(festivalMatch.slug, festivalMatch.event_type);
-          console.log(`[RedirectLegacyEvent] Festival keyword detection: ${rawSlug} → ${targetPath}`);
-          return {
-            event: festivalMatch as EventData,
-            needsRedirect: true,
-            targetSlug: festivalMatch.slug,
-            targetPath,
-            source: 'festival_detection'
-          };
-        }
-      }
-      
-      // RULE 6: Fuzzy search as last resort
-      const slugParts = rawSlug.split('-');
-      if (slugParts.length >= 2) {
-        const prefixLength = Math.min(3, slugParts.length);
-        const fuzzyPrefix = slugParts.slice(0, prefixLength).join('-');
-        
-        const { data: fuzzyMatch } = await supabase
-          .from('tm_tbl_events')
-          .select('id, slug, event_type, name, venue_city, event_date')
-          .ilike('slug', `${fuzzyPrefix}%`)
-          .gte('event_date', new Date().toISOString())
-          .order('event_date', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        
-        if (fuzzyMatch) {
-          const targetPath = getEventUrl(fuzzyMatch.slug, fuzzyMatch.event_type);
-          console.log(`[RedirectLegacyEvent] Fuzzy match: ${rawSlug} → ${targetPath}`);
-          return {
-            event: fuzzyMatch as EventData,
-            needsRedirect: true,
-            targetSlug: fuzzyMatch.slug,
-            targetPath,
-            source: 'fuzzy_search'
+            source: 'prefix_fallback',
+            fastPath: false
           };
         }
       }
       
       // Event not found
-      console.log(`[RedirectLegacyEvent] No event found for: ${rawSlug}`);
-      return { event: null, needsRedirect: false, targetSlug: null, targetPath: null, source: 'not_found' };
+      console.log(`[Redirect] Not found: ${rawSlug}`);
+      return { event: null, needsRedirect: false, targetSlug: null, targetPath: null, source: 'not_found', fastPath: false };
     },
-    enabled: !!rawSlug,
+    // Skip query if early exit is possible
+    enabled: !!rawSlug && !earlyExitResult?.canFastPath,
     staleTime: Infinity,
     gcTime: 60 * 60 * 1000,
   });
 
+  // ============================================
+  // NAVIGATION EFFECTS
+  // ============================================
+  
+  // Handle route correction from early exit
   useEffect(() => {
+    if (earlyExitResult?.needsRouteCorrection && earlyExitResult.correctRoute && rawSlug) {
+      const targetPath = `${earlyExitResult.correctRoute}/${rawSlug}`;
+      navigate(targetPath, { replace: true });
+    }
+  }, [earlyExitResult, rawSlug, navigate]);
+  
+  // Handle query results
+  useEffect(() => {
+    if (earlyExitResult?.canFastPath) return; // Fast path, no redirect needed
     if (isLoading || !isFetched) return;
     
     if (result?.needsRedirect && result.targetPath) {
@@ -347,24 +403,41 @@ const RedirectLegacyEvent = () => {
       return;
     }
     
-    if (!result?.event && isFetched) {
-      // No event found - redirect to appropriate list
-      console.warn(`Event not found: "${rawSlug}", redirecting to list page`);
-      navigate(isFestivalRoute || slugLooksLikeFestival ? '/festivales' : '/conciertos', { replace: true });
+    if (!result?.event && isFetched && result?.source === 'not_found') {
+      const slugLooksFestival = rawSlug ? isFestivalSlug(rawSlug) : false;
+      navigate(isFestivalRoute || slugLooksFestival ? '/festivales' : '/conciertos', { replace: true });
     }
-  }, [result, isLoading, isFetched, navigate, rawSlug, isFestivalRoute, slugLooksLikeFestival]);
+  }, [result, isLoading, isFetched, navigate, rawSlug, isFestivalRoute, earlyExitResult]);
 
+  // ============================================
+  // RENDER
+  // ============================================
+  
   if (error) {
     console.error('Event redirect error:', error);
     navigate(isFestivalRoute ? '/festivales' : '/conciertos', { replace: true });
     return null;
   }
 
+  // FAST PATH: Clean URL with correct route - render immediately
+  if (earlyExitResult?.canFastPath) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Producto />
+      </Suspense>
+    );
+  }
+  
+  // Waiting for route correction
+  if (earlyExitResult?.needsRouteCorrection) {
+    return <PageLoader />;
+  }
+
   if (isLoading) {
     return <PageLoader />;
   }
 
-  // Event found with no redirect needed - render page
+  // Event found with no redirect needed
   if (result?.event && !result.needsRedirect) {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -373,13 +446,13 @@ const RedirectLegacyEvent = () => {
     );
   }
 
-  // Redirect in progress - show loader with SEO tags
+  // Redirect in progress
   if (result?.needsRedirect && result.targetPath) {
     const targetUrl = `https://feelomove.com${result.targetPath}`;
     return <RedirectLoader targetUrl={targetUrl} />;
   }
 
-  // Fallback - render Producto
+  // Fallback
   return (
     <Suspense fallback={<PageLoader />}>
       <Producto />
