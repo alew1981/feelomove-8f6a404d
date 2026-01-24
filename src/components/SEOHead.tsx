@@ -16,32 +16,30 @@ interface SEOHeadProps {
   jsonLd?: object | object[];
   pageType?: "WebPage" | "ItemPage" | "CollectionPage" | "SearchResultsPage" | "AboutPage" | "ContactPage";
   breadcrumbs?: BreadcrumbItem[];
-  preloadImage?: string; // LCP image URL for preloading
-  forceNoIndex?: boolean; // Force noindex regardless of URL params
+  preloadImage?: string;
+  forceNoIndex?: boolean;
 }
 
-// Parameters that should trigger noindex when present
+// Parameters that should trigger noindex
 const NOINDEX_PARAMS = ['sort', 'order', 'orderBy', 'page'];
-// Filter parameters - noindex if more than one is present
 const FILTER_PARAMS = ['ciudad', 'city', 'genero', 'genre', 'artista', 'artist', 'mes', 'month', 'fecha', 'date', 'precio', 'price', 'duracion', 'duration'];
+// Marketing/tracking params to strip from canonical
+const TRACKING_PARAMS = ['fbclid', 'gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ref', 'source'];
 
 /**
- * Determines if the current URL should be noindexed based on query parameters
+ * Determines if the current URL should be noindexed
  */
 const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean => {
-  // Search pages should not be indexed
   if (pathname === '/buscar' || pathname.startsWith('/buscar')) {
     return true;
   }
   
-  // Check for sorting/pagination params - always noindex
   for (const param of NOINDEX_PARAMS) {
     if (searchParams.has(param)) {
       return true;
     }
   }
   
-  // Count filter parameters - noindex if more than 1
   let filterCount = 0;
   for (const param of FILTER_PARAMS) {
     if (searchParams.has(param) && searchParams.get(param)) {
@@ -53,24 +51,36 @@ const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean
 };
 
 /**
- * Gets the canonical URL for search pages
+ * Generates clean canonical URL for any page
+ * - Strips ALL query parameters
+ * - Ensures lowercase
+ * - Removes trailing slashes
+ * - Handles /festival/ and /concierto/ routes
  */
-const getSearchCanonical = (pathname: string): string | null => {
+const getCleanCanonical = (pathname: string, providedCanonical?: string): string => {
+  const siteUrl = "https://feelomove.com";
+  
+  // Search pages → redirect to /conciertos
   if (pathname === '/buscar' || pathname.startsWith('/buscar')) {
-    return 'https://feelomove.com/conciertos';
+    return `${siteUrl}/conciertos`;
   }
-  return null;
-};
-
-/**
- * Gets the clean canonical URL for festival pages (strips query params)
- */
-const getFestivalCanonical = (pathname: string): string | null => {
-  if (pathname.startsWith('/festival/')) {
-    // Return clean URL without query parameters
-    return `https://feelomove.com${pathname}`;
+  
+  // If canonical is explicitly provided, clean it
+  if (providedCanonical) {
+    const cleanProvided = providedCanonical
+      .split('?')[0]  // Strip query params
+      .split('#')[0]  // Strip hash
+      .replace(/\/+$/, ''); // Remove trailing slashes
+    
+    return cleanProvided.startsWith('http') ? cleanProvided : `${siteUrl}${cleanProvided.startsWith('/') ? cleanProvided : `/${cleanProvided}`}`;
   }
-  return null;
+  
+  // Generate from pathname
+  const cleanPath = pathname
+    .toLowerCase()
+    .replace(/\/+$/, ''); // Remove trailing slashes
+  
+  return `${siteUrl}${cleanPath}`;
 };
 
 // Organization schema - global for all pages
@@ -170,21 +180,10 @@ export const SEOHead = ({
   // Determine if page should be noindexed
   const isNoIndex = forceNoIndex || shouldNoIndex(searchParams, location.pathname);
   
-  // Get canonical - special handling for search and festival pages
-  const searchCanonical = getSearchCanonical(location.pathname);
-  const festivalCanonical = getFestivalCanonical(location.pathname);
-  
   const fullTitle = `${title} | FEELOMOVE+`;
-  const siteUrl = "https://feelomove.com";
   
-  // Ensure canonical is always absolute URL and strips query params
-  // Priority: festival canonical > search canonical > provided canonical > current path
-  const baseCanonical = festivalCanonical || searchCanonical || canonical;
-  const fullCanonical = baseCanonical 
-    ? baseCanonical.startsWith('http') 
-      ? baseCanonical.split('?')[0] // Strip query params from canonical
-      : `${siteUrl}${baseCanonical.startsWith('/') ? baseCanonical : `/${baseCanonical}`}`.split('?')[0]
-    : `${siteUrl}${location.pathname}`;
+  // Use unified canonical generator - strips all query params and tracking
+  const fullCanonical = getCleanCanonical(location.pathname, canonical);
 
   // Build WebPage schema
   const webPageSchema = {
