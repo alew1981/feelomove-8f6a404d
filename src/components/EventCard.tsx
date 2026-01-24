@@ -5,10 +5,11 @@ import { Button } from "./ui/button";
 import { MapPin, Clock } from "lucide-react";
 import { format, parseISO, isFuture } from "date-fns";
 import { es } from "date-fns/locale";
-import { useEffect, useState, memo, useRef } from "react";
+import { useEffect, useState, memo, useRef, useCallback } from "react";
 import { CategoryBadge } from "./CategoryBadge";
 import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
+import { usePrefetchEvent } from "@/hooks/useEventData";
 
 interface EventCardProps {
   event: {
@@ -150,8 +151,21 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
   // ISO 8601 date for schema
   const isoDate = eventDate ? event.event_date : undefined;
 
+  // Prefetch event data on hover for instant navigation
+  const prefetchEvent = usePrefetchEvent();
+  const handleMouseEnter = useCallback(() => {
+    if (eventSlug) {
+      prefetchEvent(eventSlug, isFestival);
+    }
+  }, [eventSlug, isFestival, prefetchEvent]);
+
   return (
-    <Link to={eventUrl} className="group block" title={`Ver entradas y detalles de ${eventName}`}>
+    <Link 
+      to={eventUrl} 
+      className="group block" 
+      title={`Ver entradas y detalles de ${eventName}`}
+      onMouseEnter={handleMouseEnter}
+    >
       <Card ref={cardRef} className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
         <article itemScope itemType="https://schema.org/Event">
           {/* Hidden semantic data for SEO */}
