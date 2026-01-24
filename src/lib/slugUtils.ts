@@ -6,7 +6,7 @@
  * - Concerts: /concierto/[artista]-[ciudad]-[dia]-[mes]-[año]
  * 
  * Fallback: [nombre]-[ciudad]-2026 (if no exact date)
- * Prohibited: Numeric suffixes (-1, -2), uppercase letters
+ * Prohibited: Numeric suffixes (-1, -2), uppercase letters, noise words
  */
 
 const SPANISH_MONTHS = [
@@ -41,46 +41,103 @@ const SPANISH_CITIES = [
 ];
 
 /**
- * Noise words to strip from slugs (client-side cleanup)
+ * CRITICAL: Noise patterns that ALWAYS require redirect
+ * These patterns indicate a legacy/dirty URL that should NEVER render directly
  */
-const NOISE_PATTERNS = [
-  /-paquetes?-vip$/i,
-  /-tickets?$/i,
-  /-entradas?$/i,
-  /-parking$/i,
-  /-bus$/i,
-  /-feed\/?$/i,
-  /-vip$/i,
-  /-premium$/i,
-  /-general$/i,
-  /-zona-\w+$/i
+const NOISE_WORDS = [
+  'paquetes-vip', 'paquete-vip', 'vip-paquetes', 'vip-paquete',
+  'world-tour', 'tour-mundial', 'gira-mundial',
+  'everyone-s-star', 'everyones-star',
+  'tickets', 'ticket', 'entradas', 'entrada',
+  'parking', 'bus', 'autobus', 
+  'feed', 'rss',
+  'premium', 'gold', 'platinum', 'silver',
+  'general', 'pista', 'grada', 'tribuna',
+  'zona-a', 'zona-b', 'zona-c', 'zona-vip'
 ];
+
+/**
+ * Regex patterns for noise detection (compiled once)
+ */
+const NOISE_REGEX = new RegExp(
+  `(${NOISE_WORDS.map(w => w.replace(/-/g, '\\-?')).join('|')})`,
+  'i'
+);
+
+/**
+ * Numeric suffix pattern (end of slug): -1, -2, -99 but NOT years like -2026
+ */
+const NUMERIC_SUFFIX_REGEX = /-(\d{1,2})$/;
 
 // ============================================
 // PERFORMANCE: FAST PATH VALIDATORS
 // ============================================
 
 /**
+ * CRITICAL: Detects if a slug contains noise that requires cleanup
+ * This runs BEFORE any DB query to intercept dirty URLs
+ */
+export const hasNoisePatterns = (slug: string): boolean => {
+  const lower = slug.toLowerCase();
+  
+  // Check for any noise word
+  if (NOISE_REGEX.test(lower)) {
+    console.log(`[SEO Debug] Noise detected in slug: ${slug}`);
+    return true;
+  }
+  
+  // Check for numeric suffix (NOT years)
+  if (NUMERIC_SUFFIX_REGEX.test(lower) && !/-20[2-9]\d$/.test(lower)) {
+    console.log(`[SEO Debug] Numeric suffix detected in slug: ${slug}`);
+    return true;
+  }
+  
+  return false;
+};
+
+/**
  * FAST CHECK: Is this a clean SEO URL that needs no processing?
- * Pattern: /concierto/*-2026 or /festival/*-2026 with Spanish month
+ * A clean URL:
+ * - Has no noise patterns (paquetes-vip, tour, tickets, etc.)
+ * - Has no numeric suffixes (-1, -2)
+ * - Ends with a year OR Spanish date format
+ * - Is all lowercase
  */
 const VALID_SEO_PATTERN = /^[a-z0-9-]+-(20[2-9]\d)$|^[a-z0-9-]+-\d{1,2}-(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)-(20[2-9]\d)$/;
 
 export const isCleanSeoUrl = (slug: string): boolean => {
   // Quick fail conditions
-  if (!slug || slug.includes('--') || /[A-Z]/.test(slug)) return false;
+  if (!slug) return false;
   
-  // Check for prohibited numeric suffixes (not years)
-  if (/-\d{1,2}$/.test(slug) && !/-20[2-9]\d$/.test(slug)) return false;
+  // Uppercase = dirty
+  if (/[A-Z]/.test(slug)) {
+    console.log(`[SEO Debug] Uppercase detected: ${slug}`);
+    return false;
+  }
   
-  // Check for placeholder dates
-  if (slug.includes('-9999')) return false;
+  // Double hyphens = dirty
+  if (slug.includes('--')) {
+    console.log(`[SEO Debug] Double hyphens detected: ${slug}`);
+    return false;
+  }
   
-  // Check for noise patterns
-  if (NOISE_PATTERNS.some(p => p.test(slug))) return false;
+  // CRITICAL: Check for noise patterns FIRST
+  if (hasNoisePatterns(slug)) {
+    return false;
+  }
   
-  // Valid pattern check
-  return VALID_SEO_PATTERN.test(slug);
+  // Placeholder dates = dirty
+  if (slug.includes('-9999')) {
+    console.log(`[SEO Debug] Placeholder date detected: ${slug}`);
+    return false;
+  }
+  
+  // Valid pattern check (must end with year or Spanish date)
+  const isValid = VALID_SEO_PATTERN.test(slug);
+  if (!isValid) {
+    console.log(`[SEO Debug] Does not match SEO pattern: ${slug}`);
+  }
+  return isValid;
 };
 
 /**
@@ -97,26 +154,40 @@ export const hasTrackingParams = (search: string): boolean => {
 // CLIENT-SIDE SLUG CLEANUP (NO DB QUERIES)
 // ============================================
 
-/**
- * Cleans slug without database queries
- * Returns { cleanedSlug, wasModified }
- */
 export interface CleanedSlugResult {
   cleanedSlug: string;
   wasModified: boolean;
-  removedSuffix: string | null;
+  removedParts: string[];
+  artistSlug: string | null;
+  citySlug: string | null;
 }
 
+/**
+ * CRITICAL: Cleans slug without database queries
+ * This is the main cleanup function that strips all noise
+ */
 export const cleanSlugClientSide = (slug: string): CleanedSlugResult => {
+  console.log(`[SEO Debug] Cleaning slug: ${slug}`);
+  
   let working = slug.toLowerCase();
   let wasModified = false;
-  let removedSuffix: string | null = null;
+  const removedParts: string[] = [];
   
   // Remove trailing feed (WordPress legacy)
-  if (/\/feed\/?$/.test(working)) {
-    working = working.replace(/\/feed\/?$/, '');
+  if (/\/feed\/?$/.test(working) || /-feed$/.test(working)) {
+    working = working.replace(/\/feed\/?$/, '').replace(/-feed$/, '');
     wasModified = true;
-    removedSuffix = '/feed';
+    removedParts.push('feed');
+  }
+  
+  // Remove all noise words (order matters - remove longer patterns first)
+  for (const noiseWord of NOISE_WORDS.sort((a, b) => b.length - a.length)) {
+    const pattern = new RegExp(`-?${noiseWord.replace(/-/g, '-?')}-?`, 'gi');
+    if (pattern.test(working)) {
+      working = working.replace(pattern, '-');
+      wasModified = true;
+      removedParts.push(noiseWord);
+    }
   }
   
   // Remove numeric suffix (-1, -2, -99) but NOT years
@@ -124,49 +195,55 @@ export const cleanSlugClientSide = (slug: string): CleanedSlugResult => {
   if (numericSuffix && !/-20[2-9]\d$/.test(working)) {
     working = working.replace(/-\d{1,2}$/, '');
     wasModified = true;
-    removedSuffix = `-${numericSuffix[1]}`;
-  }
-  
-  // Remove noise patterns
-  for (const pattern of NOISE_PATTERNS) {
-    if (pattern.test(working)) {
-      const match = working.match(pattern);
-      working = working.replace(pattern, '');
-      wasModified = true;
-      removedSuffix = match?.[0] || null;
-    }
+    removedParts.push(`-${numericSuffix[1]}`);
   }
   
   // Remove placeholder years
   if (working.includes('-9999')) {
     working = working.replace(/-9999(-\d{2})?(-\d{2})?$/, '');
     wasModified = true;
-    removedSuffix = '-9999';
+    removedParts.push('-9999');
   }
   
   // Clean double hyphens
-  if (working.includes('--')) {
+  while (working.includes('--')) {
     working = working.replace(/--+/g, '-');
     wasModified = true;
   }
   
   // Trim edge hyphens
   if (working.startsWith('-') || working.endsWith('-')) {
-    working = working.replace(/^-|-$/g, '');
+    working = working.replace(/^-+|-+$/g, '');
     wasModified = true;
   }
   
-  return { cleanedSlug: working, wasModified, removedSuffix };
+  // Extract city (for fuzzy search)
+  const city = extractCityFromSlug(working);
+  
+  // Extract artist (everything before city and date)
+  let artistSlug: string | null = null;
+  if (city) {
+    const cityIndex = working.lastIndexOf(`-${city}`);
+    if (cityIndex > 0) {
+      artistSlug = working.substring(0, cityIndex);
+    }
+  }
+  
+  console.log(`[SEO Debug] Cleaned: ${slug} → ${working} (modified: ${wasModified}, removed: ${removedParts.join(', ')})`);
+  
+  return { 
+    cleanedSlug: working, 
+    wasModified, 
+    removedParts,
+    artistSlug,
+    citySlug: city
+  };
 };
 
 // ============================================
 // REDIRECT CACHE (MEMOIZATION)
 // ============================================
 
-/**
- * In-memory cache for common redirects (avoids DB lookup)
- * Key: old_slug, Value: { new_slug, event_id, event_type }
- */
 interface CachedRedirect {
   new_slug: string;
   event_id: string;
@@ -197,13 +274,22 @@ export const setCachedRedirect = (slug: string, redirect: CachedRedirect | null)
   redirectCache.set(slug, redirect);
 };
 
+// Pre-populate cache with known high-traffic artists
+const HIGH_TRAFFIC_ARTISTS = [
+  '5-seconds-of-summer', '5sos', 'bad-bunny', 'rosalia', 'morat',
+  'duki', 'rauw-alejandro', 'karol-g', 'shakira', 'taylor-swift',
+  'coldplay', 'ed-sheeran', 'aitana', 'dani-fernandez', 'lola-indigo'
+];
+
+export const isHighTrafficArtist = (slug: string): boolean => {
+  const lower = slug.toLowerCase();
+  return HIGH_TRAFFIC_ARTISTS.some(artist => lower.includes(artist));
+};
+
 // ============================================
 // EXISTING UTILITIES (OPTIMIZED)
 // ============================================
 
-/**
- * Normalizes text to slug format (lowercase, no accents, hyphens)
- */
 export const normalizeToSlug = (text: string): string => {
   return text
     .toLowerCase()
@@ -215,9 +301,6 @@ export const normalizeToSlug = (text: string): string => {
     .replace(/^-|-$/g, '');
 };
 
-/**
- * Generates SEO-friendly slug with Spanish date
- */
 export const generateSeoSlug = (
   artistOrFestival: string,
   city: string,
@@ -233,7 +316,6 @@ export const generateSeoSlug = (
   
   const date = typeof eventDate === 'string' ? new Date(eventDate) : eventDate;
   
-  // Handle placeholder dates (9999)
   if (date.getFullYear() === 9999) {
     const nextYear = new Date().getFullYear() + 1;
     return `${normalizedName}-${normalizedCity}-${nextYear}`;
@@ -246,24 +328,21 @@ export const generateSeoSlug = (
   return `${normalizedName}-${normalizedCity}-${day}-${month}-${year}`;
 };
 
-/**
- * Checks if a slug appears to be a festival
- */
 export const isFestivalSlug = (slug: string): boolean => {
   const slugLower = slug.toLowerCase();
   return FESTIVAL_KEYWORDS.some(keyword => slugLower.includes(keyword));
 };
 
-/**
- * Extracts city from slug (optimized with early exit)
- */
 export const extractCityFromSlug = (slug: string): string | null => {
   const parts = slug.toLowerCase().split('-');
   const partsLen = parts.length;
   
-  // Start from the end (cities usually at end)
-  for (let i = partsLen - 1; i >= Math.max(0, partsLen - 5); i--) {
-    // Check multi-word city (e.g., "pamplona-iruna", "aranda-de-duero")
+  // Start from the end (cities usually at end, before date)
+  for (let i = partsLen - 1; i >= Math.max(0, partsLen - 6); i--) {
+    // Skip if this looks like a date part
+    if (/^\d+$/.test(parts[i]) || SPANISH_MONTHS.includes(parts[i])) continue;
+    
+    // Check multi-word city
     if (i >= 2) {
       const threeWord = parts.slice(i - 2, i + 1).join('-');
       if (SPANISH_CITIES.includes(threeWord)) return threeWord;
@@ -272,15 +351,11 @@ export const extractCityFromSlug = (slug: string): string | null => {
       const twoWord = parts.slice(i - 1, i + 1).join('-');
       if (SPANISH_CITIES.includes(twoWord)) return twoWord;
     }
-    // Single word city
     if (SPANISH_CITIES.includes(parts[i])) return parts[i];
   }
   return null;
 };
 
-/**
- * Parses a legacy slug to extract components
- */
 export interface ParsedSlug {
   baseSlug: string;
   date: string | null;
@@ -294,7 +369,7 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
   let workingSlug = slug;
   let hasNumericSuffix = false;
   
-  // Check for Spanish month date format: -DD-month-YYYY
+  // Check for Spanish month date format
   const spanishMonthPattern = new RegExp(
     `-(\\d{1,2})-(${SPANISH_MONTHS.join('|')})-(20[2-9]\\d)$`,
     'i'
@@ -318,7 +393,7 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
     };
   }
   
-  // Check for numeric suffix (-1, -2, etc.) - PROHIBITED
+  // Check for numeric suffix
   const numericSuffixPattern = /-(\d{1,2})$/;
   const numericMatch = workingSlug.match(numericSuffixPattern);
   if (numericMatch && parseInt(numericMatch[1]) <= 99 && !/-20[2-9]\d$/.test(workingSlug)) {
@@ -326,7 +401,7 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
     workingSlug = workingSlug.replace(numericSuffixPattern, '');
   }
   
-  // Check for placeholder year (-9999)
+  // Check for placeholder year
   const placeholderPattern = /-9999(-\d{2})?(-\d{2})?$/;
   if (placeholderPattern.test(workingSlug)) {
     return {
@@ -339,7 +414,7 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
     };
   }
   
-  // Check for YYYY-MM-DD format
+  // Check for ISO date format
   const isoDatePattern = /-(20[2-9]\d)-(\d{2})-(\d{2})$/;
   const isoMatch = workingSlug.match(isoDatePattern);
   if (isoMatch) {
@@ -353,14 +428,14 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
     };
   }
   
-  // Check for year-only suffix (-2026)
+  // Check for year-only suffix
   const yearPattern = /-(20[2-9]\d)$/;
   const yearMatch = workingSlug.match(yearPattern);
   if (yearMatch) {
     return {
       baseSlug: workingSlug.replace(yearPattern, ''),
       date: null,
-      hasLegacySuffix: false, // Year-only is valid
+      hasLegacySuffix: false,
       hasNumericSuffix,
       isPlaceholderDate: false,
       isSpanishDateFormat: false
@@ -377,9 +452,6 @@ export const parseLegacySlug = (slug: string): ParsedSlug => {
   };
 };
 
-/**
- * Generates the correct URL for an event
- */
 export const getEventUrl = (
   slug: string,
   eventType: string | null
@@ -389,9 +461,6 @@ export const getEventUrl = (
   return `${prefix}/${slug}`;
 };
 
-/**
- * Generates URL with SEO-friendly slug
- */
 export const generateEventUrl = (
   name: string,
   city: string,
@@ -402,29 +471,15 @@ export const generateEventUrl = (
   return getEventUrl(slug, eventType);
 };
 
-/**
- * Validates that a slug follows SEO standards
- * Returns true if valid, false if it needs cleanup
- */
 export const isValidSeoSlug = (slug: string): boolean => {
-  // No uppercase
   if (slug !== slug.toLowerCase()) return false;
-  
-  // No numeric suffix at the end (except year)
   if (/-\d{1,2}$/.test(slug) && !/-20[2-9]\d$/.test(slug)) return false;
-  
-  // No placeholder year
   if (/-9999/.test(slug)) return false;
-  
-  // No double hyphens
   if (/--/.test(slug)) return false;
-  
+  if (hasNoisePatterns(slug)) return false;
   return true;
 };
 
-/**
- * Cleans a slug to meet SEO standards
- */
 export const cleanSlug = (slug: string): string => {
   return slug
     .toLowerCase()
