@@ -1,8 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useRef } from "react";
-// Schema.org is now handled directly by SEOHead component with dynamic jsonLd prop
-import { useMetaTags } from "@/hooks/useMetaTags";
+import { useEventData } from "@/hooks/useEventData";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -18,13 +17,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw, Check, ArrowDown, Ticket, Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart, CartTicket } from "@/contexts/CartContext";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
-import { handleLegacyRedirect } from "@/utils/redirects";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
@@ -85,173 +82,32 @@ const Producto = () => {
   
   const [showAllTickets, setShowAllTickets] = useState(false);
 
-  // State to store canonical slug from RPC
-  const [rpcCanonicalSlug, setRpcCanonicalSlug] = useState<string | null>(null);
+  // OPTIMIZED: Use parallelized event data hook (Promise.all instead of waterfall)
+  const { data: eventResult, isLoading, isError, error, refetch } = useEventData(
+    slug,
+    isFestivalRoute,
+    isConcierto
+  );
 
-  // Fetch event details from specific views based on route type
-  const { data: eventData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["event-product-page", slug, isFestivalRoute],
-    queryFn: async () => {
-      if (!slug) throw new Error("No se proporcionó el identificador del evento");
-      
-      // Check for canonical slug redirect using slug_redirects table
-      // If current slug is an OLD slug, redirect to new one.
-      // IMPORTANT: Ignore redirects that point to placeholder slugs (e.g. ending in -9999),
-      // because they create redirect loops with our legacy-slug normalizer.
-      try {
-        const { data: redirectData } = await supabase
-          .from('slug_redirects')
-          .select('new_slug')
-          .eq('old_slug', slug)
-          .maybeSingle();
+  // Handle redirects from the optimized hook
+  useEffect(() => {
+    if (eventResult?.needsRedirect && eventResult.redirectPath) {
+      navigate(eventResult.redirectPath, { replace: true });
+    }
+    if (eventResult?.needsRouteCorrection && eventResult.correctRoutePath) {
+      navigate(eventResult.correctRoutePath, { replace: true });
+    }
+  }, [eventResult, navigate]);
 
-        const isPlaceholderSlug = (s: string) => /-9999(-\d{2})?(-\d{2})?$/.test(s);
-        const isLegacySuffixOnlyRedirect = (fromSlug: string, toSlug: string) => {
-          // Avoid redirect loops like:
-          // base-slug -> base-slug-2026 (year-only)
-          // base-slug -> base-slug-2026-04-04 (full date)
-          // base-slug -> base-slug-9999 (placeholder)
-          if (!toSlug || toSlug === fromSlug) return false;
-
-          const legacySuffixPattern = /-(\d{4})(-\d{2})?(-\d{2})?$/;
-          if (!legacySuffixPattern.test(toSlug)) return false;
-
-          // Remove the suffix and compare to original
-          const toBase = toSlug.replace(legacySuffixPattern, "");
-          return toBase === fromSlug;
-        };
-
-        if (redirectData?.new_slug && redirectData.new_slug !== slug) {
-          if (isPlaceholderSlug(redirectData.new_slug) || isLegacySuffixOnlyRedirect(slug, redirectData.new_slug)) {
-            // Skip placeholder & legacy-suffix redirects to avoid infinite loops with our legacy-slug normalizer.
-            console.warn('Ignoring slug_redirects entry:', {
-              old_slug: slug,
-              new_slug: redirectData.new_slug,
-              reason: isPlaceholderSlug(redirectData.new_slug)
-                ? 'placeholder'
-                : 'legacy_suffix_only',
-            });
-          } else {
-            // Store the canonical slug for SEO purposes
-            setRpcCanonicalSlug(redirectData.new_slug);
-
-            // Redirect to the new canonical URL
-            const redirectPath = isFestivalRoute
-              ? `/festival/${redirectData.new_slug}`
-              : `/concierto/${redirectData.new_slug}`;
-
-            navigate(redirectPath, { replace: true });
-            return null; // Stop execution, redirect will happen
-          }
-        }
-      } catch (redirectError) {
-        // Silently continue if redirect table is unavailable
-        console.warn('Redirect check skipped:', redirectError);
-      }
-      
-      // If the slug exists but the route type is wrong (/concierto for a festival or vice-versa),
-      // redirect immediately to the correct canonical route.
-      // This prevents unnecessary view queries and fixes 404s for misclassified URLs.
-      try {
-        const { data: typeCheck } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug")
-          .eq("slug", slug)
-          .maybeSingle();
-
-        if (typeCheck?.event_type) {
-          const shouldBeFestival = typeCheck.event_type === "festival";
-          const isWrongRoute = shouldBeFestival ? !isFestivalRoute : !isConcierto;
-
-          if (isWrongRoute) {
-            const correctPath = shouldBeFestival
-              ? `/festival/${typeCheck.slug}`
-              : `/concierto/${typeCheck.slug}`;
-            navigate(correctPath, { replace: true });
-            return null;
-          }
-        }
-      } catch (e) {
-        // If this check fails (e.g. permissions), continue with the existing fallback logic.
-        console.warn("Route type check skipped:", e);
-      }
-
-      // Use specific view based on route type
-      const viewName = isFestivalRoute 
-        ? "lovable_mv_event_product_page_festivales" 
-        : isConcierto 
-          ? "lovable_mv_event_product_page_conciertos"
-          : "lovable_mv_event_product_page"; // Fallback for legacy routes
-      
-      // Helper function to search event in a specific view
-      const searchInView = async (
-        view: "lovable_mv_event_product_page" | "lovable_mv_event_product_page_conciertos" | "lovable_mv_event_product_page_festivales", 
-        searchSlug: string
-      ) => {
-        const { data, error } = await supabase
-          .from(view)
-          .select("*")
-          .eq("event_slug", searchSlug);
-        
-        if (error) {
-          console.error(`Supabase error in ${view}:`, error);
-          return null;
-        }
-        return data && data.length > 0 ? data : null;
-      };
-      
-      // Try to find event with current slug
-      let result = await searchInView(viewName, slug);
-      if (result) return result;
-      
-      // If not found, check if current slug is a NEW slug and the view has OLD slug
-      // This handles case where view wasn't refreshed after slug migration
-      try {
-        const { data: reverseRedirect } = await supabase
-          .from('slug_redirects')
-          .select('old_slug')
-          .eq('new_slug', slug)
-          .limit(1);
-        
-        if (reverseRedirect && reverseRedirect.length > 0) {
-          // Try searching with the old slug from the view
-          const oldSlug = reverseRedirect[0].old_slug;
-          result = await searchInView(viewName, oldSlug);
-          if (result) return result;
-        }
-      } catch (e) {
-        console.warn('Reverse redirect check failed:', e);
-      }
-      
-      // Try alternative views as fallback
-      const alternativeViews: Array<"lovable_mv_event_product_page" | "lovable_mv_event_product_page_conciertos" | "lovable_mv_event_product_page_festivales"> = [
-        "lovable_mv_event_product_page_festivales",
-        "lovable_mv_event_product_page_conciertos",
-        "lovable_mv_event_product_page"
-      ];
-      
-      for (const altView of alternativeViews) {
-        if (altView === viewName) continue;
-        result = await searchInView(altView, slug);
-        if (result) return result;
-      }
-      
-      // Still not found - try legacy redirect
-      if (slug) {
-        const redirected = await handleLegacyRedirect(slug, navigate);
-        if (redirected) return null;
-      }
-      
-      throw new Error("Evento no encontrado");
-    },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * (attemptIndex + 1), 3000),
-    staleTime: 30000, // Cache for 30 seconds to prevent refetching on navigation
-  });
-
+  // Extract event data and canonical slug from result
+  const eventData = eventResult?.data;
+  const rpcCanonicalSlug = eventResult?.canonicalSlug || null;
 
   // Process data - first row has event details
   const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
+
+  // Track page view with proper title (fixes "Page Name not defined" in Matomo)
+  usePageTracking(eventDetails?.event_name);
   
   // Get hotels from hotels_prices_aggregated_jsonb
   const hotels: HotelData[] = (() => {
@@ -326,9 +182,7 @@ const Producto = () => {
   }, [isError, error, navigate]);
 
   // Schema.org is handled by SEOHead with jsonLd prop - no duplicate injection needed
-  
-  // Inject Open Graph and meta tags from materialized view
-  useMetaTags(slug);
+  // Meta tags are now handled by SEOHead component - removed useMetaTags hook to avoid duplicate query
 
   if (isLoading) {
     return <ProductoSkeleton />;
