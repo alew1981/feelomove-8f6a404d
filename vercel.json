@@ -134,6 +134,11 @@
       "source": "/festivales/:slug(.*u.*u.*)",
       "destination": "/eventos",
       "permanent": true
+    },
+    {
+      "source": "/destinos/c%C3%A1ceres",
+      "destination": "/destinos/caceres",
+      "permanent": true
     }
   ],
   "headers": [
