@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Building2, MapPin, Check, ChevronDown } from "lucide-react";
-import HotelCard from "./HotelCard";
+import LazyHotelCard from "./LazyHotelCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
@@ -369,8 +369,8 @@ const HotelMapTabs = ({
 
                 {filteredAndSortedHotels.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
-                    {filteredAndSortedHotels.map((hotel) => (
-                      <HotelCard
+                    {filteredAndSortedHotels.map((hotel, index) => (
+                      <LazyHotelCard
                         key={hotel.hotel_id}
                         hotel={hotel}
                         onAddHotel={onAddHotel}
@@ -379,6 +379,7 @@ const HotelMapTabs = ({
                         eventName={eventName}
                         showTicketHint={ticketsSelected}
                         isAdded={selectedHotelId === hotel.hotel_id}
+                        index={index}
                       />
                     ))}
                   </div>
