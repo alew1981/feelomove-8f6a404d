@@ -209,6 +209,9 @@ export const SEOHead = ({
 
   // For event pages (og:type="event"), we skip the generic WebPage schema
   // since EventSeo component provides the proper Event structured data
+  
+  // Detect if we're on event detail page for critical preconnects (LCP optimization)
+  const isEventDetailPage = location.pathname.startsWith('/concierto/') || location.pathname.startsWith('/festival/');
   const isEventPage = ogType === 'event';
 
   // Build WebPage schema only for non-event pages
@@ -256,6 +259,14 @@ export const SEOHead = ({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
+      
+      {/* CRITICAL: Preconnect for Ticketmaster images on event detail pages (LCP optimization) */}
+      {isEventDetailPage && (
+        <>
+          <link rel="preconnect" href="https://s1.ticketm.net" crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href="https://s1.ticketm.net" />
+        </>
+      )}
       
       {/* Preconnect for image domains - critical path optimization */}
       {isDestinationsPage && (
