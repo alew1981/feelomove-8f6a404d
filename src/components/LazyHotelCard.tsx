@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, memo } from "react";
 import HotelCard from "./HotelCard";
 import HotelCardSkeleton from "./HotelCardSkeleton";
 
@@ -30,10 +30,11 @@ interface LazyHotelCardProps {
 }
 
 /**
- * LazyHotelCard - Wraps HotelCard with intersection observer for progressive loading
- * First 2 cards load immediately, rest load when 200px from viewport
+ * LazyHotelCard - Optimized wrapper with stable rendering
+ * First 3 cards render immediately, rest use IntersectionObserver
+ * Memoized to prevent unnecessary re-renders
  */
-const LazyHotelCard = ({
+const LazyHotelCard = memo(({
   hotel,
   onAddHotel,
   checkinDate,
@@ -44,49 +45,50 @@ const LazyHotelCard = ({
   index,
 }: LazyHotelCardProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  // First 2 cards render immediately for perceived performance
-  const [shouldRender, setShouldRender] = useState(index < 2);
+  // First 3 cards render immediately - no lazy loading needed
+  const isPriority = index < 3;
+  const [hasIntersected, setHasIntersected] = useState(isPriority);
 
   useEffect(() => {
-    // Skip observer for immediately rendered cards
-    if (index < 2) return;
+    // Priority cards already rendered, skip observer
+    if (isPriority || hasIntersected) return;
 
     const element = containerRef.current;
     if (!element) return;
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setShouldRender(true);
-            observer.unobserve(element);
-          }
-        });
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasIntersected(true);
+          observer.disconnect();
+        }
       },
-      {
-        rootMargin: "200px", // Start loading 200px before visible
-        threshold: 0,
-      }
+      { rootMargin: "300px", threshold: 0 }
     );
 
     observer.observe(element);
+    return () => observer.disconnect();
+  }, [isPriority, hasIntersected]);
 
-    return () => {
-      observer.unobserve(element);
-    };
-  }, [index]);
+  // Priority cards render immediately without any wrapper overhead
+  if (isPriority) {
+    return (
+      <HotelCard
+        hotel={hotel}
+        onAddHotel={onAddHotel}
+        checkinDate={checkinDate}
+        checkoutDate={checkoutDate}
+        eventName={eventName}
+        showTicketHint={showTicketHint}
+        isAdded={isAdded}
+        priority={true}
+      />
+    );
+  }
 
   return (
-    <div 
-      ref={containerRef}
-      style={{ 
-        // Reserve space to prevent CLS
-        minHeight: shouldRender ? 'auto' : '340px',
-        contentVisibility: shouldRender ? 'visible' : 'auto',
-        containIntrinsicSize: '0 340px',
-      }}
-    >
-      {shouldRender ? (
+    <div ref={containerRef}>
+      {hasIntersected ? (
         <HotelCard
           hotel={hotel}
           onAddHotel={onAddHotel}
@@ -95,13 +97,22 @@ const LazyHotelCard = ({
           eventName={eventName}
           showTicketHint={showTicketHint}
           isAdded={isAdded}
-          priority={index < 2}
+          priority={false}
         />
       ) : (
         <HotelCardSkeleton />
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if these specific props change
+  return (
+    prevProps.hotel.hotel_id === nextProps.hotel.hotel_id &&
+    prevProps.isAdded === nextProps.isAdded &&
+    prevProps.index === nextProps.index
+  );
+});
+
+LazyHotelCard.displayName = 'LazyHotelCard';
 
 export default LazyHotelCard;
