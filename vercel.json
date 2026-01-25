@@ -121,26 +121,6 @@
       "permanent": true
     },
     {
-      "source": "/conciertos/:slug/:city",
-      "destination": "/conciertos/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/festivales/:slug/:city",
-      "destination": "/festivales/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/conciertos/:slug(.*u.*u.*)",
-      "destination": "/eventos",
-      "permanent": true
-    },
-    {
-      "source": "/festivales/:slug(.*u.*u.*)",
-      "destination": "/eventos",
-      "permanent": true
-    },
-    {
       "source": "/destinos/c%C3%A1ceres",
       "destination": "/destinos/caceres",
       "permanent": true
@@ -278,39 +258,6 @@
   ],
   "rewrites": [
     {
-      "source": "/",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(Googlebot|bingbot|Baiduspider|YandexBot|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slurp|DuckDuckBot|ia_archiver|Sogou|Exabot|AhrefsBot|SEMrushBot|MJ12bot|SeznamBot|PetalBot|Screaming Frog|seobility|msnbot|rogerbot|SemrushBot).*"
-        }
-      ],
-      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/seo-prerender?path=/"
-    },
-    {
-      "source": "/conciertos/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(Googlebot|bingbot|Baiduspider|YandexBot|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slurp|DuckDuckBot|ia_archiver|Sogou|Exabot|AhrefsBot|SEMrushBot|MJ12bot|SeznamBot|PetalBot|Screaming Frog|seobility|msnbot|rogerbot|SemrushBot).*"
-        }
-      ],
-      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/seo-prerender?path=/conciertos/:slug"
-    },
-    {
-      "source": "/festivales/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(Googlebot|bingbot|Baiduspider|YandexBot|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slurp|DuckDuckBot|ia_archiver|Sogou|Exabot|AhrefsBot|SEMrushBot|MJ12bot|SeznamBot|PetalBot|Screaming Frog|seobility|msnbot|rogerbot|SemrushBot).*"
-        }
-      ],
-      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/seo-prerender?path=/festivales/:slug"
-    },
-    {
       "source": "/sitemap.xml",
       "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index"
     },
@@ -339,7 +286,7 @@
       "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations"
     },
     {
-      "source": "/((?!api|sitemap.*\\.xml|robots\\.txt).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
