@@ -5,10 +5,6 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
-import MobileCartBar from "@/components/MobileCartBar";
-import CollapsibleBadges from "@/components/CollapsibleBadges";
-import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
-import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 import { LazySection } from "@/components/LazySection";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,11 +18,21 @@ import { es } from "date-fns/locale";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 
-// LAZY LOAD below-fold components to reduce initial JS bundle (~200KB savings)
+// LAZY LOAD below-fold and non-critical components to reduce initial JS bundle
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
 const HotelCard = lazy(() => import("@/components/HotelCard"));
 const Footer = lazy(() => import("@/components/Footer"));
 const RelatedLinks = lazy(() => import("@/components/RelatedLinks").then(m => ({ default: m.RelatedLinks })));
+
+// Secondary UI components - not needed for first paint
+const MobileCartBar = lazy(() => import("@/components/MobileCartBar"));
+const CollapsibleBadges = lazy(() => import("@/components/CollapsibleBadges"));
+const EventStatusBanner = lazy(() => import("@/components/EventStatusBanner").then(m => ({ default: m.EventStatusBanner })));
+const EventSeo = lazy(() => import("@/components/EventSeo").then(m => ({ default: m.EventSeo })));
+
+// Helper function imported directly (not a component)
+import { getEventStatus } from "@/components/EventStatusBanner";
+import { createEventSeoProps } from "@/components/EventSeo";
 
 interface PriceLevel {
   id: number;
@@ -550,8 +556,10 @@ const Producto = () => {
 
   return (
     <>
-      {/* EventSeo component injects JSON-LD structured data */}
-      <EventSeo {...eventSeoProps} />
+      {/* EventSeo component injects JSON-LD structured data - lazy loaded */}
+      <Suspense fallback={null}>
+        <EventSeo {...eventSeoProps} />
+      </Suspense>
       
       <SEOHead
         title={seoTitle}
@@ -582,12 +590,14 @@ const Producto = () => {
           {/* Breadcrumbs above hero */}
           <Breadcrumbs />
           
-          {/* Event Status Banner for cancelled, rescheduled, or past events */}
-          <EventStatusBanner 
-            status={eventStatus} 
-            eventName={eventDetails.event_name || ''} 
-            eventDate={eventDetails.event_date || ''}
-          />
+          {/* Event Status Banner for cancelled, rescheduled, or past events - lazy loaded */}
+          <Suspense fallback={null}>
+            <EventStatusBanner 
+              status={eventStatus} 
+              eventName={eventDetails.event_name || ''} 
+              eventDate={eventDetails.event_date || ''}
+            />
+          </Suspense>
           
           {/* Single H1 for SEO - screen reader accessible, visually hidden on mobile */}
           <h1 className="sr-only">
@@ -747,8 +757,10 @@ const Producto = () => {
               
               {/* Desktop: Right Side - Badges and Event Image */}
               <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 hidden sm:flex flex-col items-end justify-between">
-                {/* Badges - collapsible on mobile */}
-                <CollapsibleBadges eventDetails={eventDetails} hasVipTickets={hasVipTickets} isEventAvailable={isEventAvailable} daysUntil={daysUntil} />
+                {/* Badges - collapsible on mobile - lazy loaded */}
+                <Suspense fallback={<div className="h-8" />}>
+                  <CollapsibleBadges eventDetails={eventDetails} hasVipTickets={hasVipTickets} isEventAvailable={isEventAvailable} daysUntil={daysUntil} />
+                </Suspense>
                 
                 {/* Event Image with hover zoom */}
                 <div className="flex flex-col items-end gap-2 mb-6">
@@ -1089,13 +1101,15 @@ const Producto = () => {
           </div>
         </main>
 
-        {/* Mobile Cart Bar */}
-        <MobileCartBar 
-          eventId={eventDetails.event_id || undefined}
-          eventUrl={(eventDetails as any).event_url}
-          hotelUrl={(eventDetails as any).destination_deeplink}
-          eventName={eventDetails.event_name || undefined}
-        />
+        {/* Mobile Cart Bar - lazy loaded (below fold interaction) */}
+        <Suspense fallback={null}>
+          <MobileCartBar 
+            eventId={eventDetails.event_id || undefined}
+            eventUrl={(eventDetails as any).event_url}
+            hotelUrl={(eventDetails as any).destination_deeplink}
+            eventName={eventDetails.event_name || undefined}
+          />
+        </Suspense>
 
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
