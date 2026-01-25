@@ -19,7 +19,7 @@ const getOptimizedThumbnail = (url: string): string => {
 
   if (url.includes("unsplash.com")) {
     const baseUrl = url.split("?")[0];
-    return `${baseUrl}?w=100&q=60&fm=webp&fit=crop`;
+    return `${baseUrl}?w=150&h=150&fit=crop&q=75&fm=webp`;
   }
   
   // For Supabase storage URLs, they're already optimized

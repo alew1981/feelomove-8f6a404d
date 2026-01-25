@@ -248,11 +248,24 @@ export const SEOHead = ({
         ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
       ];
 
+  // Detect if we're on destinations page for preconnect hints
+  const isDestinationsPage = location.pathname === '/destinos' || location.pathname.startsWith('/destinos');
+
   return (
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
+      
+      {/* Preconnect for image domains - critical path optimization */}
+      {isDestinationsPage && (
+        <>
+          <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://s1.ticketm.net" crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href="https://images.unsplash.com" />
+          <link rel="dns-prefetch" href="https://s1.ticketm.net" />
+        </>
+      )}
       
       {/* Preload LCP image for better performance */}
       {preloadImage && (
