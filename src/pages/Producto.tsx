@@ -180,10 +180,18 @@ const Producto = () => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } = useCart();
   
-  // ULTRA-LAZY: Delay rendering of non-critical components by 3 seconds
-  const [isLowPriorityReady, setIsLowPriorityReady] = useState(false);
+  // ULTRA-LAZY HYDRATION: Delay rendering of non-critical components by 4 seconds
+  // This guarantees LCP is registered BEFORE React attempts to hydrate below-fold content
+  const [isInteractive, setIsInteractive] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setIsLowPriorityReady(true), 3000);
+    const timer = setTimeout(() => {
+      // Use requestIdleCallback if available for smoother hydration
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => setIsInteractive(true), { timeout: 500 });
+      } else {
+        setIsInteractive(true);
+      }
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
   
@@ -233,8 +241,8 @@ const Producto = () => {
   // Track page view with proper title (fixes "Page Name not defined" in Matomo)
   usePageTracking(eventDetails?.event_name);
   
-  // Get hotels from hotels_prices_aggregated_jsonb
-  const hotels: HotelData[] = (() => {
+  // PERFORMANCE: Get hotels from hotels_prices_aggregated_jsonb using useMemo
+  const hotels: HotelData[] = useMemo(() => {
     if (!eventDetails) return [];
     
     let aggregatedHotels = (eventDetails as any).hotels_prices_aggregated_jsonb;
@@ -277,7 +285,7 @@ const Producto = () => {
         hotel_city: hotel.city || hotel.hotel_city || "",
       };
     });
-  })();
+  }, [(eventDetails as any)?.hotels_prices_aggregated_jsonb]);
 
   // Get map widget HTML - only use Stay22 map
   const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || null;
@@ -439,8 +447,9 @@ const Producto = () => {
   // Generate SEO description - optimized for ~155 chars
   const seoDescription = `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''}. Concierto en ${eventDetails.venue_name}. Reserva tu pack de entradas + hotel con Feelomove+.`;
 
-  // Parse ticket prices from ticket_types (JSON string with price_types array containing price_levels)
-  const ticketPrices = (() => {
+  // PERFORMANCE: Parse ticket prices using deferred computation to reduce TBT
+  // Uses useMemo with minimal dependencies to prevent recalculation
+  const ticketPrices = useMemo(() => {
     const rawTicketTypes = (eventDetails as any).ticket_types;
     if (!rawTicketTypes) return [];
     
@@ -455,9 +464,10 @@ const Producto = () => {
       // Flatten price_types -> price_levels into individual ticket options
       const tickets: Array<{id: string; type: string; code: string; description: string; price: number; fees: number; availability: string}> = [];
       
-      ticketData.price_types.forEach((priceType) => {
+      for (const priceType of ticketData.price_types) {
         if (priceType.price_levels && Array.isArray(priceType.price_levels)) {
-          priceType.price_levels.forEach((level, levelIndex) => {
+          for (let levelIndex = 0; levelIndex < priceType.price_levels.length; levelIndex++) {
+            const level = priceType.price_levels[levelIndex];
             const ticketId = `${priceType.code || 'ticket'}-${levelIndex}`;
             // Normalize availability - treat missing/unknown values as "available"
             const rawAvailability = level.availability?.toLowerCase() || "available";
@@ -476,9 +486,9 @@ const Producto = () => {
               fees: Number(level.ticket_fees || 0),
               availability: normalizedAvailability
             });
-          });
+          }
         }
-      });
+      }
       
       // Sort by: 1. Available first (not sold out), 2. Then by price
       return tickets.sort((a, b) => {
@@ -491,7 +501,7 @@ const Producto = () => {
       console.error("Error parsing ticket_types:", e);
       return [];
     }
-  })();
+  }, [(eventDetails as any).ticket_types]);
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
   const hasMoreTickets = ticketPrices.length > 4;
@@ -743,7 +753,7 @@ const Producto = () => {
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
                 loading="eager"
-                decoding="sync"
+                decoding="async"
                 // @ts-expect-error - fetchpriority is valid HTML but React doesn't recognize camelCase
                 fetchpriority="high"
               />
@@ -1031,8 +1041,8 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Hotels & Map Section with Tabs - LAZY loaded with fixed-height fallback */}
-              {(hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
+              {/* Hotels & Map Section with Tabs - ULTRA-LAZY: only after 4s for TBT optimization */}
+              {isInteractive && (hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
                 <div id="hotels-section">
                   <Suspense fallback={<HotelsSkeleton />}>
                     <HotelMapTabs 
@@ -1050,6 +1060,10 @@ const Producto = () => {
                     />
                   </Suspense>
                 </div>
+              )}
+              {/* Hotels skeleton placeholder before interactive */}
+              {!isInteractive && (hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
+                <HotelsSkeleton />
               )}
             </div>
 
@@ -1215,8 +1229,8 @@ const Producto = () => {
           </div>
         </main>
 
-        {/* Mobile Cart Bar - ULTRA-LAZY: only after 3s */}
-        {isLowPriorityReady && (
+        {/* Mobile Cart Bar - ULTRA-LAZY: only after 4s */}
+        {isInteractive && (
           <Suspense fallback={<MobileCartSkeleton />}>
             <MobileCartBar 
               eventId={eventDetails.event_id || undefined}
@@ -1230,8 +1244,8 @@ const Producto = () => {
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
         
-        {/* Related Links for SEO - ULTRA-LAZY: only after 3s */}
-        {isLowPriorityReady && (
+        {/* Related Links for SEO - ULTRA-LAZY: only after 4s */}
+        {isInteractive && (
           <div className="container mx-auto px-4 pb-8">
             <Suspense fallback={<RelatedLinksSkeleton />}>
               <RelatedLinks slug={slug || ''} type="event" />
@@ -1239,8 +1253,8 @@ const Producto = () => {
           </div>
         )}
         
-        {/* Footer - ULTRA-LAZY: only after 3s */}
-        {isLowPriorityReady ? (
+        {/* Footer - ULTRA-LAZY: only after 4s */}
+        {isInteractive ? (
           <Suspense fallback={<FooterSkeleton />}>
             <Footer />
           </Suspense>
