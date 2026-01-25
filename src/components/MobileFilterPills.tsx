@@ -63,7 +63,7 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
             </button>
           </SheetTrigger>
           
-          <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-2xl">
+          <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-2xl bg-card border-t-2 border-border">
             <SheetHeader className="pb-4">
               <SheetTitle className="text-left">Filtros</SheetTitle>
             </SheetHeader>
