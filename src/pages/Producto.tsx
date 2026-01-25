@@ -303,8 +303,12 @@ const Producto = () => {
   const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
   const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
 
-  // Generate SEO description
-  const seoDescription = `Disfruta de ${mainArtist} en ${eventDetails.venue_city} este ${monthYear}. Consigue tus entradas para ${eventDetails.event_name} en ${eventDetails.venue_name}. Vive una experiencia única con la mejor música en directo. Reserva ahora tus entradas y hoteles con Feelomove+.`;
+  // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
+  const eventYear = hasValidDate ? format(eventDate, "yyyy") : '';
+  const seoTitle = `${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''} - Entradas y Hotel`;
+  
+  // Generate SEO description - optimized for ~155 chars
+  const seoDescription = `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''}. Concierto en ${eventDetails.venue_name}. Reserva tu pack de entradas + hotel con Feelomove+.`;
 
   // Parse ticket prices from ticket_types (JSON string with price_types array containing price_levels)
   const ticketPrices = (() => {
@@ -529,9 +533,9 @@ const Producto = () => {
       <EventSeo {...eventSeoProps} />
       
       <SEOHead
-        title={`${eventDetails.event_name} - Entradas y Hotel`}
+        title={seoTitle}
         description={seoDescription}
-        canonical={canonicalUrl}
+        canonical={absoluteUrl}
         ogImage={eventImage}
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}

@@ -52,10 +52,11 @@ const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean
 
 /**
  * Generates clean canonical URL for any page
- * - Strips ALL query parameters
+ * - Strips ALL query parameters and tracking params
  * - Ensures lowercase
  * - Removes trailing slashes
  * - Handles /festival/ and /concierto/ routes
+ * - Always returns absolute URL
  */
 const getCleanCanonical = (pathname: string, providedCanonical?: string): string => {
   const siteUrl = "https://feelomove.com";
@@ -65,14 +66,34 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
     return `${siteUrl}/conciertos`;
   }
   
-  // If canonical is explicitly provided, clean it
+  // If canonical is explicitly provided (can be absolute or relative)
   if (providedCanonical) {
-    const cleanProvided = providedCanonical
+    let cleanUrl = providedCanonical;
+    
+    // If it's already absolute, extract the path for cleaning
+    if (cleanUrl.startsWith('http')) {
+      try {
+        const urlObj = new URL(cleanUrl);
+        cleanUrl = urlObj.pathname;
+      } catch {
+        // If URL parsing fails, try to clean as-is
+        cleanUrl = cleanUrl.replace(/^https?:\/\/[^/]+/, '');
+      }
+    }
+    
+    // Clean the path
+    cleanUrl = cleanUrl
       .split('?')[0]  // Strip query params
       .split('#')[0]  // Strip hash
+      .toLowerCase()
       .replace(/\/+$/, ''); // Remove trailing slashes
     
-    return cleanProvided.startsWith('http') ? cleanProvided : `${siteUrl}${cleanProvided.startsWith('/') ? cleanProvided : `/${cleanProvided}`}`;
+    // Ensure it starts with /
+    if (!cleanUrl.startsWith('/')) {
+      cleanUrl = `/${cleanUrl}`;
+    }
+    
+    return `${siteUrl}${cleanUrl}`;
   }
   
   // Generate from pathname
@@ -183,10 +204,15 @@ export const SEOHead = ({
   const fullTitle = `${title} | FEELOMOVE+`;
   
   // Use unified canonical generator - strips all query params and tracking
+  // ALWAYS returns absolute URL (https://feelomove.com/...)
   const fullCanonical = getCleanCanonical(location.pathname, canonical);
 
-  // Build WebPage schema
-  const webPageSchema = {
+  // For event pages (og:type="event"), we skip the generic WebPage schema
+  // since EventSeo component provides the proper Event structured data
+  const isEventPage = ogType === 'event';
+
+  // Build WebPage schema only for non-event pages
+  const webPageSchema = !isEventPage ? {
     "@context": "https://schema.org",
     "@type": pageType,
     "name": fullTitle,
@@ -202,19 +228,25 @@ export const SEOHead = ({
       "name": "FEELOMOVE+"
     },
     "inLanguage": "es-ES"
-  };
+  } : null;
 
   // Generate breadcrumb schema if provided
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs || []);
 
   // Combine all JSON-LD schemas
-  const allSchemas = [
-    organizationSchema,
-    siteNavigationSchema,
-    webPageSchema,
-    ...(breadcrumbSchema ? [breadcrumbSchema] : []),
-    ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
-  ];
+  // For event pages, skip Organization and WebPage schemas (handled by EventSeo)
+  const allSchemas = isEventPage
+    ? [
+        ...(breadcrumbSchema ? [breadcrumbSchema] : []),
+        ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
+      ]
+    : [
+        organizationSchema,
+        siteNavigationSchema,
+        ...(webPageSchema ? [webPageSchema] : []),
+        ...(breadcrumbSchema ? [breadcrumbSchema] : []),
+        ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
+      ];
 
   return (
     <Helmet>
