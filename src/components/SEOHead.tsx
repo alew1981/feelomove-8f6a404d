@@ -278,9 +278,15 @@ export const SEOHead = ({
         </>
       )}
       
-      {/* Preload LCP image for better performance */}
+      {/* CRITICAL: Preload LCP image BEFORE JS execution for faster discovery */}
       {preloadImage && (
-        <link rel="preload" as="image" href={preloadImage} fetchPriority="high" />
+        <link 
+          rel="preload" 
+          as="image" 
+          href={preloadImage} 
+          // @ts-expect-error - fetchpriority is valid HTML attribute but React doesn't recognize it
+          fetchpriority="high"
+        />
       )}
       
       {/* Canonical URL */}

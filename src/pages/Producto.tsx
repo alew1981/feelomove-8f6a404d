@@ -1,21 +1,25 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useEventData } from "@/hooks/useEventData";
 import { usePageTracking } from "@/hooks/usePageTracking";
+// SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import HotelCard from "@/components/HotelCard";
-import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
-import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 
+// LAZY: Below-the-fold components with fixed-height Suspense fallbacks
+const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
+const RelatedLinks = lazy(() => import("@/components/RelatedLinks"));
+const MobileCartBar = lazy(() => import("@/components/MobileCartBar"));
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw, Check, ArrowDown, Ticket, Building2 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart, CartTicket } from "@/contexts/CartContext";
@@ -25,7 +29,33 @@ import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
-import { RelatedLinks } from "@/components/RelatedLinks";
+
+// Fixed-height skeleton fallbacks to prevent CLS (400px matches HotelMapTabs)
+const HotelsSkeleton = () => (
+  <div className="w-full" style={{ minHeight: '400px' }}>
+    <Skeleton className="h-10 w-48 mb-4 animate-shimmer" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <Skeleton key={i} className="h-48 rounded-xl animate-shimmer" />
+      ))}
+    </div>
+  </div>
+);
+
+const RelatedLinksSkeleton = () => (
+  <div className="w-full py-4" style={{ minHeight: '120px' }}>
+    <Skeleton className="h-6 w-32 mb-3 animate-shimmer" />
+    <div className="flex flex-wrap gap-2">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Skeleton key={i} className="h-8 w-24 rounded-full animate-shimmer" />
+      ))}
+    </div>
+  </div>
+);
+
+const MobileCartSkeleton = () => (
+  <div className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border xl:hidden" />
+);
 
 interface PriceLevel {
   id: number;
@@ -902,22 +932,24 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Hotels & Map Section with Tabs */}
+              {/* Hotels & Map Section with Tabs - LAZY loaded with fixed-height fallback */}
               {(hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
                 <div id="hotels-section">
-                  <HotelMapTabs 
-                    hotels={hotels} 
-                    mapWidgetHtml={mapWidgetHtml} 
-                    onAddHotel={handleAddHotel}
-                    checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
-                    checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
-                    eventName={eventDetails.event_name || undefined}
-                    ticketsSelected={isEventInCart && totalPersons > 0}
-                    selectedHotelId={cart?.hotel?.hotel_id || null}
-                    venueCity={eventDetails.venue_city || ""}
-                    stay22Accommodations={(eventDetails as any)?.stay22_accommodations || null}
-                    stay22Activities={(eventDetails as any)?.stay22_activities || null}
-                  />
+                  <Suspense fallback={<HotelsSkeleton />}>
+                    <HotelMapTabs 
+                      hotels={hotels} 
+                      mapWidgetHtml={mapWidgetHtml} 
+                      onAddHotel={handleAddHotel}
+                      checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
+                      checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
+                      eventName={eventDetails.event_name || undefined}
+                      ticketsSelected={isEventInCart && totalPersons > 0}
+                      selectedHotelId={cart?.hotel?.hotel_id || null}
+                      venueCity={eventDetails.venue_city || ""}
+                      stay22Accommodations={(eventDetails as any)?.stay22_accommodations || null}
+                      stay22Activities={(eventDetails as any)?.stay22_activities || null}
+                    />
+                  </Suspense>
                 </div>
               )}
             </div>
@@ -1084,20 +1116,24 @@ const Producto = () => {
           </div>
         </main>
 
-        {/* Mobile Cart Bar */}
-        <MobileCartBar 
-          eventId={eventDetails.event_id || undefined}
-          eventUrl={(eventDetails as any).event_url}
-          hotelUrl={(eventDetails as any).destination_deeplink}
-          eventName={eventDetails.event_name || undefined}
-        />
+        {/* Mobile Cart Bar - LAZY loaded */}
+        <Suspense fallback={<MobileCartSkeleton />}>
+          <MobileCartBar 
+            eventId={eventDetails.event_id || undefined}
+            eventUrl={(eventDetails as any).event_url}
+            hotelUrl={(eventDetails as any).destination_deeplink}
+            eventName={eventDetails.event_name || undefined}
+          />
+        </Suspense>
 
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
         
-        {/* Related Links for SEO */}
+        {/* Related Links for SEO - LAZY loaded with fixed-height fallback */}
         <div className="container mx-auto px-4 pb-8">
-          <RelatedLinks slug={slug || ''} type="event" />
+          <Suspense fallback={<RelatedLinksSkeleton />}>
+            <RelatedLinks slug={slug || ''} type="event" />
+          </Suspense>
         </div>
         
         <Footer />

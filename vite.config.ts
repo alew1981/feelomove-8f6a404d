@@ -27,12 +27,36 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         // Optimize chunk splitting for better caching
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip', '@radix-ui/react-tabs', '@radix-ui/react-select'],
-          'vendor-date': ['date-fns'],
-          'vendor-supabase': ['@supabase/supabase-js'],
+        // CRITICAL: Keep react/react-dom/react-router-dom in main bundle (not separated)
+        // to avoid hydration issues and ensure correct render order
+        manualChunks: (id) => {
+          // Core React stays in main bundle - DO NOT separate
+          if (id.includes('node_modules/react/') || 
+              id.includes('node_modules/react-dom/') || 
+              id.includes('node_modules/react-router-dom/') ||
+              id.includes('node_modules/scheduler/')) {
+            return undefined; // Let Vite include in main bundle
+          }
+          // Heavy libraries that are NOT needed for first paint
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'vendor-query';
+          }
+          if (id.includes('node_modules/date-fns')) {
+            return 'vendor-date';
+          }
+          if (id.includes('node_modules/@supabase/')) {
+            return 'vendor-supabase';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'vendor-icons';
+          }
+          // UI components - can be chunked safely
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-ui';
+          }
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3')) {
+            return 'vendor-charts';
+          }
         },
         // Treeshake unused exports
         experimentalMinChunkSize: 10000,
