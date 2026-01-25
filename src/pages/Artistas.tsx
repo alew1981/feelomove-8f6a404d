@@ -16,6 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
 import { useInView } from "react-intersection-observer";
 import { matchesSearch } from "@/lib/searchUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import ArtistListCard, { ArtistListCardSkeleton } from "@/components/ArtistListCard";
+import MobileFilterPills from "@/components/MobileFilterPills";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -38,6 +41,7 @@ const Artistas = () => {
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState<number>(30);
+  const isMobile = useIsMobile();
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
 
@@ -53,7 +57,7 @@ const Artistas = () => {
         
         if (error) {
           console.warn('mv_attractions unavailable (MV may be refreshing):', error.message);
-          return []; // Return empty array on MV error
+          return [];
         }
         return data || [];
       } catch (error) {
@@ -62,7 +66,7 @@ const Artistas = () => {
       }
     },
     retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   // Get hero image from first artist
@@ -93,14 +97,12 @@ const Artistas = () => {
       const searchMatches = matchesSearch(artist.attraction_name, searchQuery);
       const matchesGenreFilter = filterGenre === "all" || artist.genres?.includes(filterGenre);
       
-      // City filter - check top_cities_json
       let matchesCityFilter = filterCity === "all";
       if (filterCity !== "all" && artist.top_cities_json) {
         const topCities = Array.isArray(artist.top_cities_json) ? artist.top_cities_json : [];
         matchesCityFilter = topCities.some((c: any) => c.city === filterCity);
       }
 
-      // Month filter - check next_event_date
       let matchesMonthFilter = filterMonth === "all";
       if (filterMonth !== "all" && artist.next_event_date) {
         const eventMonth = new Date(artist.next_event_date).toISOString().slice(5, 7);
@@ -120,6 +122,37 @@ const Artistas = () => {
       setDisplayCount(prev => Math.min(prev + 30, filteredArtists.length));
     }
   }, [inView, displayedArtists.length, filteredArtists.length]);
+
+  // Filter config for mobile pills
+  const mobileFilters = useMemo(() => [
+    {
+      id: "city",
+      label: "Ciudad",
+      value: filterCity,
+      options: cities.map(c => ({ value: c, label: c })),
+      onChange: setFilterCity,
+    },
+    {
+      id: "genre",
+      label: "Género",
+      value: filterGenre,
+      options: genres.map(g => ({ value: g, label: g })),
+      onChange: setFilterGenre,
+    },
+    {
+      id: "month",
+      label: "Mes",
+      value: filterMonth,
+      options: months.map(m => ({ value: m.value, label: m.label })),
+      onChange: setFilterMonth,
+    },
+  ], [filterCity, filterGenre, filterMonth, cities, genres]);
+
+  const handleClearFilters = () => {
+    setFilterCity("all");
+    setFilterGenre("all");
+    setFilterMonth("all");
+  };
 
   // Generate JSON-LD for artists
   const jsonLd = artists && artists.length > 0 ? {
@@ -160,52 +193,63 @@ const Artistas = () => {
       
       <main className="container mx-auto px-4 py-8 mt-16">
         
-        {/* Breadcrumbs */}
-        <div className="mb-4">
+        {/* Breadcrumbs - Hidden on mobile */}
+        <div className="mb-4 hidden md:block">
           <Breadcrumbs />
         </div>
         
-        {/* Hero Image - LCP optimized */}
-        <PageHero 
-          title="Artistas en Concierto" 
-          subtitle="Encuentra eventos de tus artistas favoritos"
-          imageUrl={heroImage} 
-          priority={true}
-        />
-        
-        {/* H2 for proper heading hierarchy */}
-        <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
-          Artistas destacados con conciertos y festivales en España
-        </h2>
-        
-        {/* Description */}
-        <p className="text-muted-foreground text-lg mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
-          Explora nuestra colección de {filteredArtists?.length || 0} artistas con eventos en España
-        </p>
+        {/* Hero Image - Hidden on mobile for faster results */}
+        <div className="hidden md:block">
+          <PageHero 
+            title="Artistas en Concierto" 
+            subtitle="Encuentra eventos de tus artistas favoritos"
+            imageUrl={heroImage} 
+            priority={true}
+          />
+          
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
+            Artistas destacados con conciertos y festivales en España
+          </h2>
+          
+          <p className="text-muted-foreground text-lg mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
+            Explora nuestra colección de {filteredArtists?.length || 0} artistas con eventos en España
+          </p>
+        </div>
 
-        {/* Search and Filters */}
-        <div className="space-y-3 mb-8">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Buscar artistas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
+        {/* Mobile: Compact Title */}
+        <div className="md:hidden mb-4">
+          <h1 className="text-xl font-bold text-foreground">
+            Artistas ({filteredArtists?.length || 0})
+          </h1>
+        </div>
 
-          {/* Filters Row - artista (search), ciudad, genero, mes */}
+        {/* Search Bar */}
+        <div className="relative mb-3">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Buscar artistas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Mobile: Filter Pills */}
+        <div className="md:hidden mb-4">
+          <MobileFilterPills filters={mobileFilters} onClearAll={handleClearFilters} />
+        </div>
+
+        {/* Desktop: Filters Row */}
+        <div className="hidden md:block space-y-3 mb-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Select value={filterCity} onValueChange={setFilterCity}>
               <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
@@ -245,11 +289,7 @@ const Artistas = () => {
 
             {(filterCity !== "all" || filterGenre !== "all" || filterMonth !== "all") ? (
               <button
-                onClick={() => {
-                  setFilterCity("all");
-                  setFilterGenre("all");
-                  setFilterMonth("all");
-                }}
+                onClick={handleClearFilters}
                 className="h-10 px-3 rounded-lg border-2 border-border bg-card text-sm text-muted-foreground hover:text-destructive hover:border-destructive transition-colors"
               >
                 Limpiar
@@ -261,14 +301,33 @@ const Artistas = () => {
         </div>
 
         {isLoadingArtists ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => <ArtistCardSkeleton key={i} />)}
-          </div>
+          <>
+            {/* Mobile: List Skeletons */}
+            <div className="md:hidden space-y-0">
+              {[...Array(8)].map((_, i) => <ArtistListCardSkeleton key={i} />)}
+            </div>
+            {/* Desktop: Card Grid Skeletons */}
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => <ArtistCardSkeleton key={i} />)}
+            </div>
+          </>
         ) : filteredArtists.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Mobile: Compact List View */}
+            <div className="md:hidden space-y-0 -mx-4">
+              {displayedArtists.map((artist: any, index: number) => (
+                <ArtistListCard 
+                  key={artist.attraction_id} 
+                  artist={artist} 
+                  priority={index < 4} 
+                />
+              ))}
+            </div>
+
+            {/* Desktop: Card Grid View */}
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedArtists.map((artist: any, index: number) => {
-                const isPriority = index < 4; // First 4 cards get priority loading
+                const isPriority = index < 4;
                 return (
                   <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block" title={`Ver conciertos y entradas de ${artist.attraction_name}`}>
                     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
