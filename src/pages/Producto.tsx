@@ -564,14 +564,18 @@ const Producto = () => {
             eventDate={eventDetails.event_date || ''}
           />
           
-          {/* Mobile: Event Name above hero */}
+          {/* Single H1 for SEO - screen reader accessible, visually hidden on mobile */}
+          <h1 className="sr-only">
+            {displayTitle}{displaySubtitle ? ` ${displaySubtitle}` : ''}
+          </h1>
+          
+          {/* Mobile: Event Name above hero - decorative visual title */}
           <div className="md:hidden mb-3">
-            {/* Event title - mobile */}
-            <h1 className="text-xl font-black text-foreground leading-tight">
+            <p className="text-xl font-black text-foreground leading-tight" aria-hidden="true">
               {displayTitle}
-            </h1>
+            </p>
             {displaySubtitle && (
-              <p className="text-sm text-muted-foreground font-medium mt-1">
+              <p className="text-sm text-muted-foreground font-medium mt-1" aria-hidden="true">
                 {displaySubtitle}
               </p>
             )}
@@ -659,10 +663,10 @@ const Producto = () => {
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
                   </Button>
-                  {/* Title and optional subtitle for artist entries */}
-                  <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg">
+                  {/* Desktop title display - decorative since H1 is above hero */}
+                  <p className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg" aria-hidden="true">
                     {displayTitle}
-                  </h1>
+                  </p>
                   {displaySubtitle && (
                     <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium drop-shadow-md">
                       {displaySubtitle}
