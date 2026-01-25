@@ -8,24 +8,25 @@ import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Clock, Users } from "lucide-react";
 
-// Thumbnail optimization: generate small, low-quality image URL for list cards
+// Thumbnail optimization: generate smallest possible image URL for list cards
 const getOptimizedThumbnail = (url: string): string => {
   if (!url || url === "/placeholder.svg") return url;
   
-  // For Ticketmaster images, request smallest available size
+  // For Ticketmaster images, request the smallest available variant
   if (url.includes("ticketm.net") || url.includes("tmimg.net")) {
     return url
-      .replace(/_CUSTOM\.jpg/i, '_RECOMENDATION_16_9.jpg')
-      .replace(/_EVENT_DETAIL_PAGE_16_9\.jpg/i, '_RECOMENDATION_16_9.jpg')
-      .replace(/_RETINA_PORTRAIT_16_9\.jpg/i, '_RECOMENDATION_16_9.jpg')
-      .replace(/RATIO\/\d+_\d+/g, "RATIO/1_1")
+      .replace(/_CUSTOM\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
+      .replace(/_EVENT_DETAIL_PAGE_16_9\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
+      .replace(/_RETINA_PORTRAIT_16_9\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
+      .replace(/_ARTIST_PAGE_3_2\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
+      .replace(/RATIO\/\d+_\d+/g, "RATIO/3_2")
       .replace(/\/\d+x\d+\//g, "/100x100/");
   }
 
-  // For Unsplash images, add size parameters
+  // For Unsplash images, add aggressive compression
   if (url.includes("unsplash.com")) {
     const baseUrl = url.split("?")[0];
-    return `${baseUrl}?w=120&q=70&fm=webp&fit=crop`;
+    return `${baseUrl}?w=100&q=60&fm=webp&fit=crop`;
   }
   
   return url;
@@ -163,6 +164,11 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
           "active:bg-accent/10",
           (isSoldOut || isEventPast) && "opacity-60"
         )}
+        style={{
+          // CSS containment for off-viewport performance
+          contentVisibility: priority ? 'visible' : 'auto',
+          containIntrinsicSize: '0 100px',
+        }}
       >
         {/* a. Date Block - Left - Black background with white text */}
         <div className={cn(
@@ -189,13 +195,14 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
         <div className={cn(
           "flex-shrink-0 w-[56px] h-[56px] overflow-hidden relative",
           "rounded-xl",
-          "bg-muted"
+          "bg-foreground/10 dark:bg-zinc-800" // Dark placeholder for organic transition
         )}>
-          {/* Shimmer placeholder - shows until image loads */}
+          {/* Shimmer placeholder - dark gradient for smooth transition */}
           {!imageLoaded && (
             <div className={cn(
               "absolute inset-0",
-              "bg-gradient-to-r from-muted via-muted-foreground/10 to-muted",
+              "bg-gradient-to-r from-foreground/5 via-foreground/10 to-foreground/5",
+              "dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-900",
               "animate-shimmer bg-[length:200%_100%]",
               "rounded-xl"
             )} />
