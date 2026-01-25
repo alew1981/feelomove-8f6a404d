@@ -377,9 +377,10 @@ const ArtistaDetalle = () => {
               src={heroImage}
               alt={`${artistName} - Conciertos y gira en España`}
               className="w-full h-full object-cover"
-              fetchPriority="high"
               loading="eager"
               decoding="sync"
+              // @ts-expect-error - fetchpriority is valid HTML but React types don't recognize lowercase
+              fetchpriority="high"
               width={1200}
               height={400}
             />

@@ -339,7 +339,7 @@ const Artistas = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading={isPriority ? "eager" : "lazy"}
                           decoding={isPriority ? "sync" : "async"}
-                          fetchPriority={isPriority ? "high" : "auto"}
+                          {...(isPriority ? { fetchpriority: "high" } : {})}
                           width={400}
                           height={256}
                         />
