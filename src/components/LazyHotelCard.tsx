@@ -95,6 +95,7 @@ const LazyHotelCard = ({
           eventName={eventName}
           showTicketHint={showTicketHint}
           isAdded={isAdded}
+          priority={index < 2}
         />
       ) : (
         <HotelCardSkeleton />

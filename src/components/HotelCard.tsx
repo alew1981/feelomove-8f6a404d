@@ -1,13 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Check, Loader2 } from "lucide-react";
-import { useOptimizedImage } from "@/utils/imageOptimizer";
 
 interface HotelCardProps {
   hotel: {
     hotel_id: string;
     hotel_name: string;
     hotel_main_photo: string;
+    hotel_thumbnail?: string;
     hotel_photos?: string[];
     hotel_description: string;
     hotel_stars: number;
@@ -26,6 +26,7 @@ interface HotelCardProps {
   eventName?: string;
   showTicketHint?: boolean;
   isAdded?: boolean;
+  priority?: boolean; // New: preload image for first 2 cards
 }
 
 // Helper to strip HTML tags
@@ -43,12 +44,94 @@ const getRatingText = (rating: number): string => {
   return "Regular";
 };
 
-const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, showTicketHint = false, isAdded = false }: HotelCardProps) => {
+/**
+ * Progressive image loading component with blur-up effect
+ * Uses thumbnail as placeholder while main image loads
+ */
+const ProgressiveHotelImage = ({ 
+  src, 
+  thumbnail, 
+  alt, 
+  priority = false 
+}: { 
+  src: string; 
+  thumbnail?: string; 
+  alt: string; 
+  priority?: boolean;
+}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Preload priority images immediately
+  useEffect(() => {
+    if (priority && src) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = src;
+      document.head.appendChild(link);
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [priority, src]);
+
+  // Check if image is already cached
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current?.naturalHeight > 0) {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  const handleLoad = () => setIsLoaded(true);
+  const handleError = () => setHasError(true);
+
+  // Fallback placeholder color matching design system
+  const placeholderBg = "bg-muted";
+
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      {/* Thumbnail/blur placeholder - shows immediately */}
+      {thumbnail && !isLoaded && !hasError && (
+        <img
+          src={thumbnail}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover scale-105 blur-sm"
+          loading="eager"
+          decoding="sync"
+        />
+      )}
+      
+      {/* Fallback gradient if no thumbnail */}
+      {!thumbnail && !isLoaded && (
+        <div className={`absolute inset-0 ${placeholderBg} animate-pulse`} />
+      )}
+      
+      {/* Main image with fade-in */}
+      <img
+        ref={imgRef}
+        src={hasError ? "/placeholder.svg" : src}
+        alt={alt}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        loading={priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
+        fetchPriority={priority ? "high" : "auto"}
+        onLoad={handleLoad}
+        onError={handleError}
+        width={350}
+        height={200}
+      />
+    </div>
+  );
+};
+
+const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, showTicketHint = false, isAdded = false, priority = false }: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Optimize hotel image for performance (reduces 144-696KB to ~30-50KB)
-  const optimizedImageUrl = useOptimizedImage(hotel.hotel_main_photo, 400);
   
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
@@ -79,7 +162,6 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
   const handleAddClick = async () => {
     if (isAdded) return;
     setIsLoading(true);
-    // Small delay for UX feedback
     await new Promise(resolve => setTimeout(resolve, 300));
     onAddHotel(hotel);
     setIsLoading(false);
@@ -113,16 +195,13 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
         </div>
       )}
 
-      {/* Hotel Image - Optimized for performance */}
+      {/* Hotel Image - Progressive loading with blur-up */}
       <div className="h-[140px] sm:h-[200px] overflow-hidden rounded-t-lg bg-muted">
-        <img
-          src={optimizedImageUrl || "/placeholder.svg"}
+        <ProgressiveHotelImage
+          src={hotel.hotel_main_photo || "/placeholder.svg"}
+          thumbnail={hotel.hotel_thumbnail}
           alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ' estrellas' : ''} en ${hotel.hotel_city || 'España'} para eventos`}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          decoding="async"
-          width={350}
-          height={200}
+          priority={priority}
         />
       </div>
 
