@@ -143,7 +143,7 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
                   className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                   loading={priority ? "eager" : "lazy"}
                   decoding={priority ? "sync" : "async"}
-                  fetchPriority={priority ? "high" : "auto"}
+                  {...(priority ? { fetchpriority: "high" } : {})}
                   width={400}
                   height={224}
                   onLoad={() => setImageLoaded(true)}

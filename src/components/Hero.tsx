@@ -199,7 +199,8 @@ const Hero = () => {
           className="hero-image w-full h-full object-cover"
           loading="eager"
           decoding="sync"
-          fetchPriority="high"
+          // @ts-expect-error - fetchpriority is valid HTML but React types don't recognize lowercase
+          fetchpriority="high"
           width={1920}
           height={1080}
         />

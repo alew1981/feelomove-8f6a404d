@@ -365,7 +365,7 @@ const Destinos = () => {
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                           loading={isPriority ? "eager" : "lazy"}
                           decoding={isPriority ? "sync" : "async"}
-                          fetchPriority={isPriority ? "high" : "auto"}
+                          {...(isPriority ? { fetchpriority: "high" } : {})}
                           width={400}
                           height={256}
                           onError={(e) => {

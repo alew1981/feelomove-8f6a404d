@@ -613,9 +613,10 @@ const Producto = () => {
                 src={eventImage}
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
-                fetchPriority="high"
                 loading="eager"
                 decoding="sync"
+                // @ts-expect-error - fetchpriority is valid HTML but React doesn't recognize camelCase
+                fetchpriority="high"
               />
               
               {/* Gradient Overlay */}

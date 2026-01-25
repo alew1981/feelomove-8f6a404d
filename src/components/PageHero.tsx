@@ -49,7 +49,7 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
         className="w-full h-full object-cover parallax-bg"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
-        fetchPriority={priority ? "high" : "auto"}
+        {...(priority ? { fetchpriority: "high" } : {})}
         width={1200}
         height={400}
         style={{
