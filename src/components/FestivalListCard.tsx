@@ -8,15 +8,24 @@ import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Clock, Users } from "lucide-react";
 
-// Thumbnail optimization: generate small image URL for list cards
+// Thumbnail optimization: generate small, low-quality image URL for list cards
 const getOptimizedThumbnail = (url: string): string => {
   if (!url || url === "/placeholder.svg") return url;
   
-  // For Ticketmaster images, request smaller size
-  if (url.includes("ticketm.net") || url.includes("ticketmaster")) {
+  // For Ticketmaster images, request smallest available size
+  if (url.includes("ticketm.net") || url.includes("tmimg.net")) {
     return url
+      .replace(/_CUSTOM\.jpg/i, '_RECOMENDATION_16_9.jpg')
+      .replace(/_EVENT_DETAIL_PAGE_16_9\.jpg/i, '_RECOMENDATION_16_9.jpg')
+      .replace(/_RETINA_PORTRAIT_16_9\.jpg/i, '_RECOMENDATION_16_9.jpg')
       .replace(/RATIO\/\d+_\d+/g, "RATIO/1_1")
       .replace(/\/\d+x\d+\//g, "/100x100/");
+  }
+
+  // For Unsplash images, add size parameters
+  if (url.includes("unsplash.com")) {
+    const baseUrl = url.split("?")[0];
+    return `${baseUrl}?w=120&q=70&fm=webp&fit=crop`;
   }
   
   return url;
@@ -176,39 +185,38 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
           </span>
         </div>
 
-        {/* b. Festival Image - Square with rounded corners, optimized */}
+        {/* b. Festival Image - Square with rounded corners, LCP priority */}
         <div className={cn(
-          "flex-shrink-0 w-[56px] h-[56px] overflow-hidden",
+          "flex-shrink-0 w-[56px] h-[56px] overflow-hidden relative",
           "rounded-xl",
           "bg-muted"
         )}>
-          {isInView ? (
-            <>
-              {!imageLoaded && (
-                <Skeleton className="w-full h-full" />
+          {/* Skeleton placeholder - always rendered underneath */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-muted animate-pulse" />
+          )}
+          {isInView && (
+            <img
+              src={imageUrl}
+              alt={festivalName}
+              width={56}
+              height={56}
+              loading={priority ? "eager" : "lazy"}
+              decoding={priority ? "sync" : "async"}
+              // @ts-ignore - fetchPriority is valid HTML attribute
+              fetchPriority={priority ? "high" : "auto"}
+              className={cn(
+                "w-full h-full object-cover",
+                "transition-opacity duration-300 ease-out",
+                imageLoaded ? "opacity-100" : "opacity-0"
               )}
-              <img
-                src={imageUrl}
-                alt={festivalName}
-                width={56}
-                height={56}
-                loading={priority ? "eager" : "lazy"}
-                decoding="async"
-                className={cn(
-                  "w-full h-full object-cover",
-                  "transition-opacity duration-200",
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                )}
-                onLoad={() => setImageLoaded(true)}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                  setImageLoaded(true);
-                }}
-              />
-            </>
-          ) : (
-            <Skeleton className="w-full h-full" />
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/placeholder.svg";
+                setImageLoaded(true);
+              }}
+            />
           )}
         </div>
 
