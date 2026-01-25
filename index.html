@@ -111,11 +111,11 @@
     <!-- Main app script -->
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- NON-CRITICAL: Defer GTM loading until after page is fully loaded -->
+    <!-- NON-CRITICAL: Defer GTM loading with 6s delay to eliminate TBT impact -->
     <script>
       (function() {
         function loadDeferredScripts() {
-          // Load GTM after 2s delay
+          // Load GTM after 6s delay - ensures LCP is complete and page is interactive
           setTimeout(function() {
             var gtmScript = document.createElement('script');
             gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-5VPZ5LH';
@@ -124,7 +124,7 @@
             
             window.dataLayer = window.dataLayer || [];
             window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-          }, 2000);
+          }, 6000);
         }
         
         // Trigger after page load to ensure LCP is not impacted
