@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -21,6 +21,7 @@ import DestinationListCard, { DestinationListCardSkeleton } from "@/components/D
 import MobileFilterPills from "@/components/MobileFilterPills";
 import VirtualizedDestinationList from "@/components/VirtualizedDestinationList";
 import { CACHE_TTL } from "@/lib/cacheClient";
+import { usePrefetch } from "@/hooks/usePrefetch";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -46,6 +47,8 @@ const Destinos = () => {
   const [displayCount, setDisplayCount] = useState<number>(30);
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
   const isMobile = useIsMobile();
+  const { prefetchDestination } = usePrefetch();
+  const prefetchedCards = useRef<Set<string>>(new Set());
 
   const { data: cities, isLoading, error } = useQuery({
     queryKey: ["destinations"],
@@ -151,6 +154,14 @@ const Destinos = () => {
     setFilterArtist("all");
     setFilterMonth("all");
   };
+
+  // Prefetch handler for desktop cards
+  const handleCardPrefetch = useCallback((citySlug: string) => {
+    if (!prefetchedCards.current.has(citySlug)) {
+      prefetchedCards.current.add(citySlug);
+      prefetchDestination(citySlug);
+    }
+  }, [prefetchDestination]);
 
   const jsonLd = cities && cities.length > 0 ? {
     "@context": "https://schema.org",
@@ -335,8 +346,16 @@ const Destinos = () => {
             <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {displayedCities.map((city: any, index: number) => {
                 const isPriority = index < 4;
+                const citySlug = city.city_slug || encodeURIComponent(city.city_name);
                 return (
-                  <Link key={city.city_name} to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} className="block" title={`Descubrir eventos en ${city.city_name}`}>
+                  <Link 
+                    key={city.city_name} 
+                    to={`/destinos/${citySlug}`} 
+                    className="block" 
+                    title={`Descubrir eventos en ${city.city_name}`}
+                    onMouseEnter={() => handleCardPrefetch(citySlug)}
+                    onTouchStart={() => handleCardPrefetch(citySlug)}
+                  >
                     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                       <div className="relative h-64 overflow-hidden bg-muted">
                         <img 

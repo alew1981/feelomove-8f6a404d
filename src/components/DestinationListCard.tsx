@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { memo, useRef, useState, useEffect } from "react";
+import { memo, useRef, useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronRight, MapPin } from "lucide-react";
+import { usePrefetch } from "@/hooks/usePrefetch";
 
 // Thumbnail optimization for smallest possible image
 const getOptimizedThumbnail = (url: string): string => {
@@ -53,6 +54,8 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
   const [isInView, setIsInView] = useState(priority);
   const [imageLoaded, setImageLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const { prefetchDestination } = usePrefetch();
+  const hasPrefetched = useRef(false);
 
   useEffect(() => {
     if (priority) {
@@ -91,11 +94,23 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
   if (festivalsCount > 0) eventSummary.push(`${festivalsCount} festivales`);
   const eventText = eventSummary.length > 0 ? eventSummary.join(' · ') : `${eventCount} eventos`;
 
+  const citySlug = city.city_slug || encodeURIComponent(city.city_name);
+
+  // Prefetch on hover/touch for instant navigation
+  const handlePrefetch = useCallback(() => {
+    if (!hasPrefetched.current) {
+      hasPrefetched.current = true;
+      prefetchDestination(citySlug);
+    }
+  }, [citySlug, prefetchDestination]);
+
   return (
     <Link 
-      to={`/destinos/${city.city_slug || encodeURIComponent(city.city_name)}`} 
+      to={`/destinos/${citySlug}`} 
       className="block group touch-manipulation" 
       title={`Eventos en ${city.city_name}`}
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
     >
       <div 
         ref={cardRef}
