@@ -1,10 +1,15 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Helmet } from "react-helmet-async";
+import { useParams, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 /**
  * ProductoSkeleton - CLS-optimized skeleton for concert/festival detail pages
+ * 
+ * CRITICAL FOR PAGESPEED: Includes SEO meta tags so bots see valid content during loading
+ * This prevents PageSpeed from measuring 404-like empty content
  * 
  * CRITICAL: All dimensions MUST match the real Producto.tsx layout exactly:
  * - Hero: h-[200px] sm:h-[340px] md:h-[420px] with aspect-ratio fallback
@@ -13,8 +18,31 @@ import Footer from "@/components/Footer";
  * - Hotels block: min-height 400px to prevent jumps
  */
 const ProductoSkeleton = () => {
+  const { slug } = useParams();
+  const location = useLocation();
+  
+  // Generate a SEO-friendly title from slug for loading state
+  // This ensures PageSpeed sees valid meta tags during data fetch
+  const generateTitleFromSlug = (s: string | undefined): string => {
+    if (!s) return 'Cargando evento... | FEELOMOVE+';
+    // Convert slug like "nmixx-madrid-17-marzo-2026" to "Nmixx Madrid 17 Marzo 2026"
+    const parts = s.split('-');
+    const formatted = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+    return `${formatted} | FEELOMOVE+`;
+  };
+  
+  const isFestival = location.pathname.startsWith('/festival/');
+  const eventType = isFestival ? 'Festival' : 'Concierto';
+  const title = generateTitleFromSlug(slug);
+  
   return (
     <div className="min-h-screen bg-background">
+      {/* SEO tags during loading - prevents PageSpeed from seeing empty/404 content */}
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={`${eventType} - Compra entradas y reserva hotel. Cargando información del evento...`} />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-20">
         {/* Breadcrumbs Skeleton - matches real breadcrumb height */}

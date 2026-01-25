@@ -321,135 +321,10 @@ const Producto = () => {
   // Schema.org is handled by SEOHead with jsonLd prop - no duplicate injection needed
   // Meta tags are now handled by SEOHead component - removed useMetaTags hook to avoid duplicate query
 
-  if (isLoading) {
-    return <ProductoSkeleton />;
-  }
-
-  if (isError) {
-    // If "Evento no encontrado", redirect handled by useEffect above
-    if (error instanceof Error && error.message === "Evento no encontrado") {
-      return <ProductoSkeleton />;
-    }
-    
-    // Other errors: show error UI
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8 mt-20">
-          <Card className="max-w-lg mx-auto border-destructive/50">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <IconAlertCircle className="h-6 w-6 text-destructive" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Error al cargar el evento</h2>
-                  <p className="text-muted-foreground text-sm">
-                    {error instanceof Error ? error.message : "Ha ocurrido un error inesperado"}
-                  </p>
-                </div>
-                <div className="flex gap-3 justify-center pt-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate(-1)}
-                    className="gap-2"
-                  >
-                    Volver atrás
-                  </Button>
-                  <Button 
-                    onClick={() => refetch()}
-                    className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
-                  >
-                    <IconRefreshCw className="h-4 w-4" />
-                    Reintentar
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-        <Suspense fallback={null}><Footer /></Suspense>
-      </div>
-    );
-  }
-
-  if (!eventDetails) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8 mt-20">
-          <Card className="max-w-lg mx-auto">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <IconAlertCircle className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Evento no encontrado</h2>
-                  <p className="text-muted-foreground text-sm">
-                    El evento que buscas no existe o ha sido eliminado.
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => navigate("/conciertos")}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90"
-                >
-                  Ver todos los eventos
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-        <Suspense fallback={null}><Footer /></Suspense>
-      </div>
-    );
-  }
-
-  // Helper to check placeholder dates
-  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
-  
-  const rawEventDate = eventDetails.event_date;
-  const hasValidDate = !isPlaceholderDate(rawEventDate);
-  const eventDate = hasValidDate && rawEventDate ? new Date(rawEventDate) : new Date();
-  const formattedTime = hasValidDate ? formatDatePart(eventDate, 'time') : null;
-  const monthYear = hasValidDate ? formatDatePart(eventDate, 'monthYear') : "Fecha por confirmar";
-  
-  // Calculate countdown only if valid date
-  const now = new Date();
-  const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
-  const hoursUntil = hasValidDate ? differenceInHours(eventDate, now) % 24 : 0;
-  
-  const artistNames = eventDetails.attraction_names || [];
-  const mainArtist = artistNames[0] || eventDetails.event_name;
-  
-  // Festival lineup artists - prioritize manual lineup over automatic
-  const festivalLineupArtists = isFestivalRoute 
-    ? ((eventDetails as any).festival_lineup_artists_manual as string[] | null) 
-      || ((eventDetails as any).festival_lineup_artists as string[] | null) 
-      || []
-    : [];
-  
-  // Display logic for festivals based on primary/secondary attraction
-  // Case A: Full festival pass (secondary = null or same as primary)
-  // Case B: Artist-specific entry (secondary = different artist name)
-  const primaryAttraction = (eventDetails as any).primary_attraction_name as string | null;
-  const secondaryAttraction = (eventDetails as any).secondary_attraction_name as string | null;
-  const isArtistEntry = isFestivalRoute && secondaryAttraction && secondaryAttraction !== primaryAttraction;
-  
-  // For display purposes
-  const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
-  const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
-
-  // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
-  const eventYear = hasValidDate ? formatDatePart(eventDate, 'year') : '';
-  const seoTitle = `${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''} - Entradas y Hotel`;
-  
-  // Generate SEO description - optimized for ~155 chars
-  const seoDescription = `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''}. Concierto en ${eventDetails.venue_name}. Reserva tu pack de entradas + hotel con Feelomove+.`;
-
-  // PERFORMANCE: Parse ticket prices using deferred computation to reduce TBT
-  // Uses useMemo with minimal dependencies to prevent recalculation
+  // PERFORMANCE: Parse ticket prices using useMemo
+  // CRITICAL: This hook MUST be called before any early returns to satisfy React hooks rules
   const ticketPrices = useMemo(() => {
+    if (!eventDetails) return [];
     const rawTicketTypes = (eventDetails as any).ticket_types;
     if (!rawTicketTypes) return [];
     
@@ -501,8 +376,120 @@ const Producto = () => {
       console.error("Error parsing ticket_types:", e);
       return [];
     }
-  }, [(eventDetails as any).ticket_types]);
+  }, [eventDetails]);
 
+  // CRITICAL FOR PAGESPEED: Show skeleton during loading states
+  // This prevents PageSpeed from measuring 404 content during async data loading
+  if (isLoading) {
+    return <ProductoSkeleton />;
+  }
+
+  if (isError) {
+    // If "Evento no encontrado", redirect is handled by useEffect above
+    // Show skeleton while redirect happens to avoid PageSpeed seeing 404 content
+    if (error instanceof Error && error.message === "Evento no encontrado") {
+      return <ProductoSkeleton />;
+    }
+    
+    // Other errors: show error UI (this is rare and acceptable)
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8 mt-20">
+          <Card className="max-w-lg mx-auto border-destructive/50">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <IconAlertCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Error al cargar el evento</h2>
+                  <p className="text-muted-foreground text-sm">
+                    {error instanceof Error ? error.message : "Ha ocurrido un error inesperado"}
+                  </p>
+                </div>
+                <div className="flex gap-3 justify-center pt-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate(-1)}
+                    className="gap-2"
+                  >
+                    Volver atrás
+                  </Button>
+                  <Button 
+                    onClick={() => refetch()}
+                    className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    <IconRefreshCw className="h-4 w-4" />
+                    Reintentar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        <Suspense fallback={null}><Footer /></Suspense>
+      </div>
+    );
+  }
+
+  // CRITICAL FOR PAGESPEED: If eventResult indicates redirect pending, show skeleton
+  // This prevents PageSpeed from measuring intermediate states
+  if (eventResult?.needsRedirect || eventResult?.needsRouteCorrection) {
+    return <ProductoSkeleton />;
+  }
+
+  // Only show "not found" UI if data explicitly indicates no event exists
+  // AND we're not waiting for a redirect
+  if (!eventDetails) {
+    // Show skeleton for a brief moment before showing not found
+    // This gives the redirect useEffect time to execute
+    return <ProductoSkeleton />;
+  }
+
+  // Helper to check placeholder dates
+  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
+  
+  const rawEventDate = eventDetails.event_date;
+  const hasValidDate = !isPlaceholderDate(rawEventDate);
+  const eventDate = hasValidDate && rawEventDate ? new Date(rawEventDate) : new Date();
+  const formattedTime = hasValidDate ? formatDatePart(eventDate, 'time') : null;
+  const monthYear = hasValidDate ? formatDatePart(eventDate, 'monthYear') : "Fecha por confirmar";
+  
+  // Calculate countdown only if valid date
+  const now = new Date();
+  const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
+  const hoursUntil = hasValidDate ? differenceInHours(eventDate, now) % 24 : 0;
+  
+  const artistNames = eventDetails.attraction_names || [];
+  const mainArtist = artistNames[0] || eventDetails.event_name;
+  
+  // Festival lineup artists - prioritize manual lineup over automatic
+  const festivalLineupArtists = isFestivalRoute 
+    ? ((eventDetails as any).festival_lineup_artists_manual as string[] | null) 
+      || ((eventDetails as any).festival_lineup_artists as string[] | null) 
+      || []
+    : [];
+  
+  // Display logic for festivals based on primary/secondary attraction
+  // Case A: Full festival pass (secondary = null or same as primary)
+  // Case B: Artist-specific entry (secondary = different artist name)
+  const primaryAttraction = (eventDetails as any).primary_attraction_name as string | null;
+  const secondaryAttraction = (eventDetails as any).secondary_attraction_name as string | null;
+  const isArtistEntry = isFestivalRoute && secondaryAttraction && secondaryAttraction !== primaryAttraction;
+  
+  // For display purposes
+  const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
+  const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
+
+  // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
+  const eventYear = hasValidDate ? formatDatePart(eventDate, 'year') : '';
+  const seoTitle = `${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''} - Entradas y Hotel`;
+  
+  // Generate SEO description - optimized for ~155 chars
+  const seoDescription = `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''}. Concierto en ${eventDetails.venue_name}. Reserva tu pack de entradas + hotel con Feelomove+.`;
+
+  // ticketPrices is already computed above (before early returns) - no duplicate needed
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
   const hasMoreTickets = ticketPrices.length > 4;
   
