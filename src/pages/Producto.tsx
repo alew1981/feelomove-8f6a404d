@@ -4,7 +4,6 @@ import { useEventData } from "@/hooks/useEventData";
 import { usePageTracking } from "@/hooks/usePageTracking";
 // SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
@@ -15,20 +14,90 @@ import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
 const RelatedLinks = lazy(() => import("@/components/RelatedLinks"));
 const MobileCartBar = lazy(() => import("@/components/MobileCartBar"));
+const Footer = lazy(() => import("@/components/Footer"));
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw, Check, ArrowDown, Ticket, Building2 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart, CartTicket } from "@/contexts/CartContext";
-import { format, differenceInDays, differenceInHours } from "date-fns";
-import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
+
+// === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
+const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+  </svg>
+);
+const IconMapPin = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+const IconMinus = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12h14"/>
+  </svg>
+);
+const IconPlus = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12h14"/><path d="M12 5v14"/>
+  </svg>
+);
+const IconCheck = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6 9 17l-5-5"/>
+  </svg>
+);
+const IconTrash2 = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
+  </svg>
+);
+const IconAlertCircle = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+  </svg>
+);
+const IconRefreshCw = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+  </svg>
+);
+const IconTicket = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+  </svg>
+);
+const IconBuilding2 = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+  </svg>
+);
+
+// === NATIVE DATE FORMATTING (replaces date-fns) ===
+const SPANISH_MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const SPANISH_MONTHS_LONG = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+const formatDatePart = (date: Date, part: 'day' | 'month' | 'monthLong' | 'year' | 'time' | 'monthYear') => {
+  switch (part) {
+    case 'day': return String(date.getDate()).padStart(2, '0');
+    case 'month': return SPANISH_MONTHS_SHORT[date.getMonth()];
+    case 'monthLong': return SPANISH_MONTHS_LONG[date.getMonth()];
+    case 'year': return String(date.getFullYear());
+    case 'time': return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    case 'monthYear': return `${SPANISH_MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`;
+  }
+};
+
+const formatDateISO = (date: Date) => date.toISOString().split('T')[0];
+
+const differenceInDays = (dateA: Date, dateB: Date) => Math.floor((dateA.getTime() - dateB.getTime()) / (1000 * 60 * 60 * 24));
+const differenceInHours = (dateA: Date, dateB: Date) => Math.floor((dateA.getTime() - dateB.getTime()) / (1000 * 60 * 60));
 
 // Fixed-height skeleton fallbacks to prevent CLS (400px matches HotelMapTabs)
 const HotelsSkeleton = () => (
@@ -99,12 +168,24 @@ interface HotelData {
   hotel_city?: string;
 }
 
+// === ULTRA-LAZY HYDRATION: Below-fold content only renders after 3s ===
+const FooterSkeleton = () => (
+  <div className="w-full bg-card border-t border-border" style={{ minHeight: '200px' }} />
+);
+
 const Producto = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } = useCart();
+  
+  // ULTRA-LAZY: Delay rendering of non-critical components by 3 seconds
+  const [isLowPriorityReady, setIsLowPriorityReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLowPriorityReady(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Detect route type for canonical URL
   const isConcierto = location.pathname.startsWith('/concierto/');
@@ -251,7 +332,7 @@ const Producto = () => {
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <AlertCircle className="h-6 w-6 text-destructive" />
+                  <IconAlertCircle className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-foreground mb-2">Error al cargar el evento</h2>
@@ -271,7 +352,7 @@ const Producto = () => {
                     onClick={() => refetch()}
                     className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <IconRefreshCw className="h-4 w-4" />
                     Reintentar
                   </Button>
                 </div>
@@ -279,7 +360,7 @@ const Producto = () => {
             </CardContent>
           </Card>
         </main>
-        <Footer />
+        <Suspense fallback={null}><Footer /></Suspense>
       </div>
     );
   }
@@ -293,7 +374,7 @@ const Producto = () => {
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <AlertCircle className="h-6 w-6 text-muted-foreground" />
+                  <IconAlertCircle className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-foreground mb-2">Evento no encontrado</h2>
@@ -311,7 +392,7 @@ const Producto = () => {
             </CardContent>
           </Card>
         </main>
-        <Footer />
+        <Suspense fallback={null}><Footer /></Suspense>
       </div>
     );
   }
@@ -322,8 +403,8 @@ const Producto = () => {
   const rawEventDate = eventDetails.event_date;
   const hasValidDate = !isPlaceholderDate(rawEventDate);
   const eventDate = hasValidDate && rawEventDate ? new Date(rawEventDate) : new Date();
-  const formattedTime = hasValidDate ? format(eventDate, "HH:mm") : null;
-  const monthYear = hasValidDate ? format(eventDate, "MMMM yyyy", { locale: es }) : "Fecha por confirmar";
+  const formattedTime = hasValidDate ? formatDatePart(eventDate, 'time') : null;
+  const monthYear = hasValidDate ? formatDatePart(eventDate, 'monthYear') : "Fecha por confirmar";
   
   // Calculate countdown only if valid date
   const now = new Date();
@@ -352,7 +433,7 @@ const Producto = () => {
   const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
 
   // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
-  const eventYear = hasValidDate ? format(eventDate, "yyyy") : '';
+  const eventYear = hasValidDate ? formatDatePart(eventDate, 'year') : '';
   const seoTitle = `${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ''} - Entradas y Hotel`;
   
   // Generate SEO description - optimized for ~155 chars
@@ -481,8 +562,8 @@ const Producto = () => {
       total_price: pricePerNight * nights,
       image: hotel.hotel_main_photo || hotel.hotel_thumbnail || "/placeholder.svg",
       description: hotel.hotel_description || "Hotel confortable cerca del venue",
-      checkin_date: (eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd"),
-      checkout_date: (eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+      checkin_date: (eventDetails as any).package_checkin || formatDateISO(eventDate),
+      checkout_date: (eventDetails as any).package_checkout || formatDateISO(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000)),
     });
   };
 
@@ -675,16 +756,16 @@ const Producto = () => {
                 <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg px-2.5 py-2 flex items-center gap-2">
                   <div className="text-center border-r border-border pr-2">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                      {format(eventDate, "MMM", { locale: es })}
+                      {formatDatePart(eventDate, 'month')}
                     </p>
                     <p className="text-xl font-black text-foreground leading-none">
-                      {format(eventDate, "dd")}
+                      {formatDatePart(eventDate, 'day')}
                     </p>
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold text-foreground">{formattedTime}h</p>
                     <div className="flex items-center gap-0.5 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
+                      <IconMapPin className="h-3 w-3" />
                       <span className="text-[10px] font-medium">{eventDetails.venue_city}</span>
                     </div>
                   </div>
@@ -696,19 +777,19 @@ const Producto = () => {
                 <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
                     <p className="text-sm sm:text-base font-bold text-muted-foreground uppercase tracking-wider">
-                      {format(eventDate, "MMM", { locale: es })}
+                      {formatDatePart(eventDate, 'month')}
                     </p>
                     <p className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground leading-none my-1 sm:my-2">
-                      {format(eventDate, "dd")}
+                      {formatDatePart(eventDate, 'day')}
                     </p>
                     <p className="text-base sm:text-lg font-medium text-muted-foreground">
-                      {format(eventDate, "yyyy")}
+                      {formatDatePart(eventDate, 'year')}
                     </p>
                     <div className="border-t border-border mt-3 pt-3 sm:mt-4 sm:pt-4">
                       <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formattedTime}h</p>
                       <div className="flex flex-col items-center gap-1 mt-2 text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
+                          <IconMapPin className="h-4 w-4" />
                           <span className="text-sm sm:text-base font-bold">{eventDetails.venue_city}</span>
                         </div>
                         <span className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-2 text-center max-w-[120px] sm:max-w-[140px]">{eventDetails.venue_name}</span>
@@ -734,7 +815,7 @@ const Producto = () => {
                       image_url: eventImage
                     })}
                   >
-                    <Heart className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                    <IconHeart filled={isFavorite(eventDetails.event_id!)} className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? 'text-accent' : 'text-white'}`} />
                   </Button>
                   {/* Desktop title display - decorative since H1 is above hero */}
                   <p className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg" aria-hidden="true">
@@ -777,7 +858,7 @@ const Producto = () => {
                     image_url: eventImage
                   })}
                 >
-                  <Heart className={`h-4 w-4 ${isFavorite(eventDetails.event_id!) ? 'fill-accent text-accent' : 'text-white'}`} />
+                  <IconHeart filled={isFavorite(eventDetails.event_id!)} className={`h-4 w-4 ${isFavorite(eventDetails.event_id!) ? 'text-accent' : 'text-white'}`} />
                 </Button>
                 
                 {/* Vertical badges */}
@@ -824,13 +905,13 @@ const Producto = () => {
                         ? "bg-accent text-accent-foreground" 
                         : "bg-foreground text-background"
                     }`}>
-                      {isEventInCart && totalPersons > 0 ? <Check className="h-4 w-4" /> : "1"}
+                      {isEventInCart && totalPersons > 0 ? <IconCheck className="h-4 w-4" /> : "1"}
                     </div>
                     <div>
                       <h2 className="text-xl sm:text-2xl font-bold">Selecciona tus entradas</h2>
                       {isEventInCart && totalPersons > 0 && (
                         <p className="text-sm text-foreground flex items-center gap-1 mt-0.5">
-                          <Check className="h-3 w-3 text-accent" />
+                          <IconCheck className="h-3 w-3 text-accent" />
                           ¡Entradas añadidas! Ahora elige tu alojamiento abajo
                         </p>
                       )}
@@ -913,7 +994,7 @@ const Producto = () => {
                                     aria-label={`Reducir cantidad de ${ticket.type}`}
                                     data-ticket-type={ticket.type}
                                   >
-                                    <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                    <IconMinus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
                                   <span className="w-6 sm:w-8 text-center font-bold text-base sm:text-lg">{quantity}</span>
                                   <Button
@@ -925,7 +1006,7 @@ const Producto = () => {
                                     aria-label={`Aumentar cantidad de ${ticket.type}`}
                                     data-ticket-type={ticket.type}
                                   >
-                                    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                    <IconPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
                                 </div>
                               </div>
@@ -958,8 +1039,8 @@ const Producto = () => {
                       hotels={hotels} 
                       mapWidgetHtml={mapWidgetHtml} 
                       onAddHotel={handleAddHotel}
-                      checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
-                      checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
+                      checkinDate={(eventDetails as any).package_checkin || formatDateISO(eventDate)}
+                      checkoutDate={(eventDetails as any).package_checkout || formatDateISO(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000))}
                       eventName={eventDetails.event_name || undefined}
                       ticketsSelected={isEventInCart && totalPersons > 0}
                       selectedHotelId={cart?.hotel?.hotel_id || null}
@@ -999,25 +1080,25 @@ const Producto = () => {
                       {cart.hotel && totalPersons > 0 && (
                         <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mb-4">
                           <p className="text-xs text-foreground font-medium flex items-center gap-2">
-                            <Check className="h-3 w-3 text-accent" />
+                            <IconCheck className="h-3 w-3 text-accent" />
                             ¡Pack completo! Entradas + Hotel
                           </p>
                         </div>
                       )}
 
                       {/* Tickets in cart */}
-                      {cart.tickets.map((ticket, idx) => (
+                      {cart.tickets.map((ticketItem, idx) => (
                         <div key={idx} className="bg-muted/50 rounded-lg p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
                               <div className="flex items-center gap-1.5 mb-1">
-                                <Ticket className="h-3 w-3 text-muted-foreground" />
+                                <IconTicket className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-[10px] uppercase text-muted-foreground font-medium">Entrada</span>
                               </div>
-                              <h3 className="font-bold text-sm">{ticket.type}</h3>
-                              {ticket.description && (
+                              <h3 className="font-bold text-sm">{ticketItem.type}</h3>
+                              {ticketItem.description && (
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                  {ticket.description}
+                                  {ticketItem.description}
                                 </p>
                               )}
                             </div>
@@ -1025,21 +1106,21 @@ const Producto = () => {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => removeTicket(ticket.type)}
+                              onClick={() => removeTicket(ticketItem.type)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <IconTrash2 className="h-4 w-4" />
                             </Button>
                           </div>
                           
                           <div className="flex items-center justify-between text-xs mb-2">
                             <span className="text-muted-foreground">Cantidad:</span>
-                            <span className="font-bold">{ticket.quantity}</span>
+                            <span className="font-bold">{ticketItem.quantity}</span>
                           </div>
                           
                           <div className="text-right">
-                            <div className="text-lg font-bold">€{((ticket.price + ticket.fees) * ticket.quantity).toFixed(2)}</div>
+                            <div className="text-lg font-bold">€{((ticketItem.price + ticketItem.fees) * ticketItem.quantity).toFixed(2)}</div>
                             <p className="text-xs text-muted-foreground">
-                              €{ticket.price.toFixed(2)} + €{ticket.fees.toFixed(2)} gastos
+                              €{ticketItem.price.toFixed(2)} + €{ticketItem.fees.toFixed(2)} gastos
                             </p>
                           </div>
                         </div>
@@ -1063,7 +1144,7 @@ const Producto = () => {
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-1.5 mb-1">
-                                  <Building2 className="h-3 w-3 text-muted-foreground" />
+                                  <IconBuilding2 className="h-3 w-3 text-muted-foreground" />
                                   <span className="text-[10px] uppercase text-muted-foreground font-medium">Hotel</span>
                                 </div>
                                 <h3 className="font-bold text-sm">{cart.hotel.hotel_name}</h3>
@@ -1074,7 +1155,7 @@ const Producto = () => {
                                 className="h-6 w-6"
                                 onClick={removeHotel}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <IconTrash2 className="h-4 w-4" />
                               </Button>
                             </div>
                             <div className="space-y-1 text-xs text-muted-foreground mb-2">
@@ -1118,7 +1199,7 @@ const Producto = () => {
                   ) : (
                     <div className="text-center py-8">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                        <Ticket className="h-6 w-6 text-muted-foreground" />
+                        <IconTicket className="h-6 w-6 text-muted-foreground" />
                       </div>
                       <p className="text-foreground font-medium mb-2">
                         Empieza seleccionando tus entradas
@@ -1134,27 +1215,38 @@ const Producto = () => {
           </div>
         </main>
 
-        {/* Mobile Cart Bar - LAZY loaded */}
-        <Suspense fallback={<MobileCartSkeleton />}>
-          <MobileCartBar 
-            eventId={eventDetails.event_id || undefined}
-            eventUrl={(eventDetails as any).event_url}
-            hotelUrl={(eventDetails as any).destination_deeplink}
-            eventName={eventDetails.event_name || undefined}
-          />
-        </Suspense>
+        {/* Mobile Cart Bar - ULTRA-LAZY: only after 3s */}
+        {isLowPriorityReady && (
+          <Suspense fallback={<MobileCartSkeleton />}>
+            <MobileCartBar 
+              eventId={eventDetails.event_id || undefined}
+              eventUrl={(eventDetails as any).event_url}
+              hotelUrl={(eventDetails as any).destination_deeplink}
+              eventName={eventDetails.event_name || undefined}
+            />
+          </Suspense>
+        )}
 
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
         
-        {/* Related Links for SEO - LAZY loaded with fixed-height fallback */}
-        <div className="container mx-auto px-4 pb-8">
-          <Suspense fallback={<RelatedLinksSkeleton />}>
-            <RelatedLinks slug={slug || ''} type="event" />
-          </Suspense>
-        </div>
+        {/* Related Links for SEO - ULTRA-LAZY: only after 3s */}
+        {isLowPriorityReady && (
+          <div className="container mx-auto px-4 pb-8">
+            <Suspense fallback={<RelatedLinksSkeleton />}>
+              <RelatedLinks slug={slug || ''} type="event" />
+            </Suspense>
+          </div>
+        )}
         
-        <Footer />
+        {/* Footer - ULTRA-LAZY: only after 3s */}
+        {isLowPriorityReady ? (
+          <Suspense fallback={<FooterSkeleton />}>
+            <Footer />
+          </Suspense>
+        ) : (
+          <FooterSkeleton />
+        )}
       </div>
     </>
   );
