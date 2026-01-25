@@ -8,6 +8,20 @@ import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Clock, Users } from "lucide-react";
 
+// Thumbnail optimization: generate small image URL for list cards
+const getOptimizedThumbnail = (url: string): string => {
+  if (!url || url === "/placeholder.svg") return url;
+  
+  // For Ticketmaster images, request smaller size
+  if (url.includes("ticketm.net") || url.includes("ticketmaster")) {
+    return url
+      .replace(/RATIO\/\d+_\d+/g, "RATIO/1_1")
+      .replace(/\/\d+x\d+\//g, "/100x100/");
+  }
+  
+  return url;
+};
+
 interface FestivalListCardProps {
   festival: {
     event_id?: string;
@@ -77,7 +91,9 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
   // Normalize field names
   const festivalName = festival.festival_nombre || festival.event_name || festival.name || '';
   const festivalSlug = festival.event_slug || festival.slug;
-  const imageUrl = festival.image_large_url || festival.image_standard_url || "/placeholder.svg";
+  const rawImageUrl = festival.image_standard_url || festival.image_large_url || "/placeholder.svg";
+  // Use optimized thumbnail for list cards
+  const imageUrl = getOptimizedThumbnail(rawImageUrl);
 
   // Handle dates
   const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
@@ -92,7 +108,7 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
   const startDay = startDate ? format(startDate, "d") : '--';
   const endDay = endDate && endDate.getTime() !== startDate?.getTime() ? format(endDate, "d") : null;
   const monthName = startDate ? format(startDate, "MMM", { locale: es }).toUpperCase() : '';
-  const year = startDate ? format(startDate, "yy") : '';
+  const year = startDate ? format(startDate, "yyyy") : ''; // Full year (2026)
 
   // Check sold out status
   const isSoldOut = festival.sold_out === true || festival.seats_available === false;
@@ -130,8 +146,8 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
       <div 
         ref={cardRef}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5",
-          "h-[100px] min-h-[100px]",
+          "flex items-center gap-3 px-3",
+          "h-[100px] min-h-[100px] max-h-[100px]",
           "border-b border-border/50",
           "bg-card hover:bg-accent/5",
           "transition-colors duration-200",
@@ -139,25 +155,28 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
           (isSoldOut || isEventPast) && "opacity-60"
         )}
       >
-        {/* a. Date Block - Left */}
+        {/* a. Date Block - Left - Black background with white text */}
         <div className={cn(
-          "flex-shrink-0 w-[52px]",
+          "flex-shrink-0 w-[54px] h-[72px]",
           "flex flex-col items-center justify-center",
-          "bg-accent/10 rounded-lg py-2",
+          "bg-foreground rounded-lg",
           "text-center"
         )}>
-          <span className="text-[10px] font-semibold text-accent uppercase tracking-wide leading-none">
-            {monthName}
-          </span>
-          <span className="text-xl font-black text-foreground leading-none mt-0.5">
+          <span className={cn(
+            "font-black text-background leading-none",
+            endDay ? "text-lg" : "text-2xl"
+          )}>
             {endDay ? `${startDay}-${endDay}` : startDay}
           </span>
-          <span className="text-[10px] font-medium text-muted-foreground leading-none mt-0.5">
+          <span className="text-[10px] font-bold text-background/90 uppercase tracking-wider leading-none mt-1">
+            {monthName}
+          </span>
+          <span className="text-[9px] font-medium text-background/70 leading-none mt-0.5">
             {year}
           </span>
         </div>
 
-        {/* b. Festival Image - Square with rounded corners */}
+        {/* b. Festival Image - Square with rounded corners, optimized */}
         <div className={cn(
           "flex-shrink-0 w-[56px] h-[56px] overflow-hidden",
           "rounded-xl",
@@ -171,11 +190,13 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
               <img
                 src={imageUrl}
                 alt={festivalName}
+                width={56}
+                height={56}
                 loading={priority ? "eager" : "lazy"}
-                decoding={priority ? "sync" : "async"}
+                decoding="async"
                 className={cn(
                   "w-full h-full object-cover",
-                  "transition-opacity duration-300",
+                  "transition-opacity duration-200",
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 )}
                 onLoad={() => setImageLoaded(true)}

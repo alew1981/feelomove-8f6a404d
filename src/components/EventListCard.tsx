@@ -8,6 +8,21 @@ import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Clock } from "lucide-react";
 
+// Thumbnail optimization: generate small image URL for list cards
+const getOptimizedThumbnail = (url: string): string => {
+  if (!url || url === "/placeholder.svg") return url;
+  
+  // For Ticketmaster images, request smaller size
+  if (url.includes("ticketm.net") || url.includes("ticketmaster")) {
+    // Replace RATIO/WIDTH_HEIGHT with smaller dimensions
+    return url
+      .replace(/RATIO\/\d+_\d+/g, "RATIO/1_1")
+      .replace(/\/\d+x\d+\//g, "/100x100/");
+  }
+  
+  return url;
+};
+
 interface EventListCardProps {
   event: {
     id?: string;
@@ -43,8 +58,8 @@ interface EventListCardProps {
 /**
  * Compact list-style event card for mobile
  * - Fixed height 100px for maximum density (4-5 visible per screen)
- * - Date block on left
- * - Circular/rounded image
+ * - Date block on left with black background
+ * - Circular/rounded image optimized as thumbnail
  * - Event name + city in center
  * - Arrow CTA on right
  */
@@ -82,7 +97,9 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
   const eventName = event.name || event.event_name || '';
   const eventSlug = event.slug || event.event_slug;
   const artistName = event.artist_name || event.primary_attraction_name || '';
-  const imageUrl = event.image_large_url || event.event_image_large || event.image_standard_url || event.event_image_standard || "/placeholder.svg";
+  const rawImageUrl = event.image_standard_url || event.event_image_standard || event.image_large_url || event.event_image_large || "/placeholder.svg";
+  // Use optimized thumbnail for list cards
+  const imageUrl = getOptimizedThumbnail(rawImageUrl);
 
   // Handle dates
   const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
@@ -90,7 +107,7 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
   const eventDate = hasDate && event.event_date ? parseISO(event.event_date) : null;
   const dayNumber = eventDate ? format(eventDate, "d") : '--';
   const monthName = eventDate ? format(eventDate, "MMM", { locale: es }).toUpperCase() : '';
-  const year = eventDate ? format(eventDate, "yy") : '';
+  const year = eventDate ? format(eventDate, "yyyy") : ''; // Full year (2026)
 
   // Check sold out status
   const isSoldOut = event.sold_out === true || event.seats_available === false;
@@ -132,8 +149,8 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
       <div 
         ref={cardRef}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5",
-          "h-[100px] min-h-[100px]",
+          "flex items-center gap-3 px-3",
+          "h-[100px] min-h-[100px] max-h-[100px]",
           "border-b border-border/50",
           "bg-card hover:bg-accent/5",
           "transition-colors duration-200",
@@ -141,25 +158,25 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
           (isSoldOut || isEventPast) && "opacity-60"
         )}
       >
-        {/* a. Date Block - Left */}
+        {/* a. Date Block - Left - Black background with white text */}
         <div className={cn(
-          "flex-shrink-0 w-[52px]",
+          "flex-shrink-0 w-[54px] h-[72px]",
           "flex flex-col items-center justify-center",
-          "bg-accent/10 rounded-lg py-2",
+          "bg-foreground rounded-lg",
           "text-center"
         )}>
-          <span className="text-[10px] font-semibold text-accent uppercase tracking-wide leading-none">
-            {monthName}
-          </span>
-          <span className="text-2xl font-black text-foreground leading-none mt-0.5">
+          <span className="text-2xl font-black text-background leading-none">
             {dayNumber}
           </span>
-          <span className="text-[10px] font-medium text-muted-foreground leading-none mt-0.5">
+          <span className="text-[10px] font-bold text-background/90 uppercase tracking-wider leading-none mt-1">
+            {monthName}
+          </span>
+          <span className="text-[9px] font-medium text-background/70 leading-none mt-0.5">
             {year}
           </span>
         </div>
 
-        {/* b. Event Image */}
+        {/* b. Event Image - Optimized thumbnail */}
         <div className={cn(
           "flex-shrink-0 w-[56px] h-[56px] overflow-hidden",
           isFestival ? "rounded-xl" : "rounded-full",
@@ -173,11 +190,13 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
               <img
                 src={imageUrl}
                 alt={displayName}
+                width={56}
+                height={56}
                 loading={priority ? "eager" : "lazy"}
-                decoding={priority ? "sync" : "async"}
+                decoding="async"
                 className={cn(
                   "w-full h-full object-cover",
-                  "transition-opacity duration-300",
+                  "transition-opacity duration-200",
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 )}
                 onLoad={() => setImageLoaded(true)}
