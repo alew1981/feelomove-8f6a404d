@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import PageHero from "@/components/PageHero";
 import EventCard from "@/components/EventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
+import EventListCard, { EventListCardSkeleton } from "@/components/EventListCard";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -512,13 +513,22 @@ const Conciertos = () => {
             )}
           </div>
 
-          {/* Events Grid */}
+          {/* Events - Mobile List / Desktop Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <EventCardSkeleton key={i} />
-              ))}
-            </div>
+            <>
+              {/* Mobile List Skeleton */}
+              <div className="md:hidden space-y-0">
+                {[...Array(6)].map((_, i) => (
+                  <EventListCardSkeleton key={i} />
+                ))}
+              </div>
+              {/* Desktop Grid Skeleton */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <EventCardSkeleton key={i} />
+                ))}
+              </div>
+            </>
           ) : filteredAndSortedEvents.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-xl text-muted-foreground mb-4">No se encontraron conciertos</p>
@@ -526,7 +536,15 @@ const Conciertos = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Mobile: Compact List View */}
+              <div className="md:hidden -mx-4">
+                {displayedEvents.map((event, index) => (
+                  <EventListCard key={event.id} event={event} priority={index < 6} />
+                ))}
+              </div>
+
+              {/* Desktop: Grid View */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {displayedEvents.map((event, index) => (
                   <EventCard key={event.id} event={event} priority={index < 4} />
                 ))}

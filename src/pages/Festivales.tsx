@@ -13,6 +13,7 @@ import { matchesSearch } from "@/lib/searchUtils";
 import { FestivalCardSkeleton } from "@/components/ui/skeleton-loader";
 import FestivalCard from "@/components/FestivalCard";
 import ParentFestivalCard from "@/components/ParentFestivalCard";
+import FestivalListCard, { FestivalListCardSkeleton } from "@/components/FestivalListCard";
 import { FestivalProductPage } from "@/types/events.types";
 import { Button } from "@/components/ui/button";
 
@@ -720,38 +721,71 @@ const Festivales = () => {
             </p>
           )}
 
-          {/* Festival Cards Grid - content-visibility for below-fold optimization */}
+          {/* Festival Cards - Mobile List / Desktop Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <FestivalCardSkeleton key={i} />
-              ))}
-            </div>
+            <>
+              {/* Mobile List Skeleton */}
+              <div className="md:hidden space-y-0">
+                {[...Array(6)].map((_, i) => (
+                  <FestivalListCardSkeleton key={i} />
+                ))}
+              </div>
+              {/* Desktop Grid Skeleton */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <FestivalCardSkeleton key={i} />
+                ))}
+              </div>
+            </>
           ) : totalCount === 0 ? (
             <div className="text-center py-16" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}>
               <p className="text-xl text-muted-foreground mb-4">No se encontraron festivales</p>
               <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Parent Festivals - first 4 get priority loading for LCP */}
-              {filteredData.parentFestivals.map((parent, index) => (
-                <ParentFestivalCard 
-                  key={parent.primary_attraction_id} 
-                  festival={parent}
-                  priority={index < 4}
-                />
-              ))}
+            <>
+              {/* Mobile: Compact List View */}
+              <div className="md:hidden -mx-4">
+                {/* Parent Festivals */}
+                {filteredData.parentFestivals.map((parent, index) => (
+                  <FestivalListCard 
+                    key={parent.primary_attraction_id} 
+                    festival={parent}
+                    priority={index < 6}
+                  />
+                ))}
 
-              {/* Standalone Festivals - priority based on position */}
-              {filteredData.standaloneFestivals.map((festival, index) => (
-                <FestivalCard 
-                  key={festival.event_id} 
-                  festival={festival}
-                  priority={filteredData.parentFestivals.length + index < 4}
-                />
-              ))}
-            </div>
+                {/* Standalone Festivals */}
+                {filteredData.standaloneFestivals.map((festival, index) => (
+                  <FestivalListCard 
+                    key={festival.event_id} 
+                    festival={festival}
+                    priority={filteredData.parentFestivals.length + index < 6}
+                  />
+                ))}
+              </div>
+
+              {/* Desktop: Grid View */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Parent Festivals - first 4 get priority loading for LCP */}
+                {filteredData.parentFestivals.map((parent, index) => (
+                  <ParentFestivalCard 
+                    key={parent.primary_attraction_id} 
+                    festival={parent}
+                    priority={index < 4}
+                  />
+                ))}
+
+                {/* Standalone Festivals - priority based on position */}
+                {filteredData.standaloneFestivals.map((festival, index) => (
+                  <FestivalCard 
+                    key={festival.event_id} 
+                    festival={festival}
+                    priority={filteredData.parentFestivals.length + index < 4}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
         <Footer />
