@@ -238,7 +238,9 @@ const Producto = () => {
             </CardContent>
           </Card>
         </main>
-        <Footer />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
       </div>
     );
   }
@@ -270,7 +272,9 @@ const Producto = () => {
             </CardContent>
           </Card>
         </main>
-        <Footer />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
       </div>
     );
   }
