@@ -180,12 +180,13 @@ const Producto = () => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } = useCart();
   
-  // ULTRA-LAZY HYDRATION: Delay rendering of non-critical components by 4 seconds
-  // This guarantees LCP is registered BEFORE React attempts to hydrate below-fold content
+  // Split loading states: hotels are CRITICAL (render immediately), footer/links are not
   const [isInteractive, setIsInteractive] = useState(false);
+  const [renderHotels] = useState(true); // Hotels render immediately when data available
+  
   useEffect(() => {
+    // Keep 4s delay ONLY for non-critical components (footer, related links, mobile cart)
     const timer = setTimeout(() => {
-      // Use requestIdleCallback if available for smoother hydration
       if ('requestIdleCallback' in window) {
         (window as any).requestIdleCallback(() => setIsInteractive(true), { timeout: 500 });
       } else {
@@ -1028,8 +1029,8 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Hotels & Map Section with Tabs - ULTRA-LAZY: only after 4s for TBT optimization */}
-              {isInteractive && (hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
+              {/* Hotels & Map Section - Render immediately when data available */}
+              {renderHotels && (hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
                 <div id="hotels-section">
                   <Suspense fallback={<HotelsSkeleton />}>
                     <HotelMapTabs 
@@ -1047,10 +1048,6 @@ const Producto = () => {
                     />
                   </Suspense>
                 </div>
-              )}
-              {/* Hotels skeleton placeholder before interactive */}
-              {!isInteractive && (hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
-                <HotelsSkeleton />
               )}
             </div>
 
