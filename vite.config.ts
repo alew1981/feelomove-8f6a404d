@@ -26,35 +26,85 @@ export default defineConfig(({ mode }) => ({
     // Optimize chunks
     rollupOptions: {
       output: {
-        // Optimize chunk splitting for better caching and lazy loading
+        // AGGRESSIVE chunk splitting for faster mobile loading
         manualChunks: (id) => {
-          // Core React bundle - loaded immediately
-          if (id.includes('react-dom') || id.includes('react-router-dom')) {
-            return 'vendor-react';
+          // Skip non-node_modules (app code handled separately)
+          if (!id.includes('node_modules')) return;
+          
+          // === CRITICAL PATH (loaded immediately) ===
+          // Core React - absolute minimum for hydration
+          if (id.includes('node_modules/react/') || id.includes('node_modules/scheduler/')) {
+            return 'vendor-react-core';
           }
-          if (id.includes('node_modules/react/')) {
-            return 'vendor-react';
+          // React DOM - needed for rendering
+          if (id.includes('react-dom')) {
+            return 'vendor-react-dom';
           }
+          // Router - needed for navigation
+          if (id.includes('react-router')) {
+            return 'vendor-router';
+          }
+          
+          // === DATA LAYER (loads with first API call) ===
           // TanStack Query - needed for data fetching
           if (id.includes('@tanstack/react-query')) {
             return 'vendor-query';
           }
-          // Supabase client - needed for data
-          if (id.includes('@supabase/supabase-js')) {
+          // Supabase client
+          if (id.includes('@supabase')) {
             return 'vendor-supabase';
           }
-          // UI components from Radix - can be deferred
-          if (id.includes('@radix-ui/')) {
-            return 'vendor-ui';
+          
+          // === UI LAYER (can be slightly deferred) ===
+          // Radix primitives - split by component family
+          if (id.includes('@radix-ui/react-dialog') || id.includes('@radix-ui/react-alert-dialog')) {
+            return 'vendor-ui-dialogs';
           }
-          // Date utilities
+          if (id.includes('@radix-ui/react-dropdown') || id.includes('@radix-ui/react-menu') || id.includes('@radix-ui/react-popover')) {
+            return 'vendor-ui-menus';
+          }
+          if (id.includes('@radix-ui/react-select') || id.includes('@radix-ui/react-checkbox') || id.includes('@radix-ui/react-radio')) {
+            return 'vendor-ui-forms';
+          }
+          if (id.includes('@radix-ui/react-scroll-area') || id.includes('@radix-ui/react-tabs') || id.includes('@radix-ui/react-accordion')) {
+            return 'vendor-ui-layout';
+          }
+          if (id.includes('@radix-ui/')) {
+            return 'vendor-ui-primitives';
+          }
+          
+          // === UTILITIES (loaded on demand) ===
+          // Date utilities - only needed when displaying dates
           if (id.includes('date-fns')) {
             return 'vendor-date';
           }
-          // Lucide icons - tree-shake individual icons
+          // Icons - tree-shaken but still chunked separately
           if (id.includes('lucide-react')) {
             return 'vendor-icons';
           }
+          // Form handling
+          if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
+            return 'vendor-forms';
+          }
+          // Carousel/embla
+          if (id.includes('embla')) {
+            return 'vendor-carousel';
+          }
+          // Recharts (heavy, always lazy load)
+          if (id.includes('recharts') || id.includes('d3-')) {
+            return 'vendor-charts';
+          }
+          // Helmet for SEO
+          if (id.includes('react-helmet')) {
+            return 'vendor-seo';
+          }
+          // Class utilities
+          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance')) {
+            return 'vendor-styles';
+          }
+          
+          // Catch-all for remaining node_modules
+          return 'vendor-misc';
         },
         // Treeshake unused exports
         experimentalMinChunkSize: 10000,
