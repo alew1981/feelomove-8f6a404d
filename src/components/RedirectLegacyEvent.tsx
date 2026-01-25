@@ -20,28 +20,51 @@ import {
 // Lazy load Producto for normal event rendering
 const Producto = lazy(() => import("@/pages/Producto"));
 
-// Minimal loader for normal page loading
-const PageLoader = () => (
-  <div className="min-h-screen bg-background">
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16">
-      <div className="container mx-auto px-4 h-full flex items-center justify-between">
-        <Skeleton className="h-8 w-32" />
-        <div className="hidden md:flex gap-6">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
+// Minimal loader for normal page loading with STATIC meta tags for SEO
+const PageLoader = ({ slug, isFestival }: { slug?: string; isFestival?: boolean }) => {
+  // Generate static meta tags from slug (without DB query) for initial render
+  const slugParts = slug?.split('-') || [];
+  const artistName = slugParts.slice(0, -4).join(' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Evento';
+  const city = slugParts[slugParts.length - 4]?.replace(/\b\w/g, c => c.toUpperCase()) || '';
+  const staticTitle = city 
+    ? `${artistName} en ${city} - Entradas y Hotel | FEELOMOVE+`
+    : `${artistName} - Entradas y Hotel | FEELOMOVE+`;
+  const staticDescription = city
+    ? `Compra entradas para ${artistName} en ${city}. Reserva tu pack de entradas + hotel con Feelomove+.`
+    : `Compra entradas para ${artistName}. Reserva tu pack de entradas + hotel con Feelomove+.`;
+
+  return (
+    <>
+      {/* CRITICAL: Static meta tags from first render for SEO bots */}
+      <Helmet>
+        <title>{staticTitle}</title>
+        <meta name="description" content={staticDescription} />
+        <meta property="og:title" content={staticTitle} />
+        <meta property="og:description" content={staticDescription} />
+        <meta name="robots" content="index, follow" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16">
+          <div className="container mx-auto px-4 h-full flex items-center justify-between">
+            <Skeleton className="h-8 w-32" />
+            <div className="hidden md:flex gap-6">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          </div>
+        </div>
+        <div className="pt-16">
+          <Skeleton className="h-64 w-full" />
+        </div>
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-8 w-48 mb-4" />
+          <Skeleton className="h-4 w-full max-w-2xl mb-8" />
         </div>
       </div>
-    </div>
-    <div className="pt-16">
-      <Skeleton className="h-64 w-full" />
-    </div>
-    <div className="container mx-auto px-4 py-8">
-      <Skeleton className="h-8 w-48 mb-4" />
-      <Skeleton className="h-4 w-full max-w-2xl mb-8" />
-    </div>
-  </div>
-);
+    </>
+  );
+};
 
 // Redirect loader with SEO meta tags for 301
 const RedirectLoader = ({ targetUrl }: { targetUrl: string }) => (
@@ -147,23 +170,25 @@ const RedirectLegacyEvent = () => {
 
   // ============================================
   // STEP 2: EARLY EXIT CHECK (FAST PATH)
-  // Only for clean URLs that don't need interception
+  // CRITICAL FIX: Do NOT redirect if slug looks valid - let Producto handle 404
   // ============================================
   const earlyExitResult = useMemo(() => {
-    if (!rawSlug || interceptCheck.shouldIntercept) return null;
+    if (!rawSlug) return null;
     
-    // Strip tracking params if present (but don't redirect for this)
-    const hasTracking = hasTrackingParams(location.search);
+    // CRITICAL: If URL has noise patterns, we MUST intercept (handled above)
+    if (interceptCheck.shouldIntercept) return null;
     
-    // Check if slug is already clean SEO format
+    // Check if slug is already clean SEO format (ends with year pattern)
     const isClean = isCleanSeoUrl(rawSlug);
     
-    // Check route type
+    // Check route type for festival/concierto mismatch
     const slugIsFestival = isFestivalSlug(rawSlug);
     const routeMismatch = (slugIsFestival && isConciertRoute) || (!slugIsFestival && isFestivalRoute);
     
-    if (isClean && !routeMismatch && !hasTracking) {
-      console.log(`[SEO Debug] FAST PATH: Clean URL, rendering directly`);
+    // STABILITY FIX: Clean URLs go directly to Producto - NO redirect queries
+    // Producto will handle 404 if event doesn't exist in DB
+    if (isClean && !routeMismatch) {
+      console.log(`[SEO Debug] FAST PATH: Clean URL, rendering Producto directly (no redirect check)`);
       return { 
         canFastPath: true, 
         needsRouteCorrection: false,
@@ -171,9 +196,9 @@ const RedirectLegacyEvent = () => {
       };
     }
     
-    // Route needs correction (festival in /concierto or vice versa)
+    // Route type mismatch (festival in /concierto or vice versa) - redirect silently
     if (isClean && routeMismatch) {
-      console.log(`[SEO Debug] Route correction needed: ${slugIsFestival ? '/festival' : '/concierto'}`);
+      console.log(`[SEO Debug] Route correction: ${slugIsFestival ? '/festival' : '/concierto'}`);
       return {
         canFastPath: false,
         needsRouteCorrection: true,
@@ -182,8 +207,9 @@ const RedirectLegacyEvent = () => {
       };
     }
     
+    // Not clean - need to query for redirect
     return null;
-  }, [rawSlug, location.search, isFestivalRoute, isConciertRoute, interceptCheck.shouldIntercept]);
+  }, [rawSlug, isFestivalRoute, isConciertRoute, interceptCheck.shouldIntercept]);
 
   // ============================================
   // MAIN QUERY - Only runs for intercepted or unclear URLs
@@ -448,31 +474,36 @@ const RedirectLegacyEvent = () => {
     enabled: shouldQuery,
     staleTime: Infinity,
     gcTime: 60 * 60 * 1000,
+    // CRITICAL: Prevent refetch loops
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
   });
 
   // ============================================
-  // TIMEOUT FALLBACK (500ms)
+  // TIMEOUT FALLBACK (500ms) - ONLY for intercepted URLs
+  // STABILITY FIX: Clean URLs skip this entirely
   // ============================================
   useEffect(() => {
-    if (!shouldQuery || !rawSlug || hasNavigatedRef.current) return;
+    // Exit conditions to prevent loops
+    if (!shouldQuery) return;
+    if (!rawSlug) return;
+    if (hasNavigatedRef.current) return;
+    if (!interceptCheck.shouldIntercept) return; // Only timeout for dirty URLs
     
     const timeout = setTimeout(() => {
       const elapsed = Date.now() - startTimeRef.current;
       if (elapsed >= REDIRECT_TIMEOUT && isLoading && !hasNavigatedRef.current) {
-        console.log(`[SEO Debug] TIMEOUT (${elapsed}ms), redirecting to search`);
+        console.log(`[SEO Debug] TIMEOUT (${elapsed}ms), fallback to Producto`);
         hasNavigatedRef.current = true;
         
-        // Extract artist name for search fallback
-        const cleanedData = cleanSlugClientSide(rawSlug);
-        const artistPart = cleanedData.artistSlug || rawSlug.split('-').slice(0, 3).join('-');
-        
-        // Redirect to artist search page
-        navigate(`/conciertos/${artistPart}`, { replace: true });
+        // STABILITY FIX: Don't redirect on timeout - just render Producto
+        // This prevents PageSpeed from getting stuck in redirect loops
       }
     }, REDIRECT_TIMEOUT);
     
     return () => clearTimeout(timeout);
-  }, [shouldQuery, rawSlug, isLoading, navigate]);
+  }, [shouldQuery, rawSlug, isLoading, interceptCheck.shouldIntercept]);
 
   // ============================================
   // NAVIGATION EFFECTS
@@ -524,7 +555,7 @@ const RedirectLegacyEvent = () => {
   // FAST PATH: Clean URL with correct route - render immediately
   if (earlyExitResult?.canFastPath) {
     return (
-      <Suspense fallback={<PageLoader />}>
+      <Suspense fallback={<PageLoader slug={rawSlug} isFestival={isFestivalRoute} />}>
         <Producto />
       </Suspense>
     );
@@ -544,19 +575,19 @@ const RedirectLegacyEvent = () => {
         <Helmet>
           <meta name="robots" content="noindex, follow" />
         </Helmet>
-        <PageLoader />
+        <PageLoader slug={rawSlug} isFestival={isFestivalRoute} />
       </>
     );
   }
 
   if (isLoading) {
-    return <PageLoader />;
+    return <PageLoader slug={rawSlug} isFestival={isFestivalRoute} />;
   }
 
   // Event found with no redirect needed
   if (result?.event && !result.needsRedirect) {
     return (
-      <Suspense fallback={<PageLoader />}>
+      <Suspense fallback={<PageLoader slug={rawSlug} isFestival={isFestivalRoute} />}>
         <Producto />
       </Suspense>
     );
@@ -568,9 +599,9 @@ const RedirectLegacyEvent = () => {
     return <RedirectLoader targetUrl={targetUrl} />;
   }
 
-  // Fallback - should not happen often
+  // Fallback - render Producto directly (no more redirect loops)
   return (
-    <Suspense fallback={<PageLoader />}>
+    <Suspense fallback={<PageLoader slug={rawSlug} isFestival={isFestivalRoute} />}>
       <Producto />
     </Suspense>
   );
