@@ -706,3 +706,5 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
     </div>
   );
 };
+
+export default RelatedLinks;
