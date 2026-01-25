@@ -119,15 +119,28 @@ const Producto = () => {
     isConcierto
   );
 
-  // Handle redirects from the optimized hook
+  // STABILITY FIX: Track if we've already navigated to prevent loops
+  const hasNavigatedRef = useRef(false);
+  
+  // Handle redirects from the optimized hook - with loop prevention
   useEffect(() => {
+    // Exit conditions to prevent loops
+    if (hasNavigatedRef.current) return;
+    if (isLoading) return;
+    
     if (eventResult?.needsRedirect && eventResult.redirectPath) {
+      console.log('[Producto] Redirecting to:', eventResult.redirectPath);
+      hasNavigatedRef.current = true;
       navigate(eventResult.redirectPath, { replace: true });
+      return;
     }
     if (eventResult?.needsRouteCorrection && eventResult.correctRoutePath) {
+      console.log('[Producto] Route correction to:', eventResult.correctRoutePath);
+      hasNavigatedRef.current = true;
       navigate(eventResult.correctRoutePath, { replace: true });
+      return;
     }
-  }, [eventResult, navigate]);
+  }, [eventResult, navigate, isLoading]);
 
   // Extract event data and canonical slug from result
   const eventData = eventResult?.data;
@@ -204,12 +217,17 @@ const Producto = () => {
     prevEventIdRef.current = currentEventId;
   }, [eventDetails?.event_id, cart, clearCart]);
 
-  // Redirect to 404 when event not found - MUST be before any conditional returns
+  // Redirect to 404 when event not found - with loop prevention
   useEffect(() => {
+    if (hasNavigatedRef.current) return;
+    if (isLoading) return;
+    
     if (isError && error instanceof Error && error.message === "Evento no encontrado") {
+      console.log('[Producto] Event not found, redirecting to 404');
+      hasNavigatedRef.current = true;
       navigate("/404", { replace: true });
     }
-  }, [isError, error, navigate]);
+  }, [isError, error, navigate, isLoading]);
 
   // Schema.org is handled by SEOHead with jsonLd prop - no duplicate injection needed
   // Meta tags are now handled by SEOHead component - removed useMetaTags hook to avoid duplicate query

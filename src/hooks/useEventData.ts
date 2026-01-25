@@ -36,74 +36,15 @@ export function useEventData(
         throw new Error("No se proporcionó el identificador del evento");
       }
 
-      // OPTIMIZATION: Run redirect check and type check in PARALLEL
-      const [redirectResult, typeCheckResult] = await Promise.all([
-        // Check slug_redirects
-        supabase
-          .from("slug_redirects")
-          .select("new_slug")
-          .eq("old_slug", slug)
-          .maybeSingle()
-          .then(({ data }) => data),
-        
-        // Check event type for route correction
-        supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug")
-          .eq("slug", slug)
-          .maybeSingle()
-          .then(({ data }) => data),
-      ]);
-
-      // Handle redirect if needed
-      const isPlaceholderSlug = (s: string) => /-9999(-\d{2})?(-\d{2})?$/.test(s);
-      
-      if (redirectResult?.new_slug && redirectResult.new_slug !== slug) {
-        if (!isPlaceholderSlug(redirectResult.new_slug)) {
-          const redirectPath = isFestivalRoute
-            ? `/festival/${redirectResult.new_slug}`
-            : `/concierto/${redirectResult.new_slug}`;
-          
-          return {
-            data: null,
-            canonicalSlug: redirectResult.new_slug,
-            needsRedirect: true,
-            redirectPath,
-            needsRouteCorrection: false,
-            correctRoutePath: null,
-          };
-        }
-      }
-
-      // Handle route type correction
-      if (typeCheckResult?.event_type) {
-        const shouldBeFestival = typeCheckResult.event_type === "festival";
-        const isWrongRoute = shouldBeFestival ? !isFestivalRoute : !isConcierto;
-
-        if (isWrongRoute) {
-          const correctPath = shouldBeFestival
-            ? `/festival/${typeCheckResult.slug}`
-            : `/concierto/${typeCheckResult.slug}`;
-          
-          return {
-            data: null,
-            canonicalSlug: null,
-            needsRedirect: false,
-            redirectPath: null,
-            needsRouteCorrection: true,
-            correctRoutePath: correctPath,
-          };
-        }
-      }
-
-      // Select appropriate view
+      // Select appropriate view based on route
       const viewName: ViewName = isFestivalRoute
         ? "lovable_mv_event_product_page_festivales"
         : isConcierto
           ? "lovable_mv_event_product_page_conciertos"
           : "lovable_mv_event_product_page";
 
-      // OPTIMIZATION: Direct query to the correct view
+      // STABILITY FIX: Query event data FIRST without checking redirects
+      // This ensures the page can render even if redirect logic fails
       const { data, error } = await supabase
         .from(viewName)
         .select("*")
@@ -114,7 +55,28 @@ export function useEventData(
         throw new Error("Error al cargar el evento");
       }
 
+      // If event found directly, return it (no redirect needed)
       if (data && data.length > 0) {
+        // Check if route type is correct
+        const eventType = (data[0] as any).event_type;
+        const shouldBeFestival = eventType === "festival";
+        const isWrongRoute = shouldBeFestival ? !isFestivalRoute : !isConcierto;
+
+        if (isWrongRoute) {
+          // Return route correction info but DON'T trigger redirect here
+          // Let the component handle it to avoid loops
+          return {
+            data: data as unknown as EventProductPage[],
+            canonicalSlug: null,
+            needsRedirect: false,
+            redirectPath: null,
+            needsRouteCorrection: true,
+            correctRoutePath: shouldBeFestival
+              ? `/festival/${slug}`
+              : `/concierto/${slug}`,
+          };
+        }
+
         return {
           data: data as unknown as EventProductPage[],
           canonicalSlug: null,
@@ -125,38 +87,53 @@ export function useEventData(
         };
       }
 
-      // Fallback: Check reverse redirect (new_slug -> old_slug in view)
-      const { data: reverseRedirect } = await supabase
+      // Event not found in view - check if it's a redirect case
+      // OPTIMIZATION: Run redirect check only if event not found directly
+      const { data: redirectResult } = await supabase
         .from("slug_redirects")
-        .select("old_slug")
-        .eq("new_slug", slug)
-        .limit(1);
+        .select("new_slug, event_id")
+        .eq("old_slug", slug)
+        .maybeSingle();
 
-      if (reverseRedirect && reverseRedirect.length > 0) {
-        const oldSlug = reverseRedirect[0].old_slug;
-        const { data: fallbackData } = await supabase
-          .from(viewName)
-          .select("*")
-          .eq("event_slug", oldSlug);
-
-        if (fallbackData && fallbackData.length > 0) {
-          return {
-            data: fallbackData as unknown as EventProductPage[],
-            canonicalSlug: slug, // Keep the clean slug as canonical
-            needsRedirect: false,
-            redirectPath: null,
-            needsRouteCorrection: false,
-            correctRoutePath: null,
-          };
+      if (redirectResult?.new_slug && redirectResult.new_slug !== slug) {
+        // Verify the redirect target exists and is not a placeholder
+        const isPlaceholderSlug = (s: string) => /-9999(-\d{2})?(-\d{2})?$/.test(s);
+        
+        if (!isPlaceholderSlug(redirectResult.new_slug)) {
+          // Get event type from the target event
+          const { data: targetEvent } = await supabase
+            .from("tm_tbl_events")
+            .select("event_type, slug")
+            .eq("id", redirectResult.event_id)
+            .maybeSingle();
+          
+          if (targetEvent) {
+            const targetPath = targetEvent.event_type === "festival"
+              ? `/festival/${targetEvent.slug}`
+              : `/concierto/${targetEvent.slug}`;
+            
+            return {
+              data: null,
+              canonicalSlug: targetEvent.slug,
+              needsRedirect: true,
+              redirectPath: targetPath,
+              needsRouteCorrection: false,
+              correctRoutePath: null,
+            };
+          }
         }
       }
 
+      // No event and no valid redirect - throw 404
       throw new Error("Evento no encontrado");
     },
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * (attemptIndex + 1), 3000),
-    staleTime: 60000, // Cache for 1 minute
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1, // Reduce retries to speed up 404
+    retryDelay: 500,
+    staleTime: 60000,
+    gcTime: 5 * 60 * 1000,
+    // CRITICAL: Prevent refetch loops
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
