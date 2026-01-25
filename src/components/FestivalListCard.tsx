@@ -191,9 +191,14 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
           "rounded-xl",
           "bg-muted"
         )}>
-          {/* Skeleton placeholder - always rendered underneath */}
+          {/* Shimmer placeholder - shows until image loads */}
           {!imageLoaded && (
-            <div className="absolute inset-0 bg-muted animate-pulse" />
+            <div className={cn(
+              "absolute inset-0",
+              "bg-gradient-to-r from-muted via-muted-foreground/10 to-muted",
+              "animate-shimmer bg-[length:200%_100%]",
+              "rounded-xl"
+            )} />
           )}
           {isInView && (
             <img
@@ -203,8 +208,7 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
               height={56}
               loading={priority ? "eager" : "lazy"}
               decoding={priority ? "sync" : "async"}
-              // @ts-ignore - fetchPriority is valid HTML attribute
-              fetchPriority={priority ? "high" : "auto"}
+              {...(priority ? { fetchpriority: "high" } : {})}
               className={cn(
                 "w-full h-full object-cover",
                 "transition-opacity duration-300 ease-out",
@@ -280,24 +284,24 @@ FestivalListCard.displayName = "FestivalListCard";
 export default FestivalListCard;
 
 /**
- * Skeleton for FestivalListCard - maintains same height and structure
+ * Skeleton for FestivalListCard - maintains same height and structure with shimmer effect
  */
 export const FestivalListCardSkeleton = memo(() => (
   <div className="flex items-center gap-3 px-3 py-2.5 h-[100px] min-h-[100px] border-b border-border/50">
     {/* Date Block */}
-    <Skeleton className="w-[52px] h-[60px] rounded-lg flex-shrink-0" />
+    <div className="w-[54px] h-[72px] rounded-lg flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     
     {/* Image */}
-    <Skeleton className="w-[56px] h-[56px] rounded-xl flex-shrink-0" />
+    <div className="w-[56px] h-[56px] rounded-xl flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     
     {/* Info */}
     <div className="flex-grow flex flex-col gap-1.5">
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-3 w-1/2" />
+      <div className="h-4 w-3/4 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+      <div className="h-3 w-1/2 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     </div>
     
     {/* Button */}
-    <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+    <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
   </div>
 ));
 
