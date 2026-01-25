@@ -24,10 +24,9 @@ const Producto = lazy(() => import("./pages/Producto"));
 const Favoritos = lazy(() => import("./pages/Favoritos"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Lazy load redirect components
+// Lazy load redirect components (legacy URL support only)
 const RedirectProducto = lazy(() => import("./components/RedirectProducto"));
 const RedirectEvento = lazy(() => import("./components/RedirectEvento"));
-const RedirectLegacyEvent = lazy(() => import("./components/RedirectLegacyEvent"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -160,11 +159,11 @@ const App = () => (
                 <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
                 <Route path="/favoritos" element={<Favoritos />} />
                 
-                {/* SEO-friendly event routes - handles both new and legacy URLs */}
+                {/* Direct product routes - load Producto directly for fastest render */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
-                <Route path="/concierto/:slug" element={<RedirectLegacyEvent />} />
+                <Route path="/concierto/:slug" element={<Producto />} />
                 <Route path="/festival" element={<Navigate to="/festivales" replace />} />
-                <Route path="/festival/:slug" element={<RedirectLegacyEvent />} />
+                <Route path="/festival/:slug" element={<Producto />} />
                 
                 {/* Legacy URL redirects (301) */}
                 <Route path="/producto/:slug" element={<RedirectProducto />} />
