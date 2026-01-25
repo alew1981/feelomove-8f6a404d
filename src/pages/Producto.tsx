@@ -443,8 +443,28 @@ const Producto = () => {
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // Get image - prioritize image_large_url
-  const eventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
+  // Get image - prioritize image_large_url and optimize for LCP
+  // Use optimized Ticketmaster image variant (max 800px width for mobile LCP)
+  const rawEventImage = (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
+  
+  // Optimize Ticketmaster images: replace CUSTOM/large variants with smaller ones
+  // Reduces ~2MB images to ~100KB for faster LCP
+  const eventImage = (() => {
+    if (!rawEventImage || rawEventImage === "/placeholder.svg") return rawEventImage;
+    
+    // Ticketmaster image optimization: use TABLET_LANDSCAPE_16_9 variant (~800px wide)
+    // Patterns: s1.ticketm.net/img/tat/dam/a/xxx/xxx_CUSTOM.jpg -> xxx_TABLET_LANDSCAPE_16_9.jpg
+    if (rawEventImage.includes('ticketm.net')) {
+      // Replace common large variants with optimized mobile variant
+      return rawEventImage
+        .replace(/_CUSTOM\.(jpg|png|webp)$/i, '_TABLET_LANDSCAPE_16_9.$1')
+        .replace(/_RETINA_PORTRAIT_16_9\.(jpg|png|webp)$/i, '_TABLET_LANDSCAPE_16_9.$1')
+        .replace(/_RETINA_LANDSCAPE_16_9\.(jpg|png|webp)$/i, '_TABLET_LANDSCAPE_16_9.$1')
+        .replace(/_SOURCE\.(jpg|png|webp)$/i, '_TABLET_LANDSCAPE_16_9.$1');
+    }
+    
+    return rawEventImage;
+  })();
 
   // Build canonical URL using RPC canonical slug, VIP/Upgrade variant detection, or current slug
   const currentSlug = eventDetails.event_slug || '';
