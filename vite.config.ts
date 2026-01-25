@@ -26,13 +26,35 @@ export default defineConfig(({ mode }) => ({
     // Optimize chunks
     rollupOptions: {
       output: {
-        // Optimize chunk splitting for better caching
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip', '@radix-ui/react-tabs', '@radix-ui/react-select'],
-          'vendor-date': ['date-fns'],
-          'vendor-supabase': ['@supabase/supabase-js'],
+        // Optimize chunk splitting for better caching and lazy loading
+        manualChunks: (id) => {
+          // Core React bundle - loaded immediately
+          if (id.includes('react-dom') || id.includes('react-router-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/react/')) {
+            return 'vendor-react';
+          }
+          // TanStack Query - needed for data fetching
+          if (id.includes('@tanstack/react-query')) {
+            return 'vendor-query';
+          }
+          // Supabase client - needed for data
+          if (id.includes('@supabase/supabase-js')) {
+            return 'vendor-supabase';
+          }
+          // UI components from Radix - can be deferred
+          if (id.includes('@radix-ui/')) {
+            return 'vendor-ui';
+          }
+          // Date utilities
+          if (id.includes('date-fns')) {
+            return 'vendor-date';
+          }
+          // Lucide icons - tree-shake individual icons
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons';
+          }
         },
         // Treeshake unused exports
         experimentalMinChunkSize: 10000,

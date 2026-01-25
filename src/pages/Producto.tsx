@@ -1,31 +1,32 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useEventData } from "@/hooks/useEventData";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import HotelCard from "@/components/HotelCard";
-import HotelMapTabs from "@/components/HotelMapTabs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
+import { LazySection } from "@/components/LazySection";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw, Check, ArrowDown, Ticket, Building2 } from "lucide-react";
+import { Heart, Trash2, Plus, Minus, MapPin, AlertCircle, RefreshCw, Check, Ticket, Building2 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
-import { useCart, CartTicket } from "@/contexts/CartContext";
+import { useCart } from "@/contexts/CartContext";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { es } from "date-fns/locale";
-import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
-import { getEventUrl } from "@/lib/eventUtils";
-import { RelatedLinks } from "@/components/RelatedLinks";
+
+// LAZY LOAD below-fold components to reduce initial JS bundle (~200KB savings)
+const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
+const HotelCard = lazy(() => import("@/components/HotelCard"));
+const Footer = lazy(() => import("@/components/Footer"));
+const RelatedLinks = lazy(() => import("@/components/RelatedLinks").then(m => ({ default: m.RelatedLinks })));
 
 interface PriceLevel {
   id: number;
@@ -902,23 +903,27 @@ const Producto = () => {
                 </div>
               )}
 
-              {/* Hotels & Map Section with Tabs */}
+              {/* Hotels & Map Section with Tabs - LAZY LOADED */}
               {(hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
-                <div id="hotels-section">
-                  <HotelMapTabs 
-                    hotels={hotels} 
-                    mapWidgetHtml={mapWidgetHtml} 
-                    onAddHotel={handleAddHotel}
-                    checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
-                    checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
-                    eventName={eventDetails.event_name || undefined}
-                    ticketsSelected={isEventInCart && totalPersons > 0}
-                    selectedHotelId={cart?.hotel?.hotel_id || null}
-                    venueCity={eventDetails.venue_city || ""}
-                    stay22Accommodations={(eventDetails as any)?.stay22_accommodations || null}
-                    stay22Activities={(eventDetails as any)?.stay22_activities || null}
-                  />
-                </div>
+                <LazySection minHeight="400px" rootMargin="300px">
+                  <div id="hotels-section">
+                    <Suspense fallback={<div className="h-[400px] animate-pulse bg-muted/30 rounded-xl" />}>
+                      <HotelMapTabs 
+                        hotels={hotels} 
+                        mapWidgetHtml={mapWidgetHtml} 
+                        onAddHotel={handleAddHotel}
+                        checkinDate={(eventDetails as any).package_checkin || format(eventDate, "yyyy-MM-dd")}
+                        checkoutDate={(eventDetails as any).package_checkout || format(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")}
+                        eventName={eventDetails.event_name || undefined}
+                        ticketsSelected={isEventInCart && totalPersons > 0}
+                        selectedHotelId={cart?.hotel?.hotel_id || null}
+                        venueCity={eventDetails.venue_city || ""}
+                        stay22Accommodations={(eventDetails as any)?.stay22_accommodations || null}
+                        stay22Activities={(eventDetails as any)?.stay22_activities || null}
+                      />
+                    </Suspense>
+                  </div>
+                </LazySection>
               )}
             </div>
 
@@ -1095,12 +1100,19 @@ const Producto = () => {
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
         
-        {/* Related Links for SEO */}
-        <div className="container mx-auto px-4 pb-8">
-          <RelatedLinks slug={slug || ''} type="event" />
-        </div>
+        {/* Related Links for SEO - LAZY LOADED */}
+        <LazySection minHeight="200px" rootMargin="400px">
+          <div className="container mx-auto px-4 pb-8">
+            <Suspense fallback={<div className="h-[150px] animate-pulse bg-muted/30 rounded-xl" />}>
+              <RelatedLinks slug={slug || ''} type="event" />
+            </Suspense>
+          </div>
+        </LazySection>
         
-        <Footer />
+        {/* Footer - LAZY LOADED */}
+        <Suspense fallback={<div className="h-[200px] bg-muted/30" />}>
+          <Footer />
+        </Suspense>
       </div>
     </>
   );
