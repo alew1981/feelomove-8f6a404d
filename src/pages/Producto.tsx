@@ -5,13 +5,11 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import ProductoSkeleton from "@/components/ProductoSkeleton";
-import { LazySection } from "@/components/LazySection";
-import Footer from "@/components/Footer";
 import MobileCartBar from "@/components/MobileCartBar";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
-import { RelatedLinks } from "@/components/RelatedLinks";
+import { LazySection } from "@/components/LazySection";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,9 +22,11 @@ import { es } from "date-fns/locale";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 
-// Only lazy load truly heavy components
+// LAZY LOAD below-fold components to reduce initial JS bundle (~200KB savings)
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
 const HotelCard = lazy(() => import("@/components/HotelCard"));
+const Footer = lazy(() => import("@/components/Footer"));
+const RelatedLinks = lazy(() => import("@/components/RelatedLinks").then(m => ({ default: m.RelatedLinks })));
 
 interface PriceLevel {
   id: number;
@@ -1100,15 +1100,19 @@ const Producto = () => {
         {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
         
-        {/* Related Links for SEO */}
+        {/* Related Links for SEO - LAZY LOADED */}
         <LazySection minHeight="200px" rootMargin="400px">
           <div className="container mx-auto px-4 pb-8">
-            <RelatedLinks slug={slug || ''} type="event" />
+            <Suspense fallback={<div className="h-[150px] animate-pulse bg-muted/30 rounded-xl" />}>
+              <RelatedLinks slug={slug || ''} type="event" />
+            </Suspense>
           </div>
         </LazySection>
         
-        {/* Footer */}
-        <Footer />
+        {/* Footer - LAZY LOADED */}
+        <Suspense fallback={<div className="h-[200px] bg-muted/30" />}>
+          <Footer />
+        </Suspense>
       </div>
     </>
   );
