@@ -8,25 +8,45 @@ const ProductoSkeleton = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-20">
-        {/* Hero Skeleton */}
+        {/* Mobile: Event Name Skeleton above hero - matches real layout */}
+        <div className="md:hidden mb-3">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-1/2 mt-1" />
+        </div>
+        
+        {/* Hero Skeleton - EXACT dimensions match Producto.tsx hero */}
         <div className="relative rounded-2xl overflow-hidden mb-8">
-          <Skeleton className="h-[380px] sm:h-[420px] md:h-[500px] w-full" />
+          {/* Height matches: h-[200px] sm:h-[340px] md:h-[420px] */}
+          <Skeleton className="h-[200px] sm:h-[340px] md:h-[420px] w-full" />
           
-          {/* Overlaid badges skeleton */}
-          <div className="absolute top-4 left-4">
-            <Skeleton className="h-8 w-28 rounded-full" />
+          {/* Mobile: Compact date/city badge skeleton - matches real position */}
+          <div className="absolute left-2 bottom-2 sm:hidden">
+            <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg px-2.5 py-2 flex items-center gap-2">
+              <div className="text-center border-r border-border pr-2">
+                <Skeleton className="h-2 w-6 mx-auto mb-1" />
+                <Skeleton className="h-6 w-6 mx-auto" />
+              </div>
+              <div className="text-left">
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-3 w-16 mt-1" />
+              </div>
+            </div>
           </div>
           
-          {/* Bottom content skeleton */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-            <div className="flex items-end justify-between gap-4">
-              {/* Date card skeleton */}
-              <Skeleton className="h-24 w-20 rounded-xl" />
-              
-              {/* Event info skeleton */}
-              <div className="flex-1 text-right space-y-2">
-                <Skeleton className="h-8 w-3/4 ml-auto" />
-                <Skeleton className="h-5 w-1/2 ml-auto" />
+          {/* Desktop: Full Date Card skeleton - matches real dimensions */}
+          <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 hidden sm:block">
+            <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
+              <div className="text-center">
+                <Skeleton className="h-4 w-10 mx-auto" />
+                <Skeleton className="h-12 sm:h-14 md:h-16 w-12 sm:w-14 md:w-16 mx-auto my-1 sm:my-2" />
+                <Skeleton className="h-5 w-12 mx-auto" />
+                <div className="border-t border-border mt-3 pt-3 sm:mt-4 sm:pt-4">
+                  <Skeleton className="h-6 sm:h-7 md:h-8 w-16 mx-auto" />
+                  <div className="flex flex-col items-center gap-1 mt-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
