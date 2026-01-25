@@ -19,6 +19,8 @@ import { matchesSearch } from "@/lib/searchUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DestinationListCard, { DestinationListCardSkeleton } from "@/components/DestinationListCard";
 import MobileFilterPills from "@/components/MobileFilterPills";
+import VirtualizedDestinationList from "@/components/VirtualizedDestinationList";
+import { CACHE_TTL } from "@/lib/cacheClient";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -48,44 +50,43 @@ const Destinos = () => {
   const { data: cities, isLoading, error } = useQuery({
     queryKey: ["destinations"],
     queryFn: async () => {
-      const { data: destinations, error: destError } = await supabase
-        .from("mv_destinations_cards")
-        .select("*")
-        .order("event_count", { ascending: false });
-      if (destError) {
-        console.error("Error fetching destinations:", destError);
-        throw destError;
-      }
-      
-      try {
-        const { data: cityImages, error: imgError } = await supabase
+      // Parallel fetch: destinations MV + city images
+      const [destinationsRes, cityImagesRes] = await Promise.all([
+        supabase
+          .from("mv_destinations_cards")
+          .select("*")
+          .order("event_count", { ascending: false }),
+        supabase
           .from("lite_tbl_city_mapping")
           .select("ticketmaster_city, imagen_ciudad")
-          .not("imagen_ciudad", "is", null);
-        
-        if (imgError) {
-          console.error("Error fetching city images:", imgError);
-          return destinations || [];
-        }
-        
-        const cityImageMap = new Map<string, string>();
-        if (cityImages && Array.isArray(cityImages)) {
-          cityImages.forEach((city) => {
-            if (city.ticketmaster_city && city.imagen_ciudad) {
-              cityImageMap.set(city.ticketmaster_city.toLowerCase(), city.imagen_ciudad);
-            }
-          });
-        }
-        
-        return (destinations || []).map((dest: any) => ({
-          ...dest,
-          ciudad_imagen: dest.city_name ? cityImageMap.get(dest.city_name.toLowerCase()) || null : null
-        }));
-      } catch (e) {
-        console.error("Error processing city images:", e);
-        return destinations || [];
+          .not("imagen_ciudad", "is", null)
+      ]);
+      
+      if (destinationsRes.error) {
+        console.error("Error fetching destinations:", destinationsRes.error);
+        throw destinationsRes.error;
       }
+      
+      const destinations = destinationsRes.data || [];
+      
+      // Build city image map
+      const cityImageMap = new Map<string, string>();
+      if (cityImagesRes.data && Array.isArray(cityImagesRes.data)) {
+        cityImagesRes.data.forEach((city) => {
+          if (city.ticketmaster_city && city.imagen_ciudad) {
+            cityImageMap.set(city.ticketmaster_city.toLowerCase(), city.imagen_ciudad);
+          }
+        });
+      }
+      
+      return destinations.map((dest: any) => ({
+        ...dest,
+        ciudad_imagen: dest.city_name ? cityImageMap.get(dest.city_name.toLowerCase()) || null : null
+      }));
     },
+    // Use longer cache TTL - data is from materialized view, refreshed periodically
+    staleTime: CACHE_TTL.destinations,
+    gcTime: CACHE_TTL.destinations * 2,
   });
 
   const heroImage = cities?.[0]?.sample_image_url || cities?.[0]?.sample_image_standard_url;
@@ -182,6 +183,7 @@ const Destinos = () => {
           { name: "Inicio", url: "/" },
           { name: "Destinos" }
         ]}
+        preloadImage={cities?.[0]?.ciudad_imagen}
       />
       <div className="min-h-screen bg-background">
       <Navbar />
@@ -310,26 +312,23 @@ const Destinos = () => {
           <>
             {/* Mobile: List Skeletons */}
             <div className="md:hidden space-y-0">
-              {[...Array(8)].map((_, i) => <DestinationListCardSkeleton key={i} />)}
+              {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
             </div>
             {/* Desktop: Card Grid Skeletons */}
             <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => <DestinationCardSkeleton key={i} />)}
+              {Array.from({ length: 8 }).map((_, i) => <DestinationCardSkeleton key={i} />)}
             </div>
           </>
         ) : filteredCities.length === 0 ? (
           <div className="text-center py-16"><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
         ) : (
           <>
-            {/* Mobile: Compact List View */}
-            <div className="md:hidden space-y-0 -mx-4">
-              {displayedCities.map((city: any, index: number) => (
-                <DestinationListCard 
-                  key={city.city_name} 
-                  city={city} 
-                  priority={index < 4} 
-                />
-              ))}
+            {/* Mobile: Virtualized List - Only renders visible items */}
+            <div className="md:hidden">
+              <VirtualizedDestinationList 
+                cities={filteredCities} 
+                isLoading={isLoading} 
+              />
             </div>
 
             {/* Desktop: Card Grid View */}
