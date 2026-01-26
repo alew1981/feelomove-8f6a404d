@@ -489,9 +489,69 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         También te puede interesar
       </h3>
 
-      {/* Context-aware links for destinations */}
-      {type === 'city' && contextLinks.showDestinations && (
-        renderLinkSection('Otros destinos populares', contextLinks.destinations, 'Ver conciertos en')
+      {/* Context-aware links for destinations - Visual cards like artist page */}
+      {type === 'city' && contextLinks.showDestinations && contextLinks.destinations && contextLinks.destinations.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-bold text-foreground">Otros destinos populares</h4>
+            <Link 
+              to="/destinos" 
+              className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
+            >
+              Ver todos <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          {/* Desktop: Visual Cards Grid */}
+          <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-4">
+            {contextLinks.destinations.slice(0, 4).map((dest) => (
+              <Link
+                key={dest.slug}
+                to={dest.url}
+                className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+              >
+                <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
+                  <MapPin className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h5 className="font-semibold text-white text-sm line-clamp-1">
+                    {dest.label.replace('Conciertos en ', '')}
+                  </h5>
+                  {dest.event_count && dest.event_count > 0 && (
+                    <span className="text-xs text-white/70">{dest.event_count} eventos</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+          {/* Mobile: Compact List View */}
+          <div className="md:hidden bg-card border border-border rounded-xl divide-y divide-border">
+            {contextLinks.destinations.slice(0, 6).map((dest) => (
+              <Link
+                key={dest.slug}
+                to={dest.url}
+                className="flex items-center justify-between p-4 hover:bg-accent/5 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-transparent group-hover:ring-accent transition-all">
+                    <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-accent/50" />
+                    </div>
+                  </div>
+                  <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
+                    {dest.label.replace('Conciertos en ', '')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
+                    {dest.event_count || 0} evento{(dest.event_count || 0) === 1 ? '' : 's'}
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Context-aware links for genres - Visual cards like artist page */}

@@ -1,5 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useEventData } from "@/hooks/useEventData";
 import { usePageTracking } from "@/hooks/usePageTracking";
 // SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
@@ -9,6 +11,7 @@ import ProductoSkeleton from "@/components/ProductoSkeleton";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
+import ArtistDestinationsList from "@/components/ArtistDestinationsList";
 
 // LAZY: Below-the-fold components with fixed-height Suspense fallbacks
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
@@ -483,6 +486,81 @@ const Producto = () => {
   // For display purposes
   const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
   const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
+
+  // Fetch other destinations where this artist has events (for "Ver en otros destinos" section)
+  const artistForSearch = primaryAttraction || mainArtist;
+  const currentCity = eventDetails.venue_city;
+  
+  const { data: artistOtherCities } = useQuery({
+    queryKey: ["artist-other-cities", artistForSearch, currentCity],
+    queryFn: async () => {
+      if (!artistForSearch) return [];
+      
+      // Search for concerts and festivals with this artist in other cities
+      const [concertsRes, festivalsRes] = await Promise.all([
+        supabase
+          .from("mv_concerts_cards")
+          .select("venue_city, venue_city_slug, image_standard_url")
+          .ilike("artist_name", `%${artistForSearch}%`)
+          .gte("event_date", new Date().toISOString())
+          .neq("venue_city", currentCity)
+          .limit(50),
+        supabase
+          .from("mv_festivals_cards")
+          .select("venue_city, venue_city_slug, image_standard_url, attraction_names")
+          .gte("event_date", new Date().toISOString())
+          .neq("venue_city", currentCity)
+          .limit(50)
+      ]);
+      
+      // Group by city with counts
+      const cityMap = new Map<string, { count: number; image: string | null; slug: string }>();
+      
+      // Process concerts
+      (concertsRes.data || []).forEach((event: any) => {
+        if (event.venue_city) {
+          const existing = cityMap.get(event.venue_city);
+          if (existing) {
+            existing.count++;
+          } else {
+            cityMap.set(event.venue_city, {
+              count: 1,
+              image: event.image_standard_url,
+              slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, '-')
+            });
+          }
+        }
+      });
+      
+      // Process festivals (check if artist is in lineup)
+      (festivalsRes.data || []).forEach((event: any) => {
+        const attractionNames = event.attraction_names || [];
+        const artistInLineup = attractionNames.some((name: string) => 
+          name.toLowerCase().includes(artistForSearch.toLowerCase())
+        );
+        
+        if (artistInLineup && event.venue_city) {
+          const existing = cityMap.get(event.venue_city);
+          if (existing) {
+            existing.count++;
+          } else {
+            cityMap.set(event.venue_city, {
+              count: 1,
+              image: event.image_standard_url,
+              slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, '-')
+            });
+          }
+        }
+      });
+      
+      return Array.from(cityMap.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+    },
+    enabled: !!artistForSearch && !!currentCity,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
   const eventYear = hasValidDate ? formatDatePart(eventDate, 'year') : '';
@@ -1053,6 +1131,15 @@ const Producto = () => {
                     />
                   </Suspense>
                 </div>
+              )}
+
+              {/* Artist Destinations Section - Show other cities where this artist has events */}
+              {artistOtherCities && artistOtherCities.length > 0 && (
+                <ArtistDestinationsList 
+                  artistName={mainArtist}
+                  citiesWithData={artistOtherCities}
+                  currentCity={currentCity}
+                />
               )}
             </div>
 

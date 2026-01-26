@@ -261,10 +261,10 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
               <span className="text-[10px] font-bold text-muted-foreground uppercase">
                 Pasado
               </span>
-            ) : (artistCount > 0 || eventCount > 1) ? (
+            ) : artistCount > 0 ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                 <Users className="h-3 w-3" />
-                {artistCount > 0 ? `${artistCount} artistas` : `${eventCount} opciones`}
+                {artistCount} artistas
               </span>
             ) : null}
           </div>
