@@ -105,10 +105,11 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
   // Use optimized thumbnail for list cards
   const imageUrl = getOptimizedThumbnail(rawImageUrl);
 
-  // Handle dates
+  // Handle dates - support both NormalizedFestival and ParentFestival field names
   const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
-  const startDateStr = festival.festival_start_date || festival.event_date;
-  const endDateStr = festival.festival_end_date;
+  // ParentFestival uses min_start_date/max_end_date, NormalizedFestival uses festival_start_date/festival_end_date
+  const startDateStr = (festival as any).min_start_date || festival.festival_start_date || festival.event_date;
+  const endDateStr = (festival as any).max_end_date || festival.festival_end_date;
   
   const hasStartDate = Boolean(startDateStr) && !isPlaceholderDate(startDateStr);
   const startDate = hasStartDate && startDateStr ? parseISO(startDateStr) : null;
