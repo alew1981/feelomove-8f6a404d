@@ -142,7 +142,7 @@ const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) 
         </div>
 
         {/* Info - Center */}
-        <div className="flex-grow min-w-0 flex flex-col justify-center gap-0.5">
+        <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
           {/* Artist Name */}
           <h3 className={cn(
             "text-sm font-bold text-foreground",
@@ -151,17 +151,10 @@ const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) 
             {artist.attraction_name}
           </h3>
           
-          {/* Event Count */}
-          <p className="text-xs text-muted-foreground truncate">
-            {eventCount} {eventCount === 1 ? 'evento disponible' : 'eventos disponibles'}
-          </p>
-
-          {/* Genre Badge */}
-          {mainGenre && (
-            <span className="text-[10px] text-accent font-medium truncate mt-0.5">
-              {mainGenre}
-            </span>
-          )}
+          {/* Event Count Badge - Styled like reference */}
+          <span className="inline-flex items-center w-fit text-xs text-background bg-foreground px-2.5 py-0.5 rounded-full font-medium">
+            {eventCount} evento{eventCount === 1 ? '' : 's'}
+          </span>
         </div>
 
         {/* Action Button - Right */}

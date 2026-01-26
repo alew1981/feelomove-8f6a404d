@@ -653,6 +653,7 @@ export type Database = {
           camping_available: boolean | null
           created_at: string | null
           end_date: string
+          end_date_manual: string | null
           festival_event_id: string
           festival_stages: string[] | null
           has_official_transport: boolean | null
@@ -663,6 +664,7 @@ export type Database = {
           lineup_artists_manual: string[] | null
           manually_edited: boolean | null
           start_date: string
+          start_date_manual: string | null
           transport_event_ids: string[] | null
           updated_at: string | null
         }
@@ -670,6 +672,7 @@ export type Database = {
           camping_available?: boolean | null
           created_at?: string | null
           end_date: string
+          end_date_manual?: string | null
           festival_event_id: string
           festival_stages?: string[] | null
           has_official_transport?: boolean | null
@@ -680,6 +683,7 @@ export type Database = {
           lineup_artists_manual?: string[] | null
           manually_edited?: boolean | null
           start_date: string
+          start_date_manual?: string | null
           transport_event_ids?: string[] | null
           updated_at?: string | null
         }
@@ -687,6 +691,7 @@ export type Database = {
           camping_available?: boolean | null
           created_at?: string | null
           end_date?: string
+          end_date_manual?: string | null
           festival_event_id?: string
           festival_stages?: string[] | null
           has_official_transport?: boolean | null
@@ -697,6 +702,7 @@ export type Database = {
           lineup_artists_manual?: string[] | null
           manually_edited?: boolean | null
           start_date?: string
+          start_date_manual?: string | null
           transport_event_ids?: string[] | null
           updated_at?: string | null
         }
