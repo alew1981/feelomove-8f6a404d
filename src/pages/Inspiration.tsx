@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
-import { Star, Calendar, Moon, ChevronRight } from "lucide-react";
+import { Star, Calendar, Moon, ChevronRight, BedDouble } from "lucide-react";
 
 interface InspirationDeal {
   event_id: string | null;
@@ -59,8 +59,8 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           loading="lazy"
         />
       )}
-      {/* More subtle gradient - reduced opacity */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      {/* Subtle gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
       {/* Content */}
       <div className="relative p-5 flex flex-col h-full justify-end text-white">
@@ -69,7 +69,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           {deal.city}
         </span>
 
-        {/* Artist Name - 15% larger (text-2xl ~1.5rem → ~1.725rem ≈ text-3xl) */}
+        {/* Artist Name - 15% larger */}
         <h3 className="text-3xl font-bold line-clamp-2">
           {deal.artist_name || deal.event_name}
         </h3>
@@ -82,8 +82,20 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           </div>
         )}
 
-        {/* Pricing & CTA - More prominent pricing */}
-        <div className="mt-5 flex items-end justify-between gap-3">
+        {/* Hotel Info - Glassmorphism container */}
+        {deal.hotel_name && (
+          <div className="mt-4 p-3 bg-black/40 backdrop-blur-md rounded-lg border border-white/10">
+            <div className="flex items-center gap-2">
+              <BedDouble className="w-4 h-4 text-primary shrink-0" />
+              {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
+              <span className="text-xs opacity-70">• 1 noche</span>
+            </div>
+            <p className="text-sm font-medium mt-1 line-clamp-1">{deal.hotel_name}</p>
+          </div>
+        )}
+
+        {/* Pricing & CTA */}
+        <div className="mt-4 flex items-end justify-between gap-3">
           <div>
             {deal.price_per_person && (
               <p className="text-4xl font-black">
@@ -92,7 +104,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
               </p>
             )}
             {deal.total_pack_pair && (
-              <p className="text-sm opacity-70 mt-1">
+              <p className="text-xs opacity-70 mt-1">
                 Pack pareja: €{Math.round(deal.total_pack_pair)}
               </p>
             )}
@@ -132,7 +144,7 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
     <div 
       className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border cursor-pointer active:bg-muted/50 transition-colors"
       onClick={handleClick}
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 72px' }}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 88px' }}
     >
       {/* Circular Image - 60px */}
       <div className="relative w-[60px] h-[60px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
@@ -147,7 +159,7 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
         )}
       </div>
 
-      {/* Content - Artist name and City/Date */}
+      {/* Content - Artist name, City/Date, Hotel */}
       <div className="flex-1 min-w-0">
         {/* Artist Name */}
         <h3 className="font-bold text-sm line-clamp-1">
@@ -158,16 +170,28 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
         <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
           {deal.city} {formattedDate && <span className="capitalize">• {formattedDate}</span>}
         </p>
+
+        {/* Hotel Info - Bed icon + Stars + Name */}
+        {deal.hotel_name && (
+          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+            <BedDouble className="w-3.5 h-3.5 text-primary shrink-0" />
+            {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
+            <span className="line-clamp-1 flex-1">{deal.hotel_name}</span>
+          </div>
+        )}
       </div>
 
-      {/* Price - Bold */}
+      {/* Price - Bold, includes hotel */}
       {deal.price_per_person && (
-        <span className="text-sm font-bold text-foreground shrink-0">
-          €{Math.round(deal.price_per_person)}
-        </span>
+        <div className="shrink-0 text-right">
+          <span className="text-sm font-bold text-foreground">
+            €{Math.round(deal.price_per_person)}
+          </span>
+          <p className="text-[10px] text-muted-foreground">/ pers.</p>
+        </div>
       )}
 
-      {/* CTA Button - green circle with arrow */}
+      {/* CTA Button - Feelomove green */}
       <button 
         className="shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md hover:bg-primary/90 active:scale-95 transition-all"
         onClick={(e) => {
