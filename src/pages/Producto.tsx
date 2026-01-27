@@ -324,8 +324,68 @@ const Producto = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Get map widget HTML - for Stay22 integration (fallback if available in eventDetails)
-  const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || null;
+  // Generate Stay22 widget URLs dynamically from venue coordinates and event dates
+  // These are used as fallback when no pre-fetched hotel data exists
+  const stay22Urls = useMemo(() => {
+    const lat = eventDetails?.venue_latitude;
+    const lng = eventDetails?.venue_longitude;
+    
+    if (!lat || !lng) return { map: null, accommodations: null, activities: null };
+    
+    // Use event_date for concerts, start_date for festivals
+    const eventDateStr = isFestivalRoute 
+      ? ((eventDetails as any)?.start_date || eventDetails?.event_date)
+      : eventDetails?.event_date;
+    
+    // Get end_date for festivals, or calculate checkout for concerts
+    const endDateStr = isFestivalRoute 
+      ? ((eventDetails as any)?.end_date || eventDateStr)
+      : null;
+    
+    // Calculate check-in/check-out dates
+    let checkinDate: string;
+    let checkoutDate: string;
+    
+    if (eventDateStr) {
+      const eventDateObj = new Date(eventDateStr);
+      // Check-in: day before event
+      const checkin = new Date(eventDateObj);
+      checkin.setDate(checkin.getDate() - 1);
+      checkinDate = formatDateISO(checkin);
+      
+      // Check-out: day after event (or end_date for festivals)
+      if (endDateStr) {
+        const endDateObj = new Date(endDateStr);
+        const checkout = new Date(endDateObj);
+        checkout.setDate(checkout.getDate() + 1);
+        checkoutDate = formatDateISO(checkout);
+      } else {
+        const checkout = new Date(eventDateObj);
+        checkout.setDate(checkout.getDate() + 1);
+        checkoutDate = formatDateISO(checkout);
+      }
+    } else {
+      checkinDate = '';
+      checkoutDate = '';
+    }
+    
+    // Stay22 affiliate ID (using generic for now)
+    const aid = 'feelomove';
+    
+    // Build Stay22 URLs
+    const baseParams = `lat=${lat}&lng=${lng}&checkin=${checkinDate}&checkout=${checkoutDate}&aid=${aid}`;
+    
+    return {
+      map: `https://www.stay22.com/embed/gm?${baseParams}&zoom=14`,
+      accommodations: `https://www.stay22.com/embed/gm?${baseParams}&maincolor=00FF8F&markerimage=https://feelomove.com/favicon.svg`,
+      activities: `https://www.stay22.com/embed/activities?${baseParams}`
+    };
+  }, [eventDetails?.venue_latitude, eventDetails?.venue_longitude, eventDetails?.event_date, (eventDetails as any)?.start_date, (eventDetails as any)?.end_date, isFestivalRoute]);
+  
+  // Use generated URLs (Stay22) - always available if coordinates exist
+  const mapWidgetHtml = stay22Urls.map;
+  const stay22Accommodations = stay22Urls.accommodations;
+  const stay22Activities = stay22Urls.activities;
 
   // Clear cart when viewing a different event than what's in the cart
   // This handles both: navigation between events AND page load with stale cart in localStorage
@@ -1077,8 +1137,9 @@ const Producto = () => {
                 />
               )}
 
-              {/* Hotels & Map Section - Always show for events with venue city (hotels or city links) */}
-              {renderHotels && eventDetails?.venue_city && (
+              {/* Hotels & Map Section - Always show for events with venue coordinates OR city */}
+              {/* CRITICAL: Show section even if hotels array is empty - use Stay22 map as fallback */}
+              {renderHotels && (eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
                 <div id="hotels-section">
                   <Suspense fallback={<HotelsSkeleton />}>
                     <HotelMapTabs 
@@ -1091,8 +1152,8 @@ const Producto = () => {
                       ticketsSelected={isEventInCart && totalPersons > 0}
                       selectedHotelId={cart?.hotel?.hotel_id || null}
                       venueCity={eventDetails.venue_city || ""}
-                      stay22Accommodations={(eventDetails as any)?.stay22_accommodations || null}
-                      stay22Activities={(eventDetails as any)?.stay22_activities || null}
+                      stay22Accommodations={stay22Accommodations}
+                      stay22Activities={stay22Activities}
                     />
                   </Suspense>
                 </div>
