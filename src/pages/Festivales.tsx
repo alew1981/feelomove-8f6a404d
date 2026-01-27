@@ -235,13 +235,13 @@ const Festivales = () => {
   const { data: festivals, isLoading } = useQuery({
     queryKey: ["festivales-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lovable_mv_event_product_page_festivales")
-        .select("*")
+      const { data, error } = await (supabase
+        .from("lovable_mv_event_product_page_festivales" as any)
+        .select("*") as any)
         .order("festival_start_date", { ascending: true });
       
       if (error) throw error;
-      return (data || []) as unknown as FestivalProductPage[];
+      return (data || []) as FestivalProductPage[];
     }
   });
 

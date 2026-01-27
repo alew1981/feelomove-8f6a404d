@@ -45,9 +45,9 @@ export function useEventData(
 
       // STABILITY FIX: Query event data FIRST without checking redirects
       // This ensures the page can render even if redirect logic fails
-      const { data, error } = await supabase
-        .from(viewName)
-        .select("*")
+      const { data, error } = await (supabase
+        .from(viewName as any)
+        .select("*") as any)
         .eq("event_slug", slug);
 
       if (error) {
@@ -151,9 +151,9 @@ export function usePrefetchEvent() {
     queryClient.prefetchQuery({
       queryKey: ["event-product-page-optimized", slug, isFestival],
       queryFn: async () => {
-        const { data } = await supabase
-          .from(viewName)
-          .select("*")
+        const { data } = await (supabase
+          .from(viewName as any)
+          .select("*") as any)
           .eq("event_slug", slug);
 
         return {
