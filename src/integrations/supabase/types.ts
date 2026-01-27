@@ -167,6 +167,13 @@ export type Database = {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "inspiration_deals"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "lovable_mv_event_product_page_conciertos"
             referencedColumns: ["event_id"]
           },
@@ -700,6 +707,13 @@ export type Database = {
             foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
             columns: ["festival_event_id"]
             isOneToOne: true
+            referencedRelation: "inspiration_deals"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
             referencedRelation: "lovable_mv_event_product_page_conciertos"
             referencedColumns: ["event_id"]
           },
@@ -788,6 +802,23 @@ export type Database = {
           f_table_schema?: unknown
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      inspiration_deals: {
+        Row: {
+          artist_name: string | null
+          city: string | null
+          event_date: string | null
+          event_id: string | null
+          event_name: string | null
+          hotel_name: string | null
+          hotel_price: number | null
+          hotel_stars: number | null
+          image_url: string | null
+          price_per_person: number | null
+          ticket_price: number | null
+          total_pack_pair: number | null
         }
         Relationships: []
       }
