@@ -59,7 +59,13 @@ export function useEventData(
       if (data && data.length > 0) {
         // Check if route type is correct
         const eventType = (data[0] as any).event_type;
-        const shouldBeFestival = eventType === "festival";
+        // IMPORTANT: festival MV rows may not include event_type. Infer from the MV being queried.
+        const shouldBeFestival =
+          viewName === "lovable_mv_event_product_page_festivales"
+            ? true
+            : viewName === "lovable_mv_event_product_page_conciertos"
+              ? false
+              : eventType === "festival";
         const isWrongRoute = shouldBeFestival ? !isFestivalRoute : !isConcierto;
 
         if (isWrongRoute) {
