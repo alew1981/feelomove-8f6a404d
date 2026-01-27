@@ -87,7 +87,33 @@ export function useEventData(
         };
       }
 
-      // Event not found in view - check if it's a redirect case
+      // Event not found in primary view - check alternate view for route correction
+      // This handles cases like accessing /concierto/x when event is actually a festival
+      const alternateViewName: ViewName = isFestivalRoute 
+        ? "lovable_mv_event_product_page_conciertos"
+        : "lovable_mv_event_product_page_festivales";
+      
+      const { data: alternateData } = await (supabase
+        .from(alternateViewName as any)
+        .select("*") as any)
+        .eq("event_slug", slug);
+      
+      if (alternateData && alternateData.length > 0) {
+        // Found in alternate view - needs route correction
+        const shouldBeFestival = alternateViewName === "lovable_mv_event_product_page_festivales";
+        return {
+          data: alternateData as unknown as EventProductPage[],
+          canonicalSlug: null,
+          needsRedirect: false,
+          redirectPath: null,
+          needsRouteCorrection: true,
+          correctRoutePath: shouldBeFestival
+            ? `/festival/${slug}`
+            : `/concierto/${slug}`,
+        };
+      }
+
+      // Event not found in either view - check if it's a redirect case
       // OPTIMIZATION: Run redirect check only if event not found directly
       const { data: redirectResult } = await supabase
         .from("slug_redirects")

@@ -374,18 +374,19 @@ const FestivalDetalle = () => {
             </div>
           ) : (
             <Tabs defaultValue="conciertos" className="w-full">
-              <TabsList className="mb-6">
-                <TabsTrigger value="conciertos" className="flex items-center gap-2">
-                  <Play className="h-4 w-4" />
-                  Entradas
-                </TabsTrigger>
-                {transportEvents.length > 0 && (
+              {/* Only show tabs if there are transport events */}
+              {transportEvents.length > 0 && (
+                <TabsList className="mb-6">
+                  <TabsTrigger value="conciertos" className="flex items-center gap-2">
+                    <Play className="h-4 w-4" />
+                    Fechas
+                  </TabsTrigger>
                   <TabsTrigger value="transporte" className="flex items-center gap-2">
                     <Bus className="h-4 w-4" />
-                    Transporte al Festival
+                    Transporte
                   </TabsTrigger>
-                )}
-              </TabsList>
+                </TabsList>
+              )}
               
               <TabsContent value="conciertos">
                 {concertEvents.length === 0 ? (
