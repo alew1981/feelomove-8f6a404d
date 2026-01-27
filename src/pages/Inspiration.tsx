@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
-import { Star, Calendar, Moon, ChevronRight, BedDouble } from "lucide-react";
+import { Star, Calendar, ChevronRight } from "lucide-react";
 
 interface InspirationDeal {
   event_id: string | null;
@@ -42,9 +42,19 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
     ? format(new Date(deal.event_date), "EEE d MMM yyyy", { locale: es })
     : null;
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (deal.event_id) {
-      navigate(`/concierto/${deal.event_id}`);
+      // Look up the event slug from the database
+      const { data } = await supabase
+        .from("tm_tbl_events")
+        .select("slug, event_type")
+        .eq("id", deal.event_id)
+        .maybeSingle();
+      
+      if (data?.slug) {
+        const path = data.event_type === 'festival' ? `/festival/${data.slug}` : `/concierto/${data.slug}`;
+        navigate(path);
+      }
     }
   };
 
@@ -86,9 +96,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
         {deal.hotel_name && (
           <div className="mt-4 p-3 bg-black/40 backdrop-blur-md rounded-lg border border-white/10">
             <div className="flex items-center gap-2">
-              <BedDouble className="w-4 h-4 text-primary shrink-0" />
               {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
-              <span className="text-xs opacity-70">• 1 noche</span>
             </div>
             <p className="text-sm font-medium mt-1 line-clamp-1">{deal.hotel_name}</p>
           </div>
@@ -134,9 +142,19 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
     ? format(new Date(deal.event_date), "EEE d MMM", { locale: es })
     : null;
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (deal.event_id) {
-      navigate(`/concierto/${deal.event_id}`);
+      // Look up the event slug from the database
+      const { data } = await supabase
+        .from("tm_tbl_events")
+        .select("slug, event_type")
+        .eq("id", deal.event_id)
+        .maybeSingle();
+      
+      if (data?.slug) {
+        const path = data.event_type === 'festival' ? `/festival/${data.slug}` : `/concierto/${data.slug}`;
+        navigate(path);
+      }
     }
   };
 
@@ -171,10 +189,9 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
           {deal.city} {formattedDate && <span className="capitalize">• {formattedDate}</span>}
         </p>
 
-        {/* Hotel Info - Bed icon + Stars + Name */}
+        {/* Hotel Info - Stars + Name */}
         {deal.hotel_name && (
           <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-            <BedDouble className="w-3.5 h-3.5 text-primary shrink-0" />
             {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
             <span className="line-clamp-1 flex-1">{deal.hotel_name}</span>
           </div>
