@@ -245,8 +245,8 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
         ? "lovable_mv_event_product_page_festivales" 
         : "lovable_mv_event_product_page_conciertos";
       
-      const { data, error } = await supabase
-        .from(viewName)
+      const { data, error } = await (supabase
+        .from(viewName as any)
         .select(`
           event_name, 
           event_slug,
@@ -256,14 +256,14 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
           primary_attraction_id,
           venue_city,
           event_type
-        `)
+        `) as any)
         .eq("event_slug", productSlug)
         .maybeSingle();
       
       if (error || !data) {
         // Fallback to generic view
-        const { data: fallbackData } = await supabase
-          .from("lovable_mv_event_product_page")
+        const { data: fallbackData } = await (supabase
+          .from("lovable_mv_event_product_page" as any)
           .select(`
             event_name, 
             event_slug,
@@ -273,7 +273,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
             primary_attraction_id,
             venue_city,
             event_type
-          `)
+          `) as any)
           .eq("event_slug", productSlug)
           .maybeSingle();
         return fallbackData;

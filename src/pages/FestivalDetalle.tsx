@@ -92,15 +92,15 @@ const FestivalDetalle = () => {
   const { data: events, isLoading } = useQuery({
     queryKey: ["festival-events", festivalSlug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lovable_mv_event_product_page_festivales")
-        .select("*")
+      const { data, error } = await (supabase
+        .from("lovable_mv_event_product_page_festivales" as any)
+        .select("*") as any)
         .order("event_date", { ascending: true });
       
       if (error) throw error;
       
       // Filter by corrected festival name AND city (both case insensitive)
-      return (data || []).filter(e => {
+      return (data || []).filter((e: any) => {
         const correctedName = getFestivalNombre(e as FestivalProductPage);
         const eventCity = e.venue_city || '';
         const nameMatches = correctedName.toLowerCase() === festivalName.toLowerCase();

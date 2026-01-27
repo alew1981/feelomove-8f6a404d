@@ -13,9 +13,9 @@ export const handleLegacyRedirect = async (
     // Check if it's a numeric ID (old event_id format)
     const isNumericId = /^\d+$/.test(idOrName);
     
-    let query = supabase
-      .from("lovable_mv_event_product_page")
-      .select("event_slug, event_type")
+    let query = (supabase
+      .from("lovable_mv_event_product_page" as any)
+      .select("event_slug, event_type") as any)
       .limit(1);
     
     if (isNumericId) {
