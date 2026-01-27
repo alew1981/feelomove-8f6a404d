@@ -57,12 +57,13 @@ const Navbar = () => {
               Artistas
             </NavLink>
             <NavLink
-              to="/generos"
+              to="/inspiration"
               className="text-foreground/80 hover:text-foreground transition-colors relative pb-1"
               activeClassName="text-foreground font-semibold nav-link-active"
-              title="Descubrir géneros musicales"
+              onMouseEnter={() => handleMouseEnter('/inspiration')}
+              title="Ofertas de conciertos con hotel incluido"
             >
-              Géneros
+              Inspiración
             </NavLink>
             <NavLink
               to="/destinos"
@@ -156,13 +157,13 @@ const Navbar = () => {
               Artistas
             </NavLink>
             <NavLink
-              to="/generos"
+              to="/inspiration"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2 border-l-2 border-transparent pl-3"
               activeClassName="text-foreground font-semibold border-l-2 !border-accent"
               onClick={() => setIsMenuOpen(false)}
-              title="Descubrir géneros musicales"
+              title="Ofertas de conciertos con hotel incluido"
             >
-              Géneros
+              Inspiración
             </NavLink>
             <NavLink
               to="/destinos"

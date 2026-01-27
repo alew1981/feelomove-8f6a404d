@@ -130,7 +130,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
   );
 };
 
-// Mobile Card (List view - compact 100px height)
+// Mobile Card (List view - matching artist list design)
 const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDeal; priority?: boolean }) => {
   const navigate = useNavigate();
 
@@ -146,12 +146,12 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
 
   return (
     <div 
-      className="flex items-stretch h-[100px] bg-card border-b border-border cursor-pointer active:bg-muted/50 transition-colors"
+      className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border cursor-pointer active:bg-muted/50 transition-colors"
       onClick={handleClick}
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 100px' }}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 88px' }}
     >
-      {/* Image */}
-      <div className="relative w-[100px] h-full shrink-0 overflow-hidden">
+      {/* Circular Image - like artist cards */}
+      <div className="relative w-[60px] h-[60px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
         {deal.image_url && (
           <img
             src={deal.image_url}
@@ -161,40 +161,41 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
             fetchPriority={priority ? "high" : "auto"}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 p-3 flex flex-col justify-between">
-        <div>
-          {/* Artist & City */}
-          <h3 className="font-bold text-sm line-clamp-1">
-            {deal.artist_name || deal.event_name}
-          </h3>
-          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-            {deal.city} {formattedDate && <span className="capitalize">• {formattedDate}</span>}
-          </p>
-        </div>
+      <div className="flex-1 min-w-0">
+        {/* Artist Name */}
+        <h3 className="font-bold text-sm line-clamp-1">
+          {deal.artist_name || deal.event_name}
+        </h3>
+        
+        {/* City & Date */}
+        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+          {deal.city} {formattedDate && <span className="capitalize">• {formattedDate}</span>}
+        </p>
 
-        {/* Hotel Info */}
+        {/* Hotel Info - Stars above, name below */}
         {deal.hotel_name && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
-            <span className="line-clamp-1 flex-1">{deal.hotel_name}</span>
-            <span className="shrink-0 opacity-70">1 noche</span>
+          <div className="mt-1.5 flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
+              <span className="text-[10px] text-muted-foreground/70">1 noche</span>
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-1">{deal.hotel_name}</p>
           </div>
         )}
       </div>
 
-      {/* Price */}
-      <div className="shrink-0 p-3 flex flex-col items-end justify-center">
+      {/* Price Badge */}
+      <div className="shrink-0 text-right">
         {deal.price_per_person && (
-          <>
-            <p className="text-lg font-black text-primary">
+          <div className="bg-primary/10 rounded-lg px-2.5 py-1.5">
+            <p className="text-base font-black text-primary leading-none">
               €{Math.round(deal.price_per_person)}
             </p>
-            <p className="text-[10px] text-muted-foreground">/ persona</p>
-          </>
+            <p className="text-[9px] text-muted-foreground mt-0.5">/ persona</p>
+          </div>
         )}
       </div>
     </div>
@@ -268,14 +269,39 @@ const Inspiration = () => {
         <main className="flex-1 pt-20 pb-12">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="text-center mb-10">
-              <h1 className="text-4xl md:text-5xl font-black mb-4">
+            <div className="text-center mb-8 md:mb-10">
+              <h1 className="text-3xl md:text-5xl font-black mb-3 md:mb-4">
                 <span className="text-primary">Inspírate</span> para tu próximo viaje
               </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
                 Ofertas exclusivas de conciertos y festivales con hotel incluido. 
                 Experiencias completas al mejor precio.
               </p>
+            </div>
+
+            {/* SEO Content Section */}
+            <div className="bg-muted/30 rounded-xl p-5 md:p-8 mb-8 md:mb-10">
+              <h2 className="text-xl md:text-2xl font-bold mb-3">
+                Packs de Concierto + Hotel: Tu Escapada Musical Perfecta
+              </h2>
+              <div className="text-sm md:text-base text-muted-foreground space-y-3">
+                <p>
+                  En <strong className="text-foreground">Feelomove</strong> seleccionamos las mejores combinaciones de 
+                  <strong className="text-foreground"> entradas para conciertos y festivales con alojamiento</strong> en hoteles 
+                  cercanos al venue. Cada pack incluye <strong className="text-foreground">1 noche de hotel</strong> y está 
+                  calculado por persona, ideal para planificar tu escapada musical sin complicaciones.
+                </p>
+                <p className="hidden md:block">
+                  Nuestras ofertas se actualizan diariamente para mostrarte los precios más competitivos en 
+                  <strong className="text-foreground"> Madrid, Barcelona, Valencia, Sevilla</strong> y las principales ciudades 
+                  españolas. Desde conciertos de artistas internacionales hasta festivales de música electrónica, 
+                  rock o indie: encuentra el pack perfecto y reserva con total confianza.
+                </p>
+                <p className="text-xs md:text-sm opacity-80">
+                  💡 <em>Consejo:</em> Los packs para parejas (precio total indicado) son la opción más económica 
+                  para disfrutar de tu artista favorito con acompañante.
+                </p>
+              </div>
             </div>
 
             {/* Error State */}
