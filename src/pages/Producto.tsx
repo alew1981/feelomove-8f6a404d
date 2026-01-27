@@ -233,11 +233,95 @@ const Producto = () => {
   
   // RESTORED: Fetch hotels from lite_tbl_event_hotel_prices + lite_tbl_hotels
   // Uses venue coordinates for distance calculation
+  // CRITICAL: This hook MUST be called before any early returns to satisfy React hooks rules
   const { data: hotels = [] } = useEventHotels({
     eventId: eventDetails?.event_id,
     venueLatitude: eventDetails?.venue_latitude ? Number(eventDetails.venue_latitude) : null,
     venueLongitude: eventDetails?.venue_longitude ? Number(eventDetails.venue_longitude) : null,
     enabled: !!eventDetails?.event_id,
+  });
+  
+  // Detect route type for display logic - used throughout the component
+  const isFestivalDisplay = location.pathname.startsWith('/festival/');
+  
+  // CRITICAL: All useQuery hooks MUST be called before early returns
+  // Artist for "Ver en otros destinos" section
+  const primaryAttractionForSearch = (eventDetails as any)?.primary_attraction_name as string | null;
+  const artistNames = eventDetails?.attraction_names || [];
+  const mainArtist = artistNames[0] || eventDetails?.event_name || '';
+  const artistForSearch = primaryAttractionForSearch || mainArtist;
+  const currentCity = eventDetails?.venue_city || '';
+  
+  // Fetch other destinations where this artist has events
+  const { data: artistOtherCities } = useQuery({
+    queryKey: ["artist-other-cities", artistForSearch, currentCity],
+    queryFn: async () => {
+      if (!artistForSearch) return [];
+      
+      // Search for concerts and festivals with this artist in other cities
+      const [concertsRes, festivalsRes] = await Promise.all([
+        supabase
+          .from("mv_concerts_cards")
+          .select("venue_city, venue_city_slug, image_standard_url")
+          .ilike("artist_name", `%${artistForSearch}%`)
+          .gte("event_date", new Date().toISOString())
+          .neq("venue_city", currentCity)
+          .limit(50),
+        supabase
+          .from("mv_festivals_cards")
+          .select("venue_city, venue_city_slug, image_standard_url, attraction_names")
+          .gte("event_date", new Date().toISOString())
+          .neq("venue_city", currentCity)
+          .limit(50)
+      ]);
+      
+      // Group by city with counts
+      const cityMap = new Map<string, { count: number; image: string | null; slug: string }>();
+      
+      // Process concerts
+      (concertsRes.data || []).forEach((event: any) => {
+        if (event.venue_city) {
+          const existing = cityMap.get(event.venue_city);
+          if (existing) {
+            existing.count++;
+          } else {
+            cityMap.set(event.venue_city, {
+              count: 1,
+              image: event.image_standard_url,
+              slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, '-')
+            });
+          }
+        }
+      });
+      
+      // Process festivals (check if artist is in lineup)
+      (festivalsRes.data || []).forEach((event: any) => {
+        const attractionNames = event.attraction_names || [];
+        const artistInLineup = attractionNames.some((name: string) => 
+          name.toLowerCase().includes(artistForSearch.toLowerCase())
+        );
+        
+        if (artistInLineup && event.venue_city) {
+          const existing = cityMap.get(event.venue_city);
+          if (existing) {
+            existing.count++;
+          } else {
+            cityMap.set(event.venue_city, {
+              count: 1,
+              image: event.image_standard_url,
+              slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, '-')
+            });
+          }
+        }
+      });
+      
+      return Array.from(cityMap.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+    },
+    enabled: !!artistForSearch && !!currentCity,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Get map widget HTML - for Stay22 integration (fallback if available in eventDetails)
@@ -414,11 +498,8 @@ const Producto = () => {
   const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
   const hoursUntil = hasValidDate ? differenceInHours(eventDate, now) % 24 : 0;
   
-  const artistNames = eventDetails.attraction_names || [];
-  const mainArtist = artistNames[0] || eventDetails.event_name;
-  
   // Festival lineup artists - prioritize manual lineup over automatic
-  const festivalLineupArtists = isFestivalRoute 
+  const festivalLineupArtists = isFestivalDisplay 
     ? ((eventDetails as any).festival_lineup_artists_manual as string[] | null) 
       || ((eventDetails as any).festival_lineup_artists as string[] | null) 
       || []
@@ -429,86 +510,13 @@ const Producto = () => {
   // Case B: Artist-specific entry (secondary = different artist name)
   const primaryAttraction = (eventDetails as any).primary_attraction_name as string | null;
   const secondaryAttraction = (eventDetails as any).secondary_attraction_name as string | null;
-  const isArtistEntry = isFestivalRoute && secondaryAttraction && secondaryAttraction !== primaryAttraction;
+  const isArtistEntry = isFestivalDisplay && secondaryAttraction && secondaryAttraction !== primaryAttraction;
   
   // For display purposes
   const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
   const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
 
-  // Fetch other destinations where this artist has events (for "Ver en otros destinos" section)
-  const artistForSearch = primaryAttraction || mainArtist;
-  const currentCity = eventDetails.venue_city;
-  
-  const { data: artistOtherCities } = useQuery({
-    queryKey: ["artist-other-cities", artistForSearch, currentCity],
-    queryFn: async () => {
-      if (!artistForSearch) return [];
-      
-      // Search for concerts and festivals with this artist in other cities
-      const [concertsRes, festivalsRes] = await Promise.all([
-        supabase
-          .from("mv_concerts_cards")
-          .select("venue_city, venue_city_slug, image_standard_url")
-          .ilike("artist_name", `%${artistForSearch}%`)
-          .gte("event_date", new Date().toISOString())
-          .neq("venue_city", currentCity)
-          .limit(50),
-        supabase
-          .from("mv_festivals_cards")
-          .select("venue_city, venue_city_slug, image_standard_url, attraction_names")
-          .gte("event_date", new Date().toISOString())
-          .neq("venue_city", currentCity)
-          .limit(50)
-      ]);
-      
-      // Group by city with counts
-      const cityMap = new Map<string, { count: number; image: string | null; slug: string }>();
-      
-      // Process concerts
-      (concertsRes.data || []).forEach((event: any) => {
-        if (event.venue_city) {
-          const existing = cityMap.get(event.venue_city);
-          if (existing) {
-            existing.count++;
-          } else {
-            cityMap.set(event.venue_city, {
-              count: 1,
-              image: event.image_standard_url,
-              slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, '-')
-            });
-          }
-        }
-      });
-      
-      // Process festivals (check if artist is in lineup)
-      (festivalsRes.data || []).forEach((event: any) => {
-        const attractionNames = event.attraction_names || [];
-        const artistInLineup = attractionNames.some((name: string) => 
-          name.toLowerCase().includes(artistForSearch.toLowerCase())
-        );
-        
-        if (artistInLineup && event.venue_city) {
-          const existing = cityMap.get(event.venue_city);
-          if (existing) {
-            existing.count++;
-          } else {
-            cityMap.set(event.venue_city, {
-              count: 1,
-              image: event.image_standard_url,
-              slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, '-')
-            });
-          }
-        }
-      });
-      
-      return Array.from(cityMap.entries())
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 6);
-    },
-    enabled: !!artistForSearch && !!currentCity,
-    staleTime: 5 * 60 * 1000,
-  });
+  // artistOtherCities is already fetched above (before early returns)
 
   // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
   const eventYear = hasValidDate ? formatDatePart(eventDate, 'year') : '';
@@ -651,7 +659,7 @@ const Producto = () => {
       : currentSlug;
   
   // Build canonical URL - always use the canonical slug
-  const eventType = isFestivalRoute ? 'festival' : 'concierto';
+  const eventType = isFestivalDisplay ? 'festival' : 'concierto';
   const canonicalUrl = `/${eventType}/${canonicalSlug}`;
   const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
 
@@ -854,7 +862,7 @@ const Producto = () => {
                     </p>
                   )}
                   {/* Lineup for festivals - below event name */}
-                  {isFestivalRoute && festivalLineupArtists.length > 0 && (
+                  {isFestivalDisplay && festivalLineupArtists.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full mt-3">
                       {festivalLineupArtists.map((artist, idx) => (
                         <span 
@@ -1061,7 +1069,7 @@ const Producto = () => {
               )}
 
               {/* Festival Services & Add-ons Section (Transport, Parking, Camping) */}
-              {isFestivalRoute && eventDetails?.event_id && (
+              {isFestivalDisplay && eventDetails?.event_id && (
                 <FestivalServiceAddons 
                   eventId={eventDetails.event_id}
                   festivalName={eventDetails?.primary_attraction_name || eventDetails?.event_name}
