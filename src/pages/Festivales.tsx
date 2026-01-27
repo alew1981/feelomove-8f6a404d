@@ -238,7 +238,7 @@ const Festivales = () => {
       const { data, error } = await (supabase
         .from("lovable_mv_event_product_page_festivales" as any)
         .select("*") as any)
-        .order("festival_start_date", { ascending: true });
+        .order("start_date", { ascending: true });
       
       if (error) throw error;
       return (data || []) as FestivalProductPage[];
