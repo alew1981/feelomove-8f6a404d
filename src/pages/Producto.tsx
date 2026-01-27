@@ -782,7 +782,7 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        preloadImage={eventImage}
+        preloadImage={optimizeImageUrl(eventImage, { width: 1200, quality: 90 })}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           { name: eventDetails.is_festival ? "Festivales" : "Conciertos", url: eventDetails.is_festival ? "/festivales" : "/conciertos" },
@@ -837,8 +837,10 @@ const Producto = () => {
                 sizes="100vw"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
+                width={1200}
+                height={675}
                 loading="eager"
-                decoding="async"
+                decoding="sync"
                 // @ts-expect-error - fetchpriority is valid HTML but React doesn't recognize camelCase
                 fetchpriority="high"
               />
