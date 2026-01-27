@@ -88,13 +88,8 @@ const HotelMapTabs = ({
   const hasAccommodationsContent = !!stay22Accommodations;
   const hasActivitiesContent = !!stay22Activities;
   
-  // Default tab: show hotels if we have data, otherwise show accommodations or map
-  const getDefaultTab = (): TabId => {
-    if (hasHotelCards) return "hotels";
-    if (hasAccommodationsContent) return "accommodations";
-    if (hasMapContent) return "map";
-    return "hotels"; // fallback
-  };
+  // Default tab: always show "Feelomove Recomienda" (hotels) first
+  const getDefaultTab = (): TabId => "hotels";
   
   const [activeTab, setActiveTab] = useState<TabId>(getDefaultTab);
   const cityDisplay = venueCity || "la zona";
