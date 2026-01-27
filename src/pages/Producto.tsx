@@ -1077,8 +1077,8 @@ const Producto = () => {
                 />
               )}
 
-              {/* Hotels & Map Section - Render immediately when data available */}
-              {renderHotels && (hotels.length > 0 || mapWidgetHtml || (eventDetails as any)?.stay22_accommodations || (eventDetails as any)?.stay22_activities) && (
+              {/* Hotels & Map Section - Always show for events with venue city (hotels or city links) */}
+              {renderHotels && eventDetails?.venue_city && (
                 <div id="hotels-section">
                   <Suspense fallback={<HotelsSkeleton />}>
                     <HotelMapTabs 

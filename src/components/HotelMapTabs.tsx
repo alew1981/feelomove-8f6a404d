@@ -414,8 +414,19 @@ const HotelMapTabs = ({
             ) : (
               <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed border-border">
                 <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No hay hoteles disponibles para este evento</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Los hoteles se añadirán próximamente</p>
+                <p className="text-muted-foreground font-medium">No hay hoteles seleccionados para este evento</p>
+                <p className="text-xs text-muted-foreground/70 mt-1 mb-4">Busca alojamiento directamente en {cityDisplay}</p>
+                {venueCity && (
+                  <a
+                    href={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(venueCity)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent/90 transition-colors"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Ver hoteles en {cityDisplay}
+                  </a>
+                )}
               </div>
             )}
           </div>
