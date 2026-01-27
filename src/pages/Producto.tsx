@@ -12,6 +12,7 @@ import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 import ArtistDestinationsList from "@/components/ArtistDestinationsList";
+import { FestivalServiceAddons } from "@/components/FestivalServiceAddons";
 
 // LAZY: Below-the-fold components with fixed-height Suspense fallbacks
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
@@ -1110,6 +1111,15 @@ const Producto = () => {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* Festival Services & Add-ons Section (Transport, Parking, Camping) */}
+              {isFestivalRoute && eventDetails?.event_id && (
+                <FestivalServiceAddons 
+                  eventId={eventDetails.event_id}
+                  festivalName={eventDetails?.primary_attraction_name || eventDetails?.event_name}
+                  className="mt-6"
+                />
               )}
 
               {/* Hotels & Map Section - Render immediately when data available */}
