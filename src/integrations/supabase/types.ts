@@ -859,7 +859,6 @@ export type Database = {
           event_id: string | null
           event_name: string | null
           event_slug: string | null
-          festival_stages: string[] | null
           has_hotel_prices: boolean | null
           has_official_transport: boolean | null
           has_real_availability: boolean | null
@@ -869,7 +868,6 @@ export type Database = {
           image_standard_url: string | null
           is_package: boolean | null
           is_transport: boolean | null
-          lineup_artist_ids: string[] | null
           lineup_artists: string[] | null
           local_event_date: string | null
           price_min_incl_fees: number | null
