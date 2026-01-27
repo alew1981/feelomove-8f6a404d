@@ -808,8 +808,10 @@ export type Database = {
           event_slug: string | null
           event_type: string | null
           event_url: string | null
+          has_hotel_prices: boolean | null
           has_real_availability: boolean | null
           has_vip_tickets: boolean | null
+          hotel_prices_fetched_at: string | null
           image_large_url: string | null
           image_standard_url: string | null
           is_package: boolean | null
@@ -851,27 +853,35 @@ export type Database = {
         Row: {
           camping_available: boolean | null
           cancelled: boolean | null
+          categories_data: Json | null
           end_date: string | null
           event_date: string | null
           event_id: string | null
           event_name: string | null
           event_slug: string | null
+          festival_stages: string[] | null
+          has_hotel_prices: boolean | null
           has_official_transport: boolean | null
+          has_real_availability: boolean | null
           headliners: string[] | null
+          hotel_prices_fetched_at: string | null
           image_large_url: string | null
           image_standard_url: string | null
           is_package: boolean | null
           is_transport: boolean | null
+          lineup_artist_ids: string[] | null
           lineup_artists: string[] | null
           local_event_date: string | null
           price_min_incl_fees: number | null
           seo_title: string | null
           sold_out: boolean | null
           start_date: string | null
+          ticket_types: Json | null
           timezone: string | null
           transport_event_ids: string[] | null
           venue_address: string | null
           venue_city: string | null
+          venue_country: string | null
           venue_latitude: number | null
           venue_longitude: number | null
           venue_name: string | null
