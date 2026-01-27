@@ -78,10 +78,25 @@ const HotelMapTabs = ({
   stay22Activities = null,
 }: HotelMapTabsProps) => {
   const [sortBy, setSortBy] = useState<string>("distance-asc");
-  const [activeTab, setActiveTab] = useState<TabId>("hotels");
   const [starFilter, setStarFilter] = useState<number | null>(null);
 
   const isMobile = useIsMobile();
+  
+  // Determine if we have hotel card data to show
+  const hasHotelCards = hotels.length > 0;
+  const hasMapContent = !!mapWidgetHtml;
+  const hasAccommodationsContent = !!stay22Accommodations;
+  const hasActivitiesContent = !!stay22Activities;
+  
+  // Default tab: show hotels if we have data, otherwise show accommodations or map
+  const getDefaultTab = (): TabId => {
+    if (hasHotelCards) return "hotels";
+    if (hasAccommodationsContent) return "accommodations";
+    if (hasMapContent) return "map";
+    return "hotels"; // fallback
+  };
+  
+  const [activeTab, setActiveTab] = useState<TabId>(getDefaultTab);
   const cityDisplay = venueCity || "la zona";
 
   const filteredAndSortedHotels = useMemo(() => {
@@ -147,9 +162,7 @@ const HotelMapTabs = ({
     },
   };
 
-  const hasMapContent = !!mapWidgetHtml;
-  const hasAccommodationsContent = !!stay22Accommodations;
-  const hasActivitiesContent = !!stay22Activities;
+  // Note: hasMapContent, hasAccommodationsContent, hasActivitiesContent defined above
 
   // Mobile: check which dropdown group is active
   const isHotelsDropdownActive = activeTab === "hotels" || activeTab === "accommodations";
