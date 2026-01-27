@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEventData } from "@/hooks/useEventData";
+import { useEventHotels, HotelData } from "@/hooks/useEventHotels";
 import { usePageTracking } from "@/hooks/usePageTracking";
 // SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
 import Navbar from "@/components/Navbar";
@@ -154,24 +155,7 @@ interface TicketTypesData {
   price_types: PriceType[];
 }
 
-interface HotelData {
-  hotel_id: string;
-  hotel_name: string;
-  hotel_main_photo: string;
-  hotel_description: string;
-  hotel_stars: number;
-  hotel_rating: number;
-  hotel_reviews: number;
-  price: number;
-  selling_price: number;
-  distance_km: number;
-  facility_names_es?: string[];
-  checkin_date?: string;
-  checkout_date?: string;
-  nights?: number;
-  hotel_address?: string;
-  hotel_city?: string;
-}
+// HotelData interface is now imported from useEventHotels hook
 
 // === ULTRA-LAZY HYDRATION: Below-fold content only renders after 3s ===
 const FooterSkeleton = () => (
@@ -247,53 +231,16 @@ const Producto = () => {
   // Track page view with proper title (fixes "Page Name not defined" in Matomo)
   usePageTracking(eventDetails?.event_name);
   
-  // PERFORMANCE: Get hotels from hotels_prices_aggregated_jsonb using useMemo
-  const hotels: HotelData[] = useMemo(() => {
-    if (!eventDetails) return [];
-    
-    let aggregatedHotels = (eventDetails as any).hotels_prices_aggregated_jsonb;
-    
-    // Handle case where JSONB might be returned as string
-    if (typeof aggregatedHotels === 'string') {
-      try {
-        aggregatedHotels = JSON.parse(aggregatedHotels);
-      } catch (e) {
-        console.error("Error parsing hotels JSON:", e);
-        return [];
-      }
-    }
-    
-    if (!aggregatedHotels || !Array.isArray(aggregatedHotels)) {
-      return [];
-    }
-    
-    return aggregatedHotels.slice(0, 12).map((hotel: any) => {
-      // Calculate distance in km (data comes as distance_meters)
-      const distanceMeters = hotel.distance_meters || 0;
-      const distanceKm = distanceMeters > 0 ? distanceMeters / 1000 : (hotel.distance_km || 0);
-      
-      return {
-        hotel_id: hotel.hotel_id || hotel.id,
-        hotel_name: hotel.name || hotel.hotel_name,
-        hotel_main_photo: hotel.main_photo || hotel.thumbnail || hotel.hotel_main_photo,
-        hotel_description: hotel.hotel_description || hotel.description || "Hotel confortable cerca del venue",
-        hotel_stars: hotel.stars || hotel.hotel_stars || 0,
-        hotel_rating: hotel.rating || hotel.hotel_rating || 0,
-        hotel_reviews: hotel.review_count || hotel.hotel_reviews || 0,
-        price: Number(hotel.min_price) || 0,
-        selling_price: Number(hotel.ssp_price) || Number(hotel.min_price) || 0,
-        distance_km: distanceKm,
-        facility_names_es: hotel.facility_names_es || [],
-        checkin_date: hotel.checkin_date,
-        checkout_date: hotel.checkout_date,
-        nights: hotel.nights || 1,
-        hotel_address: hotel.address || hotel.hotel_address || "",
-        hotel_city: hotel.city || hotel.hotel_city || "",
-      };
-    });
-  }, [(eventDetails as any)?.hotels_prices_aggregated_jsonb]);
+  // RESTORED: Fetch hotels from lite_tbl_event_hotel_prices + lite_tbl_hotels
+  // Uses venue coordinates for distance calculation
+  const { data: hotels = [] } = useEventHotels({
+    eventId: eventDetails?.event_id,
+    venueLatitude: eventDetails?.venue_latitude ? Number(eventDetails.venue_latitude) : null,
+    venueLongitude: eventDetails?.venue_longitude ? Number(eventDetails.venue_longitude) : null,
+    enabled: !!eventDetails?.event_id,
+  });
 
-  // Get map widget HTML - only use Stay22 map
+  // Get map widget HTML - for Stay22 integration (fallback if available in eventDetails)
   const mapWidgetHtml = (eventDetails as any)?.stay22_map_general || null;
 
   // Clear cart when viewing a different event than what's in the cart
