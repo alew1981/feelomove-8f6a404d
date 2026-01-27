@@ -140,7 +140,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   }
 
   return (
-    <Link to={festivalUrl} className="block group" title={`Ver entradas y detalles de ${displayTitle}`}>
+    <Link to={festivalUrl} className="block group" title={`Ver detalles de ${displayTitle}`}>
       <Card
         ref={cardRef}
         className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg"
@@ -214,7 +214,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
           {/* Bottom Section with Button */}
           <div className="bg-background px-4 py-4 flex justify-center items-center">
             <Button variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 py-3 h-auto transition-all duration-300">
-              <span>VER ENTRADAS</span>
+              <span>VER DETALLES</span>
               <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Button>
           </div>
