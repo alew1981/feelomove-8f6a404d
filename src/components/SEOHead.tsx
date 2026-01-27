@@ -283,7 +283,8 @@ export const SEOHead = ({
         <link 
           rel="preload" 
           as="image" 
-          href={preloadImage} 
+          href={preloadImage}
+          type="image/webp"
           // @ts-expect-error - fetchpriority is valid HTML attribute but React doesn't recognize it
           fetchpriority="high"
         />

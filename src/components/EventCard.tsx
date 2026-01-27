@@ -189,9 +189,10 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     title={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
-                    {...(priority ? { fetchpriority: "high" } : {})}
+                    {...(priority ? { fetchpriority: "high" as const } : {})}
                     width={400}
                     height={256}
+                    style={{ contentVisibility: priority ? 'visible' : 'auto' }}
                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     onLoad={() => setImageLoaded(true)}
                     onError={(e) => {

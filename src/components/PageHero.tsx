@@ -49,12 +49,13 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
         className="w-full h-full object-cover parallax-bg"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
-        {...(priority ? { fetchpriority: "high" } : {})}
+        {...(priority ? { fetchpriority: "high" as const } : {})}
         width={1200}
         height={400}
         style={{
           transform: `translateY(${scrollOffset}px) scale(1.1)`,
-          contentVisibility: 'auto'
+          contentVisibility: priority ? 'visible' : 'auto',
+          aspectRatio: '3 / 1'
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
