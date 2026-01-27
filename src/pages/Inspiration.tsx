@@ -59,7 +59,8 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           loading="lazy"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
+      {/* More subtle gradient - reduced opacity */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
       {/* Content */}
       <div className="relative p-5 flex flex-col h-full justify-end text-white">
@@ -68,8 +69,8 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           {deal.city}
         </span>
 
-        {/* Artist Name */}
-        <h3 className="text-2xl font-bold line-clamp-2">
+        {/* Artist Name - 15% larger (text-2xl ~1.5rem → ~1.725rem ≈ text-3xl) */}
+        <h3 className="text-3xl font-bold line-clamp-2">
           {deal.artist_name || deal.event_name}
         </h3>
 
@@ -81,34 +82,17 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           </div>
         )}
 
-        {/* Hotel Info */}
-        {deal.hotel_name && (
-          <div className="mt-3 p-2.5 bg-white/10 backdrop-blur-sm rounded-lg">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
-                  <span className="text-xs opacity-70 flex items-center gap-1">
-                    <Moon className="w-3 h-3" /> 1 noche
-                  </span>
-                </div>
-                <p className="text-sm font-medium line-clamp-1">{deal.hotel_name}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Pricing & CTA */}
-        <div className="mt-4 flex items-end justify-between gap-3">
+        {/* Pricing & CTA - More prominent pricing */}
+        <div className="mt-5 flex items-end justify-between gap-3">
           <div>
             {deal.price_per_person && (
-              <p className="text-3xl font-black">
+              <p className="text-4xl font-black">
                 €{Math.round(deal.price_per_person)}
-                <span className="text-sm font-normal opacity-80"> / pers.</span>
+                <span className="text-base font-medium opacity-80"> / pers.</span>
               </p>
             )}
             {deal.total_pack_pair && (
-              <p className="text-xs opacity-70 mt-0.5">
+              <p className="text-sm opacity-70 mt-1">
                 Pack pareja: €{Math.round(deal.total_pack_pair)}
               </p>
             )}
@@ -148,10 +132,10 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
     <div 
       className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border cursor-pointer active:bg-muted/50 transition-colors"
       onClick={handleClick}
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 100px' }}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 72px' }}
     >
-      {/* Circular Image - like artist cards */}
-      <div className="relative w-[56px] h-[56px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+      {/* Circular Image - 60px */}
+      <div className="relative w-[60px] h-[60px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
         {deal.image_url && (
           <img
             src={deal.image_url}
@@ -163,7 +147,7 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
         )}
       </div>
 
-      {/* Content */}
+      {/* Content - Artist name and City/Date */}
       <div className="flex-1 min-w-0">
         {/* Artist Name */}
         <h3 className="font-bold text-sm line-clamp-1">
@@ -174,27 +158,16 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
         <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
           {deal.city} {formattedDate && <span className="capitalize">• {formattedDate}</span>}
         </p>
-
-        {/* Hotel Info + Price - all in one block */}
-        {deal.hotel_name && (
-          <div className="mt-1.5 space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
-              <span className="text-[10px] text-muted-foreground/70">• 1 noche</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-muted-foreground line-clamp-1 flex-1">{deal.hotel_name}</p>
-              {deal.price_per_person && (
-                <span className="text-xs font-bold text-primary shrink-0">
-                  desde €{Math.round(deal.price_per_person)}/pers.
-                </span>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* CTA Button - green circle with arrow like artist cards */}
+      {/* Price - Bold */}
+      {deal.price_per_person && (
+        <span className="text-sm font-bold text-foreground shrink-0">
+          €{Math.round(deal.price_per_person)}
+        </span>
+      )}
+
+      {/* CTA Button - green circle with arrow */}
       <button 
         className="shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md hover:bg-primary/90 active:scale-95 transition-all"
         onClick={(e) => {
