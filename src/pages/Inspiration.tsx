@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
-import { Star, Calendar, Moon } from "lucide-react";
+import { Star, Calendar, Moon, ChevronRight } from "lucide-react";
 
 interface InspirationDeal {
   event_id: string | null;
@@ -130,7 +130,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
   );
 };
 
-// Mobile Card (List view - matching artist list design)
+// Mobile Card (List view - matching artist list design with CTA)
 const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDeal; priority?: boolean }) => {
   const navigate = useNavigate();
 
@@ -148,10 +148,10 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
     <div 
       className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border cursor-pointer active:bg-muted/50 transition-colors"
       onClick={handleClick}
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 88px' }}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 100px' }}
     >
       {/* Circular Image - like artist cards */}
-      <div className="relative w-[60px] h-[60px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+      <div className="relative w-[56px] h-[56px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
         {deal.image_url && (
           <img
             src={deal.image_url}
@@ -175,29 +175,36 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
           {deal.city} {formattedDate && <span className="capitalize">• {formattedDate}</span>}
         </p>
 
-        {/* Hotel Info - Stars above, name below */}
+        {/* Hotel Info + Price - all in one block */}
         {deal.hotel_name && (
-          <div className="mt-1.5 flex flex-col gap-0.5">
-            <div className="flex items-center gap-2">
+          <div className="mt-1.5 space-y-0.5">
+            <div className="flex items-center gap-1.5">
               {deal.hotel_stars && <HotelStars stars={deal.hotel_stars} />}
-              <span className="text-[10px] text-muted-foreground/70">1 noche</span>
+              <span className="text-[10px] text-muted-foreground/70">• 1 noche</span>
             </div>
-            <p className="text-xs text-muted-foreground line-clamp-1">{deal.hotel_name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground line-clamp-1 flex-1">{deal.hotel_name}</p>
+              {deal.price_per_person && (
+                <span className="text-xs font-bold text-primary shrink-0">
+                  desde €{Math.round(deal.price_per_person)}/pers.
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Price Badge */}
-      <div className="shrink-0 text-right">
-        {deal.price_per_person && (
-          <div className="bg-primary/10 rounded-lg px-2.5 py-1.5">
-            <p className="text-base font-black text-primary leading-none">
-              €{Math.round(deal.price_per_person)}
-            </p>
-            <p className="text-[9px] text-muted-foreground mt-0.5">/ persona</p>
-          </div>
-        )}
-      </div>
+      {/* CTA Button - green circle with arrow like artist cards */}
+      <button 
+        className="shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md hover:bg-primary/90 active:scale-95 transition-all"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClick();
+        }}
+        aria-label="Ver oferta"
+      >
+        <ChevronRight className="w-5 h-5 text-primary-foreground" />
+      </button>
     </div>
   );
 };
