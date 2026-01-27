@@ -871,6 +871,8 @@ export type Database = {
           lineup_artists: string[] | null
           local_event_date: string | null
           price_min_incl_fees: number | null
+          primary_category_name: string | null
+          primary_subcategory_name: string | null
           seo_title: string | null
           sold_out: boolean | null
           start_date: string | null
