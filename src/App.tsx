@@ -22,6 +22,7 @@ const Festivales = lazy(() => import("./pages/Festivales"));
 const FestivalDetalle = lazy(() => import("./pages/FestivalDetalle"));
 const Producto = lazy(() => import("./pages/Producto"));
 const Favoritos = lazy(() => import("./pages/Favoritos"));
+const Inspiration = lazy(() => import("./pages/Inspiration"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy load redirect components (legacy URL support only)
@@ -158,6 +159,7 @@ const App = () => (
                 <Route path="/festivales" element={<Festivales />} />
                 <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
                 <Route path="/favoritos" element={<Favoritos />} />
+                <Route path="/inspiration" element={<Inspiration />} />
                 
                 {/* Direct product routes - load Producto directly for fastest render */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
