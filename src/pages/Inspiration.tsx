@@ -113,7 +113,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
             )}
             {deal.total_pack_pair && (
               <p className="text-xs opacity-70 mt-1">
-                Pack pareja: €{Math.round(deal.total_pack_pair)}
+                Hotel & Entrada: €{Math.round(deal.total_pack_pair)} para 2pers.
               </p>
             )}
           </div>
