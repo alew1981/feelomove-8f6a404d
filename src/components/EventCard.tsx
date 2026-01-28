@@ -10,6 +10,7 @@ import { CategoryBadge } from "./CategoryBadge";
 import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
+import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
 
 interface EventCardProps {
   event: {
@@ -176,22 +177,24 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
           
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
-            <div className="relative h-64 overflow-hidden bg-muted">
+            <div className="relative h-64 overflow-hidden bg-muted" style={{ aspectRatio: '16 / 10' }}>
               {/* Background Image - Lazy loaded with IntersectionObserver */}
               {isInView ? (
                 <>
                   {!imageLoaded && (
-                    <Skeleton className="absolute inset-0 w-full h-full" />
+                    <Skeleton className="absolute inset-0 w-full h-full animate-shimmer" />
                   )}
                   <img
-                    src={imageUrl}
+                    src={getOptimizedCardImage(imageUrl)}
+                    srcSet={generateCardSrcSet(imageUrl)}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     alt={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     title={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
                     {...(priority ? { fetchpriority: "high" as const } : {})}
-                    width={400}
-                    height={256}
+                    width={450}
+                    height={281}
                     style={{ contentVisibility: priority ? 'visible' : 'auto' }}
                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     onLoad={() => setImageLoaded(true)}
@@ -204,7 +207,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                   />
                 </>
               ) : (
-                <Skeleton className="absolute inset-0 w-full h-full" />
+                <Skeleton className="absolute inset-0 w-full h-full animate-shimmer" />
               )}
               
               {/* Gradient Overlay - stronger at bottom for text readability */}

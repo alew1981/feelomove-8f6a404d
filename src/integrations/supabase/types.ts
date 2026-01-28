@@ -1157,6 +1157,99 @@ export type Database = {
         }
         Relationships: []
       }
+      v_lite_tbl_hotels: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          cached_min_price: number | null
+          cached_price_date: string | null
+          checkin_time: string | null
+          checkout_time: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          deleted_at: string | null
+          facility_ids: number[] | null
+          facility_names_es: string[] | null
+          facility_names_es_stored: string[] | null
+          hotel_description: string | null
+          id: string | null
+          latitude: number | null
+          longitude: number | null
+          main_photo: string | null
+          name: string | null
+          rating: number | null
+          review_count: number | null
+          slug: string | null
+          stars: number | null
+          thumbnail: string | null
+          ticketmaster_city: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          cached_min_price?: number | null
+          cached_price_date?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          deleted_at?: string | null
+          facility_ids?: number[] | null
+          facility_names_es?: never
+          facility_names_es_stored?: string[] | null
+          hotel_description?: string | null
+          id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          main_photo?: string | null
+          name?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string | null
+          stars?: number | null
+          thumbnail?: string | null
+          ticketmaster_city?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          cached_min_price?: number | null
+          cached_price_date?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          deleted_at?: string | null
+          facility_ids?: number[] | null
+          facility_names_es?: never
+          facility_names_es_stored?: string[] | null
+          hotel_description?: string | null
+          id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          main_photo?: string | null
+          name?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string | null
+          stars?: number | null
+          thumbnail?: string | null
+          ticketmaster_city?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _postgis_deprecate: {
@@ -1353,6 +1446,10 @@ export type Database = {
       earth: { Args: never; Returns: number }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      facility_names_es_from_ids: {
+        Args: { _facility_ids: number[] }
+        Returns: string[]
+      }
       generate_concert_slug: {
         Args: {
           p_artist_name: string
@@ -2177,6 +2274,7 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      sync_lite_tbl_hotels_facility_names_es: { Args: never; Returns: number }
       trigger_ticketmaster_sync: { Args: never; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }

@@ -70,9 +70,9 @@ export function useEventHotels({
       // Get unique hotel IDs
       const hotelIds = [...new Set(hotelPrices.map(p => p.hotel_id))];
 
-      // Fetch hotel details
+      // Fetch hotel details from v_lite_tbl_hotels view (has normalized facility names)
       const { data: hotels, error: hotelsError } = await supabase
-        .from("lite_tbl_hotels")
+        .from("v_lite_tbl_hotels")
         .select(`
           id,
           name,
