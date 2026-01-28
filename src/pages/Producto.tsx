@@ -828,7 +828,7 @@ const Producto = () => {
           </div>
           
           {/* Hero Section */}
-          <div className="relative rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: '16 / 9' }}>
+          <div className="relative rounded-2xl overflow-hidden mb-6">
             {/* Background Image */}
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
               <img
