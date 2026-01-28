@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
-import { optimizeImageUrl, generateHeroSrcSet } from "@/lib/imageOptimization";
+import { optimizeImageUrl, getOptimizedHeroImage, generateHeroSrcSet, generateCardSrcSet } from "@/lib/imageOptimization";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
@@ -782,7 +782,7 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        preloadImage={optimizeImageUrl(eventImage, { width: 1200, quality: 90 })}
+        preloadImage={getOptimizedHeroImage(eventImage)}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           { name: eventDetails.is_festival ? "Festivales" : "Conciertos", url: eventDetails.is_festival ? "/festivales" : "/conciertos" },
@@ -828,17 +828,17 @@ const Producto = () => {
           </div>
           
           {/* Hero Section */}
-          <div className="relative rounded-2xl overflow-hidden mb-8">
+          <div className="relative rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: '16 / 9' }}>
             {/* Background Image */}
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
               <img
-                src={optimizeImageUrl(eventImage, { width: 1200, quality: 90 })}
+                src={getOptimizedHeroImage(eventImage)}
                 srcSet={generateHeroSrcSet(eventImage)}
                 sizes="100vw"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
-                width={1200}
-                height={675}
+                width={1000}
+                height={563}
                 loading="eager"
                 decoding="sync"
                 // @ts-expect-error - fetchpriority is valid HTML but React doesn't recognize camelCase
@@ -979,8 +979,8 @@ const Producto = () => {
                 <div className="flex flex-col items-end gap-2 mb-6">
                   <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-background group">
                     <img
-                      src={optimizeImageUrl((eventDetails as any).image_large_url || eventImage, { width: 400 })}
-                      srcSet={generateHeroSrcSet((eventDetails as any).image_large_url || eventImage)}
+                      src={optimizeImageUrl((eventDetails as any).image_large_url || eventImage, { width: 450 })}
+                      srcSet={generateCardSrcSet((eventDetails as any).image_large_url || eventImage)}
                       sizes="(max-width: 768px) 150px, 225px"
                       alt={eventDetails.event_name || "Evento"}
                       className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover transition-transform duration-300 group-hover:scale-110"

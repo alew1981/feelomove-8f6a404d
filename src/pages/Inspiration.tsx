@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { Star, Calendar, ChevronRight } from "lucide-react";
+import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
 
 interface InspirationDeal {
   event_id: string | null;
@@ -63,10 +64,13 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
       {/* Background Image with Overlay */}
       {deal.image_url && (
         <img
-          src={deal.image_url}
+          src={getOptimizedCardImage(deal.image_url)}
+          srcSet={generateCardSrcSet(deal.image_url)}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           alt={deal.artist_name || "Evento"}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          style={{ aspectRatio: '3 / 4' }}
         />
       )}
       {/* Subtle gradient */}
@@ -165,14 +169,16 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 88px' }}
     >
       {/* Circular Image - 60px */}
-      <div className="relative w-[60px] h-[60px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+      <div className="relative w-[60px] h-[60px] shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20" style={{ aspectRatio: '1 / 1' }}>
         {deal.image_url && (
           <img
-            src={deal.image_url}
+            src={getOptimizedCardImage(deal.image_url)}
             alt={deal.artist_name || "Evento"}
             className="absolute inset-0 h-full w-full object-cover"
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
+            width={60}
+            height={60}
           />
         )}
       </div>

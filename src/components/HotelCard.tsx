@@ -1,4 +1,4 @@
-import { useState, memo, useEffect } from "react";
+import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Check, Loader2 } from "lucide-react";
 import { optimizeImageUrl, generateHotelSrcSet } from "@/lib/imageOptimization";
@@ -63,40 +63,26 @@ const HotelImage = memo(({
 }) => {
   const [hasError, setHasError] = useState(false);
 
-  // Optimize URL with WebP conversion
-  const optimizedSrc = optimizeImageUrl(src, { width: 640, quality: 85 });
+  // Optimize URL with WebP conversion (w=450 for cards)
+  const optimizedSrc = optimizeImageUrl(src, { width: 450, quality: 75 });
   const srcSet = generateHotelSrcSet(src);
 
-  // Preload priority images for LCP optimization
-  useEffect(() => {
-    if (priority && src && !src.includes('placeholder')) {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = optimizedSrc;
-      link.setAttribute('imagesrcset', srcSet);
-      link.setAttribute('imagesizes', '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw');
-      document.head.appendChild(link);
-      return () => {
-        try { document.head.removeChild(link); } catch {}
-      };
-    }
-  }, [priority, src, optimizedSrc, srcSet]);
-
   return (
-    <img
-      src={hasError ? "/placeholder.svg" : optimizedSrc}
-      srcSet={hasError ? undefined : srcSet}
-      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-      alt={alt}
-      className="w-full h-full object-cover"
-      loading={priority ? "eager" : "lazy"}
-      decoding={priority ? "sync" : "async"}
-      fetchPriority={priority ? "high" : "low"}
-      onError={() => setHasError(true)}
-      width={640}
-      height={360}
-    />
+    <div className="relative w-full h-full" style={{ aspectRatio: '16 / 9' }}>
+      <img
+        src={hasError ? "/placeholder.svg" : optimizedSrc}
+        srcSet={hasError ? undefined : srcSet}
+        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        alt={alt}
+        className="w-full h-full object-cover"
+        loading={priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
+        fetchPriority={priority ? "high" : "low"}
+        onError={() => setHasError(true)}
+        width={450}
+        height={253}
+      />
+    </div>
   );
 });
 

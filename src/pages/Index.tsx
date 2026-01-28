@@ -10,6 +10,8 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
 
 // Featured cities for display order
 const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];
@@ -383,7 +385,9 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="h-64 animate-pulse bg-muted" />
+                <Card key={i} className="h-64 overflow-hidden">
+                  <Skeleton className="w-full h-full animate-shimmer" />
+                </Card>
               ))
             ) : (
               destinations.map((destination: any) => (
@@ -393,13 +397,15 @@ const Index = () => {
                   className="group block"
                 >
                   <Card className="overflow-hidden h-64 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20">
-                    <div className="relative h-full">
+                    <div className="relative h-full" style={{ aspectRatio: '16 / 10' }}>
                       <img
-                        src={destination.sample_image_url || "/placeholder.svg"}
+                        src={getOptimizedCardImage(destination.sample_image_url)}
+                        srcSet={generateCardSrcSet(destination.sample_image_url)}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         alt={`Conciertos y festivales en ${destination.city_name} - ${destination.event_count} eventos disponibles`}
                         loading="lazy"
-                        width={400}
-                        height={256}
+                        width={450}
+                        height={281}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

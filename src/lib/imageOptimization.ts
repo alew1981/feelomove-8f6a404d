@@ -1,17 +1,35 @@
 /**
  * Image Optimization Utilities
- * Uses wsrv.nl as a free proxy for on-the-fly WebP conversion
+ * Uses images.weserv.nl as a free proxy for on-the-fly WebP conversion
  * 
- * OPTIMIZATIONS APPLIED (25-01-2026):
+ * OPTIMIZATIONS APPLIED (28-01-2026):
  * - WebP conversion: 390KB JPEG → ~150KB WebP (60% reduction)
  * - Responsive srcset for different screen sizes
  * - Progressive loading with interlace
  * - No API key required, global CDN cache
  */
 
+// Domains that should be proxied through weserv
+const PROXY_DOMAINS = [
+  'ticketm.net',
+  'tmimg.net',
+  's1.ticketm.net',
+  'static.cupid.travel',
+  'supabase.co',
+  'wcyjuytpxxqailtixept.supabase.co'
+];
+
 /**
- * Optimizes external image URLs by converting to WebP via wsrv.nl proxy
- * @param originalUrl - Original image URL (e.g., static.cupid.travel)
+ * Check if a URL should be proxied
+ */
+const shouldProxy = (url: string): boolean => {
+  if (!url) return false;
+  return PROXY_DOMAINS.some(domain => url.includes(domain));
+};
+
+/**
+ * Optimizes external image URLs by converting to WebP via images.weserv.nl proxy
+ * @param originalUrl - Original image URL (e.g., static.cupid.travel, ticketm.net)
  * @param options - Width, quality, and format options
  * @returns Optimized image URL
  */
@@ -28,7 +46,7 @@ export const optimizeImageUrl = (
     return originalUrl || '/placeholder.svg';
   }
 
-  const { width = 640, quality = 85, format = 'webp' } = options;
+  const { width = 640, quality = 75, format = 'webp' } = options;
 
   // Decode URL if it comes encoded from database
   let cleanUrl = originalUrl;
@@ -40,8 +58,13 @@ export const optimizeImageUrl = (
     cleanUrl = originalUrl;
   }
 
-  // Use wsrv.nl as optimization proxy (free, no API key)
-  // Docs: https://wsrv.nl/
+  // Only proxy URLs from known domains
+  if (!shouldProxy(cleanUrl)) {
+    return cleanUrl;
+  }
+
+  // Use images.weserv.nl as optimization proxy (free, no API key)
+  // Docs: https://images.weserv.nl/
   const params = new URLSearchParams({
     url: cleanUrl,
     w: width.toString(),
@@ -50,7 +73,7 @@ export const optimizeImageUrl = (
     il: '', // Interlace for progressive loading
   });
 
-  return `https://wsrv.nl/?${params.toString()}`;
+  return `https://images.weserv.nl/?${params.toString()}`;
 };
 
 /**
@@ -72,7 +95,7 @@ export const generateSrcSet = (
 };
 
 /**
- * Generates srcset for hotel card images (smaller sizes)
+ * Generates srcset for hotel card images (smaller sizes, w=450 for cards)
  */
 export const generateHotelSrcSet = (
   originalUrl: string | undefined | null
@@ -81,14 +104,30 @@ export const generateHotelSrcSet = (
     return '';
   }
 
-  const sizes = [400, 640, 800];
+  const sizes = [320, 450, 640];
   return sizes
-    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 80 })} ${width}w`)
+    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 75 })} ${width}w`)
     .join(', ');
 };
 
 /**
- * Generates srcset for hero images (larger sizes)
+ * Generates srcset for card images (w=450)
+ */
+export const generateCardSrcSet = (
+  originalUrl: string | undefined | null
+): string => {
+  if (!originalUrl || originalUrl.includes('placeholder')) {
+    return '';
+  }
+
+  const sizes = [320, 450, 640];
+  return sizes
+    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 75 })} ${width}w`)
+    .join(', ');
+};
+
+/**
+ * Generates srcset for hero images (larger sizes, w=1000)
  */
 export const generateHeroSrcSet = (
   originalUrl: string | undefined | null
@@ -97,8 +136,22 @@ export const generateHeroSrcSet = (
     return '';
   }
 
-  const sizes = [800, 1200, 1920];
+  const sizes = [640, 1000, 1400];
   return sizes
-    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 90 })} ${width}w`)
+    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 85 })} ${width}w`)
     .join(', ');
+};
+
+/**
+ * Get optimized card image (w=450)
+ */
+export const getOptimizedCardImage = (url: string | undefined | null): string => {
+  return optimizeImageUrl(url, { width: 450, quality: 75 });
+};
+
+/**
+ * Get optimized hero image (w=1000)
+ */
+export const getOptimizedHeroImage = (url: string | undefined | null): string => {
+  return optimizeImageUrl(url, { width: 1000, quality: 85 });
 };
