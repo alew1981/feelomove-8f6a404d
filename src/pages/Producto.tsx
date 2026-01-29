@@ -1,20 +1,3 @@
-// ============================================================================
-// ARCHIVO 5/5: Producto.tsx - TODAS LAS OPTIMIZACIONES IMPLEMENTADAS
-// ============================================================================
-// Optimizaciones incluidas:
-// ✅ #1: Miniatura duplicada eliminada
-// ✅ #2: useMemo para URLs de imagen (previene re-renders)
-// ✅ #3: useCallback para funciones (previene re-renders de children)
-// ✅ #4: Keys estables en imágenes
-// ✅ #5: srcSet simplificado (del archivo imageOptimization.ts)
-//
-// Impacto total esperado:
-// • Cargas de imagen: 20 → 5 (-75%)
-// • Bytes desperdiciados: 981KB → 0KB
-// • Tiempo de carga: 2.4s → 0.4s
-// • PageSpeed: +20-25 puntos
-// ============================================================================
-
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -675,98 +658,80 @@ const Producto = () => {
   const hasAvailableTickets = ticketPrices.some((ticket) => ticket.availability !== "none");
   const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
 
-  // ⚡ OPTIMIZACIÓN #6: useCallback para funciones que se pasan a children
-  // Previene re-renders innecesarios de componentes hijos
-  const handleTicketQuantityChange = useCallback(
-    (ticketId: string, change: number) => {
-      const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
-      const ticketIndex = existingTickets.findIndex((t) => t.type === ticketId);
+  // ⚡ NOTA: Función normal en lugar de useCallback para evitar error de hooks
+  // (Los hooks no pueden estar después de returns condicionales)
+  const handleTicketQuantityChange = (ticketId: string, change: number) => {
+    const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
+    const ticketIndex = existingTickets.findIndex((t) => t.type === ticketId);
 
-      const ticketData = ticketPrices.find((t) => t.id === ticketId);
-      if (!ticketData) return;
+    const ticketData = ticketPrices.find((t) => t.id === ticketId);
+    if (!ticketData) return;
 
-      let updatedTickets = [...existingTickets];
+    let updatedTickets = [...existingTickets];
 
-      if (ticketIndex >= 0) {
-        const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
-        if (newQuantity === 0) {
-          updatedTickets = updatedTickets.filter((t) => t.type !== ticketId);
-        } else {
-          updatedTickets[ticketIndex] = {
-            ...updatedTickets[ticketIndex],
-            quantity: newQuantity,
-          };
-        }
-      } else if (change > 0) {
-        updatedTickets.push({
-          type: ticketId,
-          description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
-          price: ticketData.price,
-          fees: ticketData.fees,
-          quantity: 1,
-        });
-      }
-
-      if (updatedTickets.length > 0) {
-        addTickets(eventDetails.event_id!, eventDetails as any, updatedTickets);
+    if (ticketIndex >= 0) {
+      const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
+      if (newQuantity === 0) {
+        updatedTickets = updatedTickets.filter((t) => t.type !== ticketId);
       } else {
-        clearCart();
+        updatedTickets[ticketIndex] = {
+          ...updatedTickets[ticketIndex],
+          quantity: newQuantity,
+        };
       }
-    },
-    [cart, eventDetails, ticketPrices, addTickets, clearCart],
-  );
-
-  const getTicketQuantity = useCallback(
-    (ticketId: string) => {
-      if (!cart || cart.event_id !== eventDetails.event_id) return 0;
-      const ticket = cart.tickets.find((t) => t.type === ticketId);
-      return ticket ? ticket.quantity : 0;
-    },
-    [cart, eventDetails.event_id],
-  );
-
-  const handleAddHotel = useCallback(
-    (hotel: any) => {
-      const nights = (eventDetails as any).package_nights || 1;
-      const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
-      addHotel(eventDetails.event_id!, eventDetails, {
-        hotel_id: hotel.hotel_id,
-        hotel_name: hotel.hotel_name,
-        nights: nights,
-        price_per_night: pricePerNight,
-        total_price: pricePerNight * nights,
-        image: hotel.hotel_main_photo || hotel.hotel_thumbnail || "/placeholder.svg",
-        description: hotel.hotel_description || "Hotel confortable cerca del venue",
-        checkin_date: (eventDetails as any).package_checkin || formatDateISO(eventDate),
-        checkout_date:
-          (eventDetails as any).package_checkout ||
-          formatDateISO(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000)),
+    } else if (change > 0) {
+      updatedTickets.push({
+        type: ticketId,
+        description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
+        price: ticketData.price,
+        fees: ticketData.fees,
+        quantity: 1,
       });
-    },
-    [eventDetails, eventDate, addHotel],
-  );
+    }
+
+    if (updatedTickets.length > 0) {
+      addTickets(eventDetails.event_id!, eventDetails as any, updatedTickets);
+    } else {
+      clearCart();
+    }
+  };
+
+  const getTicketQuantity = (ticketId: string) => {
+    if (!cart || cart.event_id !== eventDetails.event_id) return 0;
+    const ticket = cart.tickets.find((t) => t.type === ticketId);
+    return ticket ? ticket.quantity : 0;
+  };
+
+  const handleAddHotel = (hotel: any) => {
+    const nights = (eventDetails as any).package_nights || 1;
+    const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
+    addHotel(eventDetails.event_id!, eventDetails, {
+      hotel_id: hotel.hotel_id,
+      hotel_name: hotel.hotel_name,
+      nights: nights,
+      price_per_night: pricePerNight,
+      total_price: pricePerNight * nights,
+      image: hotel.hotel_main_photo || hotel.hotel_thumbnail || "/placeholder.svg",
+      description: hotel.hotel_description || "Hotel confortable cerca del venue",
+      checkin_date: (eventDetails as any).package_checkin || formatDateISO(eventDate),
+      checkout_date:
+        (eventDetails as any).package_checkout ||
+        formatDateISO(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000)),
+    });
+  };
 
   const isEventInCart = cart?.event_id === eventDetails.event_id;
   const totalPersons = getTotalTickets();
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // ⚡ OPTIMIZACIÓN #7: useMemo para URL de imagen (SINGLE SIZE)
-  // Previene regeneración de URL en cada render
-  // Usamos SOLO una imagen optimizada sin srcSet para evitar cargas duplicadas
+  // ⚡ OPTIMIZACIÓN #7: Imagen optimizada (sin useMemo para evitar error de hooks)
+  // Usamos una imagen de 1200px que funciona bien en mobile y desktop
   const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
-
-  const optimizedHeroImage = useMemo(() => {
-    // Detectar si es mobile o desktop y cargar SOLO una versión
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const width = isMobile ? 800 : 1400;
-    const quality = isMobile ? 80 : 85;
-
-    return {
-      src: optimizeImageUrl(eventImage, { width, quality }),
-      key: `hero-${eventDetails.event_id}`, // Key estable para prevenir re-mount
-    };
-  }, [eventImage, eventDetails.event_id]);
+  const optimizedHeroImage = {
+    src: optimizeImageUrl(eventImage, { width: 1200, quality: 85 }),
+    key: `hero-${eventDetails.event_id}`,
+  };
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(
     eventDetails.event_slug || "",
