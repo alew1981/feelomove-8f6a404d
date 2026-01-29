@@ -46,7 +46,8 @@ export const optimizeImageUrl = (
     return originalUrl || '/placeholder.svg';
   }
 
-  const { width = 640, quality = 75, format = 'webp' } = options;
+  // AGGRESSIVE: Default to w=800 and q=80 for optimal mobile LCP
+  const { width = 800, quality = 80, format = 'webp' } = options;
 
   // Decode URL if it comes encoded from database
   let cleanUrl = originalUrl;
@@ -64,13 +65,13 @@ export const optimizeImageUrl = (
   }
 
   // Use images.weserv.nl as optimization proxy (free, no API key)
-  // Docs: https://images.weserv.nl/
+  // AGGRESSIVE OPTIMIZATION: q=80, output=webp, il (interlaced progressive)
   const params = new URLSearchParams({
     url: cleanUrl,
     w: width.toString(),
     q: quality.toString(),
     output: format,
-    il: '', // Interlace for progressive loading
+    il: '', // Interlace for progressive loading (faster perceived load)
   });
 
   return `https://images.weserv.nl/?${params.toString()}`;
@@ -143,15 +144,16 @@ export const generateHeroSrcSet = (
 };
 
 /**
- * Get optimized card image (w=450)
+ * Get optimized card image (w=450, q=80)
  */
 export const getOptimizedCardImage = (url: string | undefined | null): string => {
-  return optimizeImageUrl(url, { width: 450, quality: 75 });
+  return optimizeImageUrl(url, { width: 450, quality: 80 });
 };
 
 /**
- * Get optimized hero image (w=1000)
+ * Get optimized hero image (w=800, q=80) - AGGRESSIVE for LCP
+ * Reduced from 1000px to 800px for faster mobile LCP
  */
 export const getOptimizedHeroImage = (url: string | undefined | null): string => {
-  return optimizeImageUrl(url, { width: 1000, quality: 85 });
+  return optimizeImageUrl(url, { width: 800, quality: 80 });
 };

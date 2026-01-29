@@ -14,9 +14,9 @@ export function usePageTracking(pageTitle?: string) {
     if (lastTrackedPath.current === location.pathname) return;
     lastTrackedPath.current = location.pathname;
 
-    // NON-BLOCKING: Defer analytics tracking to avoid competing with LCP rendering
-    // Use requestIdleCallback if available, otherwise setTimeout with generous delay
-    const trackPageView = () => {
+    // EXTREME DEFERRAL: Wait 5 seconds before ANY analytics
+    // This ensures LCP, FCP, and TBT are completely unaffected by tracking scripts
+    const timer = setTimeout(() => {
       const doTrack = () => {
         const title = pageTitle || document.title || "FEELOMOVE+";
         
@@ -38,17 +38,15 @@ export function usePageTracking(pageTitle?: string) {
         }
       };
 
-      // Use requestIdleCallback to defer tracking until browser is idle
-      // This ensures tracking doesn't block LCP or main thread during initial render
+      // Use requestIdleCallback for final deferral after 5s delay
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(doTrack, { timeout: 2000 });
+        (window as any).requestIdleCallback(doTrack, { timeout: 1000 });
       } else {
-        // Fallback: 500ms delay to ensure LCP has rendered
-        setTimeout(doTrack, 500);
+        doTrack();
       }
-    };
+    }, 5000); // 5 SECOND DELAY - extreme deferral for LCP protection
 
-    trackPageView();
+    return () => clearTimeout(timer);
   }, [location.pathname, location.search, pageTitle]);
 }
 
