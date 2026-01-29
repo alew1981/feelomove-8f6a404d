@@ -33,7 +33,10 @@ interface HotelCardProps {
 // Helper to strip HTML tags
 const stripHtml = (html: string): string => {
   if (!html) return "";
-  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
 };
 
 // Get rating text based on score
@@ -52,15 +55,7 @@ const getRatingText = (rating: number): string => {
  * - srcset responsive for different screen sizes
  * - Preload for priority images (LCP optimization)
  */
-const HotelImage = memo(({ 
-  src, 
-  alt, 
-  priority = false 
-}: { 
-  src: string; 
-  alt: string; 
-  priority?: boolean;
-}) => {
+const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => {
   const [hasError, setHasError] = useState(false);
 
   // Optimize URL with WebP conversion (w=450 for cards)
@@ -68,7 +63,7 @@ const HotelImage = memo(({
   const srcSet = generateHotelSrcSet(src);
 
   return (
-    <div className="relative w-full h-full" style={{ aspectRatio: '16 / 9' }}>
+    <div className="relative w-full h-full" style={{ aspectRatio: "16 / 9" }}>
       <img
         src={hasError ? "/placeholder.svg" : optimizedSrc}
         srcSet={hasError ? undefined : srcSet}
@@ -77,7 +72,7 @@ const HotelImage = memo(({
         className="w-full h-full object-cover"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
-        fetchPriority={priority ? "high" : "low"}
+        fetchpriority={priority ? "high" : "low"}
         onError={() => setHasError(true)}
         width={450}
         height={253}
@@ -86,33 +81,42 @@ const HotelImage = memo(({
   );
 });
 
-HotelImage.displayName = 'HotelImage';
+HotelImage.displayName = "HotelImage";
 
-const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, showTicketHint = false, isAdded = false, priority = false }: HotelCardProps) => {
+const HotelCard = ({
+  hotel,
+  onAddHotel,
+  checkinDate,
+  checkoutDate,
+  eventName,
+  showTicketHint = false,
+  isAdded = false,
+  priority = false,
+}: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
   const reviewCount = hotel.hotel_reviews || 0;
-  
+
   // Strip HTML from description
   const rawDescription = stripHtml(hotel.hotel_description) || "Hotel confortable cerca del venue";
   const shortDescription = rawDescription.length > 100 ? rawDescription.substring(0, 100) + "..." : rawDescription;
   const distanceText = hotel.distance_km > 0 ? `${hotel.distance_km.toFixed(1)} km` : "";
-  
+
   // Render stars
   const renderStars = (starCount: number) => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
       stars.push(
-        <span 
-          key={i} 
+        <span
+          key={i}
           className={`text-base ${i < starCount ? "text-orange-400" : "text-muted/40"}`}
-          style={{ letterSpacing: '-2px' }}
+          style={{ letterSpacing: "-2px" }}
         >
           ★
-        </span>
+        </span>,
       );
     }
     return stars;
@@ -121,20 +125,22 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
   const handleAddClick = async () => {
     if (isAdded) return;
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     onAddHotel(hotel);
     setIsLoading(false);
   };
 
   return (
-    <div className={`rounded-lg shadow-lg bg-card overflow-visible relative w-full transition-all ${isAdded ? 'ring-2 ring-accent' : ''}`}>
+    <div
+      className={`rounded-lg shadow-lg bg-card overflow-visible relative w-full transition-all ${isAdded ? "ring-2 ring-accent" : ""}`}
+    >
       {/* Added badge */}
       {isAdded && (
         <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground rounded-full p-1">
           <Check className="h-4 w-4" />
         </div>
       )}
-      
+
       {/* Review Box - Top Right */}
       {reviewScore > 0 && (
         <div className="absolute top-2.5 right-2.5 z-10 flex items-start p-1.5 bg-background/95 rounded-md shadow-sm">
@@ -142,13 +148,9 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
             {Number(reviewScore).toFixed(1)}
           </span>
           <div className="flex flex-col leading-none">
-            <span className="font-bold text-foreground text-xs whitespace-nowrap">
-              {getRatingText(reviewScore)}
-            </span>
+            <span className="font-bold text-foreground text-xs whitespace-nowrap">{getRatingText(reviewScore)}</span>
             {reviewCount > 0 && (
-              <span className="text-xs font-bold text-muted-foreground">
-                ({reviewCount.toLocaleString()})
-              </span>
+              <span className="text-xs font-bold text-muted-foreground">({reviewCount.toLocaleString()})</span>
             )}
           </div>
         </div>
@@ -158,7 +160,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
       <div className="h-[140px] sm:h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <HotelImage
           src={hotel.hotel_main_photo || "/placeholder.svg"}
-          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ' estrellas' : ''} en ${hotel.hotel_city || 'España'} para eventos`}
+          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + " estrellas" : ""} en ${hotel.hotel_city || "España"} para eventos`}
           priority={priority}
         />
       </div>
@@ -166,11 +168,7 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
       {/* Hotel Details */}
       <div className="p-4 pb-2.5">
         {/* Stars */}
-        {hotel.hotel_stars > 0 && (
-          <div className="mb-1 leading-none">
-            {renderStars(hotel.hotel_stars)}
-          </div>
-        )}
+        {hotel.hotel_stars > 0 && <div className="mb-1 leading-none">{renderStars(hotel.hotel_stars)}</div>}
 
         {/* Hotel Name */}
         <h3 className="text-base sm:text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2 min-h-[2.4em]">
@@ -180,7 +178,9 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
         {/* Hotel Address and City */}
         {(hotel.hotel_address || hotel.hotel_city) && (
           <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
-            {hotel.hotel_address}{hotel.hotel_address && hotel.hotel_city && ", "}{hotel.hotel_city}
+            {hotel.hotel_address}
+            {hotel.hotel_address && hotel.hotel_city && ", "}
+            {hotel.hotel_city}
           </p>
         )}
 
@@ -188,13 +188,10 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
         {distanceText && (
           <div className="text-sm text-muted-foreground mt-1 leading-snug">
             <strong className="font-bold">
-              <MapPin className="h-3 w-3 inline-block mr-1" />
-              a {distanceText} de:
+              <MapPin className="h-3 w-3 inline-block mr-1" />a {distanceText} de:
             </strong>
             {eventName && (
-              <span className="block text-muted-foreground font-normal mt-0.5 leading-tight">
-                {eventName}
-              </span>
+              <span className="block text-muted-foreground font-normal mt-0.5 leading-tight">{eventName}</span>
             )}
           </div>
         )}
@@ -239,16 +236,14 @@ const HotelCard = ({ hotel, onAddHotel, checkinDate, checkoutDate, eventName, sh
             1 habitación x 1 noche impuestos incluidos
           </span>
           {showTicketHint && (
-            <span className="text-[10px] text-accent font-medium block mt-0.5">
-              + entradas seleccionadas
-            </span>
+            <span className="text-[10px] text-accent font-medium block mt-0.5">+ entradas seleccionadas</span>
           )}
           <Button
             size="sm"
             className={`mt-2 font-bold text-sm px-3 py-1.5 rounded transition-all ${
-              isAdded 
-                ? 'bg-accent/20 text-accent border-2 border-accent cursor-default' 
-                : 'bg-accent text-accent-foreground hover:bg-accent/90'
+              isAdded
+                ? "bg-accent/20 text-accent border-2 border-accent cursor-default"
+                : "bg-accent text-accent-foreground hover:bg-accent/90"
             }`}
             onClick={handleAddClick}
             disabled={isLoading || isAdded}
