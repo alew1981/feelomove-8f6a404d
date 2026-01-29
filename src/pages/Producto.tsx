@@ -1,22 +1,5 @@
-// ============================================================================
-// ARCHIVO 5/5: Producto.tsx - TODAS LAS OPTIMIZACIONES IMPLEMENTADAS
-// ============================================================================
-// Optimizaciones incluidas:
-// ✅ #1: Miniatura duplicada eliminada
-// ✅ #2: useMemo para URLs de imagen (previene re-renders)
-// ✅ #3: useCallback para funciones (previene re-renders de children)
-// ✅ #4: Keys estables en imágenes
-// ✅ #5: srcSet simplificado (del archivo imageOptimization.ts)
-//
-// Impacto total esperado:
-// • Cargas de imagen: 20 → 5 (-75%)
-// • Bytes desperdiciados: 981KB → 0KB
-// • Tiempo de carga: 2.4s → 0.4s
-// • PageSpeed: +20-25 puntos
-// ============================================================================
-
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEventData } from "@/hooks/useEventData";
@@ -298,8 +281,11 @@ interface TicketTypesData {
   price_types: PriceType[];
 }
 
+// HotelData interface is now imported from useEventHotels hook
+
 // === ULTRA-LAZY HYDRATION: Below-fold content only renders after 3s ===
 const FooterSkeleton = () => <div className="w-full bg-card border-t border-border" style={{ minHeight: "200px" }} />;
+
 const Producto = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -310,9 +296,10 @@ const Producto = () => {
 
   // Split loading states: hotels are CRITICAL (render immediately), footer/links are not
   const [isInteractive, setIsInteractive] = useState(false);
-  const [renderHotels] = useState(true);
+  const [renderHotels] = useState(true); // Hotels render immediately when data available
 
   useEffect(() => {
+    // Keep 4s delay ONLY for non-critical components (footer, related links, mobile cart)
     const timer = setTimeout(() => {
       if ("requestIdleCallback" in window) {
         (window as any).requestIdleCallback(() => setIsInteractive(true), { timeout: 500 });
@@ -323,16 +310,21 @@ const Producto = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Detect route type for canonical URL
   const isConcierto = location.pathname.startsWith("/concierto/");
   const isFestivalRoute = location.pathname.startsWith("/festival/");
 
   const [showAllTickets, setShowAllTickets] = useState(false);
 
+  // OPTIMIZED: Use parallelized event data hook (Promise.all instead of waterfall)
   const { data: eventResult, isLoading, isError, error, refetch } = useEventData(slug, isFestivalRoute, isConcierto);
 
+  // STABILITY FIX: Track if we've already navigated to prevent loops
   const hasNavigatedRef = useRef(false);
 
+  // Handle redirects from the optimized hook - with loop prevention
   useEffect(() => {
+    // Exit conditions to prevent loops
     if (hasNavigatedRef.current) return;
     if (isLoading) return;
 
@@ -350,12 +342,19 @@ const Producto = () => {
     }
   }, [eventResult, navigate, isLoading]);
 
+  // Extract event data and canonical slug from result
   const eventData = eventResult?.data;
   const rpcCanonicalSlug = eventResult?.canonicalSlug || null;
+
+  // Process data - first row has event details
   const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
 
+  // Track page view with proper title (fixes "Page Name not defined" in Matomo)
   usePageTracking(eventDetails?.event_name);
 
+  // RESTORED: Fetch hotels from lite_tbl_event_hotel_prices + lite_tbl_hotels
+  // Uses venue coordinates for distance calculation
+  // CRITICAL: This hook MUST be called before any early returns to satisfy React hooks rules
   const { data: hotels = [] } = useEventHotels({
     eventId: eventDetails?.event_id,
     venueLatitude: eventDetails?.venue_latitude ? Number(eventDetails.venue_latitude) : null,
@@ -363,19 +362,24 @@ const Producto = () => {
     enabled: !!eventDetails?.event_id,
   });
 
+  // Detect route type for display logic - used throughout the component
   const isFestivalDisplay = location.pathname.startsWith("/festival/");
 
+  // CRITICAL: All useQuery hooks MUST be called before early returns
+  // Artist for "Ver en otros destinos" section
   const primaryAttractionForSearch = (eventDetails as any)?.primary_attraction_name as string | null;
   const artistNames = eventDetails?.attraction_names || [];
   const mainArtist = artistNames[0] || eventDetails?.event_name || "";
   const artistForSearch = primaryAttractionForSearch || mainArtist;
   const currentCity = eventDetails?.venue_city || "";
 
+  // Fetch other destinations where this artist has events
   const { data: artistOtherCities } = useQuery({
     queryKey: ["artist-other-cities", artistForSearch, currentCity],
     queryFn: async () => {
       if (!artistForSearch) return [];
 
+      // Search for concerts and festivals with this artist in other cities
       const [concertsRes, festivalsRes] = await Promise.all([
         supabase
           .from("mv_concerts_cards")
@@ -392,8 +396,10 @@ const Producto = () => {
           .limit(50),
       ]);
 
+      // Group by city with counts
       const cityMap = new Map<string, { count: number; image: string | null; slug: string }>();
 
+      // Process concerts
       (concertsRes.data || []).forEach((event: any) => {
         if (event.venue_city) {
           const existing = cityMap.get(event.venue_city);
@@ -409,6 +415,7 @@ const Producto = () => {
         }
       });
 
+      // Process festivals (check if artist is in lineup)
       (festivalsRes.data || []).forEach((event: any) => {
         const attractionNames = event.attraction_names || [];
         const artistInLineup = attractionNames.some((name: string) =>
@@ -438,27 +445,34 @@ const Producto = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Generate Stay22 widget URLs dynamically from venue coordinates and event dates
+  // These are used as fallback when no pre-fetched hotel data exists
   const stay22Urls = useMemo(() => {
     const lat = eventDetails?.venue_latitude;
     const lng = eventDetails?.venue_longitude;
 
     if (!lat || !lng) return { map: null, accommodations: null, activities: null };
 
+    // Use event_date for concerts, start_date for festivals
     const eventDateStr = isFestivalRoute
       ? (eventDetails as any)?.start_date || eventDetails?.event_date
       : eventDetails?.event_date;
 
+    // Get end_date for festivals, or calculate checkout for concerts
     const endDateStr = isFestivalRoute ? (eventDetails as any)?.end_date || eventDateStr : null;
 
+    // Calculate check-in/check-out dates
     let checkinDate: string;
     let checkoutDate: string;
 
     if (eventDateStr) {
       const eventDateObj = new Date(eventDateStr);
+      // Check-in: day before event
       const checkin = new Date(eventDateObj);
       checkin.setDate(checkin.getDate() - 1);
       checkinDate = formatDateISO(checkin);
 
+      // Check-out: day after event (or end_date for festivals)
       if (endDateStr) {
         const endDateObj = new Date(endDateStr);
         const checkout = new Date(endDateObj);
@@ -474,7 +488,10 @@ const Producto = () => {
       checkoutDate = "";
     }
 
+    // Stay22 affiliate ID (using generic for now)
     const aid = "feelomove";
+
+    // Build Stay22 URLs
     const baseParams = `lat=${lat}&lng=${lng}&checkin=${checkinDate}&checkout=${checkoutDate}&aid=${aid}`;
 
     return {
@@ -491,22 +508,28 @@ const Producto = () => {
     isFestivalRoute,
   ]);
 
+  // Use generated URLs (Stay22) - always available if coordinates exist
   const mapWidgetHtml = stay22Urls.map;
   const stay22Accommodations = stay22Urls.accommodations;
   const stay22Activities = stay22Urls.activities;
 
+  // Clear cart when viewing a different event than what's in the cart
+  // This handles both: navigation between events AND page load with stale cart in localStorage
   const prevEventIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentEventId = eventDetails?.event_id;
     if (!currentEventId) return;
 
+    // Check if cart belongs to a different event
     if (cart && cart.event_id !== currentEventId) {
+      // Cart has items from a different event - clear it
       clearCart();
     }
 
     prevEventIdRef.current = currentEventId;
   }, [eventDetails?.event_id, cart, clearCart]);
 
+  // Redirect to 404 when event not found - with loop prevention
   useEffect(() => {
     if (hasNavigatedRef.current) return;
     if (isLoading) return;
@@ -518,17 +541,24 @@ const Producto = () => {
     }
   }, [isError, error, navigate, isLoading]);
 
+  // Schema.org is handled by SEOHead with jsonLd prop - no duplicate injection needed
+  // Meta tags are now handled by SEOHead component - removed useMetaTags hook to avoid duplicate query
+
+  // PERFORMANCE: Parse ticket prices using useMemo
+  // CRITICAL: This hook MUST be called before any early returns to satisfy React hooks rules
   const ticketPrices = useMemo(() => {
     if (!eventDetails) return [];
     const rawTicketTypes = (eventDetails as any).ticket_types;
     if (!rawTicketTypes) return [];
 
     try {
+      // Parse JSON string if needed
       const ticketData: TicketTypesData =
         typeof rawTicketTypes === "string" ? JSON.parse(rawTicketTypes) : rawTicketTypes;
 
       if (!ticketData?.price_types || !Array.isArray(ticketData.price_types)) return [];
 
+      // Flatten price_types -> price_levels into individual ticket options
       const tickets: Array<{
         id: string;
         type: string;
@@ -544,6 +574,7 @@ const Producto = () => {
           for (let levelIndex = 0; levelIndex < priceType.price_levels.length; levelIndex++) {
             const level = priceType.price_levels[levelIndex];
             const ticketId = `${priceType.code || "ticket"}-${levelIndex}`;
+            // Normalize availability - treat missing/unknown values as "available"
             const rawAvailability = level.availability?.toLowerCase() || "available";
             const normalizedAvailability =
               rawAvailability === "none" || rawAvailability === "soldout" || rawAvailability === "sold_out"
@@ -565,6 +596,7 @@ const Producto = () => {
         }
       }
 
+      // Sort by: 1. Available first (not sold out), 2. Then by price
       return tickets.sort((a, b) => {
         const aAvailable = a.availability !== "none" ? 0 : 1;
         const bAvailable = b.availability !== "none" ? 0 : 1;
@@ -577,15 +609,20 @@ const Producto = () => {
     }
   }, [eventDetails]);
 
+  // CRITICAL FOR PAGESPEED: Show skeleton during loading states
+  // This prevents PageSpeed from measuring 404 content during async data loading
   if (isLoading) {
     return <ProductoSkeleton />;
   }
 
   if (isError) {
+    // If "Evento no encontrado", redirect is handled by useEffect above
+    // Show skeleton while redirect happens to avoid PageSpeed seeing 404 content
     if (error instanceof Error && error.message === "Evento no encontrado") {
       return <ProductoSkeleton />;
     }
 
+    // Other errors: show error UI (this is rare and acceptable)
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -625,14 +662,21 @@ const Producto = () => {
     );
   }
 
+  // CRITICAL FOR PAGESPEED: If eventResult indicates redirect pending, show skeleton
+  // This prevents PageSpeed from measuring intermediate states
   if (eventResult?.needsRedirect || eventResult?.needsRouteCorrection) {
     return <ProductoSkeleton />;
   }
 
+  // Only show "not found" UI if data explicitly indicates no event exists
+  // AND we're not waiting for a redirect
   if (!eventDetails) {
+    // Show skeleton for a brief moment before showing not found
+    // This gives the redirect useEffect time to execute
     return <ProductoSkeleton />;
   }
 
+  // Helper to check placeholder dates
   const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith("9999");
 
   const rawEventDate = eventDetails.event_date;
@@ -641,145 +685,189 @@ const Producto = () => {
   const formattedTime = hasValidDate ? formatDatePart(eventDate, "time") : null;
   const monthYear = hasValidDate ? formatDatePart(eventDate, "monthYear") : "Fecha por confirmar";
 
+  // Calculate countdown only if valid date
   const now = new Date();
   const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
   const hoursUntil = hasValidDate ? differenceInHours(eventDate, now) % 24 : 0;
 
+  // Festival lineup artists - prioritize manual lineup over automatic
   const festivalLineupArtists = isFestivalDisplay
     ? ((eventDetails as any).festival_lineup_artists_manual as string[] | null) ||
       ((eventDetails as any).festival_lineup_artists as string[] | null) ||
       []
     : [];
 
+  // Display logic for festivals based on primary/secondary attraction
+  // Case A: Full festival pass (secondary = null or same as primary)
+  // Case B: Artist-specific entry (secondary = different artist name)
   const primaryAttraction = (eventDetails as any).primary_attraction_name as string | null;
   const secondaryAttraction = (eventDetails as any).secondary_attraction_name as string | null;
   const isArtistEntry = isFestivalDisplay && secondaryAttraction && secondaryAttraction !== primaryAttraction;
 
+  // For display purposes
   const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
   const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
 
+  // artistOtherCities is already fetched above (before early returns)
+
+  // Generate SEO title - optimized for 60 chars: [Artist] en [City] [Year] - Entradas y Hotel
   const eventYear = hasValidDate ? formatDatePart(eventDate, "year") : "";
   const seoTitle = `${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ""} - Entradas y Hotel`;
+
+  // Generate SEO description - optimized for ~155 chars
   const seoDescription = `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ""}. Concierto en ${eventDetails.venue_name}. Reserva tu pack de entradas + hotel con Feelomove+.`;
 
+  // ticketPrices is already computed above (before early returns) - no duplicate needed
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
   const hasMoreTickets = ticketPrices.length > 4;
 
+  // Calculate if event has VIP tickets from ticket data (more reliable than has_vip_tickets field)
   const hasVipTickets =
     ticketPrices.some(
       (ticket) =>
         /vip/i.test(ticket.type || "") || /vip/i.test(ticket.description || "") || /vip/i.test(ticket.code || ""),
     ) || (eventDetails as any).has_vip_tickets;
 
+  // Calculate real availability based on ticket data
   const hasAvailableTickets = ticketPrices.some((ticket) => ticket.availability !== "none");
   const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
 
-  // ⚡ OPTIMIZACIÓN #6: useCallback para funciones que se pasan a children
-  // Previene re-renders innecesarios de componentes hijos
-  const handleTicketQuantityChange = useCallback(
-    (ticketId: string, change: number) => {
-      const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
-      const ticketIndex = existingTickets.findIndex((t) => t.type === ticketId);
+  const handleTicketQuantityChange = (ticketId: string, change: number) => {
+    const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
+    const ticketIndex = existingTickets.findIndex((t) => t.type === ticketId);
 
-      const ticketData = ticketPrices.find((t) => t.id === ticketId);
-      if (!ticketData) return;
+    const ticketData = ticketPrices.find((t) => t.id === ticketId);
+    if (!ticketData) return;
 
-      let updatedTickets = [...existingTickets];
+    let updatedTickets = [...existingTickets];
 
-      if (ticketIndex >= 0) {
-        const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
-        if (newQuantity === 0) {
-          updatedTickets = updatedTickets.filter((t) => t.type !== ticketId);
-        } else {
-          updatedTickets[ticketIndex] = {
-            ...updatedTickets[ticketIndex],
-            quantity: newQuantity,
-          };
-        }
-      } else if (change > 0) {
-        updatedTickets.push({
-          type: ticketId,
-          description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
-          price: ticketData.price,
-          fees: ticketData.fees,
-          quantity: 1,
-        });
-      }
-
-      if (updatedTickets.length > 0) {
-        addTickets(eventDetails.event_id!, eventDetails as any, updatedTickets);
+    if (ticketIndex >= 0) {
+      // Existing ticket - increment/decrement
+      const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
+      if (newQuantity === 0) {
+        updatedTickets = updatedTickets.filter((t) => t.type !== ticketId);
       } else {
-        clearCart();
+        updatedTickets[ticketIndex] = {
+          ...updatedTickets[ticketIndex],
+          quantity: newQuantity,
+        };
       }
-    },
-    [cart, eventDetails, ticketPrices, addTickets, clearCart],
-  );
-
-  const getTicketQuantity = useCallback(
-    (ticketId: string) => {
-      if (!cart || cart.event_id !== eventDetails.event_id) return 0;
-      const ticket = cart.tickets.find((t) => t.type === ticketId);
-      return ticket ? ticket.quantity : 0;
-    },
-    [cart, eventDetails.event_id],
-  );
-
-  const handleAddHotel = useCallback(
-    (hotel: any) => {
-      const nights = (eventDetails as any).package_nights || 1;
-      const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
-      addHotel(eventDetails.event_id!, eventDetails, {
-        hotel_id: hotel.hotel_id,
-        hotel_name: hotel.hotel_name,
-        nights: nights,
-        price_per_night: pricePerNight,
-        total_price: pricePerNight * nights,
-        image: hotel.hotel_main_photo || hotel.hotel_thumbnail || "/placeholder.svg",
-        description: hotel.hotel_description || "Hotel confortable cerca del venue",
-        checkin_date: (eventDetails as any).package_checkin || formatDateISO(eventDate),
-        checkout_date:
-          (eventDetails as any).package_checkout ||
-          formatDateISO(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000)),
+    } else if (change > 0) {
+      // New ticket - start with quantity 1
+      updatedTickets.push({
+        type: ticketId,
+        description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
+        price: ticketData.price,
+        fees: ticketData.fees,
+        quantity: 1,
       });
-    },
-    [eventDetails, eventDate, addHotel],
-  );
+    }
+
+    if (updatedTickets.length > 0) {
+      addTickets(eventDetails.event_id!, eventDetails as any, updatedTickets);
+    } else {
+      clearCart();
+    }
+  };
+
+  const getTicketQuantity = (ticketId: string) => {
+    if (!cart || cart.event_id !== eventDetails.event_id) return 0;
+    const ticket = cart.tickets.find((t) => t.type === ticketId);
+    return ticket ? ticket.quantity : 0;
+  };
+
+  const handleAddHotel = (hotel: any) => {
+    const nights = (eventDetails as any).package_nights || 1;
+    const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
+    addHotel(eventDetails.event_id!, eventDetails, {
+      hotel_id: hotel.hotel_id,
+      hotel_name: hotel.hotel_name,
+      nights: nights,
+      price_per_night: pricePerNight,
+      total_price: pricePerNight * nights,
+      image: hotel.hotel_main_photo || hotel.hotel_thumbnail || "/placeholder.svg",
+      description: hotel.hotel_description || "Hotel confortable cerca del venue",
+      checkin_date: (eventDetails as any).package_checkin || formatDateISO(eventDate),
+      checkout_date:
+        (eventDetails as any).package_checkout ||
+        formatDateISO(new Date(eventDate.getTime() + nights * 24 * 60 * 60 * 1000)),
+    });
+  };
 
   const isEventInCart = cart?.event_id === eventDetails.event_id;
   const totalPersons = getTotalTickets();
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // ⚡ OPTIMIZACIÓN #7: useMemo para URLs de imagen
-  // Previene regeneración de URLs en cada render
-  const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
+  // Get image - prioritize image_large_url and optimize for LCP
+  // Use optimized Ticketmaster image variant (max 800px width for mobile LCP)
+  const rawEventImage =
+    (eventDetails as any).image_large_url || (eventDetails as any).image_standard_url || "/placeholder.svg";
 
-  const optimizedHeroImages = useMemo(
-    () => ({
-      src: getOptimizedHeroImage(eventImage),
-      srcSet: generateHeroSrcSet(eventImage),
-      key: `hero-${eventDetails.event_id}`, // Key estable para prevenir re-mount
-    }),
-    [eventImage, eventDetails.event_id],
+  // Optimize Ticketmaster images: replace CUSTOM/large variants with smaller ones
+  // Reduces ~2MB images to ~100KB for faster LCP
+  const eventImage = (() => {
+    if (!rawEventImage || rawEventImage === "/placeholder.svg") return rawEventImage;
+
+    // Ticketmaster image optimization: use TABLET_LANDSCAPE_16_9 variant (~800px wide)
+    // Patterns: s1.ticketm.net/img/tat/dam/a/xxx/xxx_CUSTOM.jpg -> xxx_TABLET_LANDSCAPE_16_9.jpg
+    if (rawEventImage.includes("ticketm.net")) {
+      // Replace common large variants with optimized mobile variant
+      return rawEventImage
+        .replace(/_CUSTOM\.(jpg|png|webp)$/i, "_TABLET_LANDSCAPE_16_9.$1")
+        .replace(/_RETINA_PORTRAIT_16_9\.(jpg|png|webp)$/i, "_TABLET_LANDSCAPE_16_9.$1")
+        .replace(/_RETINA_LANDSCAPE_16_9\.(jpg|png|webp)$/i, "_TABLET_LANDSCAPE_16_9.$1")
+        .replace(/_SOURCE\.(jpg|png|webp)$/i, "_TABLET_LANDSCAPE_16_9.$1");
+    }
+
+    return rawEventImage;
+  })();
+
+  // Build canonical URL using RPC canonical slug, VIP/Upgrade variant detection, or current slug
+  const currentSlug = eventDetails.event_slug || "";
+  const eventName = eventDetails.event_name?.toLowerCase() || "";
+
+  // Detect VIP/Upgrade variants by slug patterns AND event name keywords
+  const vipSlugPatterns = ["-paquetes-vip", "-vip", "-upgrade", "-meet-greet", "-pack", "-parking"];
+  const vipNameKeywords = [
+    "vip",
+    "upgrade",
+    "meet & greet",
+    "meet and greet",
+    "paquete",
+    "pack",
+    "parking",
+    "golden circle",
+    "premium",
+    "platinum",
+  ];
+
+  const hasVipSlugPattern = vipSlugPatterns.some((pattern) => currentSlug.includes(pattern));
+  const hasVipNameKeyword = vipNameKeywords.some((keyword) => eventName.includes(keyword));
+  const isVipVariant = hasVipSlugPattern || hasVipNameKeyword;
+
+  // Priority: 1. RPC canonical slug, 2. VIP variant cleanup (remove suffix), 3. Current slug
+  // For VIP variants, the canonical should point to the main event (same artist, same day)
+  const cleanedVipSlug = vipSlugPatterns.reduce(
+    (slug, pattern) => slug.replace(new RegExp(pattern + "(-\\d+)?$", "g"), ""),
+    currentSlug,
   );
 
-  const absoluteUrl = `${window.location.origin}${getEventUrl(
-    eventDetails.event_slug || "",
-    eventDetails.is_festival || false,
-    rpcCanonicalSlug || undefined,
-  )}`;
+  const canonicalSlug = rpcCanonicalSlug ? rpcCanonicalSlug : isVipVariant ? cleanedVipSlug : currentSlug;
 
-  const eventStatus = getEventStatus(
-    eventDetails.cancelled,
-    eventDetails.rescheduled,
-    eventDetails.sold_out,
-    eventDetails.event_date || "",
-    isEventAvailable,
-  );
+  // Build canonical URL - always use the canonical slug
+  const eventType = isFestivalDisplay ? "festival" : "concierto";
+  const canonicalUrl = `/${eventType}/${canonicalSlug}`;
+  const absoluteUrl = `https://feelomove.com${canonicalUrl}`;
 
+  // Determine event status for banner and JSON-LD
+  const eventStatus = getEventStatus(eventDetails.cancelled, eventDetails.rescheduled, eventDetails.event_date);
+
+  // Build comprehensive Event JSON-LD using EventSeo component
   const minPrice = ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees || 0;
   const maxPrice = ticketPrices[ticketPrices.length - 1]?.price || minPrice;
 
+  // Create EventSeo props using helper function
   const eventSeoProps = createEventSeoProps(
     {
       event_id: eventDetails.event_id || "",
@@ -813,8 +901,10 @@ const Producto = () => {
       isEventAvailable,
     },
   );
+
   return (
     <>
+      {/* EventSeo component injects JSON-LD structured data */}
       <EventSeo {...eventSeoProps} />
 
       <SEOHead
@@ -825,13 +915,14 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        preloadImage={optimizedHeroImages.src}
+        preloadImage={getOptimizedHeroImage(eventImage)}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           {
             name: eventDetails.is_festival ? "Festivales" : "Conciertos",
             url: eventDetails.is_festival ? "/festivales" : "/conciertos",
           },
+          // For concerts: link to artist profile; for festivals: link to destination
           ...(eventDetails.is_festival
             ? [
                 {
@@ -857,19 +948,23 @@ const Producto = () => {
         <Navbar />
 
         <main className="container mx-auto px-4 py-8 mt-20">
+          {/* Breadcrumbs above hero */}
           <Breadcrumbs />
 
+          {/* Event Status Banner for cancelled, rescheduled, or past events */}
           <EventStatusBanner
             status={eventStatus}
             eventName={eventDetails.event_name || ""}
             eventDate={eventDetails.event_date || ""}
           />
 
+          {/* Single H1 for SEO - screen reader accessible, visually hidden on mobile */}
           <h1 className="sr-only">
             {displayTitle}
             {displaySubtitle ? ` ${displaySubtitle}` : ""}
           </h1>
 
+          {/* Mobile: Event Name above hero - decorative visual title */}
           <div className="md:hidden mb-3">
             <p className="text-xl font-black text-foreground leading-tight" aria-hidden="true">
               {displayTitle}
@@ -881,14 +976,13 @@ const Producto = () => {
             )}
           </div>
 
-          {/* ⚡ Hero Section OPTIMIZADO con todas las mejoras */}
+          {/* Hero Section */}
           <div className="relative rounded-2xl overflow-hidden mb-6">
+            {/* Background Image */}
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* ⚡ OPTIMIZACIÓN #8: Key estable + URLs memoizadas */}
               <img
-                key={optimizedHeroImages.key}
-                src={optimizedHeroImages.src}
-                srcSet={optimizedHeroImages.srcSet}
+                src={getOptimizedHeroImage(eventImage)}
+                srcSet={generateHeroSrcSet(eventImage)}
                 sizes="100vw"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
@@ -896,12 +990,14 @@ const Producto = () => {
                 height={563}
                 loading="eager"
                 decoding="sync"
-                // @ts-expect-error - fetchpriority is valid HTML
+                // @ts-expect-error - fetchpriority is valid HTML but React doesn't recognize camelCase
                 fetchpriority="high"
               />
 
+              {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
+              {/* Mobile: Compact date/city badge */}
               <div className="absolute left-2 bottom-2 sm:hidden">
                 <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg px-2.5 py-2 flex items-center gap-2">
                   <div className="text-center border-r border-border pr-2">
@@ -922,6 +1018,7 @@ const Producto = () => {
                 </div>
               </div>
 
+              {/* Desktop: Full Date Card with Venue */}
               <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 hidden sm:block">
                 <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
@@ -950,6 +1047,7 @@ const Producto = () => {
                 </div>
               </div>
 
+              {/* Desktop: Center - Event Name with Lineup (for festivals) and Favorite above */}
               <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%] hidden sm:block">
                 <div className="flex flex-col items-center gap-2">
                   <Button
@@ -972,6 +1070,7 @@ const Producto = () => {
                       className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? "text-accent" : "text-white"}`}
                     />
                   </Button>
+                  {/* Desktop title display - decorative since H1 is above hero */}
                   <p
                     className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg"
                     aria-hidden="true"
@@ -983,6 +1082,7 @@ const Producto = () => {
                       {displaySubtitle}
                     </p>
                   )}
+                  {/* Lineup for festivals - below event name */}
                   {isFestivalDisplay && festivalLineupArtists.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full mt-3">
                       {festivalLineupArtists.map((artist, idx) => (
@@ -998,7 +1098,9 @@ const Producto = () => {
                 </div>
               </div>
 
+              {/* Mobile: Favorite button and vertical badges */}
               <div className="absolute right-2 top-2 bottom-2 sm:hidden flex flex-col items-end justify-between">
+                {/* Favorite button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -1020,12 +1122,14 @@ const Producto = () => {
                   />
                 </Button>
 
+                {/* Vertical badges */}
                 <div className="flex flex-col gap-1 items-end">
                   {eventDetails.sold_out && (
                     <Badge className="bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5">
                       AGOTADO
                     </Badge>
                   )}
+
                   {hasVipTickets && (
                     <Badge variant="outline" className="bg-background/80 text-[9px] px-1.5 py-0.5">
                       VIP
@@ -1034,23 +1138,28 @@ const Producto = () => {
                 </div>
               </div>
 
-              {/* ⚡ OPTIMIZACIÓN #1: Miniatura duplicada ELIMINADA */}
-              <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 hidden sm:flex flex-col items-end justify-start">
+              {/* Desktop: Right Side - Badges and Event Image */}
+              <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 hidden sm:flex flex-col items-end justify-between">
+                {/* Badges - collapsible on mobile */}
                 <CollapsibleBadges
                   eventDetails={eventDetails}
                   hasVipTickets={hasVipTickets}
                   isEventAvailable={isEventAvailable}
                   daysUntil={daysUntil}
                 />
-                {/* ✅ ELIMINADA: Imagen miniatura duplicada que causaba 2 cargas extra */}
+
+                {/* LCP OPTIMIZATION: Thumbnail removed to reduce HTTP requests and improve initial load */}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Main Content */}
             <div className="xl:col-span-2 space-y-8">
+              {/* Ticket Cards - List Format */}
               {ticketPrices.length > 0 && (
                 <div>
+                  {/* Section Header with Step Number */}
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
@@ -1094,6 +1203,7 @@ const Producto = () => {
                         >
                           <CardContent className="p-3 sm:p-4">
                             <div className="flex items-start sm:items-center justify-between gap-3">
+                              {/* Left: Ticket info */}
                               <div className="flex-1 min-w-0 pr-2">
                                 <div className="flex items-center gap-2 flex-wrap mb-1">
                                   {isVIP && (
@@ -1125,7 +1235,9 @@ const Producto = () => {
                                 )}
                               </div>
 
+                              {/* Right: Price stacked above Quantity Selector */}
                               <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                                {/* Price */}
                                 <div className="text-center">
                                   <span className="text-xl sm:text-2xl font-black text-foreground">
                                     €{ticket.price.toFixed(0)}
@@ -1137,6 +1249,7 @@ const Producto = () => {
                                   )}
                                 </div>
 
+                                {/* Quantity Selector */}
                                 <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
                                   <Button
                                     variant="ghost"
@@ -1145,6 +1258,7 @@ const Producto = () => {
                                     onClick={() => handleTicketQuantityChange(ticket.id, -1)}
                                     disabled={quantity === 0 || isSoldOut}
                                     aria-label={`Reducir cantidad de ${ticket.type}`}
+                                    data-ticket-type={ticket.type}
                                   >
                                     <IconMinus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
@@ -1158,6 +1272,7 @@ const Producto = () => {
                                     onClick={() => handleTicketQuantityChange(ticket.id, 1)}
                                     disabled={quantity >= 10 || isSoldOut}
                                     aria-label={`Aumentar cantidad de ${ticket.type}`}
+                                    data-ticket-type={ticket.type}
                                   >
                                     <IconPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                   </Button>
@@ -1184,6 +1299,7 @@ const Producto = () => {
                 </div>
               )}
 
+              {/* Festival Services & Add-ons Section (Transport, Parking, Camping) */}
               {isFestivalDisplay && eventDetails?.event_id && (
                 <FestivalServiceAddons
                   eventId={eventDetails.event_id}
@@ -1192,6 +1308,8 @@ const Producto = () => {
                 />
               )}
 
+              {/* Hotels & Map Section - Always show for events with venue coordinates OR city */}
+              {/* CRITICAL: Show section even if hotels array is empty - use Stay22 map as fallback */}
               {renderHotels &&
                 (eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
                   <div id="hotels-section">
@@ -1216,6 +1334,7 @@ const Producto = () => {
                   </div>
                 )}
 
+              {/* Artist Destinations Section - Show other cities where this artist has events */}
               {artistOtherCities && artistOtherCities.length > 0 && (
                 <ArtistDestinationsList
                   artistName={mainArtist}
@@ -1225,6 +1344,7 @@ const Producto = () => {
               )}
             </div>
 
+            {/* Sidebar - Shopping Cart (Hidden on mobile/tablet, replaced by MobileCartBar) */}
             <div className="hidden xl:block xl:col-span-1">
               <Card className="sticky top-24 border-2">
                 <CardHeader className="bg-foreground text-background">
@@ -1240,10 +1360,12 @@ const Producto = () => {
                 <CardContent className="pt-6 space-y-4">
                   {isEventInCart && cart ? (
                     <>
+                      {/* Event Info */}
                       <div className="mb-4">
                         <p className="text-sm font-bold text-foreground">{eventDetails.event_name}</p>
                       </div>
 
+                      {/* Pack complete success */}
                       {cart.hotel && totalPersons > 0 && (
                         <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mb-4">
                           <p className="text-xs text-foreground font-medium flex items-center gap-2">
@@ -1253,6 +1375,7 @@ const Producto = () => {
                         </div>
                       )}
 
+                      {/* Tickets in cart */}
                       {cart.tickets.map((ticketItem, idx) => (
                         <div key={idx} className="bg-muted/50 rounded-lg p-4">
                           <div className="flex items-start justify-between mb-2">
@@ -1294,6 +1417,7 @@ const Producto = () => {
                         </div>
                       ))}
 
+                      {/* Reserve tickets button */}
                       <Button
                         variant="default"
                         className="w-full h-10 text-sm bg-accent text-accent-foreground hover:bg-accent/90"
@@ -1304,6 +1428,7 @@ const Producto = () => {
                         </a>
                       </Button>
 
+                      {/* Hotel in cart */}
                       {cart.hotel && (
                         <>
                           <div className="bg-muted/50 rounded-lg p-4">
@@ -1340,6 +1465,7 @@ const Producto = () => {
                             </div>
                           </div>
 
+                          {/* Reserve hotel button with deeplink */}
                           <Button
                             className="w-full h-10 text-sm bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
                             asChild
@@ -1355,6 +1481,7 @@ const Producto = () => {
                         </>
                       )}
 
+                      {/* Summary - Inverted: Por persona grande, Total pequeño */}
                       <div className="pt-4 border-t-2 space-y-3">
                         <div className="text-center">
                           <p className="text-sm text-muted-foreground mb-1">Total por persona</p>
@@ -1384,6 +1511,7 @@ const Producto = () => {
           </div>
         </main>
 
+        {/* Mobile Cart Bar - ULTRA-LAZY: only after 4s */}
         {isInteractive && (
           <Suspense fallback={<MobileCartSkeleton />}>
             <MobileCartBar
@@ -1395,8 +1523,10 @@ const Producto = () => {
           </Suspense>
         )}
 
+        {/* Add padding at bottom for mobile/tablet cart bar */}
         <div className="h-20 xl:hidden" />
 
+        {/* Related Links for SEO - ULTRA-LAZY: only after 4s */}
         {isInteractive && (
           <div className="container mx-auto px-4 pb-8">
             <Suspense fallback={<RelatedLinksSkeleton />}>
@@ -1405,6 +1535,7 @@ const Producto = () => {
           </div>
         )}
 
+        {/* Footer - ULTRA-LAZY: only after 4s */}
         {isInteractive ? (
           <Suspense fallback={<FooterSkeleton />}>
             <Footer />
