@@ -975,18 +975,7 @@ const Producto = () => {
                 {/* Badges - collapsible on mobile */}
                 <CollapsibleBadges eventDetails={eventDetails} hasVipTickets={hasVipTickets} isEventAvailable={isEventAvailable} daysUntil={daysUntil} />
                 
-                {/* Event Image with hover zoom */}
-                <div className="flex flex-col items-end gap-2 mb-6">
-                  <div className="overflow-hidden rounded-xl shadow-2xl border-4 border-background group">
-                    <img
-                      src={optimizeImageUrl((eventDetails as any).image_large_url || eventImage, { width: 450 })}
-                      srcSet={generateCardSrcSet((eventDetails as any).image_large_url || eventImage)}
-                      sizes="(max-width: 768px) 150px, 225px"
-                      alt={eventDetails.event_name || "Evento"}
-                      className="w-[150px] h-[200px] md:w-[225px] md:h-[305px] object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                  </div>
-                </div>
+                {/* LCP OPTIMIZATION: Thumbnail removed to reduce HTTP requests and improve initial load */}
               </div>
             </div>
           </div>

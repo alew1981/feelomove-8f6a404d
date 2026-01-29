@@ -260,11 +260,13 @@ export const SEOHead = ({
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
       
-      {/* CRITICAL: Preconnect for Ticketmaster images on event detail pages (LCP optimization) */}
+      {/* CRITICAL: Preconnect for image domains on event detail pages (LCP optimization) */}
       {isEventDetailPage && (
         <>
           <link rel="preconnect" href="https://s1.ticketm.net" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://images.weserv.nl" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="https://s1.ticketm.net" />
+          <link rel="dns-prefetch" href="https://images.weserv.nl" />
         </>
       )}
       
