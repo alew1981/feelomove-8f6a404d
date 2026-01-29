@@ -751,18 +751,22 @@ const Producto = () => {
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // ⚡ OPTIMIZACIÓN #7: useMemo para URLs de imagen
-  // Previene regeneración de URLs en cada render
+  // ⚡ OPTIMIZACIÓN #7: useMemo para URL de imagen (SINGLE SIZE)
+  // Previene regeneración de URL en cada render
+  // Usamos SOLO una imagen optimizada sin srcSet para evitar cargas duplicadas
   const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
 
-  const optimizedHeroImages = useMemo(
-    () => ({
-      src: getOptimizedHeroImage(eventImage),
-      srcSet: generateHeroSrcSet(eventImage),
+  const optimizedHeroImage = useMemo(() => {
+    // Detectar si es mobile o desktop y cargar SOLO una versión
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const width = isMobile ? 800 : 1400;
+    const quality = isMobile ? 80 : 85;
+
+    return {
+      src: optimizeImageUrl(eventImage, { width, quality }),
       key: `hero-${eventDetails.event_id}`, // Key estable para prevenir re-mount
-    }),
-    [eventImage, eventDetails.event_id],
-  );
+    };
+  }, [eventImage, eventDetails.event_id]);
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(
     eventDetails.event_slug || "",
@@ -827,7 +831,7 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        preloadImage={optimizedHeroImages.src}
+        preloadImage={optimizedHeroImage.src}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           {
@@ -886,12 +890,10 @@ const Producto = () => {
           {/* ⚡ Hero Section OPTIMIZADO con todas las mejoras */}
           <div className="relative rounded-2xl overflow-hidden mb-6">
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* ⚡ OPTIMIZACIÓN #8: Key estable + URLs memoizadas */}
+              {/* ⚡ OPTIMIZACIÓN #8: Key estable + URL memoizada (SIN srcSet para evitar duplicados) */}
               <img
-                key={optimizedHeroImages.key}
-                src={optimizedHeroImages.src}
-                srcSet={optimizedHeroImages.srcSet}
-                sizes="100vw"
+                key={optimizedHeroImage.key}
+                src={optimizedHeroImage.src}
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
                 width={1000}
