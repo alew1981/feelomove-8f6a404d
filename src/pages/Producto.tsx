@@ -479,18 +479,17 @@ const Producto = () => {
   const stay22Accommodations = stay22Urls.accommodations;
   const stay22Activities = stay22Urls.activities;
 
-  // ⚡ OPTIMIZACIÓN CRÍTICA #7: URL DETERMINISTA PARA HERO IMAGE (LCP)
-  // Centraliza transformación de URL en un solo paso para evitar cargas duplicadas
-  const finalHeroImageUrl = useMemo(() => {
+  // ⚡ OPTIMIZACIÓN CRÍTICA #7: URLs RESPONSIVE PARA HERO IMAGE (LCP)
+  // Genera múltiples tamaños para mobile/tablet/desktop sin cargas duplicadas
+  const heroImageUrls = useMemo(() => {
     const rawUrl = (eventDetails as any)?.image_large_url || eventDetails?.image_standard_url || "/placeholder.svg";
 
     // Si es placeholder, retornar directo
     if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
-      return rawUrl;
+      return { src: rawUrl, srcSet: "" };
     }
 
     // PASO 1: Normalizar URL de Ticketmaster a formato óptimo
-    // Reemplazar sufijos (_CUSTOM, _SOURCE, _RECOMENDATION, etc.) por _TABLET_LANDSCAPE_16_9.jpg
     let normalizedUrl = rawUrl;
     const ticketmasterSuffixes = [
       "_CUSTOM.jpg",
@@ -507,18 +506,27 @@ const Producto = () => {
       }
     }
 
-    // PASO 2: Aplicar proxy Weserv con parámetros fijos optimizados
-    // Usamos 800px que es óptimo para mobile y desktop sin cargas extra
-    const params = new URLSearchParams({
-      url: normalizedUrl,
-      w: "800",
-      output: "webp",
-      q: "75",
-      il: "", // interlace/progressive
-      maxage: "31d", // cache 31 días
-    });
+    // PASO 2: Generar URLs para diferentes tamaños (responsive)
+    const createUrl = (width: number) => {
+      const params = new URLSearchParams({
+        url: normalizedUrl,
+        w: width.toString(),
+        output: "webp",
+        q: "75",
+        il: "",
+        maxage: "31d",
+      });
+      return `https://images.weserv.nl/?${params}`;
+    };
 
-    return `https://images.weserv.nl/?${params}`;
+    // Tamaños optimizados:
+    // - 400px: mobile portrait (0-639px viewport)
+    // - 800px: tablet/mobile landscape (640-1023px)
+    // - 1200px: desktop (1024px+)
+    return {
+      src: createUrl(800), // Fallback para navegadores sin srcset
+      srcSet: `${createUrl(400)} 400w, ${createUrl(800)} 800w, ${createUrl(1200)} 1200w`,
+    };
   }, [(eventDetails as any)?.image_large_url, eventDetails?.image_standard_url, eventDetails?.event_id]);
 
   const prevEventIdRef = useRef<string | null>(null);
@@ -895,7 +903,9 @@ const Producto = () => {
               {/* ⚡ OPTIMIZACIÓN CRÍTICA LCP: URL determinista + prioridad alta */}
               <img
                 key={`hero-${eventDetails.event_id}`}
-                src={finalHeroImageUrl}
+                src={heroImageUrls.src}
+                srcSet={heroImageUrls.srcSet}
+                sizes="(max-width: 639px) 400px, (max-width: 1023px) 800px, 1200px"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
                 width={800}
