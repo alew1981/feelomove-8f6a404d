@@ -725,13 +725,50 @@ const Producto = () => {
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // ⚡ OPTIMIZACIÓN #7: Imagen optimizada (sin useMemo para evitar error de hooks)
-  // Usamos una imagen de 1200px que funciona bien en mobile y desktop
+  // ⚡ OPTIMIZACIÓN CRÍTICA #7: URL DETERMINISTA PARA HERO IMAGE (LCP)
+  // Centraliza transformación de URL en un solo paso para evitar cargas duplicadas
+  const finalHeroImageUrl = useMemo(() => {
+    const rawUrl = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
+
+    // Si es placeholder, retornar directo
+    if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
+      return rawUrl;
+    }
+
+    // PASO 1: Normalizar URL de Ticketmaster a formato óptimo
+    // Reemplazar sufijos (_CUSTOM, _SOURCE, _RECOMENDATION, etc.) por _TABLET_LANDSCAPE_16_9.jpg
+    let normalizedUrl = rawUrl;
+    const ticketmasterSuffixes = [
+      "_CUSTOM.jpg",
+      "_SOURCE.jpg",
+      "_RECOMENDATION.jpg",
+      "_TABLET_LANDSCAPE_LARGE_16_9.jpg",
+      "_TABLET_LANDSCAPE_3_2.jpg",
+    ];
+
+    for (const suffix of ticketmasterSuffixes) {
+      if (normalizedUrl.includes(suffix)) {
+        normalizedUrl = normalizedUrl.replace(suffix, "_TABLET_LANDSCAPE_16_9.jpg");
+        break;
+      }
+    }
+
+    // PASO 2: Aplicar proxy Weserv con parámetros fijos optimizados
+    // Usamos 800px que es óptimo para mobile y desktop sin cargas extra
+    const params = new URLSearchParams({
+      url: normalizedUrl,
+      w: "800",
+      output: "webp",
+      q: "75",
+      il: "", // interlace/progressive
+      maxage: "31d", // cache 31 días
+    });
+
+    return `https://images.weserv.nl/?${params}`;
+  }, [(eventDetails as any).image_large_url, eventDetails.image_standard_url, eventDetails.event_id]);
+
+  // URL de imagen sin procesar para usos no críticos
   const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
-  const optimizedHeroImage = {
-    src: optimizeImageUrl(eventImage, { width: 1200, quality: 85 }),
-    key: `hero-${eventDetails.event_id}`,
-  };
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(
     eventDetails.event_slug || "",
@@ -796,7 +833,7 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        preloadImage={optimizedHeroImage.src}
+        preloadImage={finalHeroImageUrl}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           {
@@ -853,19 +890,18 @@ const Producto = () => {
           </div>
 
           {/* ⚡ Hero Section OPTIMIZADO con todas las mejoras */}
-          <div className="relative rounded-2xl overflow-hidden mb-6">
+          <div className="relative rounded-2xl overflow-hidden mb-6" style={{ willChange: "transform" }}>
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* ⚡ OPTIMIZACIÓN #8: Key estable + URL memoizada (SIN srcSet para evitar duplicados) */}
+              {/* ⚡ OPTIMIZACIÓN CRÍTICA LCP: URL determinista + prioridad alta */}
               <img
-                key={optimizedHeroImage.key}
-                src={optimizedHeroImage.src}
+                key={`hero-${eventDetails.event_id}`}
+                src={finalHeroImageUrl}
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
-                width={1000}
-                height={563}
+                width={800}
+                height={450}
                 loading="eager"
-                decoding="sync"
-                // @ts-expect-error - fetchpriority is valid HTML
+                decoding="async"
                 fetchpriority="high"
               />
 
@@ -935,6 +971,7 @@ const Producto = () => {
                         image_url: eventImage,
                       })
                     }
+                    aria-label={isFavorite(eventDetails.event_id!) ? "Quitar de favoritos" : "Añadir a favoritos"}
                   >
                     <IconHeart
                       filled={isFavorite(eventDetails.event_id!)}
