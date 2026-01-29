@@ -479,6 +479,48 @@ const Producto = () => {
   const stay22Accommodations = stay22Urls.accommodations;
   const stay22Activities = stay22Urls.activities;
 
+  // ⚡ OPTIMIZACIÓN CRÍTICA #7: URL DETERMINISTA PARA HERO IMAGE (LCP)
+  // Centraliza transformación de URL en un solo paso para evitar cargas duplicadas
+  const finalHeroImageUrl = useMemo(() => {
+    const rawUrl = (eventDetails as any)?.image_large_url || eventDetails?.image_standard_url || "/placeholder.svg";
+
+    // Si es placeholder, retornar directo
+    if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
+      return rawUrl;
+    }
+
+    // PASO 1: Normalizar URL de Ticketmaster a formato óptimo
+    // Reemplazar sufijos (_CUSTOM, _SOURCE, _RECOMENDATION, etc.) por _TABLET_LANDSCAPE_16_9.jpg
+    let normalizedUrl = rawUrl;
+    const ticketmasterSuffixes = [
+      "_CUSTOM.jpg",
+      "_SOURCE.jpg",
+      "_RECOMENDATION.jpg",
+      "_TABLET_LANDSCAPE_LARGE_16_9.jpg",
+      "_TABLET_LANDSCAPE_3_2.jpg",
+    ];
+
+    for (const suffix of ticketmasterSuffixes) {
+      if (normalizedUrl.includes(suffix)) {
+        normalizedUrl = normalizedUrl.replace(suffix, "_TABLET_LANDSCAPE_16_9.jpg");
+        break;
+      }
+    }
+
+    // PASO 2: Aplicar proxy Weserv con parámetros fijos optimizados
+    // Usamos 800px que es óptimo para mobile y desktop sin cargas extra
+    const params = new URLSearchParams({
+      url: normalizedUrl,
+      w: "800",
+      output: "webp",
+      q: "75",
+      il: "", // interlace/progressive
+      maxage: "31d", // cache 31 días
+    });
+
+    return `https://images.weserv.nl/?${params}`;
+  }, [(eventDetails as any)?.image_large_url, eventDetails?.image_standard_url, eventDetails?.event_id]);
+
   const prevEventIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentEventId = eventDetails?.event_id;
@@ -724,48 +766,6 @@ const Producto = () => {
   const totalPersons = getTotalTickets();
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
-
-  // ⚡ OPTIMIZACIÓN CRÍTICA #7: URL DETERMINISTA PARA HERO IMAGE (LCP)
-  // Centraliza transformación de URL en un solo paso para evitar cargas duplicadas
-  const finalHeroImageUrl = useMemo(() => {
-    const rawUrl = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
-
-    // Si es placeholder, retornar directo
-    if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
-      return rawUrl;
-    }
-
-    // PASO 1: Normalizar URL de Ticketmaster a formato óptimo
-    // Reemplazar sufijos (_CUSTOM, _SOURCE, _RECOMENDATION, etc.) por _TABLET_LANDSCAPE_16_9.jpg
-    let normalizedUrl = rawUrl;
-    const ticketmasterSuffixes = [
-      "_CUSTOM.jpg",
-      "_SOURCE.jpg",
-      "_RECOMENDATION.jpg",
-      "_TABLET_LANDSCAPE_LARGE_16_9.jpg",
-      "_TABLET_LANDSCAPE_3_2.jpg",
-    ];
-
-    for (const suffix of ticketmasterSuffixes) {
-      if (normalizedUrl.includes(suffix)) {
-        normalizedUrl = normalizedUrl.replace(suffix, "_TABLET_LANDSCAPE_16_9.jpg");
-        break;
-      }
-    }
-
-    // PASO 2: Aplicar proxy Weserv con parámetros fijos optimizados
-    // Usamos 800px que es óptimo para mobile y desktop sin cargas extra
-    const params = new URLSearchParams({
-      url: normalizedUrl,
-      w: "800",
-      output: "webp",
-      q: "75",
-      il: "", // interlace/progressive
-      maxage: "31d", // cache 31 días
-    });
-
-    return `https://images.weserv.nl/?${params}`;
-  }, [(eventDetails as any).image_large_url, eventDetails.image_standard_url, eventDetails.event_id]);
 
   // URL de imagen sin procesar para usos no críticos
   const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
