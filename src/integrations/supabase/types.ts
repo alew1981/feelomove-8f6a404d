@@ -167,8 +167,15 @@ export type Database = {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "inspiration_deals"
+            referencedRelation: "lovable_mv_event_product_page"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
@@ -176,6 +183,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lovable_mv_event_product_page_conciertos"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page_conciertos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
@@ -707,8 +721,15 @@ export type Database = {
             foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
             columns: ["festival_event_id"]
             isOneToOne: true
-            referencedRelation: "inspiration_deals"
+            referencedRelation: "lovable_mv_event_product_page"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
@@ -716,6 +737,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "lovable_mv_event_product_page_conciertos"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
+            columns: ["festival_event_id"]
+            isOneToOne: true
+            referencedRelation: "lovable_mv_event_product_page_conciertos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tm_tbl_festival_details_festival_event_id_fkey"
@@ -805,20 +833,82 @@ export type Database = {
         }
         Relationships: []
       }
-      inspiration_deals: {
+      lovable_mv_event_product_page: {
         Row: {
-          artist_name: string | null
-          city: string | null
+          attraction_ids: string[] | null
+          attraction_names: string[] | null
+          attraction_urls: string[] | null
+          cancelled: boolean | null
+          categories_data: Json | null
+          created_at: string | null
+          currency: string | null
+          day_of_week: string | null
+          domain: string | null
+          door_opening_date: string | null
+          end_date: string | null
           event_date: string | null
+          event_date_format: string | null
           event_id: string | null
           event_name: string | null
-          hotel_name: string | null
-          hotel_price: number | null
-          hotel_stars: number | null
-          image_url: string | null
-          price_per_person: number | null
-          ticket_price: number | null
-          total_pack_pair: number | null
+          event_type: string | null
+          event_url: string | null
+          exclude_from_sitemap: boolean | null
+          external_url: boolean | null
+          has_hotel_prices: boolean | null
+          has_real_availability: boolean | null
+          hotel_prices_fetched_at: string | null
+          id: string | null
+          image_large_height: number | null
+          image_large_url: string | null
+          image_large_width: number | null
+          image_standard_height: number | null
+          image_standard_url: string | null
+          image_standard_width: number | null
+          is_package: boolean | null
+          is_transport: boolean | null
+          local_event_date: string | null
+          local_event_date_format: string | null
+          minimum_age_required: number | null
+          name: string | null
+          needs_price_update: boolean | null
+          off_sale_date: string | null
+          on_sale_date: string | null
+          price_max_excl_fees: number | null
+          price_max_incl_fees: number | null
+          price_min_excl_fees: number | null
+          price_min_incl_fees: number | null
+          primary_attraction_id: string | null
+          primary_attraction_name: string | null
+          primary_category_id: number | null
+          primary_category_name: string | null
+          primary_subcategory_id: number | null
+          primary_subcategory_name: string | null
+          rescheduled: boolean | null
+          schedule_status: string | null
+          seatmap_interactive_detailed: boolean | null
+          seatmap_interactive_overview: boolean | null
+          seatmap_static: boolean | null
+          seats_available: boolean | null
+          secondary_attraction_id: string | null
+          secondary_attraction_name: string | null
+          secondary_attraction_url: string | null
+          slug: string | null
+          sold_out: boolean | null
+          start_date: string | null
+          status: string | null
+          ticket_types: Json | null
+          timezone: string | null
+          updated_at: string | null
+          url: string | null
+          venue_address: string | null
+          venue_city: string | null
+          venue_country: string | null
+          venue_id: string | null
+          venue_latitude: number | null
+          venue_longitude: number | null
+          venue_name: string | null
+          venue_postal_code: string | null
+          venue_url: string | null
         }
         Relationships: []
       }
@@ -829,49 +919,72 @@ export type Database = {
           attraction_urls: string[] | null
           cancelled: boolean | null
           categories_data: Json | null
+          created_at: string | null
+          currency: string | null
           day_of_week: string | null
-          event_currency: string | null
+          domain: string | null
+          door_opening_date: string | null
+          end_date: string | null
           event_date: string | null
           event_date_format: string | null
           event_id: string | null
           event_name: string | null
-          event_season: string | null
           event_slug: string | null
           event_type: string | null
           event_url: string | null
+          exclude_from_sitemap: boolean | null
+          external_url: boolean | null
           has_hotel_prices: boolean | null
           has_real_availability: boolean | null
-          has_vip_tickets: boolean | null
           hotel_prices_fetched_at: string | null
+          id: string | null
+          image_large_height: number | null
           image_large_url: string | null
+          image_large_width: number | null
+          image_standard_height: number | null
           image_standard_url: string | null
+          image_standard_width: number | null
+          is_festival: boolean | null
           is_package: boolean | null
           is_transport: boolean | null
           local_event_date: string | null
           local_event_date_format: string | null
-          meta_description: string | null
           minimum_age_required: number | null
+          name: string | null
+          needs_price_update: boolean | null
           off_sale_date: string | null
           on_sale_date: string | null
+          price_max_excl_fees: number | null
+          price_max_incl_fees: number | null
+          price_min_excl_fees: number | null
           price_min_incl_fees: number | null
           primary_attraction_id: string | null
           primary_attraction_name: string | null
+          primary_category_id: number | null
           primary_category_name: string | null
+          primary_subcategory_id: number | null
           primary_subcategory_name: string | null
           rescheduled: boolean | null
           schedule_status: string | null
+          seatmap_interactive_detailed: boolean | null
+          seatmap_interactive_overview: boolean | null
           seatmap_static: boolean | null
           seats_available: boolean | null
+          secondary_attraction_id: string | null
           secondary_attraction_name: string | null
           secondary_attraction_url: string | null
-          seo_title: string | null
+          slug: string | null
           sold_out: boolean | null
-          ticket_price_min: number | null
+          start_date: string | null
+          status: string | null
           ticket_types: Json | null
           timezone: string | null
+          updated_at: string | null
+          url: string | null
           venue_address: string | null
           venue_city: string | null
           venue_country: string | null
+          venue_id: string | null
           venue_latitude: number | null
           venue_longitude: number | null
           venue_name: string | null

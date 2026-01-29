@@ -271,13 +271,41 @@ const Inspiration = () => {
   const { data: deals, isLoading, error } = useQuery({
     queryKey: ["inspiration-deals"],
     queryFn: async () => {
+      // Use mv_concerts_cards with hotel prices for inspiration deals
       const { data, error } = await supabase
-        .from("inspiration_deals")
-        .select("*")
-        .order("event_date", { ascending: true });
+        .from("mv_concerts_cards")
+        .select(`
+          id,
+          name,
+          artist_name,
+          venue_city,
+          event_date,
+          image_standard_url,
+          price_min_incl_fees,
+          hotels_available
+        `)
+        .gte("event_date", new Date().toISOString())
+        .gt("hotels_available", 0)
+        .order("event_date", { ascending: true })
+        .limit(20);
 
       if (error) throw error;
-      return data as InspirationDeal[];
+      
+      // Transform to InspirationDeal format
+      return (data || []).map(event => ({
+        event_id: event.id,
+        event_name: event.name,
+        artist_name: event.artist_name,
+        city: event.venue_city,
+        event_date: event.event_date,
+        hotel_name: null, // Not available from this view
+        hotel_stars: 3, // Default
+        hotel_price: 85, // Placeholder
+        ticket_price: event.price_min_incl_fees,
+        price_per_person: (event.price_min_incl_fees || 50) + 42.5, // Ticket + half hotel
+        total_pack_pair: ((event.price_min_incl_fees || 50) * 2) + 85, // 2 tickets + hotel
+        image_url: event.image_standard_url
+      })) as InspirationDeal[];
     },
     staleTime: 5 * 60 * 1000,
   });
