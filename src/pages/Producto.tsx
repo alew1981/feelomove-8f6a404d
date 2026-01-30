@@ -292,18 +292,19 @@ const Producto = () => {
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } =
     useCart();
 
-  // Split loading states: hotels are CRITICAL (render immediately), footer/links are not
+  // EXTREME DEFERRAL: Non-critical UI waits 5s after hydration
   const [isInteractive, setIsInteractive] = useState(false);
   const [renderHotels] = useState(true);
 
   useEffect(() => {
+    // Wait for idle time after 5 seconds to load non-critical components
     const timer = setTimeout(() => {
       if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(() => setIsInteractive(true), { timeout: 500 });
+        (window as any).requestIdleCallback(() => setIsInteractive(true), { timeout: 1000 });
       } else {
         setIsInteractive(true);
       }
-    }, 4000);
+    }, 5000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -506,27 +507,24 @@ const Producto = () => {
       }
     }
 
-    // PASO 2: Generar URLs para diferentes tamaños (responsive) con maxage cache
-    const createUrl = (width: number) => {
+    // PASO 2: Generar URLs para diferentes tamaños (responsive) con aggressive caching
+    const createUrl = (width: number, quality: number = 70) => {
       const params = new URLSearchParams({
         url: normalizedUrl,
         w: width.toString(),
         output: "webp",
-        q: "75",
+        q: quality.toString(),
         il: "",
         maxage: "31d",
       });
       return `https://images.weserv.nl/?${params}`;
     };
 
-    // Tamaños optimizados con 240px añadido para móviles pequeños:
-    // - 240px: small mobile (0-374px viewport)
-    // - 400px: mobile portrait (375-639px viewport)
-    // - 800px: tablet/mobile landscape (640-1023px)
-    // - 1200px: desktop (1024px+)
+    // OPTIMIZED SIZES: Reduced quality to 70 for faster load
+    // Mobile-first: smaller images load faster on 3G/4G
     return {
-      src: createUrl(800), // Fallback para navegadores sin srcset
-      srcSet: `${createUrl(240)} 240w, ${createUrl(400)} 400w, ${createUrl(800)} 800w, ${createUrl(1200)} 1200w`,
+      src: createUrl(640, 70), // Reduced fallback for faster mobile LCP
+      srcSet: `${createUrl(320, 65)} 320w, ${createUrl(480, 70)} 480w, ${createUrl(640, 70)} 640w, ${createUrl(960, 75)} 960w`,
     };
   }, [(eventDetails as any)?.image_large_url, eventDetails?.image_standard_url, eventDetails?.event_id]);
 
@@ -918,19 +916,18 @@ const Producto = () => {
             )}
           </div>
 
-          {/* ⚡ Hero Section OPTIMIZADO con todas las mejoras */}
-          <div className="relative rounded-2xl overflow-hidden mb-6" style={{ willChange: "transform" }}>
+          {/* ⚡ Hero Section - LCP OPTIMIZED */}
+          <div className="relative rounded-2xl overflow-hidden mb-6">
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* ⚡ OPTIMIZACIÓN CRÍTICA LCP: URL determinista + prioridad alta + responsive sizes */}
+              {/* LCP IMAGE: Minimal attributes, maximum priority */}
               <img
-                key={`hero-${eventDetails.event_id}`}
                 src={heroImageUrls.src}
                 srcSet={heroImageUrls.srcSet}
-                sizes="(max-width: 374px) 240px, (max-width: 639px) 400px, (max-width: 1023px) 800px, 1200px"
+                sizes="(max-width: 480px) 320px, (max-width: 640px) 480px, (max-width: 960px) 640px, 960px"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
-                width={800}
-                height={450}
+                width={640}
+                height={360}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"

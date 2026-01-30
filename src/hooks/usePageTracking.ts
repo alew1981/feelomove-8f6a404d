@@ -14,7 +14,7 @@ export function usePageTracking(pageTitle?: string) {
     if (lastTrackedPath.current === location.pathname) return;
     lastTrackedPath.current = location.pathname;
 
-    // EXTREME DEFERRAL: Wait for load event + 3s delay before ANY analytics
+    // EXTREME DEFERRAL: Wait for load event + 5s delay before ANY analytics
     // This ensures LCP, FCP, and TBT are completely unaffected by tracking scripts
     const initTracking = () => {
       setTimeout(() => {
@@ -41,11 +41,11 @@ export function usePageTracking(pageTitle?: string) {
 
         // Use requestIdleCallback for final deferral
         if ('requestIdleCallback' in window) {
-          (window as any).requestIdleCallback(doTrack, { timeout: 1000 });
+          (window as any).requestIdleCallback(doTrack, { timeout: 2000 });
         } else {
           doTrack();
         }
-      }, 3000); // 3 SECOND DELAY post-load
+      }, 5000); // 5 SECOND DELAY post-load (matches GTM)
     };
 
     // Wait for page load before starting timer
