@@ -777,12 +777,12 @@ const Producto = () => {
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
   // URL de imagen optimizada para og:image (1200x630 para social sharing)
-  const ogImageUrl = useMemo(() => {
+  // NOTA: No usar useMemo aquí porque estamos después de returns condicionales
+  const ogImageUrl = (() => {
     const rawUrl = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
     if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
       return "https://feelomove.com/og-image.jpg";
     }
-    // Normalize and optimize via weserv for OG image (1200x630 is standard for social)
     let normalizedUrl = rawUrl;
     const ticketmasterSuffixes = ["_CUSTOM.jpg", "_SOURCE.jpg", "_RECOMENDATION.jpg", "_TABLET_LANDSCAPE_LARGE_16_9.jpg"];
     for (const suffix of ticketmasterSuffixes) {
@@ -801,7 +801,7 @@ const Producto = () => {
       maxage: "31d",
     });
     return `https://images.weserv.nl/?${params}`;
-  }, [(eventDetails as any).image_large_url, eventDetails.image_standard_url]);
+  })();
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(
     rpcCanonicalSlug || eventDetails.event_slug || "",
