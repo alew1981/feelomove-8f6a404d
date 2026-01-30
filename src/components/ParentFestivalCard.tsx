@@ -16,6 +16,9 @@ interface ParentFestival {
   image_large_url: string;
   min_start_date: string;
   max_end_date: string;
+  // Manual date overrides - prioritize these
+  start_date_manual?: string | null;
+  end_date_manual?: string | null;
   total_artists?: number;
   genres?: string[];
   // On sale date for "coming soon" badge (earliest on_sale_date from events)
@@ -68,13 +71,16 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
     `${festival.festival_nombre.toLowerCase().replace(/\s+/g, '-')}_${(festival.venue_city || 'unknown').toLowerCase().replace(/\s+/g, '-')}`
   );
   
-  // Check for placeholder dates
-  const isStartPlaceholder = isPlaceholderDate(festival.min_start_date);
-  const isEndPlaceholder = isPlaceholderDate(festival.max_end_date);
+  // Check for placeholder dates - prioritize manual dates
+  const startDateSource = festival.start_date_manual || festival.min_start_date;
+  const endDateSource = festival.end_date_manual || festival.max_end_date;
+  
+  const isStartPlaceholder = isPlaceholderDate(startDateSource);
+  const isEndPlaceholder = isPlaceholderDate(endDateSource);
   const hasValidDates = !isStartPlaceholder && !isEndPlaceholder;
   
-  const startDate = hasValidDates ? parseISO(festival.min_start_date) : null;
-  const endDate = hasValidDates ? parseISO(festival.max_end_date) : null;
+  const startDate = hasValidDates ? parseISO(startDateSource) : null;
+  const endDate = hasValidDates ? parseISO(endDateSource) : null;
   
   // Check if event is in the past
   const eventDateForCheck = endDate || startDate;

@@ -999,6 +999,7 @@ export type Database = {
           cancelled: boolean | null
           categories_data: Json | null
           end_date: string | null
+          end_date_manual: string | null
           event_date: string | null
           event_id: string | null
           event_name: string | null
@@ -1020,6 +1021,7 @@ export type Database = {
           seo_title: string | null
           sold_out: boolean | null
           start_date: string | null
+          start_date_manual: string | null
           ticket_types: Json | null
           timezone: string | null
           transport_event_ids: string[] | null
