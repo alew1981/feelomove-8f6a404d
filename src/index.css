@@ -135,6 +135,14 @@ All colors MUST be HSL.
     content-visibility: auto;
     contain-intrinsic-size: 0 40px;
   }
+  
+  /* Animation delays for staggered entrance */
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
 
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-xl;

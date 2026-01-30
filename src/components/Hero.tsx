@@ -2,11 +2,47 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Search, MapPin, Music, User, Calendar, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
 import heroConcertImage from "@/assets/hero-concert.webp";
+
+// === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
+const IconSearch = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+  </svg>
+);
+const IconMapPin = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+  </svg>
+);
+const IconMusic = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+  </svg>
+);
+const IconUser = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </svg>
+);
+const IconCalendar = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" />
+  </svg>
+);
+const IconX = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+  </svg>
+);
+const IconLoader = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v4" /><path d="m16.2 7.8 2.9-2.9" /><path d="M18 12h4" /><path d="m16.2 16.2 2.9 2.9" /><path d="M12 18v4" /><path d="m4.9 19.1 2.9-2.9" /><path d="M2 12h4" /><path d="m4.9 4.9 2.9 2.9" />
+  </svg>
+);
 
 interface SearchResult {
   type: 'event' | 'artist' | 'destination' | 'genre';
@@ -175,10 +211,10 @@ const Hero = () => {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'artist': return <User className="h-4 w-4 text-accent" />;
-      case 'destination': return <MapPin className="h-4 w-4 text-accent" />;
-      case 'genre': return <Music className="h-4 w-4 text-accent" />;
-      default: return <Calendar className="h-4 w-4 text-accent" />;
+      case 'artist': return <IconUser className="h-4 w-4 text-accent" />;
+      case 'destination': return <IconMapPin className="h-4 w-4 text-accent" />;
+      case 'genre': return <IconMusic className="h-4 w-4 text-accent" />;
+      default: return <IconCalendar className="h-4 w-4 text-accent" />;
     }
   };
 
@@ -222,12 +258,11 @@ const Hero = () => {
         {/* Improved Search Bar */}
         <div 
           ref={searchRef}
-          className="max-w-3xl mx-auto mb-16 animate-fade-in relative" 
-          style={{ animationDelay: "150ms" }}
+          className="max-w-3xl mx-auto mb-16 animate-fade-in animation-delay-150 relative"
         >
           <div className="bg-white rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Buscar por evento, artista, destino, género o mes..."
                 value={searchQuery}
@@ -247,7 +282,7 @@ const Hero = () => {
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="h-4 w-4" />
+                  <IconX className="h-4 w-4" />
                 </button>
               )}
             </div>
@@ -273,7 +308,7 @@ const Hero = () => {
               
               {isSearching ? (
                 <div className="p-6 flex items-center justify-center gap-3 text-muted-foreground">
-                  <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                  <IconLoader className="h-5 w-5 animate-spin text-accent" />
                   <span className="font-medium">Buscando experiencias...</span>
                 </div>
               ) : results.length > 0 ? (
@@ -328,7 +363,7 @@ const Hero = () => {
         </div>
 
         {/* Improved 3 Steps */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-4 text-white animate-fade-in" style={{ animationDelay: "300ms" }}>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-4 text-white animate-fade-in animation-delay-300">
           <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
             <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-black text-xl shadow-lg flex-shrink-0">
               1
