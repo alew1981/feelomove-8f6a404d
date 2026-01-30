@@ -776,8 +776,32 @@ const Producto = () => {
   const totalPrice = getTotalPrice();
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
-  // URL de imagen sin procesar para usos no críticos
-  const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
+  // URL de imagen optimizada para og:image (1200x630 para social sharing)
+  const ogImageUrl = useMemo(() => {
+    const rawUrl = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
+    if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
+      return "https://feelomove.com/og-image.jpg";
+    }
+    // Normalize and optimize via weserv for OG image (1200x630 is standard for social)
+    let normalizedUrl = rawUrl;
+    const ticketmasterSuffixes = ["_CUSTOM.jpg", "_SOURCE.jpg", "_RECOMENDATION.jpg", "_TABLET_LANDSCAPE_LARGE_16_9.jpg"];
+    for (const suffix of ticketmasterSuffixes) {
+      if (normalizedUrl.includes(suffix)) {
+        normalizedUrl = normalizedUrl.replace(suffix, "_TABLET_LANDSCAPE_16_9.jpg");
+        break;
+      }
+    }
+    const params = new URLSearchParams({
+      url: normalizedUrl,
+      w: "1200",
+      h: "630",
+      fit: "cover",
+      output: "jpg",
+      q: "80",
+      maxage: "31d",
+    });
+    return `https://images.weserv.nl/?${params}`;
+  }, [(eventDetails as any).image_large_url, eventDetails.image_standard_url]);
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(
     rpcCanonicalSlug || eventDetails.event_slug || "",
@@ -835,7 +859,7 @@ const Producto = () => {
         title={seoTitle}
         description={seoDescription}
         canonical={absoluteUrl}
-        ogImage={eventImage}
+        ogImage={ogImageUrl}
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
@@ -975,7 +999,7 @@ const Producto = () => {
                         event_slug: eventDetails.event_slug || "",
                         event_date: eventDetails.event_date || "",
                         venue_city: eventDetails.venue_city || "",
-                        image_url: eventImage,
+                        image_url: heroImageUrls.src,
                       })
                     }
                     aria-label={isFavorite(eventDetails.event_id!) ? "Quitar de favoritos" : "Añadir a favoritos"}
@@ -1023,7 +1047,7 @@ const Producto = () => {
                       event_slug: eventDetails.event_slug || "",
                       event_date: eventDetails.event_date || "",
                       venue_city: eventDetails.venue_city || "",
-                      image_url: eventImage,
+                      image_url: heroImageUrls.src,
                     })
                   }
                 >
