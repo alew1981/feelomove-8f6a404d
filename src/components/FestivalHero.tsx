@@ -101,8 +101,7 @@ const FestivalHero = ({
         className="absolute inset-0 w-full h-full object-cover parallax-bg"
         loading="eager"
         decoding="sync"
-        // @ts-expect-error - fetchpriority is valid HTML but React types don't recognize lowercase
-        fetchpriority="high"
+        fetchPriority="high"
         width={1200}
         height={320}
         style={{ transform: `translateY(${scrollOffset}px) scale(1.1)` }}

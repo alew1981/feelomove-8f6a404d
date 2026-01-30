@@ -192,7 +192,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     title={`${eventName} - Concierto en ${event.venue_city || 'España'}`}
                     loading={priority ? "eager" : "lazy"}
                     decoding={priority ? "sync" : "async"}
-                    {...(priority ? { fetchpriority: "high" as const } : {})}
+                    fetchPriority={priority ? "high" : "low"}
                     width={450}
                     height={281}
                     style={{ contentVisibility: priority ? 'visible' : 'auto' }}

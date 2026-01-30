@@ -219,7 +219,7 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
               height={56}
               loading={priority ? "eager" : "lazy"}
               decoding={priority ? "sync" : "async"}
-              {...(priority ? { fetchpriority: "high" } : {})}
+              fetchPriority={priority ? "high" : "low"}
               className={cn(
                 "w-full h-full object-cover",
                 "transition-opacity duration-300 ease-out",

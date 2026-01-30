@@ -139,7 +139,7 @@ const OptimizedImage = memo(({
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
-          {...(priority ? { fetchpriority: "high" } : {})}
+          fetchPriority={priority ? "high" : "low"}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
