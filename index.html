@@ -50,24 +50,15 @@
          and loading="eager" in the component for optimal LCP. -->
     
     
-    <!-- CRITICAL: Inline critical font-face declarations with font-display: swap -->
+    <!-- CRITICAL CSS: Inline styles for instant FCP (< 0.5s) -->
     <style>
-      /* Critical font-face with swap for immediate text visibility */
+      /* === CRITICAL FONT-FACE === */
       @font-face {
         font-family: 'Poppins';
         font-style: normal;
         font-weight: 400;
         font-display: swap;
         src: url(https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJfecg.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-      }
-      @font-face {
-        font-family: 'Poppins';
-        font-style: normal;
-        font-weight: 500;
-        font-display: swap;
-        src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLGT9Z1xlFQ.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
       @font-face {
         font-family: 'Poppins';
@@ -75,7 +66,6 @@
         font-weight: 600;
         font-display: swap;
         src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFQ.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
       @font-face {
         font-family: 'Poppins';
@@ -83,40 +73,90 @@
         font-weight: 700;
         font-display: swap;
         src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-      }
-      @font-face {
-        font-family: 'Poppins';
-        font-style: normal;
-        font-weight: 800;
-        font-display: swap;
-        src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLDD4Z1xlFQ.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
       
-      /* Critical layout CSS - prevents layout shift */
-      *,*::before,*::after{box-sizing:border-box}
-      html{-webkit-text-size-adjust:100%;font-family:'Poppins',system-ui,-apple-system,sans-serif}
-      body{margin:0;background:#121212;color:#fff;min-height:100vh}
+      /* === CRITICAL RESET & LAYOUT === */
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html{-webkit-text-size-adjust:100%;font-family:'Poppins',system-ui,-apple-system,sans-serif;scroll-behavior:smooth}
+      body{background:#121212;color:#fff;min-height:100vh;line-height:1.5}
       #root{min-height:100vh;display:flex;flex-direction:column}
       
-      /* Critical hero styles for LCP - immediate render */
-      .hero-section{position:relative;min-height:200px;display:flex;align-items:center;overflow:hidden}
-      @media(min-width:640px){.hero-section{min-height:340px}}
-      @media(min-width:768px){.hero-section{min-height:420px}}
+      /* === CRITICAL NAVBAR (fixed, instant paint) === */
+      .navbar-critical{position:fixed;top:0;left:0;right:0;z-index:50;height:64px;background:rgba(18,18,18,0.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;padding:0 16px}
+      .navbar-critical .logo{height:32px;width:auto}
+      .navbar-critical .nav-skeleton{display:flex;gap:24px;margin-left:auto}
+      .navbar-critical .nav-item{width:60px;height:16px;background:rgba(255,255,255,0.1);border-radius:4px}
+      @media(max-width:768px){.navbar-critical .nav-skeleton{display:none}}
       
-      /* Force LCP image to paint immediately */
+      /* === CRITICAL HERO SKELETON (LCP placeholder) === */
+      .hero-skeleton{margin-top:80px;padding:0 16px}
+      .hero-skeleton .breadcrumb{height:20px;width:200px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:16px}
+      .hero-skeleton .image-container{position:relative;width:100%;height:200px;background:linear-gradient(135deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.02) 100%);border-radius:16px;overflow:hidden}
+      @media(min-width:640px){.hero-skeleton .image-container{height:340px}}
+      @media(min-width:768px){.hero-skeleton .image-container{height:420px}}
+      .hero-skeleton .image-container::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);animation:shimmer 1.5s infinite}
+      @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+      
+      /* === CRITICAL CONTENT SKELETON === */
+      .content-skeleton{padding:16px;display:flex;flex-direction:column;gap:12px}
+      .content-skeleton .title{height:28px;width:70%;background:rgba(255,255,255,0.08);border-radius:6px}
+      .content-skeleton .subtitle{height:18px;width:50%;background:rgba(255,255,255,0.05);border-radius:4px}
+      .content-skeleton .meta{height:14px;width:40%;background:rgba(255,255,255,0.03);border-radius:4px}
+      
+      /* === FORCE LCP IMAGE PRIORITY === */
       img[fetchpriority="high"]{content-visibility:visible!important}
       img:not([fetchpriority="high"]){content-visibility:auto}
       
-      /* Reduce unused CSS by inlining only critical skeleton */
-      .animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
-      @keyframes pulse{50%{opacity:.5}}
+      /* === PREVENT FOUC === */
+      .loading-screen{position:fixed;inset:0;background:#121212;z-index:9999;display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity 0.2s}
+      .loading-screen.hidden{opacity:0;pointer-events:none}
     </style>
+    
+    <!-- ASYNC CSS LOADING: Preload then swap to stylesheet -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
   </head>
 
   <body>
+    <!-- CRITICAL SKELETON: Paints instantly before React hydrates -->
+    <div id="critical-skeleton">
+      <!-- Navbar skeleton -->
+      <div class="navbar-critical">
+        <svg class="logo" viewBox="0 0 120 32" fill="none">
+          <text x="0" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="18">FEELOMOVE</text>
+          <text x="108" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="14">+</text>
+        </svg>
+        <div class="nav-skeleton">
+          <div class="nav-item"></div>
+          <div class="nav-item"></div>
+          <div class="nav-item"></div>
+        </div>
+      </div>
+      <!-- Hero skeleton -->
+      <div class="hero-skeleton">
+        <div class="breadcrumb"></div>
+        <div class="image-container"></div>
+        <div class="content-skeleton">
+          <div class="title"></div>
+          <div class="subtitle"></div>
+          <div class="meta"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- React root - skeleton hidden when React mounts -->
     <div id="root"></div>
+    
+    <!-- Hide skeleton once React renders -->
+    <script>
+      // Remove critical skeleton once React hydrates (non-blocking)
+      window.addEventListener('DOMContentLoaded', function() {
+        requestAnimationFrame(function() {
+          var skeleton = document.getElementById('critical-skeleton');
+          if (skeleton) skeleton.style.display = 'none';
+        });
+      });
+    </script>
     
     <!-- Main app script -->
     <script type="module" src="/src/main.tsx"></script>
