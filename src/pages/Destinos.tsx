@@ -346,7 +346,7 @@ const Destinos = () => {
             <div className="hidden md:grid grid-cols-3 gap-2">
               {displayedCities.map((city: any) => {
                 const citySlug = city.city_slug || encodeURIComponent(city.city_name);
-                const topArtists = city.top_artists?.slice(0, 2)?.join(', ') || '';
+                const topArtists = city.top_artists?.slice(0, 3)?.join(' · ') || '';
                 
                 return (
                   <Link 
@@ -356,27 +356,20 @@ const Destinos = () => {
                     title={`Descubrir eventos en ${city.city_name}`}
                     onMouseEnter={() => handleCardPrefetch(citySlug)}
                   >
-                    {/* Left: Icon + City Name + Artists */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-black/10 transition-colors">
-                        <svg className="w-5 h-5 text-accent group-hover:text-black transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                        </svg>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-foreground text-sm truncate group-hover:text-black transition-colors duration-200">
-                          {city.city_name}
-                        </h3>
-                        {topArtists && (
-                          <p className="text-xs text-muted-foreground truncate group-hover:text-black/70 transition-colors duration-200">
-                            {topArtists}
-                          </p>
-                        )}
-                      </div>
+                    {/* Left: City Name + Artists */}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-foreground text-lg truncate group-hover:text-black transition-colors duration-200">
+                        {city.city_name}
+                      </h3>
+                      {topArtists && (
+                        <p className="text-sm text-accent font-medium truncate group-hover:text-black/80 transition-colors duration-200">
+                          {topArtists}
+                        </p>
+                      )}
                     </div>
                     
                     {/* Right: Event Count Badge */}
-                    <span className="flex-shrink-0 font-bold text-sm px-3 py-1 rounded-full bg-foreground text-background group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                    <span className="flex-shrink-0 font-bold text-sm px-3 py-1.5 rounded-full bg-foreground text-background group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
                       {city.event_count}
                     </span>
                   </Link>
