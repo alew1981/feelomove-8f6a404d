@@ -779,17 +779,14 @@ const Producto = () => {
   const eventImage = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(
-    eventDetails.event_slug || "",
+    rpcCanonicalSlug || eventDetails.event_slug || "",
     eventDetails.is_festival || false,
-    rpcCanonicalSlug || undefined,
   )}`;
 
   const eventStatus = getEventStatus(
     eventDetails.cancelled,
     eventDetails.rescheduled,
-    eventDetails.sold_out,
     eventDetails.event_date || "",
-    isEventAvailable,
   );
 
   const minPrice = ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees || 0;
@@ -912,7 +909,7 @@ const Producto = () => {
                 height={450}
                 loading="eager"
                 decoding="async"
-                fetchpriority="high"
+                fetchPriority="high"
               />
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
