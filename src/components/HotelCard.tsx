@@ -63,7 +63,7 @@ const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: str
   const srcSet = generateHotelSrcSet(src);
 
   return (
-    <div className="relative w-full h-full" style={{ aspectRatio: "16 / 9" }}>
+    <div className="relative w-full h-full aspect-video">
       <img
         src={hasError ? "/placeholder.svg" : optimizedSrc}
         srcSet={hasError ? undefined : srcSet}
@@ -112,8 +112,7 @@ const HotelCard = ({
       stars.push(
         <span
           key={i}
-          className={`text-base ${i < starCount ? "text-orange-400" : "text-muted/40"}`}
-          style={{ letterSpacing: "-2px" }}
+          className={`text-base tracking-tighter ${i < starCount ? "text-orange-400" : "text-muted/40"}`}
         >
           ★
         </span>,

@@ -218,7 +218,7 @@ const Destinos = () => {
             Ciudades destacadas con eventos musicales en España
           </h2>
           
-          <p className="text-muted-foreground leading-relaxed mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
+          <p className="text-muted-foreground leading-relaxed mb-8 content-auto">
             Explora eventos musicales en las mejores ciudades de España.
           </p>
         </div>
