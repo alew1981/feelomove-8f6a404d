@@ -160,7 +160,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
                   title={`${displayTitle} - Festival en ${festival.venue_city || 'España'}`}
                   loading={priority ? "eager" : "lazy"}
                   decoding={priority ? "sync" : "async"}
-                  {...(priority ? { fetchpriority: "high" } : {})}
+                  fetchPriority={priority ? "high" : "low"}
                   width={400}
                   height={224}
                   className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}

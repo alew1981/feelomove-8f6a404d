@@ -506,7 +506,7 @@ const Producto = () => {
       }
     }
 
-    // PASO 2: Generar URLs para diferentes tamaños (responsive)
+    // PASO 2: Generar URLs para diferentes tamaños (responsive) con maxage cache
     const createUrl = (width: number) => {
       const params = new URLSearchParams({
         url: normalizedUrl,
@@ -519,13 +519,14 @@ const Producto = () => {
       return `https://images.weserv.nl/?${params}`;
     };
 
-    // Tamaños optimizados:
-    // - 400px: mobile portrait (0-639px viewport)
+    // Tamaños optimizados con 240px añadido para móviles pequeños:
+    // - 240px: small mobile (0-374px viewport)
+    // - 400px: mobile portrait (375-639px viewport)
     // - 800px: tablet/mobile landscape (640-1023px)
     // - 1200px: desktop (1024px+)
     return {
       src: createUrl(800), // Fallback para navegadores sin srcset
-      srcSet: `${createUrl(400)} 400w, ${createUrl(800)} 800w, ${createUrl(1200)} 1200w`,
+      srcSet: `${createUrl(240)} 240w, ${createUrl(400)} 400w, ${createUrl(800)} 800w, ${createUrl(1200)} 1200w`,
     };
   }, [(eventDetails as any)?.image_large_url, eventDetails?.image_standard_url, eventDetails?.event_id]);
 
@@ -897,12 +898,12 @@ const Producto = () => {
           {/* ⚡ Hero Section OPTIMIZADO con todas las mejoras */}
           <div className="relative rounded-2xl overflow-hidden mb-6" style={{ willChange: "transform" }}>
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* ⚡ OPTIMIZACIÓN CRÍTICA LCP: URL determinista + prioridad alta */}
+              {/* ⚡ OPTIMIZACIÓN CRÍTICA LCP: URL determinista + prioridad alta + responsive sizes */}
               <img
                 key={`hero-${eventDetails.event_id}`}
                 src={heroImageUrls.src}
                 srcSet={heroImageUrls.srcSet}
-                sizes="(max-width: 639px) 400px, (max-width: 1023px) 800px, 1200px"
+                sizes="(max-width: 374px) 240px, (max-width: 639px) 400px, (max-width: 1023px) 800px, 1200px"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
                 width={800}
