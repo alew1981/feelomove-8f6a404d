@@ -839,7 +839,6 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        preloadImage={heroImageUrls.src}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           {
