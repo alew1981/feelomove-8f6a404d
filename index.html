@@ -121,29 +121,35 @@
     <!-- Main app script -->
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- EXTREME DEFERRAL: GTM loads 5s after page is fully interactive -->
+    <!-- INTERACTION-TRIGGERED: GTM only loads on first user interaction (scroll/mouse/touch) -->
     <script>
-      // Use requestIdleCallback for maximum TBT reduction
-      function loadGTM() {
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+      (function() {
+        var gtmLoaded = false;
         
-        var gtmScript = document.createElement('script');
-        gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-5VPZ5LH';
-        gtmScript.async = true;
-        document.head.appendChild(gtmScript);
-      }
-      
-      // Wait for load + 5s + idle time
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadGTM, { timeout: 3000 });
-          } else {
-            loadGTM();
-          }
-        }, 5000);
-      });
+        function loadGTM() {
+          if (gtmLoaded) return;
+          gtmLoaded = true;
+          
+          // Remove all listeners immediately
+          ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'].forEach(function(evt) {
+            window.removeEventListener(evt, loadGTM, { passive: true, capture: true });
+          });
+          
+          // Load GTM
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+          
+          var gtmScript = document.createElement('script');
+          gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-5VPZ5LH';
+          gtmScript.async = true;
+          document.head.appendChild(gtmScript);
+        }
+        
+        // Add passive listeners for user interaction
+        ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'].forEach(function(evt) {
+          window.addEventListener(evt, loadGTM, { passive: true, capture: true, once: true });
+        });
+      })();
     </script>
     
     <!-- GTM noscript fallback (hidden, non-blocking) -->
