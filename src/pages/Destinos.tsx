@@ -1,27 +1,37 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import Breadcrumbs from "@/components/Breadcrumbs";
-import PageHero from "@/components/PageHero";
 import { SEOHead } from "@/components/SEOHead";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DestinationCardSkeleton } from "@/components/ui/skeleton-loader";
-import { useInView } from "react-intersection-observer";
 import { matchesSearch } from "@/lib/searchUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import DestinationListCard, { DestinationListCardSkeleton } from "@/components/DestinationListCard";
-import MobileFilterPills from "@/components/MobileFilterPills";
-import VirtualizedDestinationList from "@/components/VirtualizedDestinationList";
+import { DestinationListCardSkeleton } from "@/components/DestinationListCard";
 import { CACHE_TTL } from "@/lib/cacheClient";
 import { usePrefetch } from "@/hooks/usePrefetch";
+
+// === INLINE SVG ICONS (replaces lucide-react for TBT optimization) ===
+const IconSearch = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+  </svg>
+);
+const IconX = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+  </svg>
+);
+
+// Lazy load non-critical components (desktop-only or below-fold)
+const Breadcrumbs = lazy(() => import("@/components/Breadcrumbs"));
+const PageHero = lazy(() => import("@/components/PageHero"));
+const MobileFilterPills = lazy(() => import("@/components/MobileFilterPills"));
+const VirtualizedDestinationList = lazy(() => import("@/components/VirtualizedDestinationList"));
+const Footer = lazy(() => import("@/components/Footer"));
+
+// Desktop filters - lazy loaded since hidden on mobile  
+const DesktopFiltersSection = lazy(() => import("@/components/DestinationDesktopFilters"));
 
 const months = [
   { value: "01", label: "Enero" },
@@ -45,7 +55,7 @@ const Destinos = () => {
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState<number>(30);
-  const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { prefetchDestination } = usePrefetch();
   const prefetchedCards = useRef<Set<string>>(new Set());
@@ -124,11 +134,23 @@ const Destinos = () => {
 
   const displayedCities = useMemo(() => filteredCities.slice(0, displayCount), [filteredCities, displayCount]);
 
+  // Native IntersectionObserver for load more (replaces react-intersection-observer)
   useEffect(() => {
-    if (inView && displayedCities.length < filteredCities.length) {
-      setDisplayCount(prev => Math.min(prev + 30, filteredCities.length));
-    }
-  }, [inView, displayedCities.length, filteredCities.length]);
+    const element = loadMoreRef.current;
+    if (!element) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && displayedCities.length < filteredCities.length) {
+          setDisplayCount(prev => Math.min(prev + 30, filteredCities.length));
+        }
+      },
+      { threshold: 0 }
+    );
+    
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [displayedCities.length, filteredCities.length]);
 
   // Filter config for mobile pills
   const mobileFilters = useMemo(() => [
@@ -200,19 +222,23 @@ const Destinos = () => {
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">
         
-        {/* Breadcrumbs - Hidden on mobile */}
+        {/* Breadcrumbs - Hidden on mobile, lazy loaded */}
         <div className="mb-4 hidden md:block">
-          <Breadcrumbs />
+          <Suspense fallback={<div className="h-5" />}>
+            <Breadcrumbs />
+          </Suspense>
         </div>
         
-        {/* Hero Image - Hidden on mobile for faster results */}
+        {/* Hero Image - Hidden on mobile for faster results, lazy loaded */}
         <div className="hidden md:block">
-          <PageHero 
-            title="Destinos Musicales en España" 
-            subtitle="Conciertos y festivales por ciudad"
-            imageUrl={heroImage} 
-            priority={true}
-          />
+          <Suspense fallback={<div className="h-[340px] bg-muted/20 rounded-2xl animate-pulse" />}>
+            <PageHero 
+              title="Destinos Musicales en España" 
+              subtitle="Conciertos y festivales por ciudad"
+              imageUrl={heroImage} 
+              priority={true}
+            />
+          </Suspense>
           
           <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
             Ciudades destacadas con eventos musicales en España
@@ -232,7 +258,7 @@ const Destinos = () => {
 
         {/* Search Bar */}
         <div className="relative mb-3">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Buscar destino..."
@@ -245,78 +271,37 @@ const Destinos = () => {
               onClick={() => setSearchQuery("")}
               className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors"
             >
-              <X className="h-3 w-3" />
+              <IconX className="h-3 w-3" />
             </button>
           )}
         </div>
 
-        {/* Mobile: Filter Pills */}
+        {/* Mobile: Filter Pills - Lazy loaded */}
         <div className="md:hidden mb-4">
-          <MobileFilterPills filters={mobileFilters} onClearAll={handleClearFilters} />
+          <Suspense fallback={<div className="h-10" />}>
+            <MobileFilterPills filters={mobileFilters} onClearAll={handleClearFilters} />
+          </Suspense>
         </div>
 
-        {/* Desktop: Filters Row */}
-        <div className="hidden md:block space-y-3 mb-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Select value={filterCity} onValueChange={setFilterCity}>
-              <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
-                {cityNames.map((city: string) => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterGenre} onValueChange={setFilterGenre}>
-              <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterGenre === "all" ? "Género" : filterGenre}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los géneros</SelectItem>
-                {genres.map((genre: string) => (
-                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterArtist} onValueChange={setFilterArtist}>
-              <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterArtist !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterArtist === "all" ? "Artista" : filterArtist}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los artistas</SelectItem>
-                {artists.map((artist: string) => (
-                  <SelectItem key={artist} value={artist}>{artist}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterMonth} onValueChange={setFilterMonth}>
-              <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los meses</SelectItem>
-                {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonth !== "all") && (
-            <div className="flex justify-end">
-              <button
-                onClick={handleClearFilters}
-                className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          )}
+        {/* Desktop: Filters Row - Lazy loaded */}
+        <div className="hidden md:block">
+          <Suspense fallback={<div className="h-14 bg-muted/20 rounded-lg animate-pulse mb-8" />}>
+            <DesktopFiltersSection
+              filterCity={filterCity}
+              setFilterCity={setFilterCity}
+              cityNames={cityNames}
+              filterGenre={filterGenre}
+              setFilterGenre={setFilterGenre}
+              genres={genres}
+              filterArtist={filterArtist}
+              setFilterArtist={setFilterArtist}
+              artists={artists}
+              filterMonth={filterMonth}
+              setFilterMonth={setFilterMonth}
+              months={months}
+              handleClearFilters={handleClearFilters}
+            />
+          </Suspense>
         </div>
 
         {isLoading ? (
@@ -327,7 +312,7 @@ const Destinos = () => {
             </div>
             {/* Desktop: Card Grid Skeletons */}
             <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => <DestinationCardSkeleton key={i} />)}
+              {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
             </div>
           </>
         ) : filteredCities.length === 0 ? (
@@ -336,10 +321,16 @@ const Destinos = () => {
           <>
             {/* Mobile: Virtualized List - Only renders visible items */}
             <div className="md:hidden">
-              <VirtualizedDestinationList 
-                cities={filteredCities} 
-                isLoading={isLoading} 
-              />
+              <Suspense fallback={
+                <div className="space-y-0">
+                  {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
+                </div>
+              }>
+                <VirtualizedDestinationList 
+                  cities={filteredCities} 
+                  isLoading={isLoading} 
+                />
+              </Suspense>
             </div>
 
             {/* Desktop: 3-Column List Layout - Spacious design */}
@@ -384,7 +375,9 @@ const Destinos = () => {
           </>
         )}
       </main>
-      <Footer />
+      <Suspense fallback={<div className="h-64 bg-muted/10" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 256px' }} />}>
+        <Footer />
+      </Suspense>
     </div>
     </>
   );
