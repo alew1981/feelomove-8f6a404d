@@ -422,9 +422,10 @@ const Index = () => {
                       <img
                         src={artist.sample_image_url || "/placeholder.svg"}
                         alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
+                        width={450}
+                        height={281}
                         loading="lazy"
-                        width={400}
-                        height={256}
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

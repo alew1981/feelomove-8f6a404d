@@ -135,6 +135,8 @@ const EventCardCompact = memo(({ event, priority = false, forceConcierto = false
               <img
                 src={imageUrl}
                 alt={eventName}
+                width={300}
+                height={400}
                 loading={priority ? "eager" : "lazy"}
                 decoding={priority ? "sync" : "async"}
                 className={cn(

@@ -72,9 +72,11 @@ const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }
               <img
                 src={city.image}
                 alt={`${artistName} en ${city.name}`}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                width={300}
+                height={225}
                 loading="lazy"
                 decoding="async"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
@@ -102,7 +104,7 @@ const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-transparent group-hover:ring-accent transition-all">
                   {city.image ? (
-                    <img src={city.image} alt={city.name} className="w-full h-full object-cover" loading="lazy" />
+                    <img src={city.image} alt={city.name} width={40} height={40} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
                       <IconMapPin className="w-4 h-4 text-accent/50" />
