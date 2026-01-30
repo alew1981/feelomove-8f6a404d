@@ -126,17 +126,16 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-    font-display: swap;
-  }
-
-  /* Font display optimization for web fonts */
-  @font-face {
-    font-family: 'Poppins';
-    font-display: swap;
   }
 }
 
 @layer utilities {
+  /* Performance: content-visibility optimization */
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 40px;
+  }
+
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-xl;
   }
