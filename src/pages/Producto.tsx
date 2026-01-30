@@ -14,6 +14,7 @@ import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanne
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 import ArtistDestinationsList from "@/components/ArtistDestinationsList";
 import { FestivalServiceAddons } from "@/components/FestivalServiceAddons";
+import RelatedEventsSection from "@/components/RelatedEventsSection";
 
 // LAZY: Below-the-fold components with fixed-height Suspense fallbacks
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
@@ -1434,9 +1435,13 @@ const Producto = () => {
 
         {isInteractive && (
           <div className="container mx-auto px-4 pb-8">
-            <Suspense fallback={<RelatedLinksSkeleton />}>
-              <RelatedLinks slug={slug || ""} type="event" />
-            </Suspense>
+            <RelatedEventsSection 
+              currentEventId={eventDetails.event_id || undefined}
+              currentArtist={artistForSearch}
+              currentCity={currentCity}
+              currentGenre={(eventDetails as any)?.primary_category_name}
+              maxItems={4}
+            />
           </div>
         )}
 
