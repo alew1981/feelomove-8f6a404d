@@ -136,6 +136,10 @@ All colors MUST be HSL.
     contain-intrinsic-size: 0 40px;
   }
   
+  .content-visibility-auto {
+    content-visibility: auto;
+  }
+  
   /* Animation delays for staggered entrance */
   .animation-delay-150 {
     animation-delay: 150ms;
