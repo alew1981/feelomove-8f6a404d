@@ -342,44 +342,64 @@ const Destinos = () => {
               />
             </div>
 
-            {/* Desktop: Master Card Grid - Feelomove+ Design */}
-            <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {/* Desktop: Destination Cards - Feelomove+ Design */}
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {displayedCities.map((city: any) => {
                 const citySlug = city.city_slug || encodeURIComponent(city.city_name);
-                const topArtists = city.top_artists?.slice(0, 3)?.join(', ') || '';
+                const topArtists = city.top_artists?.slice(0, 2)?.join(', ') || '';
+                const genres = city.genres?.slice(0, 2)?.join(' · ') || '';
                 
                 return (
                   <Link 
                     key={city.city_name} 
                     to={`/destinos/${citySlug}`} 
-                    className="group block bg-card border-2 border-foreground rounded-xl p-4 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
+                    className="group block rounded-2xl overflow-hidden bg-card border border-border transition-all duration-300 hover:-translate-y-1 hover:border-accent"
                     title={`Descubrir eventos en ${city.city_name}`}
                     onMouseEnter={() => handleCardPrefetch(citySlug)}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        {/* Icon + Title */}
-                        <div className="flex items-center gap-2 mb-1">
-                          <svg className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                          </svg>
-                          <h3 className="font-bold text-foreground text-base truncate group-hover:text-black transition-colors duration-200">
-                            {city.city_name}
-                          </h3>
+                    {/* Content Area (no image) */}
+                    <div className="relative aspect-[4/3] bg-gradient-to-br from-muted via-card to-muted/50 p-4 flex flex-col justify-between">
+                      {/* Top: Event Count Badge */}
+                      <div className="flex justify-between items-start">
+                        <div className="bg-foreground text-background rounded-lg px-3 py-2 text-center">
+                          <div className="text-2xl font-black leading-none">{city.event_count}</div>
+                          <div className="text-[10px] font-semibold uppercase tracking-wide">eventos</div>
                         </div>
-                        
-                        {/* Subtitle: Top Artists */}
-                        {topArtists && (
-                          <p className="text-muted-foreground text-sm truncate ml-6 group-hover:text-black/70 transition-colors duration-200">
-                            {topArtists}
-                          </p>
+                        {city.price_from && city.price_from > 0 && (
+                          <div className="bg-accent/10 text-accent rounded-lg px-2 py-1 text-xs font-semibold">
+                            desde {city.price_from}€
+                          </div>
                         )}
                       </div>
-                      
-                      {/* Badge: Event Count */}
-                      <span className="flex-shrink-0 font-bold text-sm px-2.5 py-1 rounded-full bg-foreground text-background group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
-                        {city.event_count}
-                      </span>
+
+                      {/* Middle: Location Icon */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                          <svg className="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Bottom: Genres/Artists */}
+                      <div className="space-y-1">
+                        {genres && (
+                          <p className="text-xs text-muted-foreground truncate">{genres}</p>
+                        )}
+                        {topArtists && (
+                          <p className="text-sm font-medium text-foreground truncate">{topArtists}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CTA Button with City Name */}
+                    <div className="p-3">
+                      <div className="w-full bg-accent text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 group-hover:bg-accent/90 transition-colors">
+                        {city.city_name.toUpperCase()}
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+                        </svg>
+                      </div>
                     </div>
                   </Link>
                 );
