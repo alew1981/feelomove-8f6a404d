@@ -115,8 +115,8 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
       <div 
         ref={cardRef}
         className={cn(
-          "flex items-center gap-3 px-3",
-          "h-[100px] min-h-[100px] max-h-[100px]",
+          "flex items-center gap-3 px-4",
+          "h-[80px] min-h-[80px] max-h-[80px]",
           "border-b border-border/50",
           "bg-card hover:bg-accent/5",
           "transition-colors duration-200",
@@ -124,85 +124,42 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
         )}
         style={{
           contentVisibility: priority ? 'visible' : 'auto',
-          containIntrinsicSize: '0 100px',
+          containIntrinsicSize: '0 80px',
         }}
       >
-        {/* City Image - Rounded Square */}
+        {/* Icon - Simple location marker */}
         <div className={cn(
-          "flex-shrink-0 w-[60px] h-[60px] overflow-hidden relative",
-          "rounded-xl",
-          "bg-foreground/10 dark:bg-zinc-800"
+          "flex-shrink-0 w-10 h-10",
+          "flex items-center justify-center",
+          "rounded-full bg-accent/10"
         )}>
-          {/* Shimmer placeholder */}
-          {!imageLoaded && (
-            <div className={cn(
-              "absolute inset-0 rounded-xl",
-              "bg-gradient-to-r from-foreground/5 via-foreground/10 to-foreground/5",
-              "dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-900",
-              "animate-shimmer bg-[length:200%_100%]"
-            )} />
-          )}
-          {isInView && (
-            <img
-              src={imageUrl}
-              alt={city.city_name}
-              width={60}
-              height={60}
-              loading={priority ? "eager" : "lazy"}
-              decoding={priority ? "sync" : "async"}
-              {...(priority ? { fetchpriority: "high" } : {})}
-              className={cn(
-                "w-full h-full object-cover",
-                "transition-opacity duration-300 ease-out",
-                imageLoaded ? "opacity-100" : "opacity-0"
-              )}
-              onLoad={() => setImageLoaded(true)}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                setImageLoaded(true);
-              }}
-            />
-          )}
+          <MapPin className="h-5 w-5 text-accent" />
         </div>
 
         {/* Info - Center */}
         <div className="flex-grow min-w-0 flex flex-col justify-center gap-0.5">
           {/* City Name */}
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-            <h3 className={cn(
-              "text-sm font-bold text-foreground",
-              "truncate leading-tight"
-            )}>
-              {city.city_name}
-            </h3>
-          </div>
+          <h3 className={cn(
+            "text-base font-bold text-foreground",
+            "truncate leading-tight"
+          )}>
+            {city.city_name}
+          </h3>
           
           {/* Event Count */}
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-sm text-muted-foreground truncate">
             {eventText}
           </p>
-
-          {/* Price Info */}
-          {city.price_from && (
-            <span className="text-[10px] text-accent font-semibold mt-0.5">
-              Desde {Number(city.price_from).toFixed(0)}€
-            </span>
-          )}
         </div>
 
-        {/* Action Button - Right */}
-        <div className={cn(
-          "flex-shrink-0 w-10 h-10",
-          "flex items-center justify-center",
-          "rounded-full",
-          "bg-accent text-accent-foreground",
-          "transition-transform duration-200",
-          "group-hover:scale-110 group-active:scale-95"
+        {/* Event Count Badge - Right */}
+        <span className={cn(
+          "flex-shrink-0 font-bold text-sm",
+          "px-3 py-1.5 rounded-full",
+          "bg-foreground text-background"
         )}>
-          <ChevronRight className="h-5 w-5" />
-        </div>
+          {eventCount}
+        </span>
       </div>
     </Link>
   );
@@ -216,19 +173,18 @@ export default DestinationListCard;
  * Skeleton for DestinationListCard - shimmer effect
  */
 export const DestinationListCardSkeleton = memo(() => (
-  <div className="flex items-center gap-3 px-3 py-2.5 h-[100px] min-h-[100px] border-b border-border/50">
-    {/* Image */}
-    <div className="w-[60px] h-[60px] rounded-xl flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+  <div className="flex items-center gap-3 px-4 h-[80px] min-h-[80px] border-b border-border/50">
+    {/* Icon */}
+    <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     
     {/* Info */}
     <div className="flex-grow flex flex-col gap-1.5">
-      <div className="h-4 w-3/4 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
-      <div className="h-3 w-1/2 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
-      <div className="h-2.5 w-1/4 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+      <div className="h-5 w-2/3 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+      <div className="h-4 w-1/2 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     </div>
     
-    {/* Button */}
-    <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+    {/* Badge */}
+    <div className="w-12 h-8 rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
   </div>
 ));
 
