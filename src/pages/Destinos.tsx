@@ -342,57 +342,44 @@ const Destinos = () => {
               />
             </div>
 
-            {/* Desktop: Clean Grid View - No Images for Performance */}
+            {/* Desktop: Master Card Grid - Feelomove+ Design */}
             <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {displayedCities.map((city: any, index: number) => {
+              {displayedCities.map((city: any) => {
                 const citySlug = city.city_slug || encodeURIComponent(city.city_name);
-                const concertsCount = city.concerts_count || 0;
-                const festivalsCount = city.festivals_count || 0;
+                const topArtists = city.top_artists?.slice(0, 3)?.join(', ') || '';
                 
                 return (
                   <Link 
                     key={city.city_name} 
                     to={`/destinos/${citySlug}`} 
-                    className="group block" 
+                    className="group block bg-card border-2 border-foreground rounded-xl p-4 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
                     title={`Descubrir eventos en ${city.city_name}`}
                     onMouseEnter={() => handleCardPrefetch(citySlug)}
                   >
-                    <div className="flex items-center justify-between gap-3 p-4 bg-card border-2 border-border rounded-xl hover:border-accent hover:bg-accent/5 transition-all duration-200">
-                      {/* Left: City Info */}
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
+                        {/* Icon + Title */}
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                            <svg className="h-4 w-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                            </svg>
-                          </div>
-                          <h3 className="font-bold text-foreground text-sm truncate group-hover:text-accent transition-colors">
+                          <svg className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                          </svg>
+                          <h3 className="font-bold text-foreground text-base truncate group-hover:text-black transition-colors duration-200">
                             {city.city_name}
                           </h3>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-10">
-                          {concertsCount > 0 && <span>{concertsCount} conciertos</span>}
-                          {concertsCount > 0 && festivalsCount > 0 && <span>·</span>}
-                          {festivalsCount > 0 && <span>{festivalsCount} festivales</span>}
-                        </div>
-                        {city.price_from && (
-                          <span className="text-xs font-semibold text-accent ml-10">
-                            Desde {Number(city.price_from).toFixed(0)}€
-                          </span>
+                        
+                        {/* Subtitle: Top Artists */}
+                        {topArtists && (
+                          <p className="text-muted-foreground text-sm truncate ml-6 group-hover:text-black/70 transition-colors duration-200">
+                            {topArtists}
+                          </p>
                         )}
                       </div>
                       
-                      {/* Right: Event Count Badge + Arrow */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge className="bg-foreground text-background font-bold px-2.5 py-1 text-xs rounded-full">
-                          {city.event_count}
-                        </Badge>
-                        <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m9 18 6-6-6-6"/>
-                          </svg>
-                        </div>
-                      </div>
+                      {/* Badge: Event Count */}
+                      <span className="flex-shrink-0 font-bold text-sm px-2.5 py-1 rounded-full bg-foreground text-background group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                        {city.event_count}
+                      </span>
                     </div>
                   </Link>
                 );
