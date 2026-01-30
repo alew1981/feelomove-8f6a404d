@@ -1,11 +1,32 @@
 import { NavLink } from "./NavLink";
 import { Button } from "./ui/button";
-import { Menu, X, Search, Heart } from "lucide-react";
 import { useState, useCallback } from "react";
 import SearchBar from "./SearchBar";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Badge } from "./ui/badge";
 import { usePrefetch } from "@/hooks/usePrefetch";
+
+// === INLINE SVG ICONS (replaces lucide-react for TBT optimization) ===
+const IconMenu = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
+  </svg>
+);
+const IconX = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+  </svg>
+);
+const IconSearch = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+  </svg>
+);
+const IconHeart = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -95,7 +116,7 @@ const Navbar = () => {
                 className="relative ripple-effect"
                 title="Buscar eventos"
               >
-                <Search className="h-5 w-5" />
+                <IconSearch className="h-5 w-5" />
               </Button>
               <NavLink
                 to="/favoritos"
@@ -103,7 +124,7 @@ const Navbar = () => {
                 aria-label="Ver favoritos"
                 title="Ver mis eventos favoritos guardados"
               >
-                <Heart className="h-5 w-5" />
+                <IconHeart className="h-5 w-5" />
                 {favorites.length > 0 && (
                   <Badge 
                     variant="destructive" 
@@ -122,7 +143,7 @@ const Navbar = () => {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isMenuOpen ? <IconX className="h-6 w-6" /> : <IconMenu className="h-6 w-6" />}
           </button>
         </div>
 
@@ -198,7 +219,7 @@ const Navbar = () => {
                 className="flex-1 ripple-effect"
                 title="Buscar eventos"
               >
-                <Search className="h-4 w-4 mr-2" />
+                <IconSearch className="h-4 w-4 mr-2" />
                 Buscar
               </Button>
               <NavLink
@@ -207,7 +228,7 @@ const Navbar = () => {
                 className="flex-1 relative ripple-effect inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
                 title="Ver mis eventos favoritos guardados"
               >
-                <Heart className="h-4 w-4" />
+                <IconHeart className="h-4 w-4" />
                 Favoritos
                 {favorites.length > 0 && (
                   <Badge 
