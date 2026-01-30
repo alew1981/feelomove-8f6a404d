@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 30;
 
 interface PriceData {
   price_min_incl_fees?: number;

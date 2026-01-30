@@ -639,75 +639,80 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </div>
       )}
 
-      {/* Context-aware links for artists - Genres with visual cards */}
+      {/* Context-aware links for artists - Clean grid without images */}
       {type === 'artist' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-bold text-foreground">Géneros musicales</h4>
+            <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Music className="h-5 w-5 text-accent" />
+              Géneros musicales
+            </h4>
             <Link 
               to="/musica" 
-              className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+              className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
             >
-              Ver todos
+              Ver todos <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {contextLinks.genres.slice(0, 4).map((genre) => (
               <Link
                 key={genre.slug}
                 to={genre.url}
-                className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                className="group flex items-center justify-between gap-2 px-4 py-3 bg-card border border-border rounded-xl hover:border-accent hover:bg-accent/5 transition-all duration-200"
               >
-                {genre.image ? (
-                  <img 
-                    src={genre.image} 
-                    alt={genre.label.replace('Explorar música ', '')}
-                    width={300}
-                    height={225}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
-                    <Music className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <h5 className="font-semibold text-white text-sm line-clamp-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Music className="h-4 w-4 text-accent flex-shrink-0" />
+                  <span className="font-medium text-foreground text-sm truncate group-hover:text-accent transition-colors">
                     {genre.label.replace('Explorar música ', '')}
-                  </h5>
-                  {genre.event_count && genre.event_count > 0 && (
-                    <span className="text-xs text-white/70">{genre.event_count} eventos</span>
-                  )}
+                  </span>
                 </div>
+                <span className="flex-shrink-0 text-xs font-semibold bg-foreground text-background px-2 py-0.5 rounded-full">
+                  {genre.event_count || 0}
+                </span>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* Hotels by destination section for artists - External Nuitee deeplinks */}
+      {/* Hotels by destination section for artists - Clean grid without images */}
       {type === 'artist' && artistDestinationsWithHotels.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-bold text-foreground">Hoteles en destinos con eventos</h4>
+            <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-accent" />
+              Hoteles en destinos con eventos
+            </h4>
             <a 
               href="https://feelomove.nuitee.link/?language=es&currency=EUR" 
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+              className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
             >
-              Ver todos
+              Ver todos <ChevronRight className="h-4 w-4" />
             </a>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {artistDestinationsWithHotels.slice(0, 4).map((destination) => {
               const linkUrl = destination.place_id 
                 ? generateNuiteeDeeplink(destination.place_id)
                 : `/destinos/${destination.city_slug}`;
               const isExternal = !!destination.place_id;
+              
+              const content = (
+                <div className="group flex items-center justify-between gap-2 px-4 py-3 bg-card border border-border rounded-xl hover:border-accent hover:bg-accent/5 transition-all duration-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+                    <span className="font-medium text-foreground text-sm truncate group-hover:text-accent transition-colors">
+                      {destination.city_name}
+                    </span>
+                  </div>
+                  <span className="flex-shrink-0 text-xs font-semibold bg-foreground text-background px-2 py-0.5 rounded-full">
+                    {destination.hotels_count}
+                  </span>
+                </div>
+              );
               
               return isExternal ? (
                 <a
@@ -715,59 +720,12 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   href={linkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative aspect-[4/3] rounded-xl overflow-hidden"
                 >
-                  {destination.imagen_ciudad || destination.sample_image_url ? (
-                    <img 
-                      src={(destination.imagen_ciudad || destination.sample_image_url) as string} 
-                      alt={`Hoteles en ${destination.city_name}`}
-                      width={300}
-                      height={225}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <MapPin className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h5 className="font-semibold text-white text-sm line-clamp-1">
-                      {destination.city_name}
-                    </h5>
-                    <span className="text-xs text-white/70">{destination.hotels_count} hoteles</span>
-                  </div>
+                  {content}
                 </a>
               ) : (
-                <Link
-                  key={destination.city_slug}
-                  to={linkUrl}
-                  className="group relative aspect-[4/3] rounded-xl overflow-hidden"
-                >
-                  {destination.imagen_ciudad || destination.sample_image_url ? (
-                    <img 
-                      src={(destination.imagen_ciudad || destination.sample_image_url) as string} 
-                      alt={`Hoteles en ${destination.city_name}`}
-                      width={300}
-                      height={225}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <MapPin className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h5 className="font-semibold text-white text-sm line-clamp-1">
-                      {destination.city_name}
-                    </h5>
-                    <span className="text-xs text-white/70">{destination.hotels_count} hoteles</span>
-                  </div>
+                <Link key={destination.city_slug} to={linkUrl}>
+                  {content}
                 </Link>
               );
             })}
