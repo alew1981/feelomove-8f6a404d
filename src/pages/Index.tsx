@@ -146,45 +146,19 @@ const Index = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch genres
+  // Fetch genres - OPTIMIZED: Uses RPC function (1 query instead of 9)
   const { data: genres = [], isLoading: loadingGenres } = useQuery({
     queryKey: ["home-genres"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('mv_genres_cards')
-        .select('*')
-        .order('event_count', { ascending: false })
-        .limit(4);
+      // Call optimized RPC function that eliminates N+1 query problem
+      const { data, error } = await supabase
+        .rpc('get_genres_with_sample_images', { p_limit: 4 });
       
-      // Fetch sample images for each genre from concerts OR festivals
-      if (data && data.length > 0) {
-        const genresWithImages = await Promise.all(
-          data.map(async (genre: any) => {
-            // Try concerts first
-            let { data: eventData } = await supabase
-              .from('mv_concerts_cards')
-              .select('image_standard_url')
-              .eq('genre', genre.genre_name)
-              .limit(1);
-            
-            // If no concert found, try festivals
-            if (!eventData || eventData.length === 0) {
-              const { data: festivalData } = await supabase
-                .from('mv_festivals_cards')
-                .select('image_standard_url')
-                .eq('genre', genre.genre_name)
-                .limit(1);
-              eventData = festivalData;
-            }
-            
-            return {
-              ...genre,
-              sample_image_url: eventData?.[0]?.image_standard_url || null
-            };
-          })
-        );
-        return genresWithImages;
+      if (error) {
+        console.error('Error fetching genres:', error);
+        return [];
       }
+      
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
