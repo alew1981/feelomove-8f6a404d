@@ -20,7 +20,7 @@ interface VirtualizedDestinationListProps {
   isLoading?: boolean;
 }
 
-const ITEM_HEIGHT = 100; // Fixed row height for destinations
+const ITEM_HEIGHT = 80; // Fixed row height for destinations (no images)
 const OVERSCAN = 5; // Render 5 extra items above/below viewport
 
 /**

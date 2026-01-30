@@ -342,8 +342,8 @@ const Destinos = () => {
               />
             </div>
 
-            {/* Desktop: 3-Column List Layout - No images for performance */}
-            <div className="hidden md:grid grid-cols-3 gap-2">
+            {/* Desktop: 3-Column List Layout - Spacious design */}
+            <div className="hidden md:grid grid-cols-3 gap-4">
               {displayedCities.map((city: any) => {
                 const citySlug = city.city_slug || encodeURIComponent(city.city_name);
                 const topArtists = city.top_artists?.slice(0, 3)?.join(' · ') || '';
@@ -352,24 +352,24 @@ const Destinos = () => {
                   <Link 
                     key={city.city_name} 
                     to={`/destinos/${citySlug}`} 
-                    className="group flex items-center justify-between gap-3 px-4 py-3 bg-card border-2 border-foreground rounded-xl transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-0.5"
+                    className="group flex items-center justify-between gap-4 px-5 py-5 bg-card border-2 border-foreground rounded-2xl transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1 hover:shadow-lg"
                     title={`Descubrir eventos en ${city.city_name}`}
                     onMouseEnter={() => handleCardPrefetch(citySlug)}
                   >
                     {/* Left: City Name + Artists */}
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-foreground text-lg truncate group-hover:text-black transition-colors duration-200">
+                      <h3 className="font-bold text-foreground text-xl truncate group-hover:text-black transition-colors duration-200">
                         {city.city_name}
                       </h3>
                       {topArtists && (
-                        <p className="text-sm text-accent font-medium truncate group-hover:text-black/80 transition-colors duration-200">
+                        <p className="text-sm text-accent font-medium truncate mt-1 group-hover:text-black/70 transition-colors duration-200">
                           {topArtists}
                         </p>
                       )}
                     </div>
                     
                     {/* Right: Event Count Badge */}
-                    <span className="flex-shrink-0 font-bold text-sm px-3 py-1.5 rounded-full bg-foreground text-background group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                    <span className="flex-shrink-0 font-bold text-base px-4 py-2 rounded-full bg-foreground text-background group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
                       {city.event_count}
                     </span>
                   </Link>
