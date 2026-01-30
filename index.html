@@ -44,6 +44,13 @@
           type="font/woff2" 
           crossorigin>
     
+    <!-- Preload LCP hero image for homepage (critical for First Paint) -->
+    <link rel="preload" 
+          as="image" 
+          href="/src/assets/hero-concert.webp" 
+          type="image/webp"
+          fetchpriority="high">
+    
     
     <!-- CRITICAL: Inline critical font-face declarations with font-display: swap -->
     <style>
