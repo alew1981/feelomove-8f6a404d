@@ -1728,6 +1728,14 @@ export type Database = {
         Args: { facility_id_array: number[] }
         Returns: string[]
       }
+      get_genres_with_sample_images: {
+        Args: { p_limit?: number }
+        Returns: {
+          event_count: number
+          genre_name: string
+          sample_image_url: string
+        }[]
+      }
       get_homepage_data: {
         Args: { p_cities?: string[]; p_featured_ids?: string[] }
         Returns: Json
