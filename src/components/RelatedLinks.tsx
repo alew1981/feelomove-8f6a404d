@@ -520,7 +520,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
   if (!hasContextLinks && !hasOriginalLinks) return null;
 
   return (
-    <div className="mt-10 pt-8 border-t border-border" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>
+    <div className="mt-10 pt-8 border-t border-border min-h-[500px]" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>
       <h3 className="text-xl font-bold text-foreground mb-6">
         También te puede interesar
       </h3>

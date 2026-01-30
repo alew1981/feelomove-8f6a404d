@@ -7,6 +7,7 @@
     
     <!-- Security Headers (enforced at server level via vercel.json) -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="x-dns-prefetch-control" content="on">
     
     <!-- Meta tags por defecto -->
     <meta name="description" content="Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento. Gestión de movilidad y alojamiento para eventos musicales." />
@@ -44,12 +45,9 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- Preload LCP hero image for homepage (critical for First Paint) -->
-    <link rel="preload" 
-          as="image" 
-          href="/src/assets/hero-concert.webp" 
-          type="image/webp"
-          fetchpriority="high">
+    <!-- NOTE: Hero image preload removed - Vite bundles the image with hashed URL,
+         so static preload causes duplicate download. The image uses fetchPriority="high"
+         and loading="eager" in the component for optimal LCP. -->
     
     
     <!-- CRITICAL: Inline critical font-face declarations with font-display: swap -->
