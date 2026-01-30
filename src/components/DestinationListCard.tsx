@@ -1,31 +1,14 @@
 import { Link } from "react-router-dom";
-import { memo, useRef, useState, useEffect, useCallback } from "react";
+import { memo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronRight, MapPin } from "lucide-react";
 import { usePrefetch } from "@/hooks/usePrefetch";
 
-// Thumbnail optimization for smallest possible image
-const getOptimizedThumbnail = (url: string): string => {
-  if (!url || url === "/placeholder.svg") return url;
-  
-  if (url.includes("ticketm.net") || url.includes("tmimg.net")) {
-    return url
-      .replace(/_CUSTOM\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
-      .replace(/_EVENT_DETAIL_PAGE_16_9\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
-      .replace(/_RETINA_PORTRAIT_16_9\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
-      .replace(/_ARTIST_PAGE_3_2\.jpg/i, '_TABLET_LANDSCAPE_3_2.jpg')
-      .replace(/RATIO\/\d+_\d+/g, "RATIO/3_2")
-      .replace(/\/\d+x\d+\//g, "/100x100/");
-  }
-
-  if (url.includes("unsplash.com")) {
-    const baseUrl = url.split("?")[0];
-    return `${baseUrl}?w=150&h=150&fit=crop&q=75&fm=webp`;
-  }
-  
-  // For Supabase storage URLs, they're already optimized
-  return url;
-};
+// === INLINE SVG ICON (replaces lucide-react for TBT optimization) ===
+const IconMapPin = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+);
 
 interface DestinationListCardProps {
   city: {
@@ -34,9 +17,6 @@ interface DestinationListCardProps {
     event_count?: number;
     concerts_count?: number;
     festivals_count?: number;
-    ciudad_imagen?: string;
-    sample_image_url?: string;
-    sample_image_standard_url?: string;
     price_from?: number;
     genres?: string[];
   };
@@ -45,45 +25,13 @@ interface DestinationListCardProps {
 
 /**
  * Compact list-style destination card for mobile
- * - Fixed height 100px for maximum density (5-6 visible per screen)
- * - Rounded square image on left
- * - City name + event count in center
- * - Arrow CTA on right
+ * - Fixed height 80px for maximum density
+ * - Icon on left, city name + event count in center
+ * - No images for optimal performance
  */
 const DestinationListCard = memo(({ city, priority = false }: DestinationListCardProps) => {
-  const [isInView, setIsInView] = useState(priority);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const { prefetchDestination } = usePrefetch();
   const hasPrefetched = useRef(false);
-
-  useEffect(() => {
-    if (priority) {
-      setIsInView(true);
-      return;
-    }
-
-    const element = cardRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.unobserve(element);
-          }
-        });
-      },
-      { rootMargin: '200px', threshold: 0 }
-    );
-
-    observer.observe(element);
-    return () => observer.unobserve(element);
-  }, [priority]);
-
-  const rawImageUrl = city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg";
-  const imageUrl = getOptimizedThumbnail(rawImageUrl);
   const eventCount = city.event_count || 0;
   const concertsCount = city.concerts_count || 0;
   const festivalsCount = city.festivals_count || 0;
@@ -113,7 +61,6 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
       onTouchStart={handlePrefetch}
     >
       <div 
-        ref={cardRef}
         className={cn(
           "flex items-center gap-3 px-4",
           "h-[80px] min-h-[80px] max-h-[80px]",
@@ -133,7 +80,7 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
           "flex items-center justify-center",
           "rounded-full bg-accent/10"
         )}>
-          <MapPin className="h-5 w-5 text-accent" />
+          <IconMapPin className="h-5 w-5 text-accent" />
         </div>
 
         {/* Info - Center */}
