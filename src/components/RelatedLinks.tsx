@@ -525,7 +525,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         También te puede interesar
       </h3>
 
-      {/* Context-aware links for destinations - Visual cards like artist page */}
+      {/* Context-aware links for destinations - Master Card Compact Style */}
       {type === 'city' && contextLinks.showDestinations && contextLinks.destinations && contextLinks.destinations.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -537,52 +537,28 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
               Ver todos <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          {/* Desktop: Visual Cards Grid */}
-          <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Master Card Grid - Compact variant */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {contextLinks.destinations.slice(0, 4).map((dest) => (
               <Link
                 key={dest.slug}
                 to={dest.url}
-                className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                className="group block bg-card border-2 border-foreground rounded-xl p-3 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
               >
-                <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
-                  <MapPin className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <h5 className="font-semibold text-white text-sm line-clamp-1">
-                    {dest.label.replace('Conciertos en ', '')}
-                  </h5>
-                  {dest.event_count && dest.event_count > 0 && (
-                    <span className="text-xs text-white/70">{dest.event_count} eventos</span>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-          {/* Mobile: Compact List View */}
-          <div className="md:hidden bg-card border border-border rounded-xl divide-y divide-border">
-            {contextLinks.destinations.slice(0, 6).map((dest) => (
-              <Link
-                key={dest.slug}
-                to={dest.url}
-                className="flex items-center justify-between p-4 hover:bg-accent/5 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-transparent group-hover:ring-accent transition-all">
-                    <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-accent/50" />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <MapPin className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" />
+                      <h5 className="font-bold text-foreground text-sm truncate group-hover:text-black transition-colors duration-200">
+                        {dest.label.replace('Conciertos en ', '')}
+                      </h5>
                     </div>
+                    {dest.event_count && dest.event_count > 0 && (
+                      <p className="text-xs text-muted-foreground ml-6 group-hover:text-black/70 transition-colors duration-200">
+                        {dest.event_count} eventos
+                      </p>
+                    )}
                   </div>
-                  <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
-                    {dest.label.replace('Conciertos en ', '')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
-                    {dest.event_count || 0} evento{(dest.event_count || 0) === 1 ? '' : 's'}
-                  </span>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
                 </div>
               </Link>
             ))}
@@ -639,7 +615,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
         </div>
       )}
 
-      {/* Context-aware links for artists - Clean grid without images */}
+      {/* Context-aware links for artists - Master Card Compact Style */}
       {type === 'artist' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -654,29 +630,33 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
               Ver todos <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {contextLinks.genres.slice(0, 4).map((genre) => (
               <Link
                 key={genre.slug}
                 to={genre.url}
-                className="group flex items-center justify-between gap-2 px-4 py-3 bg-card border border-border rounded-xl hover:border-accent hover:bg-accent/5 transition-all duration-200"
+                className="group block bg-card border-2 border-foreground rounded-xl p-3 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Music className="h-4 w-4 text-accent flex-shrink-0" />
-                  <span className="font-medium text-foreground text-sm truncate group-hover:text-accent transition-colors">
-                    {genre.label.replace('Explorar música ', '')}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Music className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" />
+                      <span className="font-bold text-foreground text-sm truncate group-hover:text-black transition-colors duration-200">
+                        {genre.label.replace('Explorar música ', '')}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="flex-shrink-0 text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                    {genre.event_count || 0}
                   </span>
                 </div>
-                <span className="flex-shrink-0 text-xs font-semibold bg-foreground text-background px-2 py-0.5 rounded-full">
-                  {genre.event_count || 0}
-                </span>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* Hotels by destination section for artists - Clean grid without images */}
+      {/* Hotels by destination section for artists - Master Card Compact Style */}
       {type === 'artist' && artistDestinationsWithHotels.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -693,24 +673,28 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
               Ver todos <ChevronRight className="h-4 w-4" />
             </a>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {artistDestinationsWithHotels.slice(0, 4).map((destination) => {
               const linkUrl = destination.place_id 
                 ? generateNuiteeDeeplink(destination.place_id)
                 : `/destinos/${destination.city_slug}`;
               const isExternal = !!destination.place_id;
               
-              const content = (
-                <div className="group flex items-center justify-between gap-2 px-4 py-3 bg-card border border-border rounded-xl hover:border-accent hover:bg-accent/5 transition-all duration-200">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
-                    <span className="font-medium text-foreground text-sm truncate group-hover:text-accent transition-colors">
-                      {destination.city_name}
+              const cardContent = (
+                <div className="group block bg-card border-2 border-foreground rounded-xl p-3 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1 h-full">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" />
+                        <span className="font-bold text-foreground text-sm truncate group-hover:text-black transition-colors duration-200">
+                          {destination.city_name}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="flex-shrink-0 text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                      {destination.hotels_count}
                     </span>
                   </div>
-                  <span className="flex-shrink-0 text-xs font-semibold bg-foreground text-background px-2 py-0.5 rounded-full">
-                    {destination.hotels_count}
-                  </span>
                 </div>
               );
               
@@ -720,12 +704,13 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   href={linkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="block"
                 >
-                  {content}
+                  {cardContent}
                 </a>
               ) : (
-                <Link key={destination.city_slug} to={linkUrl}>
-                  {content}
+                <Link key={destination.city_slug} to={linkUrl} className="block">
+                  {cardContent}
                 </Link>
               );
             })}

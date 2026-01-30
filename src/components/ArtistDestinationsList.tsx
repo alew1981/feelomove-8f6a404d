@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { memo, useState } from "react";
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 
 // Inline SVG icons to reduce bundle size
@@ -27,26 +27,17 @@ interface ArtistDestinationsListProps {
   currentCity?: string;
 }
 
-// MAX 6 ITEMS initially
-const INITIAL_LIMIT = 6;
-
 /**
- * Compact destinations list for artist events - NO IMAGES for better performance.
- * Clean grid layout with city name and event count.
+ * Artist Destinations - Pill/Chip format with horizontal scroll on mobile
+ * Feelomove+ Design: Black border, Green hover, 4px lift
  */
 const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }: ArtistDestinationsListProps) => {
-  const [showAll, setShowAll] = useState(false);
-  
   // Filter out current city if provided
   const filteredCities = currentCity 
     ? citiesWithData.filter(city => city.name.toLowerCase() !== currentCity.toLowerCase())
     : citiesWithData;
   
   if (filteredCities.length === 0) return null;
-
-  // LIMIT: Show max items unless "showAll" is true
-  const visibleCities = showAll ? filteredCities : filteredCities.slice(0, INITIAL_LIMIT);
-  const hasMore = filteredCities.length > INITIAL_LIMIT;
 
   return (
     <section className="mb-10">
@@ -63,41 +54,29 @@ const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }
         </Link>
       </div>
 
-      {/* Clean Grid - No Images */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-        {visibleCities.map((city) => (
+      {/* Horizontal Pill Layout with Scroll on Mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
+        {filteredCities.map((city) => (
           <Link
             key={city.slug}
             to={`/destinos/${city.slug}`}
             className={cn(
-              "group flex items-center justify-between gap-2 px-4 py-3",
-              "bg-card border border-border rounded-xl",
-              "hover:border-accent hover:bg-accent/5",
-              "transition-all duration-200"
+              "group inline-flex items-center gap-2 px-4 py-2.5",
+              "bg-card border-2 border-foreground rounded-full",
+              "whitespace-nowrap flex-shrink-0",
+              "transition-all duration-200 ease-out",
+              "hover:bg-[#00FF8F] hover:-translate-y-1"
             )}
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <IconMapPin className="h-4 w-4 text-accent flex-shrink-0" />
-              <span className="font-medium text-foreground text-sm truncate group-hover:text-accent transition-colors">
-                {city.name}
-              </span>
-            </div>
-            <span className="flex-shrink-0 text-xs font-semibold bg-foreground text-background px-2 py-0.5 rounded-full">
+            <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
+              {city.name}
+            </span>
+            <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
               {city.count}
             </span>
           </Link>
         ))}
       </div>
-
-      {/* "Ver más" button */}
-      {hasMore && !showAll && (
-        <button
-          onClick={() => setShowAll(true)}
-          className="mt-3 w-full py-2.5 text-center text-sm font-semibold text-accent hover:text-accent/80 bg-card border border-border rounded-xl hover:border-accent transition-all"
-        >
-          Ver {filteredCities.length - INITIAL_LIMIT} destinos más
-        </button>
-      )}
     </section>
   );
 });
