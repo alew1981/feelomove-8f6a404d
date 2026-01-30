@@ -508,23 +508,24 @@ const Producto = () => {
     }
 
     // PASO 2: Generar URLs para diferentes tamaños (responsive) con aggressive caching
-    const createUrl = (width: number, quality: number = 70) => {
+    // Mobile-first: w=800 max para LCP rápido en dispositivos móviles
+    const createUrl = (width: number, quality: number = 75) => {
       const params = new URLSearchParams({
         url: normalizedUrl,
         w: width.toString(),
         output: "webp",
         q: quality.toString(),
-        il: "",
+        il: "", // interlaced for progressive loading
         maxage: "31d",
       });
       return `https://images.weserv.nl/?${params}`;
     };
 
-    // OPTIMIZED SIZES: Reduced quality to 70 for faster load
-    // Mobile-first: smaller images load faster on 3G/4G
+    // OPTIMIZED SIZES: q=75 for balance between quality and speed
+    // Mobile LCP: 800px max width, compressed to 75 quality
     return {
-      src: createUrl(640, 70), // Reduced fallback for faster mobile LCP
-      srcSet: `${createUrl(320, 65)} 320w, ${createUrl(480, 70)} 480w, ${createUrl(640, 70)} 640w, ${createUrl(960, 75)} 960w`,
+      src: createUrl(800, 75), // Mobile-optimized default (LCP target)
+      srcSet: `${createUrl(400, 75)} 400w, ${createUrl(640, 75)} 640w, ${createUrl(800, 75)} 800w, ${createUrl(1200, 75)} 1200w`,
     };
   }, [(eventDetails as any)?.image_large_url, eventDetails?.image_standard_url, eventDetails?.event_id]);
 
@@ -919,15 +920,15 @@ const Producto = () => {
           {/* ⚡ Hero Section - LCP OPTIMIZED */}
           <div className="relative rounded-2xl overflow-hidden mb-6">
             <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* LCP IMAGE: Minimal attributes, maximum priority */}
+              {/* LCP IMAGE: First image in DOM, maximum priority */}
               <img
                 src={heroImageUrls.src}
                 srcSet={heroImageUrls.srcSet}
-                sizes="(max-width: 480px) 320px, (max-width: 640px) 480px, (max-width: 960px) 640px, 960px"
+                sizes="(max-width: 640px) 640px, (max-width: 800px) 800px, 1200px"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
-                width={640}
-                height={360}
+                width={800}
+                height={450}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
