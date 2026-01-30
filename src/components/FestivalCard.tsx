@@ -20,7 +20,11 @@ interface FestivalCardProps {
     image_standard_url?: string | null;
     sold_out?: boolean | null;
     seats_available?: boolean | null;
-    // Festival-specific fields
+    // Festival-specific fields - prioritize manual dates
+    start_date_manual?: string | null;
+    end_date_manual?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
     festival_start_date?: string | null;
     festival_end_date?: string | null;
     festival_duration_days?: number | null;
@@ -82,9 +86,9 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   // Display title - use event_name or primary_attraction_name
   const displayTitle = festival.event_name || festival.primary_attraction_name || "";
   
-  // Festival date handling - use festival_start_date and festival_end_date
-  const startDateStr = festival.festival_start_date || festival.event_date;
-  const endDateStr = festival.festival_end_date || festival.event_date;
+  // Festival date handling - prioritize start_date_manual/end_date_manual
+  const startDateStr = festival.start_date_manual || festival.start_date || festival.festival_start_date || festival.event_date;
+  const endDateStr = festival.end_date_manual || festival.end_date || festival.festival_end_date || festival.event_date;
   
   // Check for placeholder dates (9999-12-31)
   const isStartPlaceholder = isPlaceholderDate(startDateStr);
