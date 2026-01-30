@@ -342,58 +342,58 @@ const Destinos = () => {
               />
             </div>
 
-            {/* Desktop: Card Grid View */}
-            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Desktop: Clean Grid View - No Images for Performance */}
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {displayedCities.map((city: any, index: number) => {
-                const isPriority = index < 4;
                 const citySlug = city.city_slug || encodeURIComponent(city.city_name);
+                const concertsCount = city.concerts_count || 0;
+                const festivalsCount = city.festivals_count || 0;
+                
                 return (
                   <Link 
                     key={city.city_name} 
                     to={`/destinos/${citySlug}`} 
-                    className="block" 
+                    className="group block" 
                     title={`Descubrir eventos en ${city.city_name}`}
                     onMouseEnter={() => handleCardPrefetch(citySlug)}
-                    onTouchStart={() => handleCardPrefetch(citySlug)}
                   >
-                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
-                      <div className="relative h-64 overflow-hidden bg-muted">
-                        <img 
-                          src={city.ciudad_imagen || city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg"} 
-                          alt={`Conciertos y festivales en ${city.city_name} - ${city.event_count} eventos musicales`}
-                          title={`Eventos en ${city.city_name} - ${city.event_count} conciertos y festivales`}
-                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                          loading={isPriority ? "eager" : "lazy"}
-                          decoding={isPriority ? "sync" : "async"}
-                          {...(isPriority ? { fetchpriority: "high" } : {})}
-                          width={400}
-                          height={256}
-                          onError={(e) => {
-                            e.currentTarget.src = city.sample_image_url || city.sample_image_standard_url || "/placeholder.svg";
-                          }}
-                        />
-                        <div className="absolute top-3 right-3 flex flex-col gap-2">
-                          <Badge className="bg-accent text-accent-foreground hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                            {city.event_count} eventos
-                          </Badge>
+                    <div className="flex items-center justify-between gap-3 p-4 bg-card border-2 border-border rounded-xl hover:border-accent hover:bg-accent/5 transition-all duration-200">
+                      {/* Left: City Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                            <svg className="h-4 w-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                            </svg>
+                          </div>
+                          <h3 className="font-bold text-foreground text-sm truncate group-hover:text-accent transition-colors">
+                            {city.city_name}
+                          </h3>
                         </div>
-                      </div>
-                      <CardContent className="p-4 space-y-2">
-                        <h3 className="font-bold text-xl text-foreground line-clamp-1">{city.city_name}</h3>
-                        <div className="flex gap-2 text-sm text-muted-foreground">
-                          {city.concerts_count > 0 && <span>{city.concerts_count} conciertos</span>}
-                          {city.festivals_count > 0 && <span>• {city.festivals_count} festivales</span>}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-10">
+                          {concertsCount > 0 && <span>{concertsCount} conciertos</span>}
+                          {concertsCount > 0 && festivalsCount > 0 && <span>·</span>}
+                          {festivalsCount > 0 && <span>{festivalsCount} festivales</span>}
                         </div>
                         {city.price_from && (
-                          <p className="text-sm text-accent font-semibold">
+                          <span className="text-xs font-semibold text-accent ml-10">
                             Desde {Number(city.price_from).toFixed(0)}€
-                          </p>
+                          </span>
                         )}
-                      </CardContent>
-                      <CardFooter className="p-4 pt-0">
-                        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-2 rounded-lg text-sm">Ver Eventos →</Button>
-                      </CardFooter>
-                    </Card>
+                      </div>
+                      
+                      {/* Right: Event Count Badge + Arrow */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge className="bg-foreground text-background font-bold px-2.5 py-1 text-xs rounded-full">
+                          {city.event_count}
+                        </Badge>
+                        <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m9 18 6-6-6-6"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   </Link>
                 );
               })}
