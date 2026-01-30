@@ -613,8 +613,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   <img 
                     src={genre.image} 
                     alt={genre.label.replace('Explorar música ', '')}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    width={300}
+                    height={225}
                     loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
@@ -659,8 +662,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   <img 
                     src={genre.image} 
                     alt={genre.label.replace('Explorar música ', '')}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    width={300}
+                    height={225}
                     loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
@@ -715,8 +721,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                     <img 
                       src={(destination.imagen_ciudad || destination.sample_image_url) as string} 
                       alt={`Hoteles en ${destination.city_name}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={300}
+                      height={225}
                       loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
@@ -741,8 +750,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                     <img 
                       src={(destination.imagen_ciudad || destination.sample_image_url) as string} 
                       alt={`Hoteles en ${destination.city_name}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={300}
+                      height={225}
                       loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
@@ -809,8 +821,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                       <img 
                         src={genre.image} 
                         alt={genre.label.replace('Explorar música ', '')}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        width={300}
+                        height={225}
                         loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
@@ -843,8 +858,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                           <img 
                             src={genre.image} 
                             alt={genre.label.replace('Explorar música ', '')}
-                            className="w-full h-full object-cover"
+                            width={40}
+                            height={40}
                             loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
@@ -892,8 +910,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                       <img 
                         src={artist.image} 
                         alt={artist.label.replace('Ver conciertos de ', '')}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        width={300}
+                        height={225}
                         loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
@@ -926,8 +947,11 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                           <img 
                             src={artist.image} 
                             alt={artist.label.replace('Ver conciertos de ', '')}
-                            className="w-full h-full object-cover"
+                            width={40}
+                            height={40}
                             loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">

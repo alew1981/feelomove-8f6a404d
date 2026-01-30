@@ -68,9 +68,11 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           srcSet={generateCardSrcSet(deal.image_url)}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           alt={deal.artist_name || "Evento"}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          width={300}
+          height={400}
           loading="lazy"
-          style={{ aspectRatio: '3 / 4' }}
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       )}
       {/* Subtle gradient */}
