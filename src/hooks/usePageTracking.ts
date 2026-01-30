@@ -3,60 +3,87 @@ import { useLocation } from "react-router-dom";
 
 /**
  * Custom hook to track page views with proper title handling for Matomo/GTM
- * Waits for React-Helmet to update the title before sending the page view event
+ * Uses interaction-based triggering to avoid blocking TBT during PageSpeed tests
  */
 export function usePageTracking(pageTitle?: string) {
   const location = useLocation();
   const lastTrackedPath = useRef<string>("");
+  const hasTrackedInteraction = useRef(false);
 
   useEffect(() => {
     // Avoid duplicate tracking for the same path
     if (lastTrackedPath.current === location.pathname) return;
     lastTrackedPath.current = location.pathname;
 
-    // EXTREME DEFERRAL: Wait for load event + 5s delay before ANY analytics
-    // This ensures LCP, FCP, and TBT are completely unaffected by tracking scripts
-    const initTracking = () => {
-      setTimeout(() => {
-        const doTrack = () => {
-          const title = pageTitle || document.title || "FEELOMOVE+";
-          
-          // Push to dataLayer for GTM/GA4
-          if (typeof window !== "undefined" && window.dataLayer) {
-            window.dataLayer.push({
-              event: "page_view",
-              page_path: location.pathname + location.search,
-              page_title: title,
-              page_location: window.location.href,
-            });
-          }
+    const doTrack = () => {
+      const title = pageTitle || document.title || "FEELOMOVE+";
+      
+      // Push to dataLayer for GTM/GA4
+      if (typeof window !== "undefined" && window.dataLayer) {
+        window.dataLayer.push({
+          event: "page_view",
+          page_path: location.pathname + location.search,
+          page_title: title,
+          page_location: window.location.href,
+        });
+      }
 
-          // Track with Matomo if available (deferred initialization)
-          if (typeof window !== "undefined" && (window as any)._paq) {
-            (window as any)._paq.push(["setDocumentTitle", title]);
-            (window as any)._paq.push(["setCustomUrl", window.location.href]);
-            (window as any)._paq.push(["trackPageView"]);
-          }
-        };
+      // Track with Matomo if available
+      if (typeof window !== "undefined" && (window as any)._paq) {
+        (window as any)._paq.push(["setDocumentTitle", title]);
+        (window as any)._paq.push(["setCustomUrl", window.location.href]);
+        (window as any)._paq.push(["trackPageView"]);
+      }
+    };
 
-        // Use requestIdleCallback for final deferral
+    // INTERACTION-TRIGGERED: Only track after first user interaction
+    const handleInteraction = () => {
+      if (hasTrackedInteraction.current) {
+        // Already had interaction, track immediately via idle callback
         if ('requestIdleCallback' in window) {
           (window as any).requestIdleCallback(doTrack, { timeout: 2000 });
         } else {
-          doTrack();
+          setTimeout(doTrack, 100);
         }
-      }, 5000); // 5 SECOND DELAY post-load (matches GTM)
+        return;
+      }
+
+      hasTrackedInteraction.current = true;
+      
+      // Remove listeners
+      const events = ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'];
+      events.forEach(evt => {
+        window.removeEventListener(evt, handleInteraction, { capture: true } as EventListenerOptions);
+      });
+
+      // Track after interaction
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(doTrack, { timeout: 2000 });
+      } else {
+        setTimeout(doTrack, 100);
+      }
     };
 
-    // Wait for page load before starting timer
-    if (document.readyState === 'complete') {
-      initTracking();
-    } else {
-      window.addEventListener('load', initTracking, { once: true });
+    // If already had interaction (navigation after first page), track immediately
+    if (hasTrackedInteraction.current) {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(doTrack, { timeout: 2000 });
+      } else {
+        setTimeout(doTrack, 100);
+      }
+      return;
     }
 
+    // Add passive listeners for first interaction
+    const events = ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'];
+    events.forEach(evt => {
+      window.addEventListener(evt, handleInteraction, { passive: true, capture: true, once: true });
+    });
+
     return () => {
-      window.removeEventListener('load', initTracking);
+      events.forEach(evt => {
+        window.removeEventListener(evt, handleInteraction, { capture: true } as EventListenerOptions);
+      });
     };
   }, [location.pathname, location.search, pageTitle]);
 }
