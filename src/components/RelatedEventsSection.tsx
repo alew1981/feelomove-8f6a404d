@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { RelatedEventCard, RelatedEvent } from './RelatedEventCard';
 import { cn } from '@/lib/utils';
 
 // Inline SVG icons
@@ -17,6 +16,16 @@ const IconChevronRight = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+interface RelatedEvent {
+  id: string;
+  slug: string;
+  name: string;
+  artist_name?: string;
+  event_date: string;
+  venue_city: string;
+  is_festival?: boolean;
+}
+
 interface RelatedEventsSectionProps {
   currentEventId?: string;
   currentArtist?: string;
@@ -25,16 +34,25 @@ interface RelatedEventsSectionProps {
   maxItems?: number;
 }
 
+// Native date formatting
+const SPANISH_MONTHS_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+const formatShortDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return `${date.getDate()} ${SPANISH_MONTHS_SHORT[date.getMonth()]}`;
+};
+
 /**
  * Related Events Section - "También te puede interesar"
- * Displays related events using the new card design with images
+ * Pill/Chip format matching "Ver en otros destinos" for performance
+ * No images - just text pills with hover effects
  */
 export const RelatedEventsSection = ({
   currentEventId,
   currentArtist,
   currentCity,
   currentGenre,
-  maxItems = 4
+  maxItems = 8
 }: RelatedEventsSectionProps) => {
   const [events, setEvents] = useState<RelatedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,7 +62,6 @@ export const RelatedEventsSection = ({
       setIsLoading(true);
       
       try {
-        // Strategy: Fetch events by same artist, then by same city, then by same genre
         const today = new Date().toISOString();
         let relatedEvents: RelatedEvent[] = [];
         
@@ -52,7 +69,7 @@ export const RelatedEventsSection = ({
         if (currentArtist && relatedEvents.length < maxItems) {
           const { data: artistEvents } = await supabase
             .from('mv_concerts_cards')
-            .select('id, slug, name, artist_name, event_date, venue_city, venue_name, image_standard_url')
+            .select('id, slug, name, artist_name, event_date, venue_city')
             .ilike('artist_name', `%${currentArtist}%`)
             .gte('event_date', today)
             .neq('id', currentEventId || '')
@@ -67,8 +84,6 @@ export const RelatedEventsSection = ({
               artist_name: e.artist_name,
               event_date: e.event_date,
               venue_city: e.venue_city,
-              venue_name: e.venue_name,
-              image_url: e.image_standard_url,
               is_festival: false
             })));
           }
@@ -81,12 +96,12 @@ export const RelatedEventsSection = ({
           
           const { data: cityEvents } = await supabase
             .from('mv_concerts_cards')
-            .select('id, slug, name, artist_name, event_date, venue_city, venue_name, image_standard_url')
+            .select('id, slug, name, artist_name, event_date, venue_city')
             .eq('venue_city', currentCity)
             .gte('event_date', today)
             .neq('id', currentEventId || '')
             .order('event_date', { ascending: true })
-            .limit(remaining + 5); // Fetch extra to filter
+            .limit(remaining + 5);
           
           if (cityEvents) {
             const newEvents = cityEvents
@@ -99,8 +114,6 @@ export const RelatedEventsSection = ({
                 artist_name: e.artist_name,
                 event_date: e.event_date,
                 venue_city: e.venue_city,
-                venue_name: e.venue_name,
-                image_url: e.image_standard_url,
                 is_festival: false
               }));
             relatedEvents.push(...newEvents);
@@ -114,7 +127,7 @@ export const RelatedEventsSection = ({
           
           const { data: festivals } = await supabase
             .from('mv_festivals_cards')
-            .select('id, slug, name, main_attraction, event_date, venue_city, venue_name, image_standard_url')
+            .select('id, slug, name, main_attraction, event_date, venue_city')
             .gte('event_date', today)
             .neq('id', currentEventId || '')
             .order('event_date', { ascending: true })
@@ -131,8 +144,6 @@ export const RelatedEventsSection = ({
                 artist_name: e.main_attraction,
                 event_date: e.event_date,
                 venue_city: e.venue_city,
-                venue_name: e.venue_name,
-                image_url: e.image_standard_url,
                 is_festival: true
               }));
             relatedEvents.push(...newEvents);
@@ -153,12 +164,12 @@ export const RelatedEventsSection = ({
   if (isLoading) {
     return (
       <div className="mt-10 pt-8 border-t border-border">
-        <div className="flex items-center justify-between mb-6">
-          <div className="h-7 w-48 bg-muted animate-pulse rounded" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-6 w-48 bg-muted animate-pulse rounded" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-muted animate-pulse aspect-[3/4]" />
+        <div className="flex gap-2 flex-wrap">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-10 w-32 rounded-full bg-muted animate-pulse" />
           ))}
         </div>
       </div>
@@ -170,8 +181,8 @@ export const RelatedEventsSection = ({
   return (
     <div className="mt-10 pt-8 border-t border-border">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
           <IconTicket className="h-5 w-5 text-accent" />
           También te puede interesar
         </h3>
@@ -183,11 +194,35 @@ export const RelatedEventsSection = ({
         </Link>
       </div>
 
-      {/* Events Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {events.map((event) => (
-          <RelatedEventCard key={event.id} event={event} />
-        ))}
+      {/* Horizontal Pill Layout with Scroll on Mobile - Same as "Ver en otros destinos" */}
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
+        {events.map((event) => {
+          const eventUrl = event.is_festival 
+            ? `/festival/${event.slug}` 
+            : `/concierto/${event.slug}`;
+          const displayName = event.artist_name || event.name.split(' - ')[0] || event.name;
+          
+          return (
+            <Link
+              key={event.id}
+              to={eventUrl}
+              className={cn(
+                "group inline-flex items-center gap-2 px-4 py-2.5",
+                "bg-card border-2 border-foreground rounded-full",
+                "whitespace-nowrap flex-shrink-0",
+                "transition-all duration-200 ease-out",
+                "hover:bg-[#00FF8F] hover:-translate-y-1"
+              )}
+            >
+              <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
+                {displayName}
+              </span>
+              <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                {formatShortDate(event.event_date)}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
