@@ -72,7 +72,7 @@ const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: str
         className="w-full h-full object-cover"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
-        fetchpriority={priority ? "high" : "low"}
+        fetchPriority={priority ? "high" : "low"}
         onError={() => setHasError(true)}
         width={450}
         height={253}
