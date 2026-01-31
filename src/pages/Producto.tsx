@@ -347,6 +347,76 @@ const Producto = () => {
   const rpcCanonicalSlug = eventResult?.canonicalSlug || null;
   const eventDetails = eventData?.[0] as unknown as EventProductPage | null;
 
+  // SEO: Redirect service events (transport, parking, etc.) to their parent festival
+  // This transfers SEO authority from service URLs to the main festival page
+  useEffect(() => {
+    if (hasNavigatedRef.current) return;
+    if (isLoading || !eventDetails) return;
+    
+    // Check if this is a service event that should redirect
+    const isTransportEvent = (eventDetails as any).is_transport === true;
+    const eventType = (eventDetails as any).event_type;
+    const eventName = (eventDetails.event_name || "").toLowerCase();
+    
+    // Only redirect transport/service events, not regular concerts/festivals
+    if (!isTransportEvent && eventType !== 'transport') return;
+    
+    // Pattern to detect service events by name
+    const servicePatterns = [
+      /servicio\s*(de\s*)?(bus|autobus|autobús)/i,
+      /^bus\s/i,
+      /\bshuttle\b/i,
+      /\btransfer\b/i,
+    ];
+    
+    const isServiceByName = servicePatterns.some((p) => p.test(eventName));
+    
+    if (isTransportEvent || eventType === 'transport' || isServiceByName) {
+      // Extract festival name from event name
+      // e.g., "Servicio de Autobús - Malú - Concert Music Festival" -> "Concert Music Festival"
+      // The festival name is usually after the last " - " separator
+      const originalEventName = eventDetails.event_name || "";
+      const venueName = (eventDetails as any).venue_name || "";
+      const city = (eventDetails.venue_city || "").toLowerCase().replace(/\s+/g, "-");
+      
+      // Festival name patterns with their slug forms
+      const festivalMappings: Array<{ pattern: RegExp; slug: string }> = [
+        { pattern: /concert\s*music\s*festival/i, slug: 'concert-music-festival' },
+        { pattern: /starlite/i, slug: 'starlite' },
+        { pattern: /primavera\s*sound/i, slug: 'primavera-sound' },
+        { pattern: /bbk\s*live/i, slug: 'bbk-live' },
+        { pattern: /mad\s*cool/i, slug: 'mad-cool' },
+        { pattern: /arenal\s*sound/i, slug: 'arenal-sound' },
+        { pattern: /medusa/i, slug: 'medusa' },
+        { pattern: /viña\s*rock/i, slug: 'vina-rock' },
+        { pattern: /cruïlla/i, slug: 'cruilla' },
+        { pattern: /rototom/i, slug: 'rototom' },
+        { pattern: /vida\s*festival/i, slug: 'vida-festival' },
+        { pattern: /low\s*festival/i, slug: 'low-festival' },
+        { pattern: /dreambeach/i, slug: 'dreambeach' },
+        { pattern: /a\s*summer\s*story/i, slug: 'a-summer-story' },
+        { pattern: /reggaeton\s*beach/i, slug: 'reggaeton-beach' },
+      ];
+      
+      let parentFestivalSlug: string | null = null;
+      
+      // Try to find festival name in event name or venue name
+      for (const { pattern, slug } of festivalMappings) {
+        if (pattern.test(originalEventName) || pattern.test(venueName.replace(/\s+/g, ' '))) {
+          parentFestivalSlug = `${slug}_${city}_${city}`;
+          break;
+        }
+      }
+      
+      if (parentFestivalSlug) {
+        console.log("[Producto] Service event redirect to parent festival:", parentFestivalSlug);
+        hasNavigatedRef.current = true;
+        navigate(`/festivales/${parentFestivalSlug}`, { replace: true });
+        return;
+      }
+    }
+  }, [eventDetails, isLoading, navigate]);
+
   usePageTracking(eventDetails?.event_name);
 
   const { data: hotels = [] } = useEventHotels({
@@ -874,6 +944,33 @@ const Producto = () => {
     },
   );
 
+  // SEO: Detect service events (transport, parking, camping, VIP, upgrades) for noindex
+  const isServiceEvent = (() => {
+    // Database flags
+    if ((eventDetails as any).is_transport === true) return true;
+    if ((eventDetails as any).is_package === true) return true;
+    
+    // Name-based detection for services
+    const eventName = (eventDetails.event_name || "").toLowerCase();
+    const servicePatterns = [
+      /\bparking\b/i,
+      /\baparcamiento\b/i,
+      /\bbus\b/i,
+      /\bautobus\b/i,
+      /\bautobús\b/i,
+      /\bshuttle\b/i,
+      /\btransfer\b/i,
+      /\btransporte\b/i,
+      /\bupgrade\b/i,
+      /\bcamping\b/i,
+      /\balojamiento\b/i,
+      /\bvoucher\b/i,
+      /\bservicio\s*(de\s*)?(bus|autobus|autobús)/i,
+    ];
+    
+    return servicePatterns.some((pattern) => pattern.test(eventName));
+  })();
+
   return (
     <>
       <EventSeo {...eventSeoProps} />
@@ -886,6 +983,7 @@ const Producto = () => {
         ogType="event"
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
+        forceNoIndex={isServiceEvent}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           {
