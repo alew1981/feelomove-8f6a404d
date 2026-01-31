@@ -182,19 +182,15 @@ const EventCardCompact = memo(({ event, priority = false, forceConcierto = false
           {/* Status Badges */}
           {isNotYetOnSale ? (
             <div className="absolute top-2 right-2">
-              <Badge className={cn(
-                "text-[9px] font-bold px-2 py-1",
-                "bg-amber-500 text-white",
-                "flex items-center gap-1"
-              )}>
+              <Badge
+                className={cn(
+                  "text-[9px] font-bold px-2 py-1",
+                  "bg-amber-500 text-white",
+                  "flex items-center gap-1",
+                )}
+              >
                 <Clock className="h-3 w-3" />
                 Pronto
-              </Badge>
-            </div>
-          ) : isSoldOut ? (
-            <div className="absolute top-2 right-2">
-              <Badge variant="destructive" className="text-[9px] font-bold px-2 py-1">
-                AGOTADO
               </Badge>
             </div>
           ) : null}
