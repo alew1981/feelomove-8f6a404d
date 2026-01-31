@@ -219,9 +219,9 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               {/* Badge "On Sale Soon" - Top Right (priority over availability) */}
               {isNotYetOnSale ? (
                 <div className="absolute right-2 top-2 z-20">
-                  <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
+                  <Badge className="text-xs font-bold px-3 py-1.5 bg-accent text-accent-foreground flex items-center gap-1.5 shadow-lg uppercase">
                     <Clock className="h-3.5 w-3.5" />
-                    A la venta {onSaleDateFormatted}
+                    A la venta {onSaleBadgeFormatted}
                   </Badge>
                 </div>
               ) : badgeText && badgeVariant ? (
@@ -239,14 +239,6 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
 
               {/* Event Name - Overlaid at bottom of image */}
               <div className="absolute bottom-3 left-3 right-3 z-10">
-                {/* Badge "Inicio ventas" - Above event name when on_sale_date is in future */}
-                {isNotYetOnSale && onSaleBadgeFormatted && (
-                  <div className="mb-1.5">
-                    <Badge className="text-[10px] font-bold px-2 py-1 bg-accent text-accent-foreground shadow-md uppercase">
-                      Inicio ventas: {onSaleBadgeFormatted.trim()}
-                    </Badge>
-                  </div>
-                )}
                 <h3 className="text-white text-xl font-bold leading-tight tracking-tight font-['Poppins'] line-clamp-2 drop-shadow-lg" itemProp="name">
                   {eventName}
                 </h3>
