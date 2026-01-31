@@ -45,15 +45,25 @@ const SPANISH_CITIES = [
  * These patterns indicate a legacy/dirty URL that should NEVER render directly
  */
 const NOISE_WORDS = [
+  // VIP packages
   'paquetes-vip', 'paquete-vip', 'vip-paquetes', 'vip-paquete',
+  'vip-packages', 'vip-package',
+  // Tours
   'world-tour', 'tour-mundial', 'gira-mundial',
   'everyone-s-star', 'everyones-star',
+  // Ticket types
   'tickets', 'ticket', 'entradas', 'entrada',
-  'parking', 'bus', 'autobus', 
+  'ticketless', 'upgrade', 'voucher',
+  // Transport/Services (CRITICAL: These should never be indexed)
+  'parking', 'plaza-de-parking', 'shuttle', 'transfer',
+  'bus', 'autobus', 'servicio-de-autobus', 'transporte',
+  // Other noise
   'feed', 'rss',
   'premium', 'gold', 'platinum', 'silver',
   'general', 'pista', 'grada', 'tribuna',
-  'zona-a', 'zona-b', 'zona-c', 'zona-vip'
+  'zona-a', 'zona-b', 'zona-c', 'zona-vip',
+  // Hotel packages
+  'hotel-package', 'hotel-'
 ];
 
 /**
