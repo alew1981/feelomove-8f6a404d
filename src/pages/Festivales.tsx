@@ -249,8 +249,11 @@ const Festivales = () => {
   const groupedFestivals = useMemo(() => {
     if (!festivals) return { parentFestivals: [] as ParentFestival[], standaloneFestivals: [] as NormalizedFestival[] };
     
-    // Filter out past events and normalize all festivals
+    // Filter out past events, transport/service events, and normalize all festivals
     const validFestivals = festivals.filter(f => {
+      // Exclude transport/service events - they are shown within their parent festival
+      if (f.is_transport === true) return false;
+      
       const dateStr = f.festival_start_date || f.event_date;
       if (!dateStr || dateStr.startsWith('9999')) return true; // Keep TBC dates
       return new Date(dateStr) >= new Date();
