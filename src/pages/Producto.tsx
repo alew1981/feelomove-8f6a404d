@@ -1,9 +1,9 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEventData } from "@/hooks/useEventData";
-import { useEventHotels, HotelData } from "@/hooks/useEventHotels";
+import { useEventHotels } from "@/hooks/useEventHotels";
 import { usePageTracking } from "@/hooks/usePageTracking";
 // SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
 import Navbar from "@/components/Navbar";
@@ -27,17 +27,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFavorites } from "@/hooks/useFavorites";
-import { useCart, CartTicket } from "@/contexts/CartContext";
-import { toast } from "sonner";
+import { useCart } from "@/contexts/CartContext";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl } from "@/lib/eventUtils";
-import {
-  optimizeImageUrl,
-  getOptimizedHeroImage,
-  generateHeroSrcSet,
-  generateCardSrcSet,
-} from "@/lib/imageOptimization";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
@@ -232,32 +225,7 @@ const differenceInDays = (dateA: Date, dateB: Date) =>
 const differenceInHours = (dateA: Date, dateB: Date) =>
   Math.floor((dateA.getTime() - dateB.getTime()) / (1000 * 60 * 60));
 
-// Fixed-height skeleton fallbacks to prevent CLS (400px matches HotelMapTabs)
-const HotelsSkeleton = () => (
-  <div className="w-full" style={{ minHeight: "400px" }}>
-    <Skeleton className="h-10 w-48 mb-4 animate-shimmer" />
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {[1, 2, 3, 4].map((i) => (
-        <Skeleton key={i} className="h-48 rounded-xl animate-shimmer" />
-      ))}
-    </div>
-  </div>
-);
-
-const RelatedLinksSkeleton = () => (
-  <div className="w-full py-4" style={{ minHeight: "120px" }}>
-    <Skeleton className="h-6 w-32 mb-3 animate-shimmer" />
-    <div className="flex flex-wrap gap-2">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Skeleton key={i} className="h-8 w-24 rounded-full animate-shimmer" />
-      ))}
-    </div>
-  </div>
-);
-
-const MobileCartSkeleton = () => (
-  <div className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border xl:hidden" />
-);
+// Fixed-height skeletons omitted - moved below for cleaner structure
 
 interface PriceLevel {
   id: number;
@@ -282,37 +250,43 @@ interface TicketTypesData {
   price_types: PriceType[];
 }
 
-// === ULTRA-LAZY HYDRATION: Below-fold content only renders after 3s ===
-const FooterSkeleton = () => <div className="w-full bg-card border-t border-border" style={{ minHeight: "200px" }} />;
+// Fixed-height skeleton fallbacks to prevent CLS
+const HotelsSkeleton = memo(() => (
+  <div className="w-full" style={{ minHeight: "400px" }}>
+    <Skeleton className="h-10 w-48 mb-4" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
+    </div>
+  </div>
+));
+
+const MobileCartSkeleton = memo(() => (
+  <div className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border xl:hidden" />
+));
+
+const FooterSkeleton = memo(() => <div className="w-full bg-card border-t border-border" style={{ minHeight: "200px" }} />);
 
 const Producto = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } =
-    useCart();
+  const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } = useCart();
 
-  // ⚡ FIX: useRef para mantener referencia actualizada al cart
-  // Esto evita que múltiples clicks rápidos lean estado stale
+  // Ref for stable cart access in handlers
   const cartRef = useRef(cart);
-  useEffect(() => {
-    cartRef.current = cart;
-  }, [cart]);
+  useEffect(() => { cartRef.current = cart; }, [cart]);
 
-  // EXTREME DEFERRAL: Non-critical UI waits 5s after hydration
+  // Deferred rendering for non-critical UI (4s delay)
   const [isInteractive, setIsInteractive] = useState(false);
-  const [renderHotels] = useState(true);
-
   useEffect(() => {
-    // Wait for idle time after 5 seconds to load non-critical components
     const timer = setTimeout(() => {
       if ("requestIdleCallback" in window) {
         (window as any).requestIdleCallback(() => setIsInteractive(true), { timeout: 1000 });
       } else {
         setIsInteractive(true);
       }
-    }, 5000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -1346,9 +1320,8 @@ const Producto = () => {
                 />
               )}
 
-              {renderHotels &&
-                (eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
-                  <div id="hotels-section">
+              {(eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
+                <div id="hotels-section">
                     <Suspense fallback={<HotelsSkeleton />}>
                       <HotelMapTabs
                         hotels={hotels}
