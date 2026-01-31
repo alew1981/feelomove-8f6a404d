@@ -177,8 +177,8 @@ Deno.serve(async (req) => {
         url.searchParams.append("rows", BATCH_SIZE.toString());
         url.searchParams.append("start", start.toString());
         url.searchParams.append("category_ids", "10001,10101");
-        url.searchParams.append("sort_by", "eventdate");
-        url.searchParams.append("order", "asc");
+        url.searchParams.append("sort_by", "onsaledate");
+        url.searchParams.append("order", "desc");
 
         fetchPromises.push(fetch(url.toString()).then(r => r.json()));
       }
