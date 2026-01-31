@@ -119,14 +119,29 @@ const FestivalDetalle = () => {
     const normalizeText = (text: string) => 
       text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
     
-    // Transport keywords
-    const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
+    // Transport patterns - use word boundaries to avoid false positives like "Obús" (band name)
+    // These patterns match transport-related terms as complete words or at word boundaries
+    const transportPatterns = [
+      /\bautobus\b/i,           // "autobús" as a word
+      /\bbus\b/i,               // "bus" as a word (not "Obús")
+      /\bshuttle\b/i,           // shuttle service
+      /\btransfer\b/i,          // transfer service
+      /\btransporte\b/i,        // transporte
+      /servicio\s*(de\s*)?bus/i, // "servicio de bus" or "servicio bus"
+      /^bus\s/i,                // starts with "bus "
+      /\sbus$/i,                // ends with " bus"
+    ];
     
     const isTransport = (event: typeof events[0]) => {
       const name = normalizeText(event.event_name || "");
       const attraction = normalizeText(event.primary_attraction_name || "");
-      return transportKeywords.some(keyword => 
-        name.includes(keyword) || attraction.includes(keyword)
+      
+      // Also check the database flag first
+      if (event.is_transport === true) return true;
+      
+      // Check against patterns (word boundaries prevent "Obús" matching "bus")
+      return transportPatterns.some(pattern => 
+        pattern.test(name) || pattern.test(attraction)
       );
     };
     
