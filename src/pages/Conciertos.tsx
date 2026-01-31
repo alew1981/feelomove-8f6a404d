@@ -77,7 +77,7 @@ const Conciertos = () => {
     }
   }, [filterGenre, filterCity, searchParams, setSearchParams]);
 
-  // Fetch conciertos using mv_concerts_cards (excluding transport services)
+  // Fetch conciertos using mv_concerts_cards (excluding transport/technical services)
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
@@ -89,19 +89,24 @@ const Conciertos = () => {
       
       if (error) throw error;
       
-      // Filter out transport services (bus, shuttle, etc.)
-      const transportKeywords = ["autobus", "bus", "shuttle", "transfer", "transporte", "servicio de autobus"];
+      // Centralized filter: exclude technical/service events
+      // Keywords: parking, ticketless, upgrade, voucher, shuttle, bus services, VIP packages
+      const excludedKeywords = [
+        "parking", "ticketless", "upgrade", "voucher", "shuttle", "transfer",
+        "transporte", "servicio de autobus", "plaza de parking", "hotel package",
+        "paquetes vip", "vip packages", "vip package", "autobus", "bus +", "+ bus"
+      ];
       const normalizeText = (text: string) => 
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
       
       const filtered = (data || []).filter(event => {
         const name = normalizeText(event.name || "");
         const artist = normalizeText(event.artist_name || "");
-        return !transportKeywords.some(kw => name.includes(kw) || artist.includes(kw));
+        const combined = `${name} ${artist}`;
+        return !excludedKeywords.some(kw => combined.includes(kw));
       });
 
       // Ensure on_sale_date is available for the "Inicio ventas" badge in EventCard.
-      // mv_concerts_cards doesn't expose on_sale_date, so we hydrate it from tm_tbl_events.
       try {
         const ids = filtered.map((e) => e.id).filter(Boolean);
         if (ids.length === 0) return filtered;
@@ -121,7 +126,6 @@ const Conciertos = () => {
           on_sale_date: map.get(String(e.id)) ?? null,
         }));
       } catch {
-        // If hydration fails, still render the list without the badge.
         return filtered;
       }
     }
