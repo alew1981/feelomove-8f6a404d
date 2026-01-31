@@ -12,7 +12,7 @@ import EventCardSkeleton from "@/components/EventCardSkeleton";
 import { SEOHead } from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, ArrowLeft, Bus, Play, Music, Users } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, Bus, Play, Music, Users, Tent, Car } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festivalUtils";
@@ -111,16 +111,15 @@ const FestivalDetalle = () => {
     enabled: !!festivalSlug,
   });
 
-  // Separate concert events from transport events
-  const { concertEvents, transportEvents } = useMemo(() => {
-    if (!events) return { concertEvents: [], transportEvents: [] };
+  // Separate events into categories: concerts, transport, camping, parking
+  const { concertEvents, transportEvents, campingEvents, parkingEvents } = useMemo(() => {
+    if (!events) return { concertEvents: [], transportEvents: [], campingEvents: [], parkingEvents: [] };
     
     // Normalize text to handle accents (autobús -> autobus)
     const normalizeText = (text: string) => 
       text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
     
     // Transport patterns - use word boundaries to avoid false positives like "Obús" (band name)
-    // These patterns match transport-related terms as complete words or at word boundaries
     const transportPatterns = [
       /\bautobus\b/i,           // "autobús" as a word
       /\bbus\b/i,               // "bus" as a word (not "Obús")
@@ -128,27 +127,70 @@ const FestivalDetalle = () => {
       /\btransfer\b/i,          // transfer service
       /\btransporte\b/i,        // transporte
       /servicio\s*(de\s*)?bus/i, // "servicio de bus" or "servicio bus"
+      /servicio\s*(de\s*)?autobus/i, // "servicio de autobús"
       /^bus\s/i,                // starts with "bus "
       /\sbus$/i,                // ends with " bus"
     ];
     
-    const isTransport = (event: typeof events[0]) => {
+    // Camping patterns
+    const campingPatterns = [
+      /\bcamping\b/i,
+      /\balojamiento\b/i,
+      /\bacampada\b/i,
+    ];
+    
+    // Parking patterns
+    const parkingPatterns = [
+      /\bparking\b/i,
+      /plaza\s*(de\s*)?parking/i,
+      /\baparcamiento\b/i,
+    ];
+    
+    const categorizeEvent = (event: typeof events[0]): 'concert' | 'transport' | 'camping' | 'parking' => {
       const name = normalizeText(event.event_name || "");
       const attraction = normalizeText(event.primary_attraction_name || "");
       
-      // Also check the database flag first
-      if (event.is_transport === true) return true;
+      // Check database flag first
+      if (event.is_transport === true) {
+        // Further categorize transport-flagged events
+        if (campingPatterns.some(p => p.test(name) || p.test(attraction))) return 'camping';
+        if (parkingPatterns.some(p => p.test(name) || p.test(attraction))) return 'parking';
+        return 'transport';
+      }
       
-      // Check against patterns (word boundaries prevent "Obús" matching "bus")
-      return transportPatterns.some(pattern => 
-        pattern.test(name) || pattern.test(attraction)
-      );
+      // Check patterns for camping
+      if (campingPatterns.some(p => p.test(name) || p.test(attraction))) return 'camping';
+      
+      // Check patterns for parking
+      if (parkingPatterns.some(p => p.test(name) || p.test(attraction))) return 'parking';
+      
+      // Check patterns for transport (word boundaries prevent "Obús" matching "bus")
+      if (transportPatterns.some(p => p.test(name) || p.test(attraction))) return 'transport';
+      
+      return 'concert';
     };
     
-    const transport = events.filter(isTransport);
-    const concerts = events.filter(e => !isTransport(e));
+    const transport: typeof events = [];
+    const camping: typeof events = [];
+    const parking: typeof events = [];
+    const concerts: typeof events = [];
     
-    return { concertEvents: concerts, transportEvents: transport };
+    events.forEach(event => {
+      const category = categorizeEvent(event);
+      switch (category) {
+        case 'transport': transport.push(event); break;
+        case 'camping': camping.push(event); break;
+        case 'parking': parking.push(event); break;
+        default: concerts.push(event);
+      }
+    });
+    
+    return { 
+      concertEvents: concerts, 
+      transportEvents: transport, 
+      campingEvents: camping, 
+      parkingEvents: parking 
+    };
   }, [events]);
 
   // Get festival metadata (using the corrected festival name and festival-specific fields)
@@ -182,6 +224,9 @@ const FestivalDetalle = () => {
     const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
     const maxPrice = validPrices.length > 0 ? Math.max(...validPrices) : 0;
     
+    // Calculate if we have service events
+    const hasServices = transportEvents.length > 0 || campingEvents.length > 0 || parkingEvents.length > 0;
+    
     return {
       // Use corrected festival name
       name: correctedFestivalName,
@@ -192,6 +237,9 @@ const FestivalDetalle = () => {
       artistCount: firstEvent.festival_total_artists || uniqueArtists.length,
       eventCount: concertEvents.length,
       transportCount: transportEvents.length,
+      campingCount: campingEvents.length,
+      parkingCount: parkingEvents.length,
+      hasServices,
       firstDate: festivalStartDate,
       lastDate: festivalEndDate,
       hasValidDates: festivalStartDate !== null && festivalEndDate !== null,
@@ -203,14 +251,14 @@ const FestivalDetalle = () => {
       lineupArtists: uniqueArtists,
       stages: firstEvent.festival_stages || [],
       totalStages: firstEvent.festival_total_stages,
-      hasCamping: firstEvent.festival_camping_available || false,
-      hasTransport: firstEvent.festival_has_official_transport || false,
+      hasCamping: firstEvent.festival_camping_available || campingEvents.length > 0,
+      hasTransport: firstEvent.festival_has_official_transport || transportEvents.length > 0,
       hasFestivalPass: firstEvent.has_festival_pass || false,
       hasDailyTickets: firstEvent.has_daily_tickets || false,
-      hasCampingTickets: firstEvent.has_camping_tickets || false,
-      hasParkingTickets: firstEvent.has_parking_tickets || false,
+      hasCampingTickets: firstEvent.has_camping_tickets || campingEvents.length > 0,
+      hasParkingTickets: firstEvent.has_parking_tickets || parkingEvents.length > 0,
     };
-  }, [events, concertEvents, transportEvents]);
+  }, [events, concertEvents, transportEvents, campingEvents, parkingEvents]);
 
   const heroImage = festivalData?.image || "/placeholder.svg";
 
@@ -389,17 +437,31 @@ const FestivalDetalle = () => {
             </div>
           ) : (
             <Tabs defaultValue="conciertos" className="w-full">
-              {/* Only show tabs if there are transport events */}
-              {transportEvents.length > 0 && (
-                <TabsList className="mb-6">
+              {/* Only show tabs if there are service events */}
+              {festivalData?.hasServices && (
+                <TabsList className="mb-6 flex-wrap h-auto gap-1">
                   <TabsTrigger value="conciertos" className="flex items-center gap-2">
                     <Play className="h-4 w-4" />
                     Fechas
                   </TabsTrigger>
-                  <TabsTrigger value="transporte" className="flex items-center gap-2">
-                    <Bus className="h-4 w-4" />
-                    Transporte
-                  </TabsTrigger>
+                  {transportEvents.length > 0 && (
+                    <TabsTrigger value="transporte" className="flex items-center gap-2">
+                      <Bus className="h-4 w-4" />
+                      Transporte ({transportEvents.length})
+                    </TabsTrigger>
+                  )}
+                  {campingEvents.length > 0 && (
+                    <TabsTrigger value="camping" className="flex items-center gap-2">
+                      <Tent className="h-4 w-4" />
+                      Camping ({campingEvents.length})
+                    </TabsTrigger>
+                  )}
+                  {parkingEvents.length > 0 && (
+                    <TabsTrigger value="parking" className="flex items-center gap-2">
+                      <Car className="h-4 w-4" />
+                      Parking ({parkingEvents.length})
+                    </TabsTrigger>
+                  )}
                 </TabsList>
               )}
               
@@ -445,6 +507,56 @@ const FestivalDetalle = () => {
                           </div>
                         </div>
                         <div className="ring-2 ring-amber-500/50 rounded-lg overflow-hidden">
+                          <EventCard event={event as any} forceConcierto={true} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              )}
+              
+              {campingEvents.length > 0 && (
+                <TabsContent value="camping">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {campingEvents.map((event, index) => (
+                      <div
+                        key={event.event_id}
+                        className="animate-fade-in relative"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        {/* Camping badge overlay */}
+                        <div className="absolute -top-2 -left-2 z-10">
+                          <div className="bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                            <Tent className="h-3 w-3" />
+                            CAMPING
+                          </div>
+                        </div>
+                        <div className="ring-2 ring-emerald-600/50 rounded-lg overflow-hidden">
+                          <EventCard event={event as any} forceConcierto={true} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              )}
+              
+              {parkingEvents.length > 0 && (
+                <TabsContent value="parking">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {parkingEvents.map((event, index) => (
+                      <div
+                        key={event.event_id}
+                        className="animate-fade-in relative"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        {/* Parking badge overlay */}
+                        <div className="absolute -top-2 -left-2 z-10">
+                          <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                            <Car className="h-3 w-3" />
+                            PARKING
+                          </div>
+                        </div>
+                        <div className="ring-2 ring-blue-600/50 rounded-lg overflow-hidden">
                           <EventCard event={event as any} forceConcierto={true} />
                         </div>
                       </div>
