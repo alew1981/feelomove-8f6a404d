@@ -94,11 +94,36 @@ const Conciertos = () => {
       const normalizeText = (text: string) => 
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
       
-      return (data || []).filter(event => {
+      const filtered = (data || []).filter(event => {
         const name = normalizeText(event.name || "");
         const artist = normalizeText(event.artist_name || "");
         return !transportKeywords.some(kw => name.includes(kw) || artist.includes(kw));
       });
+
+      // Ensure on_sale_date is available for the "Inicio ventas" badge in EventCard.
+      // mv_concerts_cards doesn't expose on_sale_date, so we hydrate it from tm_tbl_events.
+      try {
+        const ids = filtered.map((e) => e.id).filter(Boolean);
+        if (ids.length === 0) return filtered;
+
+        const { data: saleDates, error: saleDatesError } = await supabase
+          .from("tm_tbl_events")
+          .select("id, on_sale_date")
+          .in("id", ids);
+
+        if (saleDatesError) throw saleDatesError;
+
+        const map = new Map<string, string | null>();
+        (saleDates || []).forEach((row) => map.set(String(row.id), row.on_sale_date ?? null));
+
+        return filtered.map((e) => ({
+          ...e,
+          on_sale_date: map.get(String(e.id)) ?? null,
+        }));
+      } catch {
+        // If hydration fails, still render the list without the badge.
+        return filtered;
+      }
     }
   });
 
