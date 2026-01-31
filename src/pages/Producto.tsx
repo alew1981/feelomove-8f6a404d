@@ -1057,11 +1057,6 @@ const Producto = () => {
                 </Button>
 
                 <div className="flex flex-col gap-1 items-end">
-                  {eventDetails.sold_out && (
-                    <Badge className="bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5">
-                      AGOTADO
-                    </Badge>
-                  )}
                   {hasVipTickets && (
                     <Badge variant="outline" className="bg-background/80 text-[9px] px-1.5 py-0.5">
                       VIP
