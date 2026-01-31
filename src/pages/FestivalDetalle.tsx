@@ -99,13 +99,32 @@ const FestivalDetalle = () => {
       
       if (error) throw error;
       
-      // Filter by corrected festival name AND city (both case insensitive)
+      // Normalize festival name for matching (remove dashes, lowercase)
+      const normalizedFestivalName = festivalName.toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      // Filter events that belong to this festival
       return (data || []).filter((e: any) => {
         const correctedName = getFestivalNombre(e as FestivalProductPage);
         const eventCity = e.venue_city || '';
-        const nameMatches = correctedName.toLowerCase() === festivalName.toLowerCase();
+        const eventName = (e.event_name || '').toLowerCase();
+        const venueName = (e.venue_name || '').toLowerCase();
+        
+        // Check 1: Festival name matches via corrected logic
+        const nameMatches = correctedName.toLowerCase() === normalizedFestivalName;
+        
+        // Check 2: For transport/service events, check if festival name appears in event_name
+        // e.g., "Servicio de Autobús - Malú - Concert Music Festival" contains "concert music festival"
+        const isServiceEvent = e.is_transport === true || e.is_package === true;
+        const festivalInEventName = eventName.includes(normalizedFestivalName.replace(/\s+/g, ' '));
+        
+        // Check 3: Venue name contains festival reference (e.g., "ServicioBus ConcertMusicFestival")
+        const festivalInVenueName = venueName.replace(/\s+/g, '').includes(normalizedFestivalName.replace(/\s+/g, ''));
+        
+        // City must match for regular events, but service events can have different venues
         const cityMatches = !cityName || eventCity.toLowerCase() === cityName.toLowerCase();
-        return nameMatches && cityMatches;
+        const serviceWithFestivalRef = isServiceEvent && (festivalInEventName || festivalInVenueName);
+        
+        return (nameMatches && cityMatches) || serviceWithFestivalRef;
       }) as FestivalProductPage[];
     },
     enabled: !!festivalSlug,
@@ -442,7 +461,7 @@ const FestivalDetalle = () => {
                 <TabsList className="mb-6 flex-wrap h-auto gap-1">
                   <TabsTrigger value="conciertos" className="flex items-center gap-2">
                     <Play className="h-4 w-4" />
-                    Fechas
+                    Entradas
                   </TabsTrigger>
                   {transportEvents.length > 0 && (
                     <TabsTrigger value="transporte" className="flex items-center gap-2">
