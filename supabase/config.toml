@@ -2,3 +2,6 @@ project_id = "tlqnlrrlxlvagpxyusjf"
 
 [functions.ticketmaster-prices-updater]
 verify_jwt = false
+
+[functions.ticketmaster-events-loader]
+verify_jwt = false
