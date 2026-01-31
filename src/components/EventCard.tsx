@@ -111,16 +111,14 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
       ? format(eventDate, "HH:mm") 
       : '';
 
-  // Check if event start date is in the future (show start date badge with time)
-  const isEventInFuture = eventDate && isFuture(eventDate);
-  const startDateBadgeFormatted = eventDate 
-    ? `${format(eventDate, "d MMM", { locale: es })} ${time && time !== "00:00" ? time + 'h' : ''}`
-    : '';
-
-  // Check if tickets are not yet on sale
+  // Check if tickets are not yet on sale - show "Inicio ventas" badge
   const onSaleDate = event.on_sale_date ? parseISO(event.on_sale_date) : null;
   const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
   const onSaleDateFormatted = onSaleDate ? format(onSaleDate, "d MMM yyyy", { locale: es }) : '';
+  // Format for the badge above event name: "DD mes HH:MMh"
+  const onSaleBadgeFormatted = onSaleDate 
+    ? `${format(onSaleDate, "d MMM", { locale: es })} ${format(onSaleDate, "HH:mm")}h`
+    : '';
 
   // Determine badge - show SOLD OUT if sold_out OR seats_available is explicitly false
   // seats_available = false means actually sold out; seats_available = undefined/null means we don't know
@@ -241,11 +239,11 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
 
               {/* Event Name - Overlaid at bottom of image */}
               <div className="absolute bottom-3 left-3 right-3 z-10">
-                {/* Badge "Inicio ventas" - Above event name when event is in future */}
-                {isEventInFuture && startDateBadgeFormatted && (
+                {/* Badge "Inicio ventas" - Above event name when on_sale_date is in future */}
+                {isNotYetOnSale && onSaleBadgeFormatted && (
                   <div className="mb-1.5">
                     <Badge className="text-[10px] font-bold px-2 py-1 bg-accent text-accent-foreground shadow-md uppercase">
-                      Inicio ventas: {startDateBadgeFormatted.trim()}
+                      Inicio ventas: {onSaleBadgeFormatted.trim()}
                     </Badge>
                   </div>
                 )}
