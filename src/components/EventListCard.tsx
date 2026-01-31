@@ -258,10 +258,6 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
                 <Clock className="h-3 w-3" />
                 Pronto
               </span>
-            ) : isSoldOut ? (
-              <span className="text-[10px] font-bold text-destructive uppercase">
-                Agotado
-              </span>
             ) : isEventPast ? (
               <span className="text-[10px] font-bold text-muted-foreground uppercase">
                 Pasado

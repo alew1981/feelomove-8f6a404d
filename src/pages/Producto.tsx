@@ -709,6 +709,14 @@ const Producto = () => {
   const hasAvailableTickets = ticketPrices.some((ticket) => ticket.availability !== "none");
   const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
 
+  // Badge "A la venta" (on_sale_date futura) - se muestra en el hero
+  const onSaleDateStr = (eventDetails as any).on_sale_date as string | null | undefined;
+  const onSaleDate = onSaleDateStr ? new Date(onSaleDateStr) : null;
+  const isNotYetOnSale = Boolean(onSaleDate && onSaleDate.getTime() > Date.now());
+  const onSaleBadgeFormatted = isNotYetOnSale && onSaleDate
+    ? `${onSaleDate.getDate()} ${formatDatePart(onSaleDate, "month")} ${formatDatePart(onSaleDate, "time")}h`
+    : null;
+
   // ⚡ NOTA: Función normal en lugar de useCallback para evitar error de hooks
   // (Los hooks no pueden estar después de returns condicionales)
   const handleTicketQuantityChange = (ticketId: string, change: number) => {
@@ -1057,6 +1065,12 @@ const Producto = () => {
                 </Button>
 
                 <div className="flex flex-col gap-1 items-end">
+                  {onSaleBadgeFormatted && (
+                    <Badge className="text-[10px] font-bold px-2 py-1.5 bg-accent text-accent-foreground flex flex-col items-center leading-tight shadow-lg uppercase">
+                      <span>A la venta:</span>
+                      <span>{onSaleBadgeFormatted}</span>
+                    </Badge>
+                  )}
                   {hasVipTickets && (
                     <Badge variant="outline" className="bg-background/80 text-[9px] px-1.5 py-0.5">
                       VIP
@@ -1132,19 +1146,15 @@ const Producto = () => {
                                       VIP
                                     </span>
                                   )}
-                                  {isSoldOut ? (
-                                    <span className="text-[10px] font-bold text-destructive bg-destructive/15 px-2 py-0.5 rounded border border-destructive/30">
-                                      AGOTADO
-                                    </span>
-                                  ) : isLimited ? (
+                                  {isLimited ? (
                                     <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
                                       ÚLTIMAS
                                     </span>
-                                  ) : (
+                                  ) : !isSoldOut ? (
                                     <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
                                       DISPONIBLE
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                                 <p className="text-sm sm:text-base font-bold uppercase text-foreground">
                                   {ticket.type}

@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "./ui/badge";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Clock } from "lucide-react";
+import { format, parseISO, isFuture } from "date-fns";
+import { es } from "date-fns/locale";
 import { EventProductPage } from "@/types/events.types";
 
 interface CollapsibleBadgesProps {
@@ -18,8 +20,34 @@ const CollapsibleBadges = ({
 }: CollapsibleBadgesProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const onSaleBadgeFormatted = useMemo(() => {
+    const onSaleDateStr = (eventDetails as any).on_sale_date as string | null | undefined;
+    if (!onSaleDateStr) return null;
+    const d = parseISO(onSaleDateStr);
+    if (!isFuture(d)) return null;
+    // "2 feb 09:00h" (requested)
+    return `${format(d, "d MMM", { locale: es })} ${format(d, "HH:mm")}h`;
+  }, [eventDetails]);
+
   // Build list of all badges
   const badges: { key: string; content: React.ReactNode; priority: number }[] = [];
+
+  // On-sale date badge (highest priority)
+  if (onSaleBadgeFormatted) {
+    badges.push({
+      key: "on_sale",
+      priority: 0,
+      content: (
+        <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase flex flex-col items-center leading-tight">
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            A la venta:
+          </span>
+          <span>{onSaleBadgeFormatted}</span>
+        </Badge>
+      ),
+    });
+  }
 
   // Availability Badge - highest priority
   if (isEventAvailable) {
@@ -29,16 +57,6 @@ const CollapsibleBadges = ({
       content: (
         <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
           DISPONIBLE
-        </Badge>
-      )
-    });
-  } else {
-    badges.push({
-      key: "soldout",
-      priority: 1,
-      content: (
-        <Badge className="bg-destructive text-destructive-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-          SOLD OUT
         </Badge>
       )
     });

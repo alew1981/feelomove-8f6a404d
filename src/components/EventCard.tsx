@@ -120,17 +120,12 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
     ? `${format(onSaleDate, "d MMM", { locale: es })} ${format(onSaleDate, "HH:mm")}h`
     : '';
 
-  // Determine badge - show SOLD OUT if sold_out OR seats_available is explicitly false
-  // seats_available = false means actually sold out; seats_available = undefined/null means we don't know
-  let badgeVariant: "disponible" | "agotado" | undefined;
+  // Availability badge: NEVER show SOLD OUT/AGOTADO (requested).
+  // Only show DISPONIBLE when we know for sure there are seats.
+  let badgeVariant: "disponible" | undefined;
   let badgeText: string | undefined;
 
-  const isEventSoldOut = event.sold_out === true || event.seats_available === false;
-
-  if (isEventSoldOut) {
-    badgeVariant = "agotado";
-    badgeText = "SOLD OUT";
-  } else if (event.seats_available === true) {
+  if (event.seats_available === true) {
     // Only show DISPONIBLE when we know for sure there are seats
     badgeVariant = "disponible";
     badgeText = "DISPONIBLE";
