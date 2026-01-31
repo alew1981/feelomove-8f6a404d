@@ -19,6 +19,14 @@ Disallow: /api/
 Disallow: /admin/
 Disallow: /checkout/
 Disallow: /404
+Disallow: /conciertos?q=
+Disallow: /festivales?q=
+Disallow: /*?q={search_term_string}
+
+# Bloquear rutas legacy que ya no existen
+Disallow: /artista/
+Disallow: /producto/
+Disallow: /evento/
 
 # Bloquear parámetros que consumen presupuesto de rastreo (global)
 Disallow: /*?sort=

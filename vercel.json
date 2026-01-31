@@ -111,6 +111,23 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/artista/:slug",
+      "destination": "/conciertos/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/producto/:slug",
+      "destination": "/conciertos",
+      "statusCode": 301
+    },
+    {
+      "source": "/conciertos/pink-floyds---the-wall-in-concert",
+      "destination": "/conciertos",
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",

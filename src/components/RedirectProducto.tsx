@@ -48,18 +48,19 @@ const RedirectProducto = () => {
       if (directEvent) return directEvent;
       
       // If not found, check if it's an old slug that needs redirect
+      // CRITICAL: Use event_id to get current slug, NOT new_slug (which may be outdated)
       const { data: redirect, error: redirectError } = await supabase
         .from("slug_redirects")
-        .select("new_slug")
+        .select("event_id")
         .eq("old_slug", slug)
         .maybeSingle();
       
-      if (redirect) {
-        // Get the event with the new slug
+      if (redirect?.event_id) {
+        // Get the event by ID to get the CURRENT slug (single-hop redirect)
         const { data: redirectedEvent } = await supabase
           .from("tm_tbl_events")
           .select("event_type, slug")
-          .eq("slug", redirect.new_slug)
+          .eq("id", redirect.event_id)
           .maybeSingle();
         
         return redirectedEvent;

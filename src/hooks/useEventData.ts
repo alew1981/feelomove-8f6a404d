@@ -121,38 +121,34 @@ export function useEventData(
 
       // Event not found in either view - check if it's a redirect case
       // OPTIMIZATION: Run redirect check only if event not found directly
+      // CRITICAL: Use event_id to get current slug, NOT new_slug (which may be outdated)
       const { data: redirectResult } = await supabase
         .from("slug_redirects")
-        .select("new_slug, event_id")
+        .select("event_id")
         .eq("old_slug", slug)
         .maybeSingle();
 
-      if (redirectResult?.new_slug && redirectResult.new_slug !== slug) {
-        // Verify the redirect target exists and is not a placeholder
-        const isPlaceholderSlug = (s: string) => /-9999(-\d{2})?(-\d{2})?$/.test(s);
+      if (redirectResult?.event_id) {
+        // Get current event data by ID (single-hop redirect)
+        const { data: targetEvent } = await supabase
+          .from("tm_tbl_events")
+          .select("event_type, slug")
+          .eq("id", redirectResult.event_id)
+          .maybeSingle();
         
-        if (!isPlaceholderSlug(redirectResult.new_slug)) {
-          // Get event type from the target event
-          const { data: targetEvent } = await supabase
-            .from("tm_tbl_events")
-            .select("event_type, slug")
-            .eq("id", redirectResult.event_id)
-            .maybeSingle();
+        if (targetEvent?.slug && targetEvent.slug !== slug) {
+          const targetPath = targetEvent.event_type === "festival"
+            ? `/festival/${targetEvent.slug}`
+            : `/concierto/${targetEvent.slug}`;
           
-          if (targetEvent) {
-            const targetPath = targetEvent.event_type === "festival"
-              ? `/festival/${targetEvent.slug}`
-              : `/concierto/${targetEvent.slug}`;
-            
-            return {
-              data: null,
-              canonicalSlug: targetEvent.slug,
-              needsRedirect: true,
-              redirectPath: targetPath,
-              needsRouteCorrection: false,
-              correctRoutePath: null,
-            };
-          }
+          return {
+            data: null,
+            canonicalSlug: targetEvent.slug,
+            needsRedirect: true,
+            redirectPath: targetPath,
+            needsRouteCorrection: false,
+            correctRoutePath: null,
+          };
         }
       }
 
