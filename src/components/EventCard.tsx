@@ -111,6 +111,9 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
       ? format(eventDate, "HH:mm") 
       : '';
 
+  // Check if event start date is in the future (show start date badge)
+  const isEventInFuture = eventDate && isFuture(eventDate);
+  const startDateBadgeFormatted = eventDate ? format(eventDate, "d MMM", { locale: es }) : '';
 
   // Check if tickets are not yet on sale
   const onSaleDate = event.on_sale_date ? parseISO(event.on_sale_date) : null;
@@ -219,6 +222,13 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                   <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
                     <Clock className="h-3.5 w-3.5" />
                     A la venta {onSaleDateFormatted}
+                  </Badge>
+                </div>
+              ) : isEventInFuture ? (
+                /* Badge "Próxima fecha" - When event date is in the future */
+                <div className="absolute right-2 top-2 z-20">
+                  <Badge className="text-xs font-bold px-3 py-1.5 bg-accent text-accent-foreground shadow-lg uppercase">
+                    {startDateBadgeFormatted}
                   </Badge>
                 </div>
               ) : badgeText && badgeVariant ? (
