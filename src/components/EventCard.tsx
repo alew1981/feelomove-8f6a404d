@@ -219,9 +219,12 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               {/* Badge "On Sale Soon" - Top Right (priority over availability) */}
               {isNotYetOnSale ? (
                 <div className="absolute right-2 top-2 z-20">
-                  <Badge className="text-xs font-bold px-3 py-1.5 bg-accent text-accent-foreground flex items-center gap-1.5 shadow-lg uppercase">
-                    <Clock className="h-3.5 w-3.5" />
-                    A la venta {onSaleBadgeFormatted}
+                  <Badge className="text-[10px] font-bold px-2 py-1.5 bg-accent text-accent-foreground flex flex-col items-center leading-tight shadow-lg uppercase">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      A la venta:
+                    </span>
+                    <span>{onSaleBadgeFormatted}</span>
                   </Badge>
                 </div>
               ) : badgeText && badgeVariant ? (
