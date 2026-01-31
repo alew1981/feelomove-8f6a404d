@@ -719,16 +719,21 @@ const Producto = () => {
 
   // ⚡ NOTA: Función normal en lugar de useCallback para evitar error de hooks
   // (Los hooks no pueden estar después de returns condicionales)
+  // ⚡ Usamos ticket.id como identificador único en el carrito (guardado en CartTicket.type)
   const handleTicketQuantityChange = (ticketId: string, change: number) => {
-    const existingTickets = cart?.event_id === eventDetails.event_id ? cart.tickets : [];
+    const existingTickets = cart?.event_id === eventDetails.event_id ? [...cart.tickets] : [];
     const ticketIndex = existingTickets.findIndex((t) => t.type === ticketId);
 
     const ticketData = ticketPrices.find((t) => t.id === ticketId);
-    if (!ticketData) return;
+    if (!ticketData) {
+      console.error('[Cart] ticketData not found for ticketId:', ticketId);
+      return;
+    }
 
     let updatedTickets = [...existingTickets];
 
     if (ticketIndex >= 0) {
+      // Ticket ya existe en carrito - actualizar cantidad
       const newQuantity = Math.max(0, Math.min(10, updatedTickets[ticketIndex].quantity + change));
       if (newQuantity === 0) {
         updatedTickets = updatedTickets.filter((t) => t.type !== ticketId);
@@ -739,9 +744,10 @@ const Producto = () => {
         };
       }
     } else if (change > 0) {
+      // Ticket nuevo - añadir al carrito
       updatedTickets.push({
-        type: ticketId,
-        description: `${ticketData.type} - ${ticketData.description || ticketData.code}`,
+        type: ticketId, // Usamos ticketId (ticket.id) como identificador único
+        description: `${ticketData.type}${ticketData.description ? ` - ${ticketData.description}` : ticketData.code ? ` - ${ticketData.code}` : ''}`,
         price: ticketData.price,
         fees: ticketData.fees,
         quantity: 1,
