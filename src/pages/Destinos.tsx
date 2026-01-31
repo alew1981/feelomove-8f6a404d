@@ -249,11 +249,15 @@ const Destinos = () => {
         </div>
 
         {/* Mobile: LCP-optimized Title - Renders INSTANTLY without waiting for data */}
-        <div className="md:hidden mb-4" style={{ minHeight: '28px' }}>
-          <h1 className="text-xl font-bold text-foreground">
-            Destinos {!isLoading && filteredCities ? `(${filteredCities.length})` : ''}
-          </h1>
-        </div>
+        <h1 
+          className="md:hidden text-xl font-bold text-foreground mb-4"
+          style={{ 
+            minHeight: '28px',
+            contain: 'layout style',
+          }}
+        >
+          Destinos {!isLoading && filteredCities ? `(${filteredCities.length})` : ''}
+        </h1>
 
         {/* Search Bar */}
         <div className="relative mb-3">
@@ -303,34 +307,41 @@ const Destinos = () => {
           </Suspense>
         </div>
 
-        {isLoading ? (
-          <>
-            {/* Mobile: List Skeletons with stable height */}
-            <div className="md:hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
-              {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
-            </div>
-            {/* Desktop: Card Grid Skeletons */}
-            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
-            </div>
-          </>
-        ) : filteredCities.length === 0 ? (
-          <div className="text-center py-16" style={{ minHeight: '300px' }}><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
-        ) : (
-          <>
-            {/* Mobile: Virtualized List - Only renders visible items */}
-            <div className="md:hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
-              <Suspense fallback={
-                <div style={{ minHeight: 'calc(100vh - 200px)' }}>
-                  {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
-                </div>
-              }>
-                <VirtualizedDestinationList 
-                  cities={filteredCities} 
-                  isLoading={isLoading} 
-                />
-              </Suspense>
-            </div>
+        {/* Content container with stable dimensions to prevent CLS */}
+        <div 
+          style={{ 
+            minHeight: 'calc(100vh - 280px)',
+            contain: 'layout',
+          }}
+        >
+          {isLoading ? (
+            <>
+              {/* Mobile: List Skeletons with stable height */}
+              <div className="md:hidden">
+                {Array.from({ length: 10 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
+              </div>
+              {/* Desktop: Card Grid Skeletons */}
+              <div className="hidden md:grid grid-cols-3 gap-4">
+                {Array.from({ length: 12 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
+              </div>
+            </>
+          ) : filteredCities.length === 0 ? (
+            <div className="text-center py-16"><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
+          ) : (
+            <>
+              {/* Mobile: Virtualized List - Only renders visible items */}
+              <div className="md:hidden">
+                <Suspense fallback={
+                  <div>
+                    {Array.from({ length: 10 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
+                  </div>
+                }>
+                  <VirtualizedDestinationList 
+                    cities={filteredCities} 
+                    isLoading={isLoading} 
+                  />
+                </Suspense>
+              </div>
 
             {/* Desktop: 3-Column List Layout - Spacious design */}
             <div className="hidden md:grid grid-cols-3 gap-4">
@@ -366,13 +377,14 @@ const Destinos = () => {
                 );
               })}
             </div>
-            {displayedCities.length < filteredCities.length && (
-              <div ref={loadMoreRef} className="flex justify-center items-center py-12">
-                <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-              </div>
-            )}
-          </>
-        )}
+              {displayedCities.length < filteredCities.length && (
+                <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+                  <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
       <Suspense fallback={<div style={{ minHeight: '256px', contentVisibility: 'auto', containIntrinsicSize: '0 256px' }} />}>
         <Footer />
