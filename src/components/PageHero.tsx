@@ -44,11 +44,9 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
   return (
     <div 
       ref={heroRef}
-      className={`relative h-[200px] md:h-[280px] overflow-hidden rounded-xl mb-6 ${className}`}
+      className={`relative w-full h-[200px] md:h-[280px] overflow-hidden rounded-xl mb-6 ${className}`}
       style={{ 
         minHeight: '200px',
-        // Prevent CLS with explicit aspect ratio
-        aspectRatio: '3 / 1'
       }}
     >
       {/* LCP-optimized hero image with WebP proxy */}
