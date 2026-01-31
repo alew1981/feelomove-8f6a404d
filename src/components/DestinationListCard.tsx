@@ -117,10 +117,20 @@ DestinationListCard.displayName = "DestinationListCard";
 export default DestinationListCard;
 
 /**
- * Skeleton for DestinationListCard - shimmer effect
+ * Skeleton for DestinationListCard - shimmer effect with stable dimensions
+ * CRITICAL: Uses containIntrinsicSize to prevent CLS
  */
 export const DestinationListCardSkeleton = memo(() => (
-  <div className="flex items-center gap-3 px-4 h-[80px] min-h-[80px] border-b border-border/50">
+  <div 
+    className="flex items-center gap-3 px-4 border-b border-border/50"
+    style={{
+      height: '80px',
+      minHeight: '80px',
+      maxHeight: '80px',
+      containIntrinsicSize: '0 80px',
+      contain: 'strict',
+    }}
+  >
     {/* Icon */}
     <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getOptimizedHeroImage, generateHeroSrcSet } from "@/lib/imageOptimization";
 
 interface PageHeroProps {
   title: string;
@@ -11,7 +12,11 @@ interface PageHeroProps {
 const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }: PageHeroProps) => {
   // Use a default concert image if none provided
   const defaultImage = "https://s1.ticketm.net/dam/a/512/655083a1-b8c6-45f5-ba9a-f7c3bca2c512_EVENT_DETAIL_PAGE_16_9.jpg";
-  const finalImage = imageUrl && imageUrl !== "/placeholder.svg" ? imageUrl : defaultImage;
+  const rawImage = imageUrl && imageUrl !== "/placeholder.svg" ? imageUrl : defaultImage;
+  
+  // AGGRESSIVE optimization: compress via weserv proxy
+  const finalImage = getOptimizedHeroImage(rawImage);
+  const srcSet = generateHeroSrcSet(rawImage);
   
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -40,10 +45,17 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
     <div 
       ref={heroRef}
       className={`relative h-[200px] md:h-[280px] overflow-hidden rounded-xl mb-6 ${className}`}
+      style={{ 
+        minHeight: '200px',
+        // Prevent CLS with explicit aspect ratio
+        aspectRatio: '3 / 1'
+      }}
     >
-      {/* LCP-optimized hero image */}
+      {/* LCP-optimized hero image with WebP proxy */}
       <img
         src={finalImage}
+        srcSet={srcSet || undefined}
+        sizes="(max-width: 768px) 100vw, 1200px"
         alt={`${title} - FEELOMOVE+`}
         title={`${title} - FEELOMOVE+`}
         className="w-full h-full object-cover parallax-bg"
@@ -55,7 +67,6 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
         style={{
           transform: `translateY(${scrollOffset}px) scale(1.1)`,
           contentVisibility: priority ? 'visible' : 'auto',
-          aspectRatio: '3 / 1'
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />

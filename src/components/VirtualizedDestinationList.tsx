@@ -44,10 +44,10 @@ export default function VirtualizedDestinationList({
 
   const virtualItems = virtualizer.getVirtualItems();
 
-  // Loading state - show skeletons
+  // Loading state - show skeletons with stable height
   if (isLoading) {
     return (
-      <div className="space-y-0">
+      <div style={{ minHeight: 'calc(100vh - 200px)', contain: 'layout' }}>
         {Array.from({ length: 8 }).map((_, i) => (
           <DestinationListCardSkeleton key={i} />
         ))}
@@ -55,10 +55,10 @@ export default function VirtualizedDestinationList({
     );
   }
 
-  // Empty state
+  // Empty state with stable height
   if (cities.length === 0) {
     return (
-      <div className="text-center py-16">
+      <div className="text-center py-16" style={{ minHeight: '300px' }}>
         <p className="text-lg text-muted-foreground">No se encontraron destinos</p>
       </div>
     );
@@ -69,9 +69,11 @@ export default function VirtualizedDestinationList({
       ref={parentRef}
       className="-mx-4 overflow-auto"
       style={{
-        // Use viewport height minus navbar/search/filters
+        // Use viewport height minus navbar/search/filters with stable min-height
         height: 'calc(100vh - 180px)',
+        minHeight: 'calc(100vh - 180px)',
         contain: 'strict',
+        containIntrinsicSize: '0 calc(100vh - 180px)',
       }}
     >
       <div

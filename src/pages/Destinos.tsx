@@ -216,21 +216,20 @@ const Destinos = () => {
           { name: "Inicio", url: "/" },
           { name: "Destinos" }
         ]}
-        preloadImage={cities?.[0]?.ciudad_imagen}
       />
       <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 mt-16">
         
         {/* Breadcrumbs - Hidden on mobile, lazy loaded */}
-        <div className="mb-4 hidden md:block">
+        <div className="mb-4 hidden md:block" style={{ minHeight: '20px' }}>
           <Suspense fallback={<div className="h-5" />}>
             <Breadcrumbs />
           </Suspense>
         </div>
         
         {/* Hero Image - Hidden on mobile for faster results, lazy loaded */}
-        <div className="hidden md:block">
+        <div className="hidden md:block" style={{ minHeight: '340px' }}>
           <Suspense fallback={<div className="h-[340px] bg-muted/20 rounded-2xl animate-pulse" />}>
             <PageHero 
               title="Destinos Musicales en España" 
@@ -249,10 +248,10 @@ const Destinos = () => {
           </p>
         </div>
 
-        {/* Mobile: Compact Title */}
-        <div className="md:hidden mb-4">
+        {/* Mobile: LCP-optimized Title - Renders INSTANTLY without waiting for data */}
+        <div className="md:hidden mb-4" style={{ minHeight: '28px' }}>
           <h1 className="text-xl font-bold text-foreground">
-            Destinos ({filteredCities?.length || 0})
+            Destinos {!isLoading && filteredCities ? `(${filteredCities.length})` : ''}
           </h1>
         </div>
 
@@ -306,8 +305,8 @@ const Destinos = () => {
 
         {isLoading ? (
           <>
-            {/* Mobile: List Skeletons */}
-            <div className="md:hidden space-y-0">
+            {/* Mobile: List Skeletons with stable height */}
+            <div className="md:hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
               {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
             </div>
             {/* Desktop: Card Grid Skeletons */}
@@ -316,13 +315,13 @@ const Destinos = () => {
             </div>
           </>
         ) : filteredCities.length === 0 ? (
-          <div className="text-center py-16"><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
+          <div className="text-center py-16" style={{ minHeight: '300px' }}><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
         ) : (
           <>
             {/* Mobile: Virtualized List - Only renders visible items */}
-            <div className="md:hidden">
+            <div className="md:hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
               <Suspense fallback={
-                <div className="space-y-0">
+                <div style={{ minHeight: 'calc(100vh - 200px)' }}>
                   {Array.from({ length: 8 }).map((_, i) => <DestinationListCardSkeleton key={i} />)}
                 </div>
               }>
@@ -375,7 +374,7 @@ const Destinos = () => {
           </>
         )}
       </main>
-      <Suspense fallback={<div className="h-64 bg-muted/10" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 256px' }} />}>
+      <Suspense fallback={<div style={{ minHeight: '256px', contentVisibility: 'auto', containIntrinsicSize: '0 256px' }} />}>
         <Footer />
       </Suspense>
     </div>
