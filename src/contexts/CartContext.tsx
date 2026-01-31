@@ -70,15 +70,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addTickets = (eventId: string, eventDetails: any, tickets: CartTicket[]) => {
-    setCart({
+    // ⚡ FIX: Usar setCart con función para acceder al estado más reciente
+    // Esto evita el bug donde múltiples clicks rápidos sobrescriben tickets
+    setCart((prev) => ({
       event_id: eventId,
       event_name: eventDetails.event_name,
       event_date: eventDetails.event_date,
       venue_name: eventDetails.venue_name,
       venue_city: eventDetails.venue_city,
       tickets: tickets,
-      hotel: cart?.hotel,
-    });
+      hotel: prev?.event_id === eventId ? prev.hotel : undefined,
+    }));
   };
 
   const addHotel = (eventId: string, eventDetails: any, hotel: CartHotel) => {

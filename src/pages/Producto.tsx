@@ -293,6 +293,13 @@ const Producto = () => {
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } =
     useCart();
 
+  // ⚡ FIX: useRef para mantener referencia actualizada al cart
+  // Esto evita que múltiples clicks rápidos lean estado stale
+  const cartRef = useRef(cart);
+  useEffect(() => {
+    cartRef.current = cart;
+  }, [cart]);
+
   // EXTREME DEFERRAL: Non-critical UI waits 5s after hydration
   const [isInteractive, setIsInteractive] = useState(false);
   const [renderHotels] = useState(true);
@@ -720,8 +727,10 @@ const Producto = () => {
   // ⚡ NOTA: Función normal en lugar de useCallback para evitar error de hooks
   // (Los hooks no pueden estar después de returns condicionales)
   // ⚡ Usamos ticket.id como identificador único en el carrito (guardado en CartTicket.type)
+  // ⚡ FIX: Usamos cartRef.current para obtener el estado más reciente del carrito
   const handleTicketQuantityChange = (ticketId: string, change: number) => {
-    const existingTickets = cart?.event_id === eventDetails.event_id ? [...cart.tickets] : [];
+    const currentCart = cartRef.current;
+    const existingTickets = currentCart?.event_id === eventDetails.event_id ? [...currentCart.tickets] : [];
     const ticketIndex = existingTickets.findIndex((t) => t.type === ticketId);
 
     const ticketData = ticketPrices.find((t) => t.id === ticketId);
