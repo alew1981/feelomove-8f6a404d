@@ -111,9 +111,11 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
       ? format(eventDate, "HH:mm") 
       : '';
 
-  // Check if event start date is in the future (show start date badge)
+  // Check if event start date is in the future (show start date badge with time)
   const isEventInFuture = eventDate && isFuture(eventDate);
-  const startDateBadgeFormatted = eventDate ? format(eventDate, "d MMM", { locale: es }) : '';
+  const startDateBadgeFormatted = eventDate 
+    ? `${format(eventDate, "d MMM", { locale: es })} ${time && time !== "00:00" ? time + 'h' : ''}`
+    : '';
 
   // Check if tickets are not yet on sale
   const onSaleDate = event.on_sale_date ? parseISO(event.on_sale_date) : null;
@@ -224,13 +226,6 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     A la venta {onSaleDateFormatted}
                   </Badge>
                 </div>
-              ) : isEventInFuture ? (
-                /* Badge "Próxima fecha" - When event date is in the future */
-                <div className="absolute right-2 top-2 z-20">
-                  <Badge className="text-xs font-bold px-3 py-1.5 bg-accent text-accent-foreground shadow-lg uppercase">
-                    {startDateBadgeFormatted}
-                  </Badge>
-                </div>
               ) : badgeText && badgeVariant ? (
                 <div className="absolute left-2 top-0.5 z-20">
                   <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
@@ -246,6 +241,14 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
 
               {/* Event Name - Overlaid at bottom of image */}
               <div className="absolute bottom-3 left-3 right-3 z-10">
+                {/* Badge "Inicio ventas" - Above event name when event is in future */}
+                {isEventInFuture && startDateBadgeFormatted && (
+                  <div className="mb-1.5">
+                    <Badge className="text-[10px] font-bold px-2 py-1 bg-accent text-accent-foreground shadow-md uppercase">
+                      Inicio ventas: {startDateBadgeFormatted.trim()}
+                    </Badge>
+                  </div>
+                )}
                 <h3 className="text-white text-xl font-bold leading-tight tracking-tight font-['Poppins'] line-clamp-2 drop-shadow-lg" itemProp="name">
                   {eventName}
                 </h3>
