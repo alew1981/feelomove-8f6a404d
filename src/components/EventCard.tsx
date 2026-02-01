@@ -2,15 +2,26 @@ import { Link } from "react-router-dom";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MapPin, Clock } from "lucide-react";
-import { format, parseISO, isFuture } from "date-fns";
-import { es } from "date-fns/locale";
 import { useEffect, useState, memo, useRef, useCallback } from "react";
 import { CategoryBadge } from "./CategoryBadge";
 import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
 import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
+import { parseDate, isFuture, isPlaceholderDate, formatDay, formatMonth, formatYear, formatTime, formatShortDate, formatOnSaleBadge } from "@/lib/dateUtils";
+
+// Inline SVGs for critical icons (eliminates lucide-react from critical path)
+const MapPinIcon = () => (
+  <svg className="h-2.5 w-2.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
+  </svg>
+);
 
 interface EventCardProps {
   event: {
@@ -99,26 +110,23 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
   const hasVIP = badges.some((b: string) => /vip/i.test(b)) || /vip/i.test(eventName);
 
   // Handle null/undefined dates AND placeholder dates (9999-12-31)
-  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
   const hasDate = Boolean(event.event_date) && !isPlaceholderDate(event.event_date);
-  const eventDate = hasDate && event.event_date ? parseISO(event.event_date) : null;
-  const dayNumber = eventDate ? format(eventDate, "dd") : '';
-  const monthName = eventDate ? format(eventDate, "MMM", { locale: es }).toUpperCase() : '';
-  const year = eventDate ? format(eventDate, "yyyy") : '';
+  const eventDate = hasDate && event.event_date ? parseDate(event.event_date) : null;
+  const dayNumber = eventDate ? formatDay(eventDate, true) : '';
+  const monthName = eventDate ? formatMonth(eventDate).toUpperCase() : '';
+  const year = eventDate ? formatYear(eventDate) : '';
   const time = hasDate && event.local_event_date 
-    ? format(parseISO(event.local_event_date), "HH:mm") 
+    ? formatTime(parseDate(event.local_event_date)!) 
     : eventDate 
-      ? format(eventDate, "HH:mm") 
+      ? formatTime(eventDate) 
       : '';
 
   // Check if tickets are not yet on sale - show "Inicio ventas" badge
-  const onSaleDate = event.on_sale_date ? parseISO(event.on_sale_date) : null;
+  const onSaleDate = event.on_sale_date ? parseDate(event.on_sale_date) : null;
   const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
-  const onSaleDateFormatted = onSaleDate ? format(onSaleDate, "d MMM yyyy", { locale: es }) : '';
+  const onSaleDateFormatted = onSaleDate ? formatShortDate(onSaleDate) : '';
   // Format for the badge above event name: "DD mes HH:MMh"
-  const onSaleBadgeFormatted = onSaleDate 
-    ? `${format(onSaleDate, "d MMM", { locale: es })} ${format(onSaleDate, "HH:mm")}h`
-    : '';
+  const onSaleBadgeFormatted = onSaleDate ? formatOnSaleBadge(onSaleDate) : '';
 
   // Availability badge: NEVER show SOLD OUT/AGOTADO (requested).
   // Only show DISPONIBLE when we know for sure there are seats.
@@ -216,7 +224,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                 <div className="absolute right-2 top-2 z-20">
                   <Badge className="text-[10px] font-bold px-2 py-1.5 bg-accent text-accent-foreground flex flex-col items-center leading-tight shadow-lg uppercase">
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                      <ClockIcon />
                       A la venta:
                     </span>
                     <span>{onSaleBadgeFormatted}</span>
@@ -266,7 +274,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     itemScope 
                     itemType="https://schema.org/Place"
                   >
-                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" aria-hidden="true" />
+                    <MapPinIcon />
                     <span className="line-clamp-1 font-medium" itemProp="name">
                       {event.venue_city || 'Por confirmar'}
                     </span>

@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Heart } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { useFavorites } from "@/hooks/useFavorites";
+import { formatDay, formatMonth, formatYear, formatWeekday } from "@/lib/dateUtils";
+
+// Inline SVG for Heart icon
+const HeartIcon = ({ filled, className }: { filled: boolean; className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+  </svg>
+);
 
 interface FestivalHeroProps {
   title: string;

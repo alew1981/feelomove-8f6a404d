@@ -1,14 +1,25 @@
 import { Link } from "react-router-dom";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { MapPin, Clock, Ticket } from "lucide-react";
-import { format, parseISO, isFuture } from "date-fns";
-import { es } from "date-fns/locale";
 import { memo, useRef, useState, useEffect, useCallback } from "react";
 import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
+import { parseDate, isFuture, isPlaceholderDate, formatDay, formatMonth, formatYear } from "@/lib/dateUtils";
+
+// Inline SVGs for critical icons
+const MapPinIcon = () => (
+  <svg className="h-3 w-3 text-white/80 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
+  </svg>
+);
 
 interface EventCardCompactProps {
   event: {
@@ -79,19 +90,18 @@ const EventCardCompact = memo(({ event, priority = false, forceConcierto = false
   const imageUrl = event.image_large_url || event.event_image_large || event.image_standard_url || event.event_image_standard || "/placeholder.svg";
   const price = event.price_min_incl_fees ?? event.ticket_price_min ?? null;
 
-  // Handle dates
-  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
+  // Handle dates - use imported isPlaceholderDate
   const hasDate = Boolean(event.event_date) && !isPlaceholderDate(event.event_date);
-  const eventDate = hasDate && event.event_date ? parseISO(event.event_date) : null;
-  const dayNumber = eventDate ? format(eventDate, "d") : '';
-  const monthName = eventDate ? format(eventDate, "MMM", { locale: es }).toUpperCase() : '';
-  const year = eventDate ? format(eventDate, "yy") : '';
+  const eventDate = hasDate && event.event_date ? parseDate(event.event_date) : null;
+  const dayNumber = eventDate ? formatDay(eventDate) : '';
+  const monthName = eventDate ? formatMonth(eventDate).toUpperCase() : '';
+  const year = eventDate ? formatYear(eventDate, true) : '';
 
   // Check sold out status
   const isSoldOut = event.sold_out === true || event.seats_available === false;
   
   // Check if not yet on sale
-  const onSaleDate = event.on_sale_date ? parseISO(event.on_sale_date) : null;
+  const onSaleDate = event.on_sale_date ? parseDate(event.on_sale_date) : null;
   const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
 
   // Determine route
@@ -189,7 +199,7 @@ const EventCardCompact = memo(({ event, priority = false, forceConcierto = false
                   "flex items-center gap-1",
                 )}
               >
-                <Clock className="h-3 w-3" />
+                <ClockIcon />
                 Pronto
               </Badge>
             </div>
@@ -209,7 +219,7 @@ const EventCardCompact = memo(({ event, priority = false, forceConcierto = false
             {/* City + Price Row */}
             <div className="flex items-center justify-between gap-1">
               <div className="flex items-center gap-1 min-w-0">
-                <MapPin className="h-3 w-3 text-white/80 flex-shrink-0" />
+                <MapPinIcon />
                 <span className="text-[11px] text-white/90 font-medium truncate">
                   {event.venue_city}
                 </span>
