@@ -34,10 +34,10 @@ const CollapsibleBadges = ({
   const onSaleBadgeFormatted = useMemo(() => {
     const onSaleDateStr = (eventDetails as any).on_sale_date as string | null | undefined;
     if (!onSaleDateStr) return null;
-    const d = parseISO(onSaleDateStr);
-    if (!isFuture(d)) return null;
+    const d = parseDate(onSaleDateStr);
+    if (!d || !isFuture(d)) return null;
     // "2 feb 09:00h" (requested)
-    return `${format(d, "d MMM", { locale: es })} ${format(d, "HH:mm")}h`;
+    return formatOnSaleBadge(d);
   }, [eventDetails]);
 
   // Build list of all badges
@@ -51,7 +51,7 @@ const CollapsibleBadges = ({
       content: (
         <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase flex flex-col items-center leading-tight">
           <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+            <ClockIcon />
             A la venta:
           </span>
           <span>{onSaleBadgeFormatted}</span>
@@ -175,7 +175,7 @@ const CollapsibleBadges = ({
             className="bg-white/90 text-foreground font-bold px-2 py-1 text-[10px] rounded-full shadow-md flex items-center gap-0.5 hover:bg-white transition-colors"
           >
             +{hiddenCount}
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDownIcon />
           </button>
         )}
       </div>

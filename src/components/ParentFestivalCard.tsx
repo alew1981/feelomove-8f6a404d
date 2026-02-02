@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { memo, useState, useRef, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { parseDate, isFuture, isDatePast, isPlaceholderDate, formatDay, formatMonth, formatYear, formatShortDate } from "@/lib/dateUtils";
+import { parseDate, isFuture, isPast, formatDay, formatMonth, formatYear } from "@/lib/dateUtils";
 
 // Inline SVGs for critical icons
 const MapPinIcon = () => (
@@ -42,7 +42,7 @@ interface ParentFestivalCardProps {
 }
 
 // Helper to check if date is a placeholder (9999-12-31)
-const isPlaceholderDate = (dateStr: string | null | undefined): boolean => {
+const isPlaceholderDateCheck = (dateStr: string | null | undefined): boolean => {
   if (!dateStr) return true;
   return dateStr.startsWith('9999');
 };
@@ -86,21 +86,23 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
   const startDateSource = festival.start_date_manual || festival.min_start_date;
   const endDateSource = festival.end_date_manual || festival.max_end_date;
   
-  const isStartPlaceholder = isPlaceholderDate(startDateSource);
-  const isEndPlaceholder = isPlaceholderDate(endDateSource);
+  const isStartPlaceholder = isPlaceholderDateCheck(startDateSource);
+  const isEndPlaceholder = isPlaceholderDateCheck(endDateSource);
   const hasValidDates = !isStartPlaceholder && !isEndPlaceholder;
   
-  const startDate = hasValidDates ? parseISO(startDateSource) : null;
-  const endDate = hasValidDates ? parseISO(endDateSource) : null;
+  const startDate = hasValidDates ? parseDate(startDateSource) : null;
+  const endDate = hasValidDates ? parseDate(endDateSource) : null;
   
   // Check if event is in the past
   const eventDateForCheck = endDate || startDate;
-  const isEventPast = eventDateForCheck ? isPast(startOfDay(eventDateForCheck)) : false;
+  const isEventPast = eventDateForCheck ? isPast(eventDateForCheck) : false;
   
   // Check if tickets are not yet on sale
-  const onSaleDate = festival.earliest_on_sale_date ? parseISO(festival.earliest_on_sale_date) : null;
+  const onSaleDate = festival.earliest_on_sale_date ? parseDate(festival.earliest_on_sale_date) : null;
   const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
-  const onSaleDateFormatted = onSaleDate ? format(onSaleDate, "d MMM yyyy", { locale: es }) : '';
+  const onSaleDateFormatted = onSaleDate 
+    ? `${formatDay(onSaleDate)} ${formatMonth(onSaleDate)} ${formatYear(onSaleDate)}`
+    : '';
   
   // Format dates for badge
   let dateDisplay: React.ReactNode;
@@ -111,16 +113,16 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
         <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">FECHA</div>
         <div className="text-xs font-bold text-gray-700 mt-1 px-1">Pendiente</div>
         <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-2 border-t border-gray-200 pt-2">
-          <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+          <MapPinIcon />
           <span className="line-clamp-1 font-medium">{festival.venue_city || 'Por confirmar'}</span>
         </div>
       </div>
     );
   } else if (startDate && endDate) {
-    const monthName = format(startDate, "MMM", { locale: es }).toUpperCase();
-    const startDay = parseInt(format(startDate, "d"));
-    const endDay = parseInt(format(endDate, "d"));
-    const year = format(startDate, "yyyy");
+    const monthName = formatMonth(startDate).toUpperCase();
+    const startDay = parseInt(formatDay(startDate));
+    const endDay = parseInt(formatDay(endDate));
+    const year = formatYear(startDate);
     const isSameDay = startDay === endDay && startDate.getMonth() === endDate.getMonth();
     const dayDisplay = isSameDay ? startDay.toString() : `${startDay}-${endDay}`;
     
@@ -130,7 +132,7 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
         <div className="text-2xl font-black text-gray-900 leading-none my-1 whitespace-nowrap">{dayDisplay}</div>
         <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
         <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
-          <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+          <MapPinIcon />
           <span className="line-clamp-1 font-medium">{festival.venue_city}</span>
         </div>
       </div>
@@ -160,7 +162,7 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
                   className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                   loading={priority ? "eager" : "lazy"}
                   decoding={priority ? "sync" : "async"}
-                  {...(priority ? { fetchpriority: "high" } : {})}
+                  fetchPriority={priority ? "high" : "low"}
                   width={400}
                   height={224}
                   onLoad={() => setImageLoaded(true)}
@@ -182,7 +184,7 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
             {isNotYetOnSale ? (
               <div className="absolute right-2 top-2 z-20">
                 <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
-                  <Clock className="h-3.5 w-3.5" />
+                  <ClockIcon />
                   A la venta {onSaleDateFormatted}
                 </Badge>
               </div>
