@@ -3,15 +3,15 @@ import { Badge } from "./ui/badge";
 import { EventProductPage } from "@/types/events.types";
 import { parseDate, isFuture, formatOnSaleBadge } from "@/lib/dateUtils";
 
-// Inline SVGs for critical icons
+// Inline SVGs for critical icons (aria-hidden for screen reader accessibility)
 const ChevronDownIcon = () => (
-  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="m6 9 6 6 6-6"/>
   </svg>
 );
 
 const ClockIcon = () => (
-  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
   </svg>
 );

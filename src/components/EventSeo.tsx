@@ -210,19 +210,23 @@ export const EventSeo = ({
     const formattedStartDate = formatDateToISO(startDate);
     const formattedEndDate = formatDateToISO(endDate || startDate);
     
-    // Ensure we have at least one image
+    // ROBUST FALLBACK: Ensure we always have a valid image
     const primaryImage = image || images?.wide || images?.standard || 'https://feelomove.com/og-image.jpg';
     const absoluteUrl = url.startsWith('http') ? url : `https://feelomove.com${url}`;
     
-    // Build location object
+    // ROBUST FALLBACK: Build location object with defaults for missing data
+    // Google requires valid location - use sensible fallbacks
+    const locationName = escapeJsonLdString(location.name) || 'Recinto por confirmar';
+    const locationCity = escapeJsonLdString(location.city) || 'España';
+    
     const locationSchema: Record<string, unknown> = {
       '@type': 'Place',
-      name: escapeJsonLdString(location.name),
+      name: locationName,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: escapeJsonLdString(location.streetAddress || location.name),
-        addressLocality: escapeJsonLdString(location.city),
-        addressRegion: escapeJsonLdString(location.city), // Use city as region for Spain
+        streetAddress: escapeJsonLdString(location.streetAddress) || locationName,
+        addressLocality: locationCity,
+        addressRegion: locationCity, // Use city as region for Spain
         postalCode: location.postalCode || undefined,
         addressCountry: location.country || 'ES',
       },
@@ -250,39 +254,53 @@ export const EventSeo = ({
         }))
       : undefined;
     
-    // Build offers object
-    let offersSchema: Record<string, unknown> | undefined;
-    if (offers) {
-      offersSchema = {
-        '@type': offers.highPrice && offers.highPrice !== offers.lowPrice 
-          ? 'AggregateOffer' 
-          : 'Offer',
+    // ROBUST FALLBACK: Always build offers object with sensible defaults
+    // Google Rich Results requires valid offers - never leave empty
+    const buildOffersSchema = (): Record<string, unknown> => {
+      // Default values for missing data
+      const DEFAULT_PRICE = 0; // "Precio a consultar" represented as 0
+      const hasValidPrice = offers && offers.lowPrice > 0;
+      const lowPrice = hasValidPrice ? offers.lowPrice : DEFAULT_PRICE;
+      const highPrice = hasValidPrice && offers.highPrice ? offers.highPrice : lowPrice;
+      
+      // Determine availability based on status and offers
+      let availability = 'https://schema.org/InStock';
+      if (status === 'past' || status === 'cancelled') {
+        availability = 'https://schema.org/SoldOut';
+      } else if (offers?.availability) {
+        availability = getSchemaAvailability(offers.availability);
+      }
+      
+      const offersObj: Record<string, unknown> = {
+        '@type': highPrice > lowPrice ? 'AggregateOffer' : 'Offer',
         url: absoluteUrl,
-        priceCurrency: offers.currency || 'EUR',
-        availability: getSchemaAvailability(
-          status === 'past' || status === 'cancelled' ? 'SoldOut' : offers.availability
-        ),
+        priceCurrency: offers?.currency || 'EUR',
+        availability,
       };
       
       // Use lowPrice/highPrice for AggregateOffer, price for Offer
-      if (offers.highPrice && offers.highPrice !== offers.lowPrice) {
-        offersSchema.lowPrice = offers.lowPrice;
-        offersSchema.highPrice = offers.highPrice;
+      if (highPrice > lowPrice) {
+        offersObj.lowPrice = lowPrice;
+        offersObj.highPrice = highPrice;
       } else {
-        offersSchema.price = offers.lowPrice;
+        offersObj.price = lowPrice;
       }
       
-      if (offers.validFrom) {
-        offersSchema.validFrom = offers.validFrom;
+      if (offers?.validFrom) {
+        offersObj.validFrom = offers.validFrom;
       }
       
       // Add seller information
-      offersSchema.seller = {
+      offersObj.seller = {
         '@type': 'Organization',
         name: organizerName,
         url: organizerUrl,
       };
-    }
+      
+      return offersObj;
+    };
+    
+    const offersSchema = buildOffersSchema();
     
     // Build the complete JSON-LD object with REQUIRED fields first
     const schema: Record<string, unknown> = {
@@ -328,9 +346,8 @@ export const EventSeo = ({
       schema.performer = performerSchema;
     }
     
-    if (offersSchema) {
-      schema.offers = offersSchema;
-    }
+    // ALWAYS include offers (with fallbacks) - Google Rich Results requirement
+    schema.offers = offersSchema;
     
     return schema;
   }, [

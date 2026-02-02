@@ -13,8 +13,6 @@ import { SEOHead } from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, MapPin, ArrowLeft, Bus, Play, Music, Users, Tent, Car } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { formatFestivalDateRange, getFestivalDurationText } from "@/lib/festivalUtils";
 import { FestivalServices } from "@/components/FestivalServices";
 import { FestivalProductPage } from "@/types/events.types";
@@ -363,6 +361,11 @@ const FestivalDetalle = () => {
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           { name: "Festivales", url: "/festivales" },
+          // Include city with navigable link for proper hierarchy
+          ...(festivalData?.city ? [{
+            name: festivalData.city,
+            url: `/destinos/${festivalData.city.toLowerCase().replace(/\s+/g, '-')}`
+          }] : []),
           { name: festivalData?.name || festivalName }
         ]}
       />

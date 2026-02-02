@@ -6,21 +6,21 @@ import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
 import { parseDate, isFuture, isPast, isPlaceholderDate as isPlaceholder, formatDay, formatMonth, formatYear } from "@/lib/dateUtils";
 
-// Inline SVGs for critical icons (eliminates lucide-react from critical path)
+// Inline SVGs for critical icons (aria-hidden for accessibility)
 const ChevronRightIcon = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="m9 18 6-6-6-6"/>
   </svg>
 );
 
 const ClockIcon = () => (
-  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
   </svg>
 );
 
 const UsersIcon = () => (
-  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
   </svg>
 );
