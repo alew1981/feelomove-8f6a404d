@@ -123,26 +123,26 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
   const imageUrl = getOptimizedThumbnail(rawImageUrl);
 
   // Handle dates - support both NormalizedFestival and ParentFestival field names
-  const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith('9999');
+  const isPlaceholderDateFn = (d: string | null | undefined) => !d || d.startsWith('9999');
   // ParentFestival uses min_start_date/max_end_date, NormalizedFestival uses festival_start_date/festival_end_date
   const startDateStr = (festival as any).min_start_date || festival.festival_start_date || festival.event_date;
   const endDateStr = (festival as any).max_end_date || festival.festival_end_date;
   
-  const hasStartDate = Boolean(startDateStr) && !isPlaceholderDate(startDateStr);
-  const startDate = hasStartDate && startDateStr ? parseISO(startDateStr) : null;
-  const endDate = endDateStr && !isPlaceholderDate(endDateStr) ? parseISO(endDateStr) : null;
+  const hasStartDate = Boolean(startDateStr) && !isPlaceholderDateFn(startDateStr);
+  const startDate = hasStartDate && startDateStr ? parseDate(startDateStr) : null;
+  const endDate = endDateStr && !isPlaceholderDateFn(endDateStr) ? parseDate(endDateStr) : null;
   
   // For multi-day festivals, show day range
-  const startDay = startDate ? format(startDate, "d") : '--';
-  const endDay = endDate && endDate.getTime() !== startDate?.getTime() ? format(endDate, "d") : null;
-  const monthName = startDate ? format(startDate, "MMM", { locale: es }).toUpperCase() : '';
-  const year = startDate ? format(startDate, "yyyy") : ''; // Full year (2026)
+  const startDay = startDate ? formatDay(startDate) : '--';
+  const endDay = endDate && endDate.getTime() !== startDate?.getTime() ? formatDay(endDate) : null;
+  const monthName = startDate ? formatMonth(startDate).toUpperCase() : '';
+  const year = startDate ? formatYear(startDate) : ''; // Full year (2026)
 
   // Check sold out status
   const isSoldOut = festival.sold_out === true || festival.seats_available === false;
   
   // Check if not yet on sale
-  const onSaleDate = festival.on_sale_date ? parseISO(festival.on_sale_date) : null;
+  const onSaleDate = festival.on_sale_date ? parseDate(festival.on_sale_date) : null;
   const isNotYetOnSale = onSaleDate && isFuture(onSaleDate);
 
   // Check if event is past
@@ -268,7 +268,7 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
           <div className="flex items-center gap-1.5 mt-0.5">
             {isNotYetOnSale ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-500">
-                <Clock className="h-3 w-3" />
+                <ClockIcon />
                 Pronto
               </span>
             ) : isEventPast ? (
@@ -277,7 +277,7 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
               </span>
             ) : artistCount > 0 ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                <Users className="h-3 w-3" />
+                <UsersIcon />
                 {artistCount} artistas
               </span>
             ) : null}
@@ -293,7 +293,7 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
           "transition-transform duration-200",
           "group-hover:scale-110 group-active:scale-95"
         )}>
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRightIcon />
         </div>
       </div>
     </Link>

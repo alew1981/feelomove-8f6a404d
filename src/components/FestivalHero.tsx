@@ -71,15 +71,15 @@ const FestivalHero = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   
-  // Format date info
+  // Format date info using native utilities
   const dateInfo = useMemo(() => {
     if (!parsedDate) return { month: "FECHA", day: "", year: "", time: "", weekday: "", pendiente: true };
     return {
-      month: format(parsedDate, "MMM", { locale: es }).toUpperCase(),
-      day: format(parsedDate, "dd"),
-      year: format(parsedDate, "yyyy"),
-      time: format(parsedDate, "HH:mm"),
-      weekday: format(parsedDate, "EEEE", { locale: es }).toUpperCase(),
+      month: formatMonth(parsedDate).toUpperCase(),
+      day: formatDay(parsedDate).padStart(2, '0'),
+      year: formatYear(parsedDate),
+      time: parsedDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      weekday: formatWeekday(parsedDate).toUpperCase(),
       pendiente: false,
     };
   }, [parsedDate]);
@@ -197,7 +197,8 @@ const FestivalHero = ({
             className="p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
             aria-label={isFavorite(eventId) ? "Quitar de favoritos" : "Añadir a favoritos"}
           >
-            <Heart
+            <HeartIcon
+              filled={isFavorite(eventId)}
               className={`h-6 w-6 ${
                 isFavorite(eventId) ? "fill-red-500 text-red-500" : "text-white"
               }`}
