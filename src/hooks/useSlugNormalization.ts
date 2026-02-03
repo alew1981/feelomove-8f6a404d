@@ -20,6 +20,9 @@ const NUMERIC_SUFFIX_REGEX = /-(\d{1,2})$/;
 // Year pattern to exclude from numeric suffix removal
 const YEAR_PATTERN = /-20[2-9]\d$/;
 
+// Old date suffix pattern: -2024-12-25, -2025-01-15 (outdated dates to clean)
+const OLD_DATE_SUFFIX_REGEX = /-20(2[0-4]|25)-\d{2}-\d{2}$/; // 2020-2025 dates
+
 // Noise words that trigger redirect (from slugUtils)
 const NOISE_WORDS = [
   'paquetes-vip', 'paquete-vip', 'vip-paquetes', 'vip-paquete',
@@ -53,6 +56,20 @@ const stripNumericSuffix = (slug: string): { cleaned: string; hadSuffix: boolean
   }
   
   return { cleaned: slug, hadSuffix: false };
+};
+
+/**
+ * Removes old date suffixes (e.g., -2025-01-15 for past events)
+ * This redirects outdated URLs to the current version
+ */
+const stripOldDateSuffix = (slug: string): { cleaned: string; hadOldDate: boolean } => {
+  const match = slug.match(OLD_DATE_SUFFIX_REGEX);
+  if (match) {
+    // Extract artist-city part (first segments before the date)
+    const cleaned = slug.replace(OLD_DATE_SUFFIX_REGEX, '');
+    return { cleaned, hadOldDate: true };
+  }
+  return { cleaned: slug, hadOldDate: false };
 };
 
 /**
@@ -110,6 +127,13 @@ export function useSlugNormalization(
         const { cleaned: noSuffix, hadSuffix } = stripNumericSuffix(cleanedSlug);
         if (hadSuffix) {
           cleanedSlug = noSuffix;
+          needsRedirect = true;
+        }
+        
+        // Strip old date suffixes (e.g., -2025-01-15 for outdated URLs)
+        const { cleaned: noOldDate, hadOldDate } = stripOldDateSuffix(cleanedSlug);
+        if (hadOldDate) {
+          cleanedSlug = noOldDate;
           needsRedirect = true;
         }
         
