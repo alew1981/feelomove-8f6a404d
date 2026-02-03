@@ -126,6 +126,19 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    /* Prevent font-swap reflows by setting text-rendering */
+    text-rendering: optimizeSpeed;
+  }
+  
+  /* Hero section containment to isolate reflows */
+  .hero-section {
+    contain: layout style;
+  }
+  
+  /* Hero image dimensions - prevent layout shift */
+  .hero-image {
+    contain: strict;
+    will-change: auto;
   }
 }
 
@@ -138,6 +151,15 @@ All colors MUST be HSL.
   
   .content-visibility-auto {
     content-visibility: auto;
+  }
+  
+  /* CSS Containment: Prevent forced reflows from propagating */
+  .contain-layout {
+    contain: layout style;
+  }
+  
+  .contain-strict {
+    contain: strict;
   }
   
   /* Animation delays for staggered entrance */
