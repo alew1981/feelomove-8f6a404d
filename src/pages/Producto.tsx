@@ -312,19 +312,22 @@ const Producto = () => {
     if (hasNavigatedRef.current) return;
     if (isLoading) return;
 
+    // CRITICAL SEO: Use window.location.replace for redirects to ensure Googlebot sees 301
     if (eventResult?.needsRedirect && eventResult.redirectPath) {
-      console.log("[Producto] Redirecting to:", eventResult.redirectPath);
+      console.log("[Producto] SEO redirect to:", eventResult.redirectPath);
       hasNavigatedRef.current = true;
-      navigate(eventResult.redirectPath, { replace: true });
+      // Use window.location.replace for SEO-friendly redirect that Googlebot respects
+      window.location.replace(eventResult.redirectPath);
       return;
     }
     if (eventResult?.needsRouteCorrection && eventResult.correctRoutePath) {
       console.log("[Producto] Route correction to:", eventResult.correctRoutePath);
       hasNavigatedRef.current = true;
-      navigate(eventResult.correctRoutePath, { replace: true });
+      // Use window.location.replace for SEO-friendly redirect
+      window.location.replace(eventResult.correctRoutePath);
       return;
     }
-  }, [eventResult, navigate, isLoading]);
+  }, [eventResult, isLoading]);
 
   const eventData = eventResult?.data;
   const rpcCanonicalSlug = eventResult?.canonicalSlug || null;
