@@ -5,8 +5,11 @@ import { Input } from "./ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
-// Hero image served from public folder for LCP preload discovery
-const heroConcertImage = "/images/hero-concert.webp";
+
+// Hero image optimized via wsrv.nl proxy for compression (~1.2MB savings)
+// Using quality 75 and webp output for optimal LCP performance
+const HERO_BASE_URL = "https://feelomove.com/images/hero-concert.webp";
+const heroConcertImage = `https://wsrv.nl/?url=${encodeURIComponent(HERO_BASE_URL)}&w=1920&h=1080&fit=cover&q=75&output=webp`;
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (

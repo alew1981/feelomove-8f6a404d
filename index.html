@@ -35,10 +35,11 @@
     <!-- fonts.googleapis.com REMOVED - using inline @font-face, only need gstatic -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://wcyjuytpxxqailtixept.supabase.co" crossorigin>
-    <!-- images.weserv.nl upgraded to preconnect for LCP image optimization (~300ms savings) -->
-    <link rel="preconnect" href="https://images.weserv.nl" crossorigin>
+    <!-- wsrv.nl for LCP hero image optimization (compressed webp delivery) -->
+    <link rel="preconnect" href="https://wsrv.nl" crossorigin>
     <!-- dns-prefetch for secondary origins -->
     <link rel="dns-prefetch" href="https://s1.ticketm.net">
+    <link rel="dns-prefetch" href="https://images.weserv.nl">
     
     <!-- Preload critical font for faster text rendering (reduced to single weight) -->
     <link rel="preload" 
@@ -47,8 +48,8 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- LCP Hero image preload - uses stable public URL for immediate discovery -->
-    <link rel="preload" href="/images/hero-concert.webp" as="image" type="image/webp" fetchpriority="high">
+    <!-- LCP Hero image preload - compressed via wsrv.nl proxy (~1.2MB savings) -->
+    <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&amp;w=1920&amp;h=1080&amp;fit=cover&amp;q=75&amp;output=webp" as="image" type="image/webp" fetchpriority="high">
     
     
     <!-- CRITICAL CSS: Inline styles for instant FCP (< 0.5s) -->
