@@ -1,12 +1,16 @@
 import { useEffect, lazy, Suspense } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
-import Index from "./pages/Index";
-import { Skeleton } from "@/components/ui/skeleton";
 import ErrorBoundary from "@/components/ErrorBoundary";
+
+// Lazy load Radix-heavy UI components to reduce initial JS execution time
+// These are not critical for first paint
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const TooltipProvider = lazy(() => import("@/components/ui/tooltip").then(m => ({ default: m.TooltipProvider })));
+
+// Lazy load Index to defer Radix bundle loading
+const Index = lazy(() => import("./pages/Index"));
 
 // Lazy load all pages except Index for faster initial load
 const About = lazy(() => import("./pages/About"));
@@ -53,39 +57,38 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Loading fallback component with shimmer effect - matches actual page structure
+// CSS-only loading fallback - no Radix/Skeleton dependency for faster initial load
 const PageLoader = () => (
   <div className="min-h-screen bg-background">
-    {/* Navbar skeleton */}
+    {/* Navbar skeleton - pure CSS */}
     <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-16">
       <div className="container mx-auto px-4 h-full flex items-center justify-between">
-        <Skeleton className="h-8 w-32" />
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
         <div className="hidden md:flex gap-6">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
+          <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-20 bg-muted rounded animate-pulse" />
         </div>
       </div>
     </div>
     
-    {/* Hero skeleton */}
+    {/* Hero skeleton - pure CSS */}
     <div className="pt-16">
-      <Skeleton className="h-64 w-full" />
+      <div className="h-64 w-full bg-muted animate-pulse" />
     </div>
     
-    {/* Content skeleton */}
+    {/* Content skeleton - pure CSS */}
     <div className="container mx-auto px-4 py-8">
-      <Skeleton className="h-8 w-48 mb-4" />
-      <Skeleton className="h-4 w-full max-w-2xl mb-8" />
+      <div className="h-8 w-48 mb-4 bg-muted rounded animate-pulse" />
+      <div className="h-4 w-full max-w-2xl mb-8 bg-muted rounded animate-pulse" />
       
-      {/* Cards grid skeleton */}
+      {/* Cards grid skeleton - pure CSS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="space-y-3">
-            <Skeleton className="h-56 w-full rounded-lg" />
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-10 w-full" />
+            <div className="h-56 w-full rounded-lg bg-muted animate-pulse" />
+            <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
+            <div className="h-10 w-full bg-muted rounded animate-pulse" />
           </div>
         ))}
       </div>
@@ -135,14 +138,18 @@ const RedirectDestinoMalformed = () => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Suspense fallback={<PageLoader />}>
-            <PageWrapper>
-              <Routes>
+      {/* Lazy load Radix providers with Suspense - defers vendor-radix bundle */}
+      <Suspense fallback={null}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </Suspense>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Suspense fallback={<PageLoader />}>
+          <PageWrapper>
+            <Routes>
                 {/* Static routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
@@ -199,7 +206,6 @@ const App = () => (
             </PageWrapper>
           </Suspense>
         </BrowserRouter>
-      </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
