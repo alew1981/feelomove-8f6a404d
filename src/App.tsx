@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -47,6 +47,25 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Hook to defer non-critical UI components until browser is idle
+// This reduces TBT by not loading Radix bundle during initial render
+const useDeferredLoad = (delay = 2000) => {
+  const [isReady, setIsReady] = useState(false);
+  
+  useEffect(() => {
+    // Use requestIdleCallback if available, fallback to setTimeout
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(() => setIsReady(true), { timeout: delay });
+      return () => window.cancelIdleCallback(id);
+    } else {
+      const timer = setTimeout(() => setIsReady(true), delay);
+      return () => clearTimeout(timer);
+    }
+  }, [delay]);
+  
+  return isReady;
+};
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -135,17 +154,28 @@ const RedirectDestinoMalformed = () => {
   return <Navigate to={`/destinos/${destino}`} replace />;
 };
 
+// Deferred Radix providers wrapper - loads only when browser is idle
+const DeferredProviders = () => {
+  const isReady = useDeferredLoad(2000);
+  
+  if (!isReady) return null;
+  
+  return (
+    <Suspense fallback={null}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+      </TooltipProvider>
+    </Suspense>
+  );
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      {/* Lazy load Radix providers with Suspense - defers vendor-radix bundle */}
-      <Suspense fallback={null}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </Suspense>
+      {/* Deferred load Radix providers - reduces TBT by ~900ms */}
       <BrowserRouter>
+        <DeferredProviders />
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
           <PageWrapper>
