@@ -16,16 +16,46 @@ const NotFound = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    const pathname = location.pathname;
     const fullUrl = window.location.href;
     const referrer = document.referrer || "direct";
     
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    // CRITICAL SEO: Anti-404 catch-all for concert/festival paths
+    // Redirect malformed or non-existent event URLs to listing pages
+    if (pathname.startsWith('/concierto/') || pathname.startsWith('/conciertos/')) {
+      console.log('[SEO] 404 catch-all: redirecting malformed concert URL to /conciertos');
+      window.location.replace('/conciertos');
+      return;
+    }
+    
+    if (pathname.startsWith('/festival/') || pathname.startsWith('/festivales/')) {
+      console.log('[SEO] 404 catch-all: redirecting malformed festival URL to /festivales');
+      window.location.replace('/festivales');
+      return;
+    }
+    
+    // Catch WordPress legacy paths that somehow escaped vercel.json
+    if (pathname.startsWith('/product') || 
+        pathname.startsWith('/author/') || 
+        pathname.startsWith('/speaker/') ||
+        pathname.startsWith('/feed/') ||
+        pathname.startsWith('/wp-') ||
+        pathname.startsWith('/cart') ||
+        pathname.startsWith('/checkout') ||
+        pathname.startsWith('/my-account') ||
+        pathname.startsWith('/user-profile')) {
+      console.log('[SEO] 404 catch-all: redirecting WordPress legacy URL to home');
+      window.location.replace('/');
+      return;
+    }
+    
+    console.error("404 Error: User attempted to access non-existent route:", pathname);
     
     // Push to dataLayer for Google Analytics / GTM
     if (typeof window !== "undefined" && (window as any).dataLayer) {
       (window as any).dataLayer.push({
         event: "page_not_found",
-        page_path: location.pathname,
+        page_path: pathname,
         page_url: fullUrl,
         page_referrer: referrer,
         page_title: "404 - Página no encontrada"
@@ -35,7 +65,7 @@ const NotFound = () => {
     // Also log to console in development for debugging
     if (process.env.NODE_ENV === "development") {
       console.log("404 Analytics Event:", {
-        path: location.pathname,
+        path: pathname,
         url: fullUrl,
         referrer: referrer
       });

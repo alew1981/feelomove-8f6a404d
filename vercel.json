@@ -113,6 +113,61 @@
   ],
   "redirects": [
     {
+      "source": "/product/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/product-category/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/product-tag/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/author/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/speaker/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/feed/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/feed",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/user-profile/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/user-profile",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/conciertos/:artista/:ciudad",
+      "destination": "/concierto/:artista",
+      "permanent": true
+    },
+    {
+      "source": "/conciertos/:artista/:ciudad/:extra",
+      "destination": "/concierto/:artista",
+      "permanent": true
+    },
+    {
       "source": "/conciertos/:slug",
       "destination": "/concierto/:slug",
       "permanent": true
@@ -170,6 +225,46 @@
     {
       "source": "/conciertos/pink-floyds---the-wall-in-concert",
       "destination": "/conciertos",
+      "permanent": true
+    },
+    {
+      "source": "/wp-content/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-admin/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-includes/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/wp-json/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/xmlrpc.php",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/cart/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/checkout/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/my-account/:path*",
+      "destination": "/",
       "permanent": true
     }
   ],
