@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 /**
@@ -6,10 +6,12 @@ import { useLocation } from 'react-router-dom';
  * This prevents Google from seeing duplicate/empty meta tags on SPA pages.
  * 
  * Strategy:
- * 1. Parse the slug from URL immediately
- * 2. Generate SEO-optimized title/description from slug patterns
- * 3. Inject into DOM using useLayoutEffect (synchronous, before paint)
- * 4. Set canonical URL cleaned of all query params
+ * IMPORTANT (2026-02): To avoid duplicated tags in Google Search Console,
+ * this hook MUST NOT create <meta> or <link rel="canonical"> elements directly.
+ * All SEO tags are generated via react-helmet-async in SEOHead.tsx.
+ *
+ * We keep ONLY an instant document.title update (single node) for fast feedback
+ * while route-level components fetch data and render <SEOHead />.
  */
 
 // Spanish month names for date extraction
@@ -124,56 +126,6 @@ const generateArtistSEO = (artistSlug: string): { title: string; description: st
 };
 
 /**
- * Clean canonical URL - strips all query params and tracking
- */
-const getCleanCanonical = (pathname: string): string => {
-  const siteUrl = 'https://feelomove.com';
-  
-  // Clean the path
-  let cleanPath = pathname
-    .toLowerCase()
-    .replace(/\/+$/, ''); // Remove trailing slashes
-  
-  // Remove numeric suffix (-1, -2) but NOT years (-2026)
-  if (/-\d{1,2}$/.test(cleanPath) && !/-20[2-9]\d$/.test(cleanPath)) {
-    cleanPath = cleanPath.replace(/-\d{1,2}$/, '');
-  }
-  
-  return `${siteUrl}${cleanPath}`;
-};
-
-/**
- * Inject meta tag into document head
- */
-const setMetaTag = (name: string, content: string, isProperty = false): void => {
-  const attribute = isProperty ? 'property' : 'name';
-  let tag = document.querySelector(`meta[${attribute}="${name}"]`) as HTMLMetaElement;
-  
-  if (!tag) {
-    tag = document.createElement('meta');
-    tag.setAttribute(attribute, name);
-    document.head.appendChild(tag);
-  }
-  
-  tag.setAttribute('content', content);
-};
-
-/**
- * Set or update canonical link
- */
-const setCanonical = (href: string): void => {
-  let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-  
-  if (!link) {
-    link = document.createElement('link');
-    link.setAttribute('rel', 'canonical');
-    document.head.appendChild(link);
-  }
-  
-  link.setAttribute('href', href);
-};
-
-/**
  * Main hook - call this on route pages to instantly inject SEO tags
  * This runs BEFORE React Helmet and BEFORE Supabase data loads
  */
@@ -186,7 +138,6 @@ export const useInstantSEO = () => {
     const cleanPath = pathname.split('?')[0].split('#')[0];
     
     let title = 'FEELOMOVE+ | Entradas Conciertos y Festivales España';
-    let description = 'Compra entradas para conciertos y festivales en España. Reserva hotel cerca del evento.';
     
     // Concert detail page: /concierto/:slug
     if (cleanPath.startsWith('/concierto/')) {
@@ -194,7 +145,7 @@ export const useInstantSEO = () => {
       if (slug) {
         const parsed = parseEventSlug(slug, false);
         title = generateSEOTitle(parsed);
-        description = generateSEODescription(parsed);
+        // description handled by SEOHead.tsx
       }
     }
     
@@ -204,7 +155,7 @@ export const useInstantSEO = () => {
       if (slug) {
         const parsed = parseEventSlug(slug, true);
         title = generateSEOTitle(parsed);
-        description = generateSEODescription(parsed);
+        // description handled by SEOHead.tsx
       }
     }
     
@@ -214,7 +165,7 @@ export const useInstantSEO = () => {
       if (artistSlug) {
         const seo = generateArtistSEO(artistSlug);
         title = seo.title;
-        description = seo.description;
+        // description handled by SEOHead.tsx
       }
     }
     
@@ -225,24 +176,13 @@ export const useInstantSEO = () => {
         const cityName = toTitleCase(citySlug.replace(/-/g, ' '));
         const year = new Date().getFullYear();
         title = `Conciertos en ${cityName} ${year} | FEELOMOVE+`;
-        description = `Descubre todos los conciertos y festivales en ${cityName}. Compra entradas + hotel para los mejores eventos musicales.`;
+        // description handled by SEOHead.tsx
       }
     }
     
-    // Set document title immediately
+    // IMPORTANT: Only update <title>. Do NOT write meta/canonical here;
+    // that would create duplicates alongside react-helmet-async (data-rh="true").
     document.title = title;
-    
-    // Inject meta tags synchronously
-    setMetaTag('description', description);
-    setMetaTag('og:title', title, true);
-    setMetaTag('og:description', description, true);
-    setMetaTag('twitter:title', title);
-    setMetaTag('twitter:description', description);
-    
-    // CRITICAL: Set canonical URL (cleaned of query params)
-    const canonical = getCleanCanonical(pathname);
-    setCanonical(canonical);
-    setMetaTag('og:url', canonical, true);
     
   }, [location.pathname]);
 };
