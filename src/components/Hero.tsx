@@ -220,9 +220,9 @@ const Hero = () => {
   };
 
   return (
-    <section className="hero-section relative min-h-[750px] flex items-center justify-center overflow-hidden">
+    <section className="hero-section relative min-h-[750px] flex items-center justify-center overflow-hidden" style={{ contain: 'layout style' }}>
       {/* Static Image Background - LCP optimized with critical rendering path */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" style={{ contain: 'strict' }}>
         {/* 
           LCP Optimization:
           - fetchpriority="high" tells browser this is critical
