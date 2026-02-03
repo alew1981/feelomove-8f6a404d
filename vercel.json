@@ -113,13 +113,38 @@
   ],
   "redirects": [
     {
+      "source": "/conciertos/:slug",
+      "destination": "/concierto/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/festivales/:slug",
+      "destination": "/festival/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/events/:id",
+      "destination": "/conciertos",
+      "statusCode": 301
+    },
+    {
+      "source": "/event/:id",
+      "destination": "/conciertos",
+      "statusCode": 301
+    },
+    {
       "source": "/artista/:slug",
       "destination": "/conciertos/:slug",
       "statusCode": 301
     },
     {
       "source": "/producto/:slug",
-      "destination": "/conciertos",
+      "destination": "/concierto/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/producto/:slug/feed",
+      "destination": "/concierto/:slug",
       "statusCode": 301
     },
     {

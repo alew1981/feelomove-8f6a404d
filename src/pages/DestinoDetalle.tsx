@@ -28,10 +28,43 @@ const normalizeSlug = (slug: string): string => {
     .toLowerCase();
 };
 
+/**
+ * CRITICAL: Generate SEO content from slug IMMEDIATELY
+ * This runs BEFORE any fetch to prevent Soft 404
+ */
+const generateCityNameFromSlug = (slug: string): string => {
+  // Handle common city slug patterns
+  const cityMap: Record<string, string> = {
+    'a-coruna': 'A Coruña',
+    'san-sebastian': 'San Sebastián',
+    'palma': 'Palma de Mallorca',
+    'malaga': 'Málaga',
+    'cordoba': 'Córdoba',
+    'cadiz': 'Cádiz',
+    'caceres': 'Cáceres',
+    'almeria': 'Almería',
+    'jaen': 'Jaén',
+    'leon': 'León',
+    'gijon': 'Gijón',
+  };
+  
+  if (cityMap[slug]) return cityMap[slug];
+  
+  // Default: capitalize each word
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const DestinoDetalle = () => {
   const { destino } = useParams<{ destino: string }>();
   const rawSlug = destino ? decodeURIComponent(destino) : "";
   const citySlug = normalizeSlug(rawSlug);
+  
+  // CRITICAL: Generate city name IMMEDIATELY from slug (no fetch)
+  // This ensures Google sees valid H1 and meta tags instantly
+  const cityNameFromSlug = generateCityNameFromSlug(citySlug);
   
   // Fetch SEO content from materialized view
   const { seoContent } = useAggregationSEO(citySlug, 'city');
@@ -110,8 +143,8 @@ const DestinoDetalle = () => {
     return allEvents.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
   }, [concerts, festivals]);
 
-  // Get city name from first event or format from slug
-  const cityName = events[0]?.venue_city || citySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  // CRITICAL: Use immediate city name from slug, fallback to fetched data
+  const cityName = events[0]?.venue_city || cityNameFromSlug;
   
   // Get hero image - prefer city image, fallback to first event
   const heroImage = cityImage || events[0]?.image_large_url || events[0]?.image_standard_url;
@@ -317,6 +350,10 @@ const DestinoDetalle = () => {
     ]
   };
 
+  // CRITICAL: Determine noindex ONLY after data loads AND confirms no events
+  // During loading, we index (to prevent Soft 404)
+  const shouldNoIndex = !isLoading && events.length === 0;
+
   return (
     <>
       <SEOHead
@@ -327,6 +364,7 @@ const DestinoDetalle = () => {
         jsonLd={[jsonLdData, breadcrumbJsonLd]}
         preloadImage={heroImage}
         ogImage={heroImage || undefined}
+        forceNoIndex={shouldNoIndex}
       />
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -337,11 +375,24 @@ const DestinoDetalle = () => {
             <Breadcrumbs />
           </div>
           
-          {/* Hero Image */}
+          {/* CRITICAL: H1 renders IMMEDIATELY with city name from slug */}
+          {/* This prevents Google from seeing empty content (Soft 404) */}
           <PageHero title={seoContent?.h1Content || cityName} imageUrl={heroImage} />
           
           {/* H2 universal (sr-only) para evitar salto de niveles: H1 > H2 > H3 */}
           <h2 className="sr-only">Eventos y experiencias destacadas en {cityName}</h2>
+          
+          {/* CRITICAL SEO: Static semantic text ALWAYS visible */}
+          {/* Google sees this content immediately, even during loading */}
+          <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+            <p className="text-muted-foreground leading-relaxed">
+              Descubre los mejores conciertos, festivales y eventos en <strong>{cityName}</strong>. 
+              Compra tus entradas con hotel incluido y disfruta de una experiencia musical única. 
+              {concertsCount > 0 && ` ${concertsCount} conciertos disponibles.`}
+              {festivalsCount > 0 && ` ${festivalsCount} festivales próximos.`}
+              {minPriceEur && ` Entradas desde ${minPriceEur}€.`}
+            </p>
+          </div>
           
           {/* SEO Text */}
           <SEOText 

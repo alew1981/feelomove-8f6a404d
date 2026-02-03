@@ -27,6 +27,12 @@ Disallow: /*?q={search_term_string}
 Disallow: /artista/
 Disallow: /producto/
 Disallow: /evento/
+Disallow: /events/
+Disallow: /event/
+
+# Bloquear URLs plurales (redirigen a singular)
+Disallow: /conciertos/*-*
+Disallow: /festivales/*-*
 
 # Bloquear parámetros que consumen presupuesto de rastreo (global)
 Disallow: /*?sort=

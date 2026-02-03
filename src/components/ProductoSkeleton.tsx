@@ -8,73 +8,184 @@ import Footer from "@/components/Footer";
 /**
  * ProductoSkeleton - CLS-optimized skeleton for concert/festival detail pages
  * 
- * CRITICAL FOR PAGESPEED: Includes SEO meta tags so bots see valid content during loading
- * This prevents PageSpeed from measuring 404-like empty content
+ * CRITICAL FOR PAGESPEED & SEO: 
+ * - Includes SEO meta tags so bots see valid content during loading
+ * - Generates H1 and title IMMEDIATELY from slug (no fetch required)
+ * - This prevents Google from seeing empty content → avoids Soft 404
  * 
- * CRITICAL: All dimensions MUST match the real Producto.tsx layout exactly:
- * - Hero: h-[200px] sm:h-[340px] md:h-[420px] with aspect-ratio fallback
- * - Mobile title: text-xl (1.25rem/1.75 line-height = 1.75rem height)
- * - Tickets block: min-height 280px to prevent jumps
- * - Hotels block: min-height 400px to prevent jumps
+ * CRITICAL: All dimensions MUST match the real Producto.tsx layout exactly
  */
+
+/**
+ * Smart title generation from slug
+ * Converts: "bad-bunny-madrid-15-marzo-2026" → "Bad Bunny en Madrid"
+ * Also extracts: artist, city, date for SEO
+ */
+const parseSlugForSeo = (slug: string | undefined): {
+  title: string;
+  artist: string;
+  city: string;
+  dateText: string;
+  h1: string;
+  description: string;
+} => {
+  if (!slug) {
+    return {
+      title: 'Cargando evento...',
+      artist: '',
+      city: '',
+      dateText: '',
+      h1: 'Cargando evento...',
+      description: 'Compra entradas y reserva hotel para tu evento favorito.'
+    };
+  }
+  
+  const parts = slug.split('-');
+  
+  // Spanish months for detection
+  const spanishMonths = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+  
+  // Spanish cities for detection
+  const knownCities = [
+    'madrid', 'barcelona', 'valencia', 'sevilla', 'bilbao', 'malaga', 'zaragoza',
+    'murcia', 'palma', 'alicante', 'cordoba', 'valladolid', 'vigo', 'gijon',
+    'granada', 'santander', 'pamplona', 'almeria', 'burgos', 'salamanca'
+  ];
+  
+  let artist = '';
+  let city = '';
+  let day = '';
+  let month = '';
+  let year = '';
+  
+  // Find month index to split artist from date
+  let monthIndex = -1;
+  for (let i = 0; i < parts.length; i++) {
+    if (spanishMonths.includes(parts[i].toLowerCase())) {
+      monthIndex = i;
+      month = parts[i];
+      if (i > 0) day = parts[i - 1];
+      if (i < parts.length - 1) year = parts[i + 1];
+      break;
+    }
+  }
+  
+  // Find city
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (knownCities.includes(parts[i].toLowerCase())) {
+      city = parts[i].charAt(0).toUpperCase() + parts[i].slice(1);
+      
+      // Artist is everything before city
+      if (monthIndex === -1) {
+        // No date found, artist is before city
+        artist = parts.slice(0, i).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      } else {
+        // Artist is before day (which is before month)
+        const artistEnd = monthIndex > 0 ? monthIndex - 1 : i;
+        artist = parts.slice(0, Math.min(artistEnd, i)).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      }
+      break;
+    }
+  }
+  
+  // Fallback: If no city found, use first few parts as artist
+  if (!artist) {
+    const endIndex = monthIndex > 0 ? monthIndex - 1 : Math.min(3, parts.length);
+    artist = parts.slice(0, endIndex).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+  }
+  
+  // Format date text
+  const dateText = month 
+    ? `${day} de ${month.charAt(0).toUpperCase() + month.slice(1)}${year ? ` ${year}` : ''}`
+    : year || '';
+  
+  // Build title and H1
+  const title = city 
+    ? `${artist} en ${city}${year ? ` ${year}` : ''} - Entradas y Hotel`
+    : `${artist} - Entradas y Hotel`;
+  
+  const h1 = city 
+    ? `${artist} en ${city}`
+    : artist;
+  
+  const description = city
+    ? `Compra entradas para ${artist} en ${city}. ${dateText ? `Fecha: ${dateText}.` : ''} Reserva tu hotel cerca del recinto y disfruta del concierto sin preocupaciones.`
+    : `Compra entradas para ${artist}. Reserva tu hotel y disfruta del evento sin preocupaciones.`;
+  
+  return { title, artist, city, dateText, h1, description };
+};
+
 const ProductoSkeleton = () => {
   const { slug } = useParams();
   const location = useLocation();
   
-  // Generate a SEO-friendly title from slug for loading state
-  // This ensures PageSpeed sees valid meta tags during data fetch
-  const generateTitleFromSlug = (s: string | undefined): string => {
-    if (!s) return 'Cargando evento... | FEELOMOVE+';
-    // Convert slug like "nmixx-madrid-17-marzo-2026" to "Nmixx Madrid 17 Marzo 2026"
-    const parts = s.split('-');
-    const formatted = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-    return `${formatted} | FEELOMOVE+`;
-  };
+  // CRITICAL: Generate SEO content IMMEDIATELY from slug (no fetch)
+  const { title, h1, description, artist, city, dateText } = parseSlugForSeo(slug);
   
   const isFestival = location.pathname.startsWith('/festival/');
   const eventType = isFestival ? 'Festival' : 'Concierto';
-  const title = generateTitleFromSlug(slug);
+  const canonicalUrl = `https://feelomove.com${location.pathname}`;
+  
+  // JSON-LD for immediate SEO (even during loading)
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://feelomove.com" },
+      { "@type": "ListItem", "position": 2, "name": isFestival ? "Festivales" : "Conciertos", "item": `https://feelomove.com/${isFestival ? 'festivales' : 'conciertos'}` },
+      ...(city ? [{ "@type": "ListItem", "position": 3, "name": city, "item": `https://feelomove.com/destinos/${city.toLowerCase()}` }] : []),
+      { "@type": "ListItem", "position": city ? 4 : 3, "name": artist || h1, "item": canonicalUrl }
+    ]
+  };
   
   return (
     <div className="min-h-screen bg-background">
-      {/* SEO tags during loading - prevents PageSpeed from seeing empty/404 content */}
+      {/* CRITICAL SEO: Full meta tags from slug - Google sees valid content immediately */}
       <Helmet>
-        <title>{title}</title>
-        <meta name="description" content={`${eventType} - Compra entradas y reserva hotel. Cargando información del evento...`} />
-        <meta name="robots" content="noindex, nofollow" />
+        <title>{title} | FEELOMOVE+</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalUrl} />
+        {/* IMPORTANT: index,follow during loading - NOT noindex */}
+        <meta name="robots" content="index, follow" />
+        <meta property="og:title" content={`${title} | FEELOMOVE+`} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="event" />
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbJsonLd)}
+        </script>
       </Helmet>
+      
       <Navbar />
+      
       <main className="container mx-auto px-4 py-8 mt-20">
-        {/* Breadcrumbs Skeleton - matches real breadcrumb height */}
+        {/* Breadcrumbs Skeleton */}
         <div className="mb-4">
           <Skeleton className="h-5 w-64 rounded" />
         </div>
         
-        {/* Mobile: Event Name Skeleton - EXACT dimensions from Producto.tsx */}
-        {/* Real: text-xl font-black = ~28px height with line-height */}
+        {/* CRITICAL: H1 with real content from slug - NOT skeleton */}
+        {/* This is what Google reads for semantic content */}
         <div className="md:hidden mb-3">
-          <Skeleton className="h-7 w-3/4 rounded-md" />
-          <Skeleton className="h-5 w-1/2 mt-1 rounded" />
+          <h1 className="text-xl font-black text-foreground">{h1}</h1>
+          {city && dateText && (
+            <p className="text-muted-foreground text-sm mt-1">{city} · {dateText}</p>
+          )}
         </div>
         
-        {/* Hero Skeleton - EXACT dimensions: h-[200px] sm:h-[340px] md:h-[420px] */}
-        {/* Using fixed heights prevents CLS - aspect-ratio as fallback */}
+        {/* Hero Skeleton */}
         <div 
           className="relative rounded-2xl overflow-hidden mb-8"
-          style={{ 
-            // Reserve exact space to prevent layout shift
-            minHeight: '200px',
-            aspectRatio: '16/9'
-          }}
+          style={{ minHeight: '200px', aspectRatio: '16/9' }}
         >
-          {/* Fixed height container matching real hero */}
           <div className="relative h-[200px] sm:h-[340px] md:h-[420px] w-full">
             <Skeleton className="absolute inset-0 w-full h-full animate-shimmer" />
-            
-            {/* Gradient overlay placeholder */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
             
-            {/* Mobile: Compact date/city badge skeleton - matches real position */}
+            {/* Mobile: Date badge skeleton */}
             <div className="absolute left-2 bottom-2 sm:hidden">
               <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg px-2.5 py-2 flex items-center gap-2">
                 <div className="text-center border-r border-border pr-2">
@@ -88,19 +199,14 @@ const ProductoSkeleton = () => {
               </div>
             </div>
             
-            {/* Desktop: Full Date Card skeleton - EXACT dimensions from Producto.tsx */}
-            {/* Real: min-w-[140px] sm:min-w-[160px] md:min-w-[180px], p-4/5/6 */}
+            {/* Desktop: Date Card skeleton */}
             <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 hidden sm:block">
               <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
                 <div className="text-center">
-                  {/* Month: text-sm sm:text-base */}
                   <Skeleton className="h-4 sm:h-5 w-10 mx-auto rounded" />
-                  {/* Day: text-4xl sm:text-5xl md:text-6xl = 40-60px */}
                   <Skeleton className="h-12 sm:h-14 md:h-16 w-12 sm:w-14 md:w-16 mx-auto my-1 sm:my-2 rounded-lg" />
-                  {/* Year: text-base sm:text-lg */}
                   <Skeleton className="h-5 sm:h-6 w-12 mx-auto rounded" />
                   <div className="border-t border-border mt-3 pt-3 sm:mt-4 sm:pt-4">
-                    {/* Time: text-xl sm:text-2xl md:text-3xl */}
                     <Skeleton className="h-6 sm:h-7 md:h-8 w-16 mx-auto rounded" />
                     <div className="flex flex-col items-center gap-1 mt-2">
                       <Skeleton className="h-4 sm:h-5 w-20 rounded" />
@@ -111,19 +217,26 @@ const ProductoSkeleton = () => {
               </div>
             </div>
             
-            {/* Desktop: Center title skeleton */}
+            {/* Desktop: Center title - REAL H1 on desktop */}
             <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[50%] hidden sm:flex flex-col items-center gap-2">
               <Skeleton className="h-10 w-10 rounded-full" />
-              <Skeleton className="h-8 sm:h-10 md:h-12 w-64 sm:w-80 md:w-96 rounded-lg" />
+              <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{h1}</h1>
             </div>
           </div>
+        </div>
+
+        {/* SEO Text: Visible semantic content for Google */}
+        <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+          <p className="text-muted-foreground">
+            {description} Cargando información del {eventType.toLowerCase()}...
+          </p>
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Tickets & Hotels */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Tickets Section - min-height prevents CLS */}
+            {/* Tickets Section */}
             <Card className="border-border/50" style={{ minHeight: '280px' }}>
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -132,7 +245,6 @@ const ProductoSkeleton = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* 2x2 grid on mobile, 3 cols on desktop - matches real layout */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {[1, 2, 3, 4].map((i) => (
                     <div 
@@ -140,13 +252,9 @@ const ProductoSkeleton = () => {
                       className="border border-border/50 rounded-xl p-3 sm:p-4 space-y-2 sm:space-y-3"
                       style={{ minHeight: '140px' }}
                     >
-                      {/* Ticket type name */}
                       <Skeleton className="h-5 w-3/4 rounded" />
-                      {/* Description */}
                       <Skeleton className="h-4 w-full rounded" />
-                      {/* Availability badge */}
                       <Skeleton className="h-5 w-16 rounded-full" />
-                      {/* Price + button row */}
                       <div className="flex items-center justify-between pt-1 sm:pt-2">
                         <Skeleton className="h-6 w-16 rounded" />
                         <Skeleton className="h-8 w-20 rounded-lg" />
@@ -157,7 +265,7 @@ const ProductoSkeleton = () => {
               </CardContent>
             </Card>
 
-            {/* Hotels Section - min-height prevents CLS */}
+            {/* Hotels Section */}
             <Card className="border-border/50" style={{ minHeight: '400px' }}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -176,23 +284,16 @@ const ProductoSkeleton = () => {
                       className="flex gap-3 sm:gap-4 p-3 sm:p-4 border border-border/30 rounded-xl"
                       style={{ minHeight: '120px' }}
                     >
-                      {/* Hotel image - aspect matches real HotelCard */}
                       <Skeleton className="h-24 sm:h-28 w-28 sm:w-36 rounded-lg flex-shrink-0" />
                       <div className="flex-1 space-y-2 min-w-0">
-                        {/* Hotel name */}
                         <Skeleton className="h-5 w-3/4 rounded" />
-                        {/* Star rating */}
                         <Skeleton className="h-4 w-20 rounded" />
-                        {/* Facilities badges */}
                         <div className="flex gap-2 flex-wrap">
                           <Skeleton className="h-5 w-14 rounded-full" />
                           <Skeleton className="h-5 w-16 rounded-full" />
-                          <Skeleton className="h-5 w-12 rounded-full" />
                         </div>
-                        {/* Description line */}
                         <Skeleton className="h-4 w-full rounded" />
                       </div>
-                      {/* Price + button column */}
                       <div className="text-right space-y-2 flex-shrink-0 hidden sm:block">
                         <Skeleton className="h-6 w-20 ml-auto rounded" />
                         <Skeleton className="h-9 w-24 rounded-lg" />
@@ -211,45 +312,21 @@ const ProductoSkeleton = () => {
                 <Skeleton className="h-7 w-32 rounded-md" />
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Empty cart state */}
                 <div className="text-center py-4">
                   <Skeleton className="h-12 w-12 mx-auto rounded-full mb-3" />
                   <Skeleton className="h-5 w-40 mx-auto rounded" />
                   <Skeleton className="h-4 w-48 mx-auto mt-2 rounded" />
                 </div>
                 <Skeleton className="h-px w-full" />
-                {/* Summary rows */}
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <Skeleton className="h-5 w-24 rounded" />
                     <Skeleton className="h-5 w-16 rounded" />
                   </div>
-                  <div className="flex justify-between">
-                    <Skeleton className="h-5 w-20 rounded" />
-                    <Skeleton className="h-5 w-16 rounded" />
-                  </div>
                 </div>
-                <Skeleton className="h-px w-full" />
-                {/* Total */}
-                <div className="flex justify-between">
-                  <Skeleton className="h-7 w-28 rounded" />
-                  <Skeleton className="h-7 w-20 rounded" />
-                </div>
-                {/* Buttons */}
                 <Skeleton className="h-12 w-full rounded-lg" />
-                <Skeleton className="h-10 w-full rounded-lg" />
               </CardContent>
             </Card>
-          </div>
-        </div>
-        
-        {/* Related Links skeleton */}
-        <div className="mt-8" style={{ minHeight: '100px' }}>
-          <Skeleton className="h-6 w-48 mb-4 rounded" />
-          <div className="flex flex-wrap gap-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-8 w-24 rounded-full" />
-            ))}
           </div>
         </div>
       </main>
