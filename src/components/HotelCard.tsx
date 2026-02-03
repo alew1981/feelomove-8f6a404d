@@ -73,6 +73,9 @@ const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: str
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
         fetchPriority={priority ? "high" : "low"}
+        // SEO: Evita que Google intente validar origen de imágenes externas (cupid.travel)
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
         onError={() => setHasError(true)}
         width={450}
         height={253}

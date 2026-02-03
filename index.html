@@ -16,11 +16,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="x-dns-prefetch-control" content="on">
     
-    <!-- Meta tags base - dinámicos gestionados por react-helmet-async -->
-    <meta name="author" content="FEELOMOVE+" />
-    <meta name="language" content="es" />
+    <!-- NOTA: Todos los metatags SEO (title, description, canonical, og:*, twitter:*) 
+         son gestionados EXCLUSIVAMENTE por react-helmet-async en SEOHead.tsx -->
     <meta name="impact-site-verification" content="7cc879ee-e195-4865-9dd5-6dc6eb167203">
-    <link rel="publisher" href="https://feelomove.com" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
@@ -38,10 +36,9 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- LCP Hero image preload - MUST match exactly Hero.tsx URLs -->
-    <!-- Mobile: 600px, Desktop: 1200px - wsrv.nl proxy -->
-    <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=600&fit=cover&q=65&output=webp" as="image" type="image/webp" fetchpriority="high" media="(max-width: 767px)">
-    <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=1200&fit=cover&q=65&output=webp" as="image" type="image/webp" fetchpriority="high" media="(min-width: 768px)">
+    <!-- LCP Hero image preload - imagen LOCAL sin proxy externo -->
+    <!-- Mobile: 600px, Desktop: 1200px - DIRECTO desde nuestro dominio -->
+    <link rel="preload" href="/images/hero-concert.webp" as="image" type="image/webp" fetchpriority="high">
     
     
     <!-- CRITICAL CSS: Inline styles for instant FCP (< 0.5s) -->
