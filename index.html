@@ -48,8 +48,10 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- LCP Hero image preload - compressed via wsrv.nl proxy (~1.2MB savings) -->
-    <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&amp;w=1920&amp;h=1080&amp;fit=cover&amp;q=75&amp;output=webp" as="image" type="image/webp" fetchpriority="high">
+    <!-- LCP Hero image preload - responsive via wsrv.nl proxy -->
+    <!-- Mobile: 600px (~40KB), Desktop: 1200px (~100KB) -->
+    <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=600&fit=cover&q=75&output=webp" as="image" type="image/webp" fetchpriority="high" media="(max-width: 767px)">
+    <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=1200&fit=cover&q=75&output=webp" as="image" type="image/webp" fetchpriority="high" media="(min-width: 768px)">
     
     
     <!-- CRITICAL CSS: Inline styles for instant FCP (< 0.5s) -->

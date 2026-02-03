@@ -6,10 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
 
-// Hero image optimized via wsrv.nl proxy for compression (~1.2MB savings)
-// Using quality 75 and webp output for optimal LCP performance
+// Hero image optimized via wsrv.nl proxy for compression
+// Responsive: mobile (600px ~40KB), desktop (1200px ~100KB)
 const HERO_BASE_URL = "https://feelomove.com/images/hero-concert.webp";
-const heroConcertImage = `https://wsrv.nl/?url=${encodeURIComponent(HERO_BASE_URL)}&w=1920&h=1080&fit=cover&q=75&output=webp`;
+const HERO_ENCODED = encodeURIComponent(HERO_BASE_URL);
+// Mobile: 600px wide for <768px screens
+const heroMobile = `https://wsrv.nl/?url=${HERO_ENCODED}&w=600&fit=cover&q=75&output=webp`;
+// Desktop: 1200px for larger screens
+const heroDesktop = `https://wsrv.nl/?url=${HERO_ENCODED}&w=1200&fit=cover&q=75&output=webp`;
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (
@@ -240,16 +244,16 @@ const Hero = () => {
           - Vite hashes the image, so we serve appropriately sized versions
         */}
         <img
-          src={heroConcertImage}
-          srcSet={`${heroConcertImage} 1920w`} 
-          sizes="100vw"
+          src={heroDesktop}
+          srcSet={`${heroMobile} 600w, ${heroDesktop} 1200w`} 
+          sizes="(max-width: 767px) 100vw, 100vw"
           alt="Conciertos y festivales en España - FEELOMOVE+"
           className="hero-image w-full h-full object-cover"
           loading="eager"
           decoding="sync"
           fetchPriority="high"
-          width={1920}
-          height={1080}
+          width={1200}
+          height={675}
         />
         <div className="hero-overlay absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
