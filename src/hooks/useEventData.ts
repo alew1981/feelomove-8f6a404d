@@ -152,6 +152,39 @@ export function useEventData(
         }
       }
 
+      // CRITICAL SEO: Semantic search - if slug not found exactly, search partial match
+      // This prevents 404s when users arrive with partial/incorrect URLs
+      const partialSlug = slug.split('-').slice(0, 3).join('-'); // First 3 segments (e.g., "artista-ciudad")
+      
+      const { data: partialMatch } = await (supabase
+        .from(viewName as any)
+        .select("event_slug, event_type") as any)
+        .ilike("event_slug", `${partialSlug}%`)
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true })
+        .limit(1);
+      
+      if (partialMatch && partialMatch.length > 0) {
+        const matchedSlug = partialMatch[0].event_slug;
+        const matchedType = partialMatch[0].event_type;
+        
+        if (matchedSlug && matchedSlug !== slug) {
+          console.log(`[SEO] Partial match redirect: ${slug} → ${matchedSlug}`);
+          const targetPath = matchedType === "festival" || isFestivalRoute
+            ? `/festival/${matchedSlug}`
+            : `/concierto/${matchedSlug}`;
+          
+          return {
+            data: null,
+            canonicalSlug: matchedSlug,
+            needsRedirect: true,
+            redirectPath: targetPath,
+            needsRouteCorrection: false,
+            correctRoutePath: null,
+          };
+        }
+      }
+
       // No event and no valid redirect - throw 404
       throw new Error("Evento no encontrado");
     },

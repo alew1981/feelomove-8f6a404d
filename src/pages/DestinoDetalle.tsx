@@ -384,13 +384,28 @@ const DestinoDetalle = () => {
           
           {/* CRITICAL SEO: Static semantic text ALWAYS visible */}
           {/* Google sees this content immediately, even during loading */}
-          <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+          {/* This prevents Soft 404 by providing substantial text content */}
+          <div className="mb-6 p-5 bg-muted/30 rounded-xl border border-border/50">
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              Conciertos y Festivales en {cityName} - Temporada 2026
+            </h2>
+            <p className="text-muted-foreground leading-relaxed mb-3">
+              Reserva tus entradas para los mejores <strong>conciertos y festivales en {cityName}</strong> para la temporada 2026. 
+              Ofrecemos paquetes exclusivos de entrada + hotel para que disfrutes de una experiencia musical completa sin preocupaciones.
+            </p>
             <p className="text-muted-foreground leading-relaxed">
-              Descubre los mejores conciertos, festivales y eventos en <strong>{cityName}</strong>. 
-              Compra tus entradas con hotel incluido y disfruta de una experiencia musical única. 
-              {concertsCount > 0 && ` ${concertsCount} conciertos disponibles.`}
-              {festivalsCount > 0 && ` ${festivalsCount} festivales próximos.`}
-              {minPriceEur && ` Entradas desde ${minPriceEur}€.`}
+              {isLoading ? (
+                <>Cargando la programación musical de {cityName}...</>
+              ) : (
+                <>
+                  {concertsCount > 0 && <><strong>{concertsCount} conciertos</strong> disponibles. </>}
+                  {festivalsCount > 0 && <><strong>{festivalsCount} festivales</strong> próximos. </>}
+                  {minPriceEur && <>Entradas desde <strong>{minPriceEur}€</strong>.</>}
+                  {concertsCount === 0 && festivalsCount === 0 && (
+                    <>Actualmente no hay eventos programados en {cityName}. Consulta otras ciudades cercanas o vuelve pronto para nuevas fechas.</>
+                  )}
+                </>
+              )}
             </p>
           </div>
           

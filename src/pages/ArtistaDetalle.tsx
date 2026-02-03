@@ -13,11 +13,8 @@ import EventListCard, { EventListCardSkeleton } from "@/components/EventListCard
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Music, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInView } from "react-intersection-observer";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
@@ -117,13 +114,32 @@ const ArtistaDetalle = () => {
     enabled: !!artistSlug,
   });
 
-  // Redirect to 404 if artist has no future events
+  // SEO: If artist has exactly 1 event, redirect directly to event page
+  // This provides Google with the "final product" instead of a listing
   useEffect(() => {
-    // Only redirect after loading is complete and we have no events
-    if (!isLoading && events !== undefined && events.length === 0) {
+    if (isLoading || events === undefined) return;
+    
+    // No events → 404
+    if (events.length === 0) {
       navigate("/404", { replace: true });
+      return;
     }
-  }, [events, isLoading, navigate]);
+    
+    // Single event → redirect to event detail (better SEO)
+    if (events.length === 1) {
+      const singleEvent = events[0] as any;
+      const eventSlug = singleEvent.slug || singleEvent.canonical_slug;
+      if (eventSlug) {
+        // Determine if festival or concert
+        const isFestival = singleEvent.main_attraction || singleEvent.artist_count > 1;
+        const targetPath = isFestival 
+          ? `/festival/${eventSlug}` 
+          : `/concierto/${eventSlug}`;
+        console.log(`[SEO] Single event redirect: ${artistSlug} → ${targetPath}`);
+        navigate(targetPath, { replace: true });
+      }
+    }
+  }, [events, isLoading, navigate, artistSlug]);
 
   // Get artist name from first event - check both artist_name (concerts) and main_attraction (festivals)
   const artistName = events && events.length > 0 
@@ -205,22 +221,35 @@ const ArtistaDetalle = () => {
     enabled: !!artistGenre && !!artistName,
   });
 
+  // Native date formatting (replaces date-fns)
+  const SPANISH_MONTHS = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+  ];
+  
+  const formatMonthYear = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    return `${SPANISH_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
   const availableMonths = useMemo(() => {
     if (!events) return [];
     const monthSet = new Set<string>();
     
     events.forEach(event => {
       if (event.event_date) {
-        const date = new Date(event.event_date);
-        const monthYear = format(date, "MMMM yyyy", { locale: es });
+        const monthYear = formatMonthYear(event.event_date);
         monthSet.add(monthYear);
       }
     });
     
     return Array.from(monthSet).sort((a, b) => {
-      const dateA = new Date(a);
-      const dateB = new Date(b);
-      return dateA.getTime() - dateB.getTime();
+      // Parse "enero 2026" format back to comparable dates
+      const parseMonth = (str: string) => {
+        const [month, year] = str.split(' ');
+        return new Date(parseInt(year), SPANISH_MONTHS.indexOf(month));
+      };
+      return parseMonth(a).getTime() - parseMonth(b).getTime();
     });
   }, [events]);
 
@@ -243,12 +272,12 @@ const ArtistaDetalle = () => {
       filtered = filtered.filter(event => event.venue_city === filterCity);
     }
 
-    // Apply date filter
-    if (filterDate !== "all") {
-      filtered = filtered.filter(event => {
-        if (!event.event_date) return false;
-        const eventMonth = format(new Date(event.event_date), "MMMM yyyy", { locale: es });
-        return eventMonth === filterDate;
+      // Apply date filter
+      if (filterDate !== "all") {
+        filtered = filtered.filter(event => {
+          if (!event.event_date) return false;
+          const eventMonth = formatMonthYear(event.event_date);
+          return eventMonth === filterDate;
       });
     }
 
@@ -429,7 +458,19 @@ const ArtistaDetalle = () => {
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <svg 
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
             <Input
               type="text"
               placeholder="Buscar eventos o ciudades..."
@@ -559,7 +600,8 @@ const ArtistaDetalle = () => {
                   to="/destinos"
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                 >
-                  Ver todos <ChevronRight className="h-4 w-4" />
+                  Ver todos 
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                 </Link>
               </div>
               <div className="bg-card border border-border rounded-xl divide-y divide-border">
@@ -590,7 +632,7 @@ const ArtistaDetalle = () => {
                       <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
                         {city.count} evento{city.count > 1 ? 's' : ''}
                       </span>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                      <svg className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                     </div>
                   </Link>
                 ))}
@@ -608,7 +650,8 @@ const ArtistaDetalle = () => {
                     to={`/generos/${genreSlug}`}
                     className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                   >
-                    Ver todos <ChevronRight className="h-4 w-4" />
+                    Ver todos 
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                   </Link>
                 )}
               </div>
