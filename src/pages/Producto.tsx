@@ -312,6 +312,16 @@ const Producto = () => {
     if (hasNavigatedRef.current) return;
     if (isLoading) return;
 
+    // CRITICAL SEO: Handle notFound - redirect to listing instead of 404
+    // This prevents Google from seeing 404 errors for non-existent events
+    if (eventResult?.notFound) {
+      console.log("[Producto] Event not found, redirecting to listing");
+      hasNavigatedRef.current = true;
+      const listingPath = isFestivalRoute ? '/festivales' : '/conciertos';
+      window.location.replace(listingPath);
+      return;
+    }
+
     // CRITICAL SEO: Use window.location.replace for redirects to ensure Googlebot sees 301
     if (eventResult?.needsRedirect && eventResult.redirectPath) {
       console.log("[Producto] SEO redirect to:", eventResult.redirectPath);
@@ -327,7 +337,7 @@ const Producto = () => {
       window.location.replace(eventResult.correctRoutePath);
       return;
     }
-  }, [eventResult, isLoading]);
+  }, [eventResult, isLoading, isFestivalRoute]);
 
   const eventData = eventResult?.data;
   const rpcCanonicalSlug = eventResult?.canonicalSlug || null;

@@ -15,6 +15,7 @@ interface EventDataResult {
   redirectPath: string | null;
   needsRouteCorrection: boolean;
   correctRoutePath: string | null;
+  notFound: boolean; // CRITICAL: Flag for graceful 404 handling without throwing
 }
 
 /**
@@ -80,6 +81,7 @@ export function useEventData(
             correctRoutePath: shouldBeFestival
               ? `/festival/${slug}`
               : `/concierto/${slug}`,
+            notFound: false,
           };
         }
 
@@ -90,6 +92,7 @@ export function useEventData(
           redirectPath: null,
           needsRouteCorrection: false,
           correctRoutePath: null,
+          notFound: false,
         };
       }
 
@@ -116,6 +119,7 @@ export function useEventData(
           correctRoutePath: shouldBeFestival
             ? `/festival/${slug}`
             : `/concierto/${slug}`,
+          notFound: false,
         };
       }
 
@@ -148,6 +152,7 @@ export function useEventData(
             redirectPath: targetPath,
             needsRouteCorrection: false,
             correctRoutePath: null,
+            notFound: false,
           };
         }
       }
@@ -181,12 +186,23 @@ export function useEventData(
             redirectPath: targetPath,
             needsRouteCorrection: false,
             correctRoutePath: null,
+            notFound: false,
           };
         }
       }
 
-      // No event and no valid redirect - throw 404
-      throw new Error("Evento no encontrado");
+      // CRITICAL SEO: No event found - return notFound flag instead of throwing
+      // This allows the component to handle the redirect gracefully to /conciertos
+      console.log(`[SEO] Event not found: ${slug} - will redirect to listing`);
+      return {
+        data: null,
+        canonicalSlug: null,
+        needsRedirect: false,
+        redirectPath: null,
+        needsRouteCorrection: false,
+        correctRoutePath: null,
+        notFound: true,
+      };
     },
     retry: 1, // Reduce retries to speed up 404
     retryDelay: 500,
@@ -224,6 +240,7 @@ export function usePrefetchEvent() {
           redirectPath: null,
           needsRouteCorrection: false,
           correctRoutePath: null,
+          notFound: !data || data.length === 0,
         };
       },
       staleTime: 60000,

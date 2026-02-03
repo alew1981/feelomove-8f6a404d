@@ -266,6 +266,51 @@
       "source": "/my-account/:path*",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/category/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/tag/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/page/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/shop/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/tienda/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/carrito/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*/embed",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*/trackback",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "rewrites": [
