@@ -118,8 +118,9 @@ export default defineConfig(({ mode }) => ({
       enforce: 'post' as const,
       transformIndexHtml(html: string) {
         // Transform CSS link tags to use preload with onload swap
+        // Handle both with and without crossorigin attribute
         return html.replace(
-          /<link rel="stylesheet" crossorigin href="([^"]+\.css)">/g,
+          /<link\s+rel="stylesheet"(?:\s+crossorigin)?\s+href="([^"]+\.css)"(?:\s+crossorigin)?>/g,
           `<link rel="preload" href="$1" as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin>
 <noscript><link rel="stylesheet" href="$1" crossorigin></noscript>`
         );
