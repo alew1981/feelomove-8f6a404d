@@ -335,9 +335,13 @@ const ArtistaDetalle = () => {
     }
   }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
 
-  // SEO content
-  const firstCity = cities[0] || "España";
-  const seoDescription = `Descubre todos los conciertos de ${artistName} en ${firstCity} y otras ciudades. Compra entradas + hotel para los próximos eventos de ${artistName} en España.`;
+  // SEO Gold Format: [Artista]: Conciertos, Gira y Entradas 2026 | FEELOMOVE+
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+  const seoYear = events?.some((e: any) => new Date(e.event_date).getFullYear() > currentYear) ? nextYear : currentYear;
+  
+  const seoTitle = `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
+  const seoDescription = `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
 
   // Generate JSON-LD structured data for artist and events
   const jsonLdData = useMemo(() => {
@@ -399,8 +403,8 @@ const ArtistaDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`${artistName} - Conciertos y Gira España 2025`}
-        description={`Compra entradas para ${artistName} en ${firstCity} y más ciudades. ${events?.length || 0} conciertos + hotel. ¡Reserva ahora!`}
+        title={seoTitle}
+        description={seoDescription}
         canonical={`https://feelomove.com/conciertos/${artistSlug}`}
         ogImage={heroImage || undefined}
         pageType="ItemPage"

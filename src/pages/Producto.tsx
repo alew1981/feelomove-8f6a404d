@@ -767,8 +767,15 @@ const Producto = () => {
   const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
 
   const eventYear = hasValidDate ? formatDatePart(eventDate, "year") : "";
-  const seoTitle = `${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ""} - Entradas y Hotel`;
-  const seoDescription = `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${eventYear ? ` ${eventYear}` : ""}. Concierto en ${eventDetails.venue_name}. Reserva tu pack de entradas + hotel con Feelomove+.`;
+  
+  // SEO Gold Format: Entradas [Artista] [Ciudad] [Año] | FEELOMOVE+
+  const seoTitle = isFestivalDisplay
+    ? `${mainArtist} ${eventYear} - Entradas Festival + Hotel`
+    : `Entradas ${mainArtist} ${eventDetails.venue_city} ${eventYear}`;
+  
+  const seoDescription = isFestivalDisplay
+    ? `Compra tus entradas para ${mainArtist} ${eventYear}. Festival en ${eventDetails.venue_city}. Incluye opciones de alojamiento cerca del evento. ¡Reserva tu experiencia musical completa!`
+    : `Compra tus entradas para el concierto de ${mainArtist} en ${eventDetails.venue_city}. Incluye opciones de alojamiento y transporte. ¡Reserva tu experiencia musical completa!`;
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
   const hasMoreTickets = ticketPrices.length > 4;

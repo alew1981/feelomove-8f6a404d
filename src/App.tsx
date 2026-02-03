@@ -2,6 +2,7 @@ import { useEffect, lazy, Suspense, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useInstantSEO } from "@/hooks/useInstantSEO";
 
 // Lazy load Radix-heavy UI components to reduce initial JS execution time
 // These are not critical for first paint
@@ -79,9 +80,13 @@ const useInteractionDeferred = () => {
   return isReady;
 };
 
-// Scroll to top on route change
+// Scroll to top on route change + inject instant SEO
 const ScrollToTop = () => {
   const { pathname } = useLocation();
+  
+  // CRITICAL: Inject SEO tags instantly from URL before Supabase loads
+  useInstantSEO();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
