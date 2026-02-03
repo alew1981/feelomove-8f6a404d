@@ -7,13 +7,12 @@ import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
 
 // Hero image optimized via wsrv.nl proxy for compression
+// CRITICAL: URLs MUST match EXACTLY with index.html preload tags
 // Responsive: mobile (600px ~40KB), desktop (1200px ~100KB)
-const HERO_BASE_URL = "https://feelomove.com/images/hero-concert.webp";
-const HERO_ENCODED = encodeURIComponent(HERO_BASE_URL);
 // Mobile: 600px wide for <768px screens (q=65 for faster LCP)
-const heroMobile = `https://wsrv.nl/?url=${HERO_ENCODED}&w=600&fit=cover&q=65&output=webp`;
+const heroMobile = "https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=600&fit=cover&q=65&output=webp";
 // Desktop: 1200px for larger screens (q=65 for faster LCP)
-const heroDesktop = `https://wsrv.nl/?url=${HERO_ENCODED}&w=1200&fit=cover&q=65&output=webp`;
+const heroDesktop = "https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=1200&fit=cover&q=65&output=webp";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (

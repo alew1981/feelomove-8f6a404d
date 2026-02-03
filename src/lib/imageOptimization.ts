@@ -10,6 +10,7 @@
  */
 
 // Domains that should be proxied through weserv
+// NOTE: Google can crawl images.weserv.nl - no robots.txt blocking needed
 const PROXY_DOMAINS = [
   'ticketm.net',
   'tmimg.net',

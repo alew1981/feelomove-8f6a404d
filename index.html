@@ -6,6 +6,7 @@
     <!-- CRITICAL: Preconnect hints FIRST for maximum effect (max 4 recommended) -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link rel="preconnect" href="https://wsrv.nl" crossorigin="">
+    <link rel="preconnect" href="https://images.weserv.nl" crossorigin="">
     <link rel="preconnect" href="https://wcyjuytpxxqailtixept.supabase.co" crossorigin="">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,22 +16,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="x-dns-prefetch-control" content="on">
     
-    <!-- Meta tags por defecto -->
-    <meta name="description" content="Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento. Gestión de movilidad y alojamiento para eventos musicales." />
-    <meta name="keywords" content="entradas conciertos, festivales españa, hoteles festivales, gestión movilidad eventos, alojamiento eventos, transporte conciertos" />
+    <!-- Meta tags base - dinámicos gestionados por react-helmet-async -->
     <meta name="author" content="FEELOMOVE+" />
     <meta name="language" content="es" />
     <meta name="impact-site-verification" content="7cc879ee-e195-4865-9dd5-6dc6eb167203">
     <link rel="publisher" href="https://feelomove.com" />
-    
-    <!-- Open Graph -->
-    <meta property="og:site_name" content="FEELOMOVE+" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="es_ES" />
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Feelomove" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
@@ -48,8 +38,8 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- LCP Hero image preload - responsive via wsrv.nl proxy (q=65 for faster LCP) -->
-    <!-- Mobile: 600px, Desktop: 1200px -->
+    <!-- LCP Hero image preload - MUST match exactly Hero.tsx URLs -->
+    <!-- Mobile: 600px, Desktop: 1200px - wsrv.nl proxy -->
     <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=600&fit=cover&q=65&output=webp" as="image" type="image/webp" fetchpriority="high" media="(max-width: 767px)">
     <link rel="preload" href="https://wsrv.nl/?url=https%3A%2F%2Ffeelomove.com%2Fimages%2Fhero-concert.webp&w=1200&fit=cover&q=65&output=webp" as="image" type="image/webp" fetchpriority="high" media="(min-width: 768px)">
     
