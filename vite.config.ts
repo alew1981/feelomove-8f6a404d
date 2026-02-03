@@ -111,6 +111,19 @@ export default defineConfig(({ mode }) => ({
           console.log('✅ Sitemap generated successfully');
         }
       }
+    },
+    // CRITICAL: Make CSS non-render-blocking in production
+    mode === 'production' && {
+      name: 'css-non-render-blocking',
+      enforce: 'post' as const,
+      transformIndexHtml(html: string) {
+        // Transform CSS link tags to use preload with onload swap
+        return html.replace(
+          /<link rel="stylesheet" crossorigin href="([^"]+\.css)">/g,
+          `<link rel="preload" href="$1" as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin>
+<noscript><link rel="stylesheet" href="$1" crossorigin></noscript>`
+        );
+      }
     }
   ].filter(Boolean),
   resolve: {
