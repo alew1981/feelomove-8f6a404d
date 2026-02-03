@@ -244,9 +244,9 @@ const Hero = () => {
           - Vite hashes the image, so we serve appropriately sized versions
         */}
         <img
-          src={heroDesktop}
+          src={heroMobile}
           srcSet={`${heroMobile} 600w, ${heroDesktop} 1200w`} 
-          sizes="(max-width: 767px) 100vw, 100vw"
+          sizes="(max-width: 767px) 600px, 1200px"
           alt="Conciertos y festivales en España - FEELOMOVE+"
           className="hero-image w-full h-full object-cover"
           loading="eager"
