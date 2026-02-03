@@ -115,42 +115,62 @@
     {
       "source": "/conciertos/:slug",
       "destination": "/concierto/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/festivales/:slug",
       "destination": "/festival/:slug",
-      "statusCode": 301
+      "permanent": true
+    },
+    {
+      "source": "/concierto/:slug-1",
+      "destination": "/concierto/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/concierto/:slug-2",
+      "destination": "/concierto/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/festival/:slug-1",
+      "destination": "/festival/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/festival/:slug-2",
+      "destination": "/festival/:slug",
+      "permanent": true
     },
     {
       "source": "/events/:id",
       "destination": "/conciertos",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/event/:id",
       "destination": "/conciertos",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/artista/:slug",
       "destination": "/conciertos/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/producto/:slug",
       "destination": "/concierto/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/producto/:slug/feed",
       "destination": "/concierto/:slug",
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/conciertos/pink-floyds---the-wall-in-concert",
       "destination": "/conciertos",
-      "statusCode": 301
+      "permanent": true
     }
   ],
   "rewrites": [

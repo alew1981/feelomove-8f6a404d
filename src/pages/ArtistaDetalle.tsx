@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -124,19 +124,20 @@ const ArtistaDetalle = () => {
   });
 
   // CRITICAL SEO: If artist has exactly 1 event, redirect directly to event page
-  // Uses window.location.replace() for proper 301-like behavior that Googlebot respects
-  // This provides Google with the "final product" instead of a listing
-  useEffect(() => {
+  // Uses useLayoutEffect + window.location.replace for IMMEDIATE redirect before paint
+  // This ensures Googlebot sees the redirect in the first cycle, not a rendered page
+  useLayoutEffect(() => {
     if (isLoading || events === undefined || isRedirecting) return;
     
     // No events → 404
     if (events.length === 0) {
-      navigate("/404", { replace: true });
+      setIsRedirecting(true);
+      window.location.replace("/404");
       return;
     }
     
-    // Single event → FORCE redirect to event detail using window.location.replace
-    // This is critical for SEO: Google needs to see the redirect immediately
+    // Single event → FORCE immediate redirect to event detail
+    // This is critical for SEO: Google must not index this intermediate page
     if (events.length === 1) {
       const singleEvent = events[0] as any;
       const eventSlug = singleEvent.slug || singleEvent.canonical_slug;
@@ -149,15 +150,19 @@ const ArtistaDetalle = () => {
           ? `/festival/${eventSlug}` 
           : `/concierto/${eventSlug}`;
         
-        console.log(`[SEO] Single event redirect: ${artistSlug} → ${targetPath}`);
+        console.log(`[SEO] Immediate redirect: ${artistSlug} → ${targetPath}`);
         
-        // Use window.location.replace for immediate, SEO-friendly redirect
-        // This ensures Googlebot sees it as a proper redirect, not a soft navigation
+        // window.location.replace executes synchronously and prevents further rendering
         window.location.replace(targetPath);
         return;
       }
     }
-  }, [events, isLoading, navigate, artistSlug, isRedirecting]);
+  }, [events, isLoading, artistSlug, isRedirecting]);
+  
+  // Block rendering completely if redirect is in progress
+  if (isRedirecting) {
+    return null;
+  }
 
   // Get artist name from first event - check both artist_name (concerts) and main_attraction (festivals)
   const artistName = events && events.length > 0 
