@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef, lazy, Suspense, memo } from "reac
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEventData } from "@/hooks/useEventData";
+import { useSlugNormalization, isVipSlug, isServiceSlug } from "@/hooks/useSlugNormalization";
 import { useEventHotels } from "@/hooks/useEventHotels";
 import { usePageTracking } from "@/hooks/usePageTracking";
 // SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
@@ -293,9 +294,17 @@ const Producto = () => {
   const isConcierto = location.pathname.startsWith("/concierto/");
   const isFestivalRoute = location.pathname.startsWith("/festival/");
 
+  // CRITICAL: URL Normalization - handles numeric suffixes, noise words, plural→singular
+  // This runs BEFORE data fetch to intercept dirty URLs
+  useSlugNormalization(slug, isFestivalRoute);
+
   const [showAllTickets, setShowAllTickets] = useState(false);
 
   const { data: eventResult, isLoading, isError, error, refetch } = useEventData(slug, isFestivalRoute, isConcierto);
+  
+  // Check if this is a VIP/Premium event for SEO differentiation
+  const isVipEventFromSlug = slug ? isVipSlug(slug) : false;
+  const isServiceEventFromSlug = slug ? isServiceSlug(slug) : false;
 
   const hasNavigatedRef = useRef(false);
 
@@ -958,6 +967,8 @@ const Producto = () => {
         keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
         forceNoIndex={isServiceEvent}
+        isVipEvent={isVipEventFromSlug}
+        artistName={mainArtist}
         breadcrumbs={[
           { name: "Inicio", url: "/" },
           {

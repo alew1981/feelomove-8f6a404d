@@ -18,6 +18,10 @@ interface SEOHeadProps {
   breadcrumbs?: BreadcrumbItem[];
   preloadImage?: string;
   forceNoIndex?: boolean;
+  /** Set true for VIP/Premium events to differentiate title */
+  isVipEvent?: boolean;
+  /** Artist name for VIP title formatting */
+  artistName?: string;
 }
 
 // Parameters that should trigger noindex
@@ -28,18 +32,37 @@ const TRACKING_PARAMS = ['fbclid', 'gclid', 'utm_source', 'utm_medium', 'utm_cam
 
 /**
  * Determines if the current URL should be noindexed
+ * CRITICAL: Main content pages (concierto, festival, destinos) should ALWAYS be indexed
  */
 const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean => {
+  // FORCE INDEX: Main content routes must always be indexed (no query params = index)
+  const isMainContentRoute = 
+    pathname.startsWith('/concierto/') ||
+    pathname.startsWith('/festival/') ||
+    pathname.startsWith('/destinos/') ||
+    pathname === '/conciertos' ||
+    pathname === '/festivales' ||
+    pathname === '/destinos' ||
+    pathname === '/artistas';
+  
+  // If it's a main content route with no params, always index
+  if (isMainContentRoute && searchParams.toString() === '') {
+    return false;
+  }
+  
+  // Search pages always noindex
   if (pathname === '/buscar' || pathname.startsWith('/buscar')) {
     return true;
   }
   
+  // Check for sorting/ordering params
   for (const param of NOINDEX_PARAMS) {
     if (searchParams.has(param)) {
       return true;
     }
   }
   
+  // Multiple filter params = noindex
   let filterCount = 0;
   for (const param of FILTER_PARAMS) {
     if (searchParams.has(param) && searchParams.get(param)) {
@@ -55,7 +78,7 @@ const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean
  * - Strips ALL query parameters and tracking params
  * - Ensures lowercase
  * - Removes trailing slashes
- * - Handles /festival/ and /concierto/ routes
+ * - Removes numeric suffixes (-1, -2) but NOT years
  * - Always returns absolute URL
  */
 const getCleanCanonical = (pathname: string, providedCanonical?: string): string => {
@@ -96,10 +119,15 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
     return `${siteUrl}${cleanUrl}`;
   }
   
-  // Generate from pathname
-  const cleanPath = pathname
+  // Generate from pathname - remove numeric suffixes but not years
+  let cleanPath = pathname
     .toLowerCase()
     .replace(/\/+$/, ''); // Remove trailing slashes
+  
+  // Remove numeric suffix (-1, -2, -99) but NOT years (-2026)
+  if (/-\d{1,2}$/.test(cleanPath) && !/-20[2-9]\d$/.test(cleanPath)) {
+    cleanPath = cleanPath.replace(/-\d{1,2}$/, '');
+  }
   
   return `${siteUrl}${cleanPath}`;
 };
@@ -182,6 +210,16 @@ const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]) => {
   };
 };
 
+/**
+ * Generate VIP-differentiated title to avoid duplicate content
+ */
+const generateVipTitle = (baseTitle: string, artistName?: string): string => {
+  if (artistName) {
+    return `Experiencia VIP: ${artistName} - Entradas Premium y Hotel`;
+  }
+  return `Experiencia VIP: ${baseTitle}`;
+};
+
 export const SEOHead = ({ 
   title, 
   description, 
@@ -193,7 +231,9 @@ export const SEOHead = ({
   pageType = "WebPage",
   breadcrumbs,
   preloadImage,
-  forceNoIndex = false
+  forceNoIndex = false,
+  isVipEvent = false,
+  artistName
 }: SEOHeadProps) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -201,7 +241,12 @@ export const SEOHead = ({
   // Determine if page should be noindexed
   const isNoIndex = forceNoIndex || shouldNoIndex(searchParams, location.pathname);
   
-  const fullTitle = `${title} | FEELOMOVE+`;
+  // CRITICAL: Differentiate VIP titles to avoid duplicate content
+  const finalTitle = isVipEvent 
+    ? generateVipTitle(title, artistName)
+    : title;
+  
+  const fullTitle = `${finalTitle} | FEELOMOVE+`;
   
   // Use unified canonical generator - strips all query params and tracking
   // ALWAYS returns absolute URL (https://feelomove.com/...)
@@ -303,7 +348,7 @@ export const SEOHead = ({
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={title} />
+      <meta property="og:image:alt" content={finalTitle} />
       <meta property="og:site_name" content="FEELOMOVE+" />
       <meta property="og:locale" content="es_ES" />
       
@@ -314,9 +359,9 @@ export const SEOHead = ({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content={title} />
+      <meta name="twitter:image:alt" content={finalTitle} />
       
-      {/* Dynamic robots meta - noindex for filtered/sorted/search pages */}
+      {/* CRITICAL: Force index,follow for main content pages */}
       <meta 
         name="robots" 
         content={isNoIndex 
