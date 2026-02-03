@@ -5,7 +5,8 @@ import { Input } from "./ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
-import heroConcertImage from "@/assets/hero-concert.webp";
+// Hero image served from public folder for LCP preload discovery
+const heroConcertImage = "/images/hero-concert.webp";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (

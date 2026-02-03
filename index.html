@@ -47,9 +47,8 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- NOTE: Hero image preload removed - Vite bundles the image with hashed URL,
-         so static preload causes duplicate download. The image uses fetchPriority="high"
-         and loading="eager" in the component for optimal LCP. -->
+    <!-- LCP Hero image preload - uses stable public URL for immediate discovery -->
+    <link rel="preload" href="/images/hero-concert.webp" as="image" type="image/webp" fetchpriority="high">
     
     
     <!-- CRITICAL CSS: Inline styles for instant FCP (< 0.5s) -->
