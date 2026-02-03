@@ -10,10 +10,10 @@ import { getEventUrl } from "@/lib/eventUtils";
 // Responsive: mobile (600px ~40KB), desktop (1200px ~100KB)
 const HERO_BASE_URL = "https://feelomove.com/images/hero-concert.webp";
 const HERO_ENCODED = encodeURIComponent(HERO_BASE_URL);
-// Mobile: 600px wide for <768px screens
-const heroMobile = `https://wsrv.nl/?url=${HERO_ENCODED}&w=600&fit=cover&q=75&output=webp`;
-// Desktop: 1200px for larger screens
-const heroDesktop = `https://wsrv.nl/?url=${HERO_ENCODED}&w=1200&fit=cover&q=75&output=webp`;
+// Mobile: 600px wide for <768px screens (q=65 for faster LCP)
+const heroMobile = `https://wsrv.nl/?url=${HERO_ENCODED}&w=600&fit=cover&q=65&output=webp`;
+// Desktop: 1200px for larger screens (q=65 for faster LCP)
+const heroDesktop = `https://wsrv.nl/?url=${HERO_ENCODED}&w=1200&fit=cover&q=65&output=webp`;
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (
