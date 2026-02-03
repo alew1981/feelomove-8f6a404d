@@ -48,21 +48,33 @@ const queryClient = new QueryClient({
   },
 });
 
-// Hook to defer non-critical UI components until browser is idle
-// This reduces TBT by not loading Radix bundle during initial render
-const useDeferredLoad = (delay = 2000) => {
+// Hook to defer non-critical UI components until user interaction
+// This reduces main-thread work by not loading Radix/sonner bundle during initial render
+const useInteractionDeferred = () => {
   const [isReady, setIsReady] = useState(false);
   
   useEffect(() => {
-    // Use requestIdleCallback if available, fallback to setTimeout
-    if ('requestIdleCallback' in window) {
-      const id = window.requestIdleCallback(() => setIsReady(true), { timeout: delay });
-      return () => window.cancelIdleCallback(id);
-    } else {
-      const timer = setTimeout(() => setIsReady(true), delay);
-      return () => clearTimeout(timer);
-    }
-  }, [delay]);
+    if (isReady) return;
+    
+    const activate = () => {
+      setIsReady(true);
+      // Remove all listeners once activated
+      events.forEach(evt => window.removeEventListener(evt, activate, { capture: true }));
+    };
+    
+    const events = ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'];
+    events.forEach(evt => 
+      window.addEventListener(evt, activate, { passive: true, capture: true, once: true })
+    );
+    
+    // Fallback: load after 4s if no interaction (for automated tools/bots)
+    const fallback = setTimeout(activate, 4000);
+    
+    return () => {
+      clearTimeout(fallback);
+      events.forEach(evt => window.removeEventListener(evt, activate, { capture: true }));
+    };
+  }, [isReady]);
   
   return isReady;
 };
@@ -154,9 +166,9 @@ const RedirectDestinoMalformed = () => {
   return <Navigate to={`/destinos/${destino}`} replace />;
 };
 
-// Deferred Radix providers wrapper - loads only when browser is idle
+// Deferred Radix providers wrapper - loads only after user interaction
 const DeferredProviders = () => {
-  const isReady = useDeferredLoad(2000);
+  const isReady = useInteractionDeferred();
   
   if (!isReady) return null;
   
