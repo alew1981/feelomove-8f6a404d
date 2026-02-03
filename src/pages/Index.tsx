@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/lazyClient";
 import { Link } from "react-router-dom";
 import { SEOHead } from "@/components/SEOHead";
 import Navbar from "@/components/Navbar";
@@ -22,6 +22,7 @@ const Index = () => {
   const { data: featuredConcerts = [] } = useQuery({
     queryKey: ["home-featured-concerts"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       const { data } = await supabase
         .from('mv_concerts_cards')
         .select('*')
@@ -34,6 +35,7 @@ const Index = () => {
   const { data: featuredFestivals = [] } = useQuery({
     queryKey: ["home-featured-festivals"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       const { data } = await supabase
         .from('mv_festivals_cards')
         .select('*')
@@ -47,6 +49,7 @@ const Index = () => {
   const { data: concerts = [], isLoading: loadingConcerts } = useQuery({
     queryKey: ["home-concerts-newest"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       // First get the newest event IDs from tm_tbl_events
       const { data: newestEvents } = await supabase
         .from('tm_tbl_events')
@@ -79,6 +82,7 @@ const Index = () => {
   const { data: festivals = [], isLoading: loadingFestivals } = useQuery({
     queryKey: ["home-festivals-newest"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       // First get the newest festival IDs from tm_tbl_events
       const { data: newestFestivals } = await supabase
         .from('tm_tbl_events')
@@ -111,6 +115,7 @@ const Index = () => {
   const { data: destinations = [], isLoading: loadingDestinations } = useQuery({
     queryKey: ["home-destinations"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       const { data } = await supabase
         .from('mv_destinations_cards')
         .select('*')
@@ -126,6 +131,7 @@ const Index = () => {
     queryKey: ["home-artists"],
     queryFn: async () => {
       try {
+        const supabase = await getSupabase();
         const { data, error } = await supabase
           .from('mv_attractions')
           .select('*')
@@ -150,6 +156,7 @@ const Index = () => {
   const { data: genres = [], isLoading: loadingGenres } = useQuery({
     queryKey: ["home-genres"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       // Call optimized RPC function that eliminates N+1 query problem
       const { data, error } = await supabase
         .rpc('get_genres_with_sample_images', { p_limit: 4 });
