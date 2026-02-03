@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/lazyClient";
 import EventCard from "./EventCard";
 import { Card } from "./ui/card";
 
@@ -11,6 +11,7 @@ const FeaturedEvents = () => {
   const { data: featuredEvents, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["featured-events"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       const { data, error } = await supabase
         .from("mv_concerts_cards")
         .select("*")
@@ -27,6 +28,7 @@ const FeaturedEvents = () => {
   const { data: destinations, isLoading: isLoadingDestinations } = useQuery({
     queryKey: ["top-destinations"],
     queryFn: async () => {
+      const supabase = await getSupabase();
       const { data, error } = await supabase
         .from("mv_destinations_cards")
         .select("*")
