@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -32,9 +32,18 @@ const generateSlug = (name: string): string => {
 const ArtistaDetalle = () => {
   const { artistSlug: slugParam } = useParams<{ artistSlug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  
   // Normalize slug: decode URI and collapse multiple dashes into one
   const rawSlug = slugParam ? decodeURIComponent(slugParam) : "";
   const artistSlug = rawSlug.replace(/-+/g, '-');
+  
+  // CRITICAL SEO: Detect if we're on plural /conciertos/ and need redirect
+  // This must run BEFORE any rendering for Googlebot to see 301
+  const isOnPluralRoute = location.pathname.startsWith('/conciertos/');
+  
+  // State to track if we've already initiated a redirect
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   // Redirect to normalized URL if slug has double dashes
   useEffect(() => {
@@ -114,10 +123,11 @@ const ArtistaDetalle = () => {
     enabled: !!artistSlug,
   });
 
-  // SEO: If artist has exactly 1 event, redirect directly to event page
+  // CRITICAL SEO: If artist has exactly 1 event, redirect directly to event page
+  // Uses window.location.replace() for proper 301-like behavior that Googlebot respects
   // This provides Google with the "final product" instead of a listing
   useEffect(() => {
-    if (isLoading || events === undefined) return;
+    if (isLoading || events === undefined || isRedirecting) return;
     
     // No events → 404
     if (events.length === 0) {
@@ -125,21 +135,29 @@ const ArtistaDetalle = () => {
       return;
     }
     
-    // Single event → redirect to event detail (better SEO)
+    // Single event → FORCE redirect to event detail using window.location.replace
+    // This is critical for SEO: Google needs to see the redirect immediately
     if (events.length === 1) {
       const singleEvent = events[0] as any;
       const eventSlug = singleEvent.slug || singleEvent.canonical_slug;
       if (eventSlug) {
+        setIsRedirecting(true);
+        
         // Determine if festival or concert
         const isFestival = singleEvent.main_attraction || singleEvent.artist_count > 1;
         const targetPath = isFestival 
           ? `/festival/${eventSlug}` 
           : `/concierto/${eventSlug}`;
+        
         console.log(`[SEO] Single event redirect: ${artistSlug} → ${targetPath}`);
-        navigate(targetPath, { replace: true });
+        
+        // Use window.location.replace for immediate, SEO-friendly redirect
+        // This ensures Googlebot sees it as a proper redirect, not a soft navigation
+        window.location.replace(targetPath);
+        return;
       }
     }
-  }, [events, isLoading, navigate, artistSlug]);
+  }, [events, isLoading, navigate, artistSlug, isRedirecting]);
 
   // Get artist name from first event - check both artist_name (concerts) and main_attraction (festivals)
   const artistName = events && events.length > 0 
