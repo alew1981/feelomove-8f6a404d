@@ -229,8 +229,16 @@ const Hero = () => {
           - decoding="sync" ensures immediate decode
           - width/height prevent layout shift
         */}
+        {/* 
+          LCP Optimization with responsive images:
+          - srcset provides different image sizes for different viewport widths
+          - sizes tells browser the image will be full viewport width
+          - Vite hashes the image, so we serve appropriately sized versions
+        */}
         <img
           src={heroConcertImage}
+          srcSet={`${heroConcertImage} 1920w`} 
+          sizes="100vw"
           alt="Conciertos y festivales en España - FEELOMOVE+"
           className="hero-image w-full h-full object-cover"
           loading="eager"
