@@ -128,7 +128,7 @@ export const generateCardSrcSet = (
 };
 
 /**
- * Generates srcset for hero images (larger sizes, w=1000)
+ * Generates srcset for hero images (larger sizes, w=1000, q=65 for LCP)
  */
 export const generateHeroSrcSet = (
   originalUrl: string | undefined | null
@@ -139,7 +139,7 @@ export const generateHeroSrcSet = (
 
   const sizes = [640, 1000, 1400];
   return sizes
-    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 85 })} ${width}w`)
+    .map(width => `${optimizeImageUrl(originalUrl, { width, quality: 65 })} ${width}w`)
     .join(', ');
 };
 
@@ -151,9 +151,9 @@ export const getOptimizedCardImage = (url: string | undefined | null): string =>
 };
 
 /**
- * Get optimized hero image (w=800, q=80) - AGGRESSIVE for LCP
- * Reduced from 1000px to 800px for faster mobile LCP
+ * Get optimized hero image (w=800, q=65) - AGGRESSIVE for LCP
+ * Reduced from 1000px to 800px and q=80 to q=65 for faster mobile LCP
  */
 export const getOptimizedHeroImage = (url: string | undefined | null): string => {
-  return optimizeImageUrl(url, { width: 800, quality: 80 });
+  return optimizeImageUrl(url, { width: 800, quality: 65 });
 };
