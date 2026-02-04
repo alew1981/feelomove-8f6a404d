@@ -2,25 +2,47 @@
  * ImageKit Utility Functions
  * 
  * Centralized image optimization using ImageKit CDN
- * Replaces images.weserv.nl with ImageKit for better performance and caching
+ * 
+ * CONFIGURACIÓN:
+ * - Ticketmaster origin: s1.ticketm.net → img/tat/dam/...
+ * - Supabase origin: wcyjuytpxxqailtixept.supabase.co → storage/v1/object/public/...
  * 
  * FEATURES:
  * - Automatic WebP/AVIF conversion
- * - DPR-aware responsive images
+ * - Responsive srcset generation
  * - Clean URLs for maximum browser caching (no timestamps)
- * - Consistent API for all image components
  */
 
 const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
 
-// Domains that should be proxied through ImageKit
-const PROXY_DOMAINS = [
-  "ticketm.net",
-  "tmimg.net",
-  "s1.ticketm.net",
-  "static.cupid.travel",
-  "supabase.co",
-  "wcyjuytpxxqailtixept.supabase.co",
+/**
+ * Domain mapping for ImageKit origins
+ * Maps the original URL domain to the path structure used in ImageKit
+ */
+const ORIGIN_MAPPINGS: Array<{
+  match: RegExp;
+  extractPath: (url: string) => string | null;
+}> = [
+  {
+    // Ticketmaster: s1.ticketm.net → extracts /img/tat/dam/... or /dam/...
+    match: /s1\.ticketm\.net/,
+    extractPath: (url) => {
+      // https://s1.ticketm.net/dam/a/79f/... → /dam/a/79f/...
+      // https://s1.ticketm.net/img/tat/dam/... → /img/tat/dam/...
+      const urlObj = new URL(url);
+      return urlObj.pathname; // Returns /dam/... or /img/tat/dam/...
+    }
+  },
+  {
+    // Supabase storage: wcyjuytpxxqailtixept.supabase.co → /storage/v1/object/public/...
+    match: /wcyjuytpxxqailtixept\.supabase\.co/,
+    extractPath: (url) => {
+      const urlObj = new URL(url);
+      return urlObj.pathname; // Returns /storage/v1/object/public/...
+    }
+  }
+  // NOTE: cupid.travel (hotel images) is NOT configured in ImageKit
+  // Those images will be served directly from the original URL
 ];
 
 /**
@@ -30,7 +52,14 @@ export const shouldOptimize = (url: string): boolean => {
   if (!url) return false;
   if (url.includes("ik.imagekit.io")) return true;
   if (url.startsWith("/")) return false; // Local images
-  return PROXY_DOMAINS.some((domain) => url.includes(domain));
+  return ORIGIN_MAPPINGS.some(m => m.match.test(url));
+};
+
+/**
+ * Check if URL is from a configured ImageKit origin (Ticketmaster or Supabase)
+ */
+const isConfiguredOrigin = (url: string): boolean => {
+  return ORIGIN_MAPPINGS.some(m => m.match.test(url));
 };
 
 /**
@@ -49,14 +78,31 @@ const cleanUrl = (url: string): string => {
 };
 
 /**
+ * Extract the relative path for ImageKit from the original URL
+ */
+const extractImageKitPath = (url: string): string | null => {
+  const clean = cleanUrl(url);
+  
+  for (const mapping of ORIGIN_MAPPINGS) {
+    if (mapping.match.test(clean)) {
+      try {
+        return mapping.extractPath(clean);
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+};
+
+/**
  * Build ImageKit optimized URL
  * 
- * ImageKit web proxy format:
- * https://ik.imagekit.io/{id}/tr:w-{width},q-{quality}/https://example.com/image.jpg
+ * For configured origins (Ticketmaster/Supabase):
+ *   https://ik.imagekit.io/feelomove/tr:w-800,q-80,f-auto/{path}
  * 
- * @param originalUrl - Source image URL
- * @param options - Transformation options
- * @returns Optimized ImageKit URL
+ * For non-configured origins:
+ *   Returns original URL (no proxy available)
  */
 export const getOptimizedUrl = (
   originalUrl: string | undefined | null,
@@ -74,18 +120,25 @@ export const getOptimizedUrl = (
   // Skip if already ImageKit URL
   if (clean.includes("ik.imagekit.io")) return clean;
 
-  // Don't proxy non-matching domains
-  if (!shouldOptimize(clean)) return clean;
+  // Only process URLs from configured origins
+  if (!isConfiguredOrigin(clean)) {
+    return clean; // Return original for non-configured domains
+  }
+
+  // Extract the relative path
+  const relativePath = extractImageKitPath(clean);
+  if (!relativePath) {
+    return clean; // Fallback to original if extraction fails
+  }
 
   const { width = 800, quality = 80, format = "auto" } = options;
 
   // Build transformation string
-  // Format: tr:w-{width},q-{quality},f-{format}
   const transformations = `tr:w-${width},q-${quality},f-${format}`;
 
-  // ImageKit web proxy format - URL NOT encoded
-  // https://ik.imagekit.io/{id}/tr:transformations/https://example.com/image.jpg
-  return `${IMAGEKIT_ENDPOINT}/${transformations}/${clean}`;
+  // ImageKit URL format: endpoint/transformations/relative_path
+  // The path already starts with / so we remove the leading slash from transformations join
+  return `${IMAGEKIT_ENDPOINT}/${transformations}${relativePath}`;
 };
 
 /**
@@ -117,7 +170,7 @@ export const generateSrcSet = (
   widths: number[] = [320, 640, 960, 1200],
   quality: number = 80
 ): string => {
-  if (!originalUrl || !shouldOptimize(originalUrl)) return "";
+  if (!originalUrl || !isConfiguredOrigin(originalUrl)) return "";
 
   return widths
     .map((w) => `${getOptimizedUrl(originalUrl, { width: w, quality })} ${w}w`)
