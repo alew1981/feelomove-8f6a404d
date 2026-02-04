@@ -19,30 +19,40 @@ const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
  * Domain mapping for ImageKit origins
  * Maps the original URL domain to the path structure used in ImageKit
  */
+/**
+ * Origin types for ImageKit processing
+ * - 'path': Uses path-based proxy (e.g., Ticketmaster, Supabase)
+ * - 'url': Uses full URL proxy (e.g., cupid.travel)
+ */
 const ORIGIN_MAPPINGS: Array<{
   match: RegExp;
+  type: 'path' | 'url';
   extractPath: (url: string) => string | null;
 }> = [
   {
     // Ticketmaster: s1.ticketm.net → extracts /img/tat/dam/... or /dam/...
     match: /s1\.ticketm\.net/,
+    type: 'path',
     extractPath: (url) => {
-      // https://s1.ticketm.net/dam/a/79f/... → /dam/a/79f/...
-      // https://s1.ticketm.net/img/tat/dam/... → /img/tat/dam/...
       const urlObj = new URL(url);
-      return urlObj.pathname; // Returns /dam/... or /img/tat/dam/...
+      return urlObj.pathname;
     }
   },
   {
     // Supabase storage: wcyjuytpxxqailtixept.supabase.co → /storage/v1/object/public/...
     match: /wcyjuytpxxqailtixept\.supabase\.co/,
+    type: 'path',
     extractPath: (url) => {
       const urlObj = new URL(url);
-      return urlObj.pathname; // Returns /storage/v1/object/public/...
+      return urlObj.pathname;
     }
+  },
+  {
+    // Cupid.travel hotel images - uses full URL proxy
+    match: /static\.cupid\.travel/,
+    type: 'url',
+    extractPath: (url) => url // Return full URL for proxy
   }
-  // NOTE: cupid.travel (hotel images) is NOT configured in ImageKit
-  // Those images will be served directly from the original URL
 ];
 
 /**
@@ -78,15 +88,19 @@ const cleanUrl = (url: string): string => {
 };
 
 /**
- * Extract the relative path for ImageKit from the original URL
+ * Extract the path/URL for ImageKit from the original URL
+ * Returns { path, type } where type determines the proxy format
  */
-const extractImageKitPath = (url: string): string | null => {
+const extractImageKitPath = (url: string): { path: string; type: 'path' | 'url' } | null => {
   const clean = cleanUrl(url);
   
   for (const mapping of ORIGIN_MAPPINGS) {
     if (mapping.match.test(clean)) {
       try {
-        return mapping.extractPath(clean);
+        const path = mapping.extractPath(clean);
+        if (path) {
+          return { path, type: mapping.type };
+        }
       } catch {
         return null;
       }
@@ -125,9 +139,9 @@ export const getOptimizedUrl = (
     return clean; // Return original for non-configured domains
   }
 
-  // Extract the relative path
-  const relativePath = extractImageKitPath(clean);
-  if (!relativePath) {
+  // Extract the path/URL info
+  const pathInfo = extractImageKitPath(clean);
+  if (!pathInfo) {
     return clean; // Fallback to original if extraction fails
   }
 
@@ -136,9 +150,14 @@ export const getOptimizedUrl = (
   // Build transformation string
   const transformations = `tr:w-${width},q-${quality},f-${format}`;
 
-  // ImageKit URL format: endpoint/transformations/relative_path
-  // The path already starts with / so we remove the leading slash from transformations join
-  return `${IMAGEKIT_ENDPOINT}/${transformations}${relativePath}`;
+  // Two proxy formats:
+  // 1. Path-based (Ticketmaster/Supabase): endpoint/transformations/path
+  // 2. URL-based (cupid.travel): endpoint/transformations/full_url
+  if (pathInfo.type === 'url') {
+    return `${IMAGEKIT_ENDPOINT}/${transformations}/${pathInfo.path}`;
+  }
+  
+  return `${IMAGEKIT_ENDPOINT}/${transformations}${pathInfo.path}`;
 };
 
 /**

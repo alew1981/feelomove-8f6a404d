@@ -50,37 +50,22 @@ const getRatingText = (rating: number): string => {
 
 /**
  * Optimized hotel image
- * OPTIMIZATIONS:
- * - For Ticketmaster/Supabase: Uses ImageKit CDN with WebP/AVIF
- * - For Cupid/others: Uses original URL with lazy loading (no CDN)
- * - Clean URLs for maximum browser caching
+ * All configured origins (Ticketmaster, Supabase, cupid.travel) use ImageKit CDN
  */
 const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => {
   const [hasError, setHasError] = useState(false);
-
-  // IMPORTANT:
-  // - src is expected to already be the final URL (either direct external URL or ImageKit URL)
-  // - We intentionally DO NOT attempt any further optimization here to avoid ImageKit 404s
-  //   for non-configured origins like cupid.travel.
-  const finalSrc = src;
   const fetchPriorityAttr = priority ? "high" : "low";
-  const isCupid = finalSrc?.includes("cupid.travel");
 
   return (
     <div className="relative w-full h-full aspect-video">
       <img
-        src={hasError ? "/placeholder.svg" : finalSrc}
+        src={hasError ? "/placeholder.svg" : src}
         alt={alt}
         className="w-full h-full object-cover"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
-        // Avoid React warning for `fetchPriority` and still set the real HTML attribute.
         {...({ fetchpriority: fetchPriorityAttr } as any)}
-        // SEO: Evita que Google intente validar origen de imágenes externas (cupid.travel)
         referrerPolicy="no-referrer"
-        // NOTE: Setting crossOrigin can force a CORS fetch which some hotel CDNs don't allow.
-        // We only set it when NOT loading from cupid.travel.
-        crossOrigin={isCupid ? undefined : "anonymous"}
         onError={() => setHasError(true)}
         width={450}
         height={253}
@@ -104,13 +89,8 @@ const HotelCard = ({
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Bypass ImageKit for cupid.travel (not configured in ImageKit origins → would 404)
-  // If the URL is cupid.travel, use it directly. Otherwise, use the optimization utility.
-  const imageUrl = hotel.hotel_main_photo?.includes("cupid.travel")
-    ? hotel.hotel_main_photo
-    : getOptimizedCardImage(hotel.hotel_main_photo);
-
-  console.log("DEBUG HOTEL IMG:", imageUrl);
+  // All origins (including cupid.travel) now go through ImageKit for WebP optimization
+  const imageUrl = getOptimizedCardImage(hotel.hotel_main_photo);
 
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
