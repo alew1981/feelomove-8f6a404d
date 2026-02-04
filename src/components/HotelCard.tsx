@@ -1,7 +1,7 @@
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Check, Loader2 } from "lucide-react";
-import { getOptimizedHotelImage, generateHotelSrcSet } from "@/lib/imagekitUtils";
+import { getOptimizedCardImage } from "@/lib/imagekitUtils";
 
 interface HotelCardProps {
   hotel: {
@@ -58,22 +58,23 @@ const getRatingText = (rating: number): string => {
 const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => {
   const [hasError, setHasError] = useState(false);
 
-  // getOptimizedHotelImage returns original URL if not from configured origins (cupid.travel, etc.)
-  const optimizedSrc = getOptimizedHotelImage(src);
-  // generateHotelSrcSet returns empty string for non-configured origins
-  const srcSet = generateHotelSrcSet(src);
+  // IMPORTANT:
+  // - src is expected to already be the final URL (either direct external URL or ImageKit URL)
+  // - We intentionally DO NOT attempt any further optimization here to avoid ImageKit 404s
+  //   for non-configured origins like cupid.travel.
+  const finalSrc = src;
+  const fetchPriorityAttr = priority ? "high" : "low";
 
   return (
     <div className="relative w-full h-full aspect-video">
       <img
-        src={hasError ? "/placeholder.svg" : optimizedSrc}
-        srcSet={hasError || !srcSet ? undefined : srcSet}
-        sizes={srcSet ? "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" : undefined}
+        src={hasError ? "/placeholder.svg" : finalSrc}
         alt={alt}
         className="w-full h-full object-cover"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
-        fetchPriority={priority ? "high" : "low"}
+        // Avoid React warning for `fetchPriority` and still set the real HTML attribute.
+        {...({ fetchpriority: fetchPriorityAttr } as any)}
         // SEO: Evita que Google intente validar origen de imágenes externas (cupid.travel)
         referrerPolicy="no-referrer"
         crossOrigin="anonymous"
@@ -99,6 +100,14 @@ const HotelCard = ({
 }: HotelCardProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Bypass ImageKit for cupid.travel (not configured in ImageKit origins → would 404)
+  // If the URL is cupid.travel, use it directly. Otherwise, use the optimization utility.
+  const imageUrl = hotel.hotel_main_photo?.includes("cupid.travel")
+    ? hotel.hotel_main_photo
+    : getOptimizedCardImage(hotel.hotel_main_photo);
+
+  console.log("DEBUG HOTEL IMG:", imageUrl);
 
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
@@ -162,7 +171,7 @@ const HotelCard = ({
       {/* Hotel Image */}
       <div className="h-[140px] sm:h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <HotelImage
-          src={hotel.hotel_main_photo || "/placeholder.svg"}
+          src={imageUrl || "/placeholder.svg"}
           alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + " estrellas" : ""} en ${hotel.hotel_city || "España"} para eventos`}
           priority={priority}
         />
