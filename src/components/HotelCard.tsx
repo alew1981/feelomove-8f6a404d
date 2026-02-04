@@ -49,26 +49,26 @@ const getRatingText = (rating: number): string => {
 };
 
 /**
- * Optimized hotel image with ImageKit CDN
+ * Optimized hotel image
  * OPTIMIZATIONS:
- * - Automatic WebP/AVIF conversion via ImageKit
- * - srcset responsive for different screen sizes
- * - DPR-aware for retina displays
+ * - For Ticketmaster/Supabase: Uses ImageKit CDN with WebP/AVIF
+ * - For Cupid/others: Uses original URL with lazy loading (no CDN)
  * - Clean URLs for maximum browser caching
  */
 const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => {
   const [hasError, setHasError] = useState(false);
 
-  // Optimize URL with ImageKit (w=450 for cards)
+  // getOptimizedHotelImage returns original URL if not from configured origins (cupid.travel, etc.)
   const optimizedSrc = getOptimizedHotelImage(src);
+  // generateHotelSrcSet returns empty string for non-configured origins
   const srcSet = generateHotelSrcSet(src);
 
   return (
     <div className="relative w-full h-full aspect-video">
       <img
         src={hasError ? "/placeholder.svg" : optimizedSrc}
-        srcSet={hasError ? undefined : srcSet}
-        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        srcSet={hasError || !srcSet ? undefined : srcSet}
+        sizes={srcSet ? "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" : undefined}
         alt={alt}
         className="w-full h-full object-cover"
         loading={priority ? "eager" : "lazy"}
