@@ -89,8 +89,30 @@ const HotelCard = ({
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // All origins (including cupid.travel) now go through ImageKit for WebP optimization
-  const imageUrl = getOptimizedCardImage(hotel.hotel_main_photo);
+  // Cupid (static.cupid.travel) is configured as an ImageKit origin.
+  // Required URL format:
+  // https://ik.imagekit.io/feelomove/https://static.cupid.travel/${path}?tr=w-600,h-400,fo-auto
+  const buildCupidImageKitUrl = (originalUrl: string) => {
+    try {
+      const u = new URL(originalUrl);
+      // Keep only the path (no query) and append transformations as query.
+      return `https://ik.imagekit.io/feelomove/https://static.cupid.travel${u.pathname}?tr=w-600,h-400,fo-auto`;
+    } catch {
+      // Fallback if URL parsing fails
+      const base = "https://static.cupid.travel";
+      const idx = originalUrl.indexOf(base);
+      const path = idx >= 0 ? originalUrl.slice(idx + base.length).split("?")[0] : "";
+      return `https://ik.imagekit.io/feelomove/https://static.cupid.travel${path}?tr=w-600,h-400,fo-auto`;
+    }
+  };
+
+  // If the URL is from cupid, use the origin-based ImageKit path.
+  // Otherwise, use our standard optimizer (Ticketmaster/Supabase path-based).
+  const imageUrl = hotel.hotel_main_photo?.includes("static.cupid.travel")
+    ? buildCupidImageKitUrl(hotel.hotel_main_photo)
+    : getOptimizedCardImage(hotel.hotel_main_photo);
+
+  console.log("DEBUG HOTEL IMG:", imageUrl);
 
   const pricePerNight = Number(hotel.selling_price || hotel.price || 0);
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
