@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getOptimizedCardImage } from "@/lib/imagekitUtils";
 
 // Hero image via ImageKit CDN using Ticketmaster origin
 // OPTIMIZED: Uses Ticketmaster image resized via ImageKit transformations
@@ -122,7 +123,7 @@ const Hero = () => {
               name: event.name || '',
               path: getEventUrl(event.slug || '', false),
               subtitle: event.venue_city || '',
-              image: event.image_standard_url || ''
+              image: getOptimizedCardImage(event.image_standard_url)
             });
           }
         });
@@ -137,7 +138,7 @@ const Hero = () => {
               name: event.name || '',
               path: getEventUrl(event.slug || '', true),
               subtitle: event.venue_city || '',
-              image: event.image_standard_url || ''
+              image: getOptimizedCardImage(event.image_standard_url)
             });
           }
         });
@@ -149,7 +150,7 @@ const Hero = () => {
               type: 'destination',
               name: dest.city_name || '',
               path: `/destinos/${dest.city_slug || encodeURIComponent(dest.city_name || '')}`,
-              image: dest.sample_image_url || ''
+              image: getOptimizedCardImage(dest.sample_image_url)
             });
           }
         });
@@ -161,7 +162,7 @@ const Hero = () => {
               type: 'artist',
               name: artist.attraction_name || '',
               path: `/conciertos/${artist.attraction_slug}`,
-              image: artist.sample_image_url || ''
+              image: getOptimizedCardImage(artist.sample_image_url)
             });
           }
         });
@@ -173,7 +174,7 @@ const Hero = () => {
               type: 'genre',
               name: genre.genre_name || '',
               path: `/musica/${encodeURIComponent(genre.genre_name || '')}`,
-              image: genreImageMap[genre.genre_name || ''] || ''
+              image: getOptimizedCardImage(genreImageMap[genre.genre_name || ''])
             });
           }
         });
