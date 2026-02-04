@@ -64,6 +64,7 @@ const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: str
   //   for non-configured origins like cupid.travel.
   const finalSrc = src;
   const fetchPriorityAttr = priority ? "high" : "low";
+  const isCupid = finalSrc?.includes("cupid.travel");
 
   return (
     <div className="relative w-full h-full aspect-video">
@@ -77,7 +78,9 @@ const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: str
         {...({ fetchpriority: fetchPriorityAttr } as any)}
         // SEO: Evita que Google intente validar origen de imágenes externas (cupid.travel)
         referrerPolicy="no-referrer"
-        crossOrigin="anonymous"
+        // NOTE: Setting crossOrigin can force a CORS fetch which some hotel CDNs don't allow.
+        // We only set it when NOT loading from cupid.travel.
+        crossOrigin={isCupid ? undefined : "anonymous"}
         onError={() => setHasError(true)}
         width={450}
         height={253}
