@@ -6,6 +6,7 @@ import { useEventData } from "@/hooks/useEventData";
 import { useSlugNormalization, isVipSlug, isServiceSlug } from "@/hooks/useSlugNormalization";
 import { useEventHotels } from "@/hooks/useEventHotels";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useIsMobile } from "@/hooks/use-mobile";
 // SYNC: Header and Hero components must NOT be lazy-loaded to prevent layout shift
 import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -555,13 +556,16 @@ const Producto = () => {
   const stay22Activities = stay22Urls.activities;
 
   // ⚡ OPTIMIZACIÓN CRÍTICA #7: URLs RESPONSIVE PARA HERO IMAGE (LCP)
-  // Genera múltiples tamaños para mobile/tablet/desktop sin cargas duplicadas
+  // En MÓVIL: NO cargar imagen hero para mejor LCP (imagen Ticketmaster ~305px = pixelada al escalar)
+  // En DESKTOP: Cargar imagen con proxy weserv para WebP conversion
   const heroImageUrls = useMemo(() => {
-    const rawUrl = (eventDetails as any)?.image_large_url || eventDetails?.image_standard_url || "/placeholder.svg";
+    // Priorizar image_standard_url (más liviana, ~115px original) sobre image_large_url
+    // Solo en desktop donde se escala menos agresivamente
+    const rawUrl = eventDetails?.image_standard_url || (eventDetails as any)?.image_large_url || "/placeholder.svg";
 
     // Si es placeholder, retornar directo
     if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
-      return { src: rawUrl, srcSet: "" };
+      return { src: rawUrl, srcSet: "", showOnMobile: false };
     }
 
     // PASO 1: Normalizar URL de Ticketmaster a formato óptimo
@@ -581,9 +585,9 @@ const Producto = () => {
       }
     }
 
-    // PASO 2: Generar URLs para diferentes tamaños (responsive) con aggressive caching
-    // Mobile-first: w=800 max para LCP rápido en dispositivos móviles
-    const createUrl = (width: number, quality: number = 75) => {
+    // PASO 2: Generar URLs para DESKTOP ONLY (tablet+)
+    // Mobile NO carga imagen para LCP óptimo
+    const createUrl = (width: number, quality: number = 70) => {
       const params = new URLSearchParams({
         url: normalizedUrl,
         w: width.toString(),
@@ -595,13 +599,13 @@ const Producto = () => {
       return `https://images.weserv.nl/?${params}`;
     };
 
-    // OPTIMIZED SIZES: q=75 for balance between quality and speed
-    // Mobile LCP: 800px max width, compressed to 75 quality
+    // OPTIMIZED: Solo para desktop/tablet (sm+), mobile no carga imagen
     return {
-      src: createUrl(800, 75), // Mobile-optimized default (LCP target)
-      srcSet: `${createUrl(400, 75)} 400w, ${createUrl(640, 75)} 640w, ${createUrl(800, 75)} 800w, ${createUrl(1200, 75)} 1200w`,
+      src: createUrl(640, 70), // Tablet-optimized default
+      srcSet: `${createUrl(640, 70)} 640w, ${createUrl(800, 70)} 800w, ${createUrl(1200, 70)} 1200w`,
+      showOnMobile: false, // Flag para ocultar en mobile
     };
-  }, [(eventDetails as any)?.image_large_url, eventDetails?.image_standard_url, eventDetails?.event_id]);
+  }, [eventDetails?.image_standard_url, (eventDetails as any)?.image_large_url, eventDetails?.event_id]);
 
   const prevEventIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1044,14 +1048,80 @@ const Producto = () => {
             )}
           </div>
 
-          {/* ⚡ Hero Section - LCP OPTIMIZED */}
-          <div className="relative rounded-2xl overflow-hidden mb-6">
-            <div className="relative h-[200px] sm:h-[340px] md:h-[420px]">
-              {/* LCP IMAGE: First image in DOM, maximum priority */}
+          {/* ⚡ Hero Section - MOBILE: Sin imagen para LCP óptimo */}
+          {/* MOBILE HERO: Diseño compacto sin imagen (mejor LCP) */}
+          <div className="sm:hidden mb-4">
+            <div className="bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 rounded-xl p-4 border border-border/50">
+              <div className="flex items-start justify-between gap-3">
+                {/* Fecha compacta */}
+                <div className="bg-card rounded-lg shadow-sm px-3 py-2 flex-shrink-0">
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                      {formatDatePart(eventDate, "month")}
+                    </p>
+                    <p className="text-2xl font-black text-foreground leading-none">
+                      {formatDatePart(eventDate, "day")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatDatePart(eventDate, "year")}</p>
+                  </div>
+                </div>
+                
+                {/* Info evento */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <IconMapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="text-sm font-medium truncate">{eventDetails.venue_city}</span>
+                    <span className="text-sm">·</span>
+                    <span className="text-sm font-bold text-foreground">{formattedTime}h</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{eventDetails.venue_name}</p>
+                  
+                  {/* Badges móvil */}
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {onSaleBadgeFormatted && (
+                      <Badge className="text-[9px] font-bold px-1.5 py-0.5 bg-accent text-accent-foreground">
+                        A la venta: {onSaleBadgeFormatted}
+                      </Badge>
+                    )}
+                    {hasVipTickets && (
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0.5">VIP</Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Favorito */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-card shadow-sm flex-shrink-0"
+                  onClick={() =>
+                    toggleFavorite({
+                      event_id: eventDetails.event_id!,
+                      event_name: eventDetails.event_name || "",
+                      event_slug: eventDetails.event_slug || "",
+                      event_date: eventDetails.event_date || "",
+                      venue_city: eventDetails.venue_city || "",
+                      image_url: heroImageUrls.src,
+                    })
+                  }
+                >
+                  <IconHeart
+                    filled={isFavorite(eventDetails.event_id!)}
+                    className={`h-4 w-4 ${isFavorite(eventDetails.event_id!) ? "text-accent" : "text-muted-foreground"}`}
+                  />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* DESKTOP/TABLET HERO: Con imagen */}
+          <div className="relative rounded-2xl overflow-hidden mb-6 hidden sm:block">
+            <div className="relative h-[340px] md:h-[420px]">
+              {/* LCP IMAGE: Solo para tablet/desktop */}
               <img
                 src={heroImageUrls.src}
                 srcSet={heroImageUrls.srcSet}
-                sizes="(max-width: 640px) 640px, (max-width: 800px) 800px, 1200px"
+                sizes="(max-width: 800px) 800px, 1200px"
                 alt={eventDetails.event_name || "Evento"}
                 className="w-full h-full object-cover"
                 width={800}
@@ -1063,46 +1133,27 @@ const Producto = () => {
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-              <div className="absolute left-2 bottom-2 sm:hidden">
-                <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg px-2.5 py-2 flex items-center gap-2">
-                  <div className="text-center border-r border-border pr-2">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                      {formatDatePart(eventDate, "month")}
-                    </p>
-                    <p className="text-xl font-black text-foreground leading-none">
-                      {formatDatePart(eventDate, "day")}
-                    </p>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-foreground">{formattedTime}h</p>
-                    <div className="flex items-center gap-0.5 text-muted-foreground">
-                      <IconMapPin className="h-3 w-3" />
-                      <span className="text-[10px] font-medium">{eventDetails.venue_city}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 hidden sm:block">
-                <div className="bg-card rounded-xl shadow-lg p-4 sm:p-5 md:p-6 min-w-[140px] sm:min-w-[160px] md:min-w-[180px]">
+              {/* Fecha card - Desktop */}
+              <div className="absolute left-4 bottom-4">
+                <div className="bg-card rounded-xl shadow-lg p-5 md:p-6 min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
-                    <p className="text-sm sm:text-base font-bold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-base font-bold text-muted-foreground uppercase tracking-wider">
                       {formatDatePart(eventDate, "month")}
                     </p>
-                    <p className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground leading-none my-1 sm:my-2">
+                    <p className="text-5xl md:text-6xl font-black text-foreground leading-none my-2">
                       {formatDatePart(eventDate, "day")}
                     </p>
-                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
+                    <p className="text-lg font-medium text-muted-foreground">
                       {formatDatePart(eventDate, "year")}
                     </p>
-                    <div className="border-t border-border mt-3 pt-3 sm:mt-4 sm:pt-4">
-                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formattedTime}h</p>
+                    <div className="border-t border-border mt-4 pt-4">
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">{formattedTime}h</p>
                       <div className="flex flex-col items-center gap-1 mt-2 text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <IconMapPin className="h-4 w-4" />
-                          <span className="text-sm sm:text-base font-bold">{eventDetails.venue_city}</span>
+                          <span className="text-base font-bold">{eventDetails.venue_city}</span>
                         </div>
-                        <span className="text-xs sm:text-sm text-muted-foreground/80 line-clamp-2 text-center max-w-[120px] sm:max-w-[140px]">
+                        <span className="text-sm text-muted-foreground/80 line-clamp-2 text-center max-w-[140px]">
                           {eventDetails.venue_name}
                         </span>
                       </div>
@@ -1111,12 +1162,13 @@ const Producto = () => {
                 </div>
               </div>
 
-              <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[55%] sm:max-w-[50%] md:max-w-[45%] hidden sm:block">
+              {/* Título central - Desktop */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center max-w-[50%] md:max-w-[45%]">
                 <div className="flex flex-col items-center gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0 backdrop-blur-sm"
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/20 hover:bg-white/30 flex-shrink-0 backdrop-blur-sm"
                     onClick={() =>
                       toggleFavorite({
                         event_id: eventDetails.event_id!,
@@ -1131,26 +1183,26 @@ const Producto = () => {
                   >
                     <IconHeart
                       filled={isFavorite(eventDetails.event_id!)}
-                      className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? "text-accent" : "text-white"}`}
+                      className={`h-5 w-5 md:h-6 md:w-6 ${isFavorite(eventDetails.event_id!) ? "text-accent" : "text-white"}`}
                     />
                   </Button>
                   <p
-                    className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg"
+                    className="text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg"
                     aria-hidden="true"
                   >
                     {displayTitle}
                   </p>
                   {displaySubtitle && (
-                    <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium drop-shadow-md">
+                    <p className="text-base md:text-lg text-white/80 font-medium drop-shadow-md">
                       {displaySubtitle}
                     </p>
                   )}
                   {isFestivalDisplay && festivalLineupArtists.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2 max-w-full mt-3">
+                    <div className="flex flex-wrap justify-center gap-2 max-w-full mt-3">
                       {festivalLineupArtists.map((artist, idx) => (
                         <span
                           key={idx}
-                          className="text-xs sm:text-sm md:text-base text-white/90 font-semibold drop-shadow-md px-2 py-0.5 bg-white/10 backdrop-blur-sm rounded-full"
+                          className="text-sm md:text-base text-white/90 font-semibold drop-shadow-md px-2 py-0.5 bg-white/10 backdrop-blur-sm rounded-full"
                         >
                           {artist}
                         </span>
@@ -1160,52 +1212,15 @@ const Producto = () => {
                 </div>
               </div>
 
-              <div className="absolute right-2 top-2 bottom-2 sm:hidden flex flex-col items-end justify-between">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm"
-                  onClick={() =>
-                    toggleFavorite({
-                      event_id: eventDetails.event_id!,
-                      event_name: eventDetails.event_name || "",
-                      event_slug: eventDetails.event_slug || "",
-                      event_date: eventDetails.event_date || "",
-                      venue_city: eventDetails.venue_city || "",
-                      image_url: heroImageUrls.src,
-                    })
-                  }
-                >
-                  <IconHeart
-                    filled={isFavorite(eventDetails.event_id!)}
-                    className={`h-4 w-4 ${isFavorite(eventDetails.event_id!) ? "text-accent" : "text-white"}`}
-                  />
-                </Button>
 
-                <div className="flex flex-col gap-1 items-end">
-                  {onSaleBadgeFormatted && (
-                    <Badge className="text-[10px] font-bold px-2 py-1.5 bg-accent text-accent-foreground flex flex-col items-center leading-tight shadow-lg uppercase">
-                      <span>A la venta:</span>
-                      <span>{onSaleBadgeFormatted}</span>
-                    </Badge>
-                  )}
-                  {hasVipTickets && (
-                    <Badge variant="outline" className="bg-background/80 text-[9px] px-1.5 py-0.5">
-                      VIP
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* ⚡ OPTIMIZACIÓN #1: Miniatura duplicada ELIMINADA */}
-              <div className="absolute right-3 top-3 bottom-3 sm:right-4 sm:top-4 sm:bottom-4 hidden sm:flex flex-col items-end justify-start">
+              {/* Badges - Desktop (hero ya está hidden en mobile) */}
+              <div className="absolute right-4 top-4 bottom-4 flex flex-col items-end justify-start">
                 <CollapsibleBadges
                   eventDetails={eventDetails}
                   hasVipTickets={hasVipTickets}
                   isEventAvailable={isEventAvailable}
                   daysUntil={daysUntil}
                 />
-                {/* ✅ ELIMINADA: Imagen miniatura duplicada que causaba 2 cargas extra */}
               </div>
             </div>
           </div>
