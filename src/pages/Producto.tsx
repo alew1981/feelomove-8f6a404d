@@ -556,11 +556,10 @@ const Producto = () => {
   const stay22Activities = stay22Urls.activities;
 
   // ⚡ OPTIMIZACIÓN CRÍTICA #7: URLs RESPONSIVE PARA HERO IMAGE (LCP)
-  // En MÓVIL: NO cargar imagen hero para mejor LCP (imagen Ticketmaster ~305px = pixelada al escalar)
+  // En MÓVIL: NO cargar imagen hero para mejor LCP
   // En DESKTOP: Cargar imagen con ImageKit CDN para optimización automática
   const heroImageUrls = useMemo(() => {
-    // Priorizar image_standard_url (más liviana, ~115px original) sobre image_large_url
-    // Solo en desktop donde se escala menos agresivamente
+    // Priorizar image_standard_url (más liviana) sobre image_large_url
     const rawUrl = eventDetails?.image_standard_url || (eventDetails as any)?.image_large_url || "/placeholder.svg";
 
     // Si es placeholder, retornar directo
@@ -589,10 +588,17 @@ const Producto = () => {
     // Mobile NO carga imagen para LCP óptimo
     const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
     
+    // Extract path from Ticketmaster URL: https://s1.ticketm.net/dam/... → /dam/...
     const createUrl = (width: number, quality: number = 70) => {
-      // ImageKit web proxy format - URL NOT encoded
-      const transformations = `tr:w-${width},q-${quality},f-auto`;
-      return `${IMAGEKIT_ENDPOINT}/${transformations}/${normalizedUrl}`;
+      try {
+        const urlObj = new URL(normalizedUrl);
+        const path = urlObj.pathname; // e.g., /dam/a/79f/...
+        const transformations = `tr:w-${width},q-${quality},f-auto`;
+        return `${IMAGEKIT_ENDPOINT}/${transformations}${path}`;
+      } catch {
+        // Fallback to original URL if parsing fails
+        return normalizedUrl;
+      }
     };
 
     // OPTIMIZED: Solo para desktop/tablet (sm+), mobile no carga imagen
@@ -887,10 +893,18 @@ const Producto = () => {
         break;
       }
     }
-    // ImageKit URL para og:image (1200x630) - URL NOT encoded
+    // ImageKit URL para og:image (1200x630)
+    // Extract path from Ticketmaster URL for ImageKit
     const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
-    const transformations = "tr:w-1200,h-630,fo-center,c-at_max,q-80,f-jpg";
-    return `${IMAGEKIT_ENDPOINT}/${transformations}/${normalizedUrl}`;
+    try {
+      const urlObj = new URL(normalizedUrl);
+      const path = urlObj.pathname; // e.g., /dam/a/79f/...
+      const transformations = "tr:w-1200,h-630,fo-center,c-at_max,q-80,f-jpg";
+      return `${IMAGEKIT_ENDPOINT}/${transformations}${path}`;
+    } catch {
+      // Fallback to default og-image if URL parsing fails
+      return "https://feelomove.com/og-image.jpg";
+    }
   })();
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(

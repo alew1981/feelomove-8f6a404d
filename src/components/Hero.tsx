@@ -5,11 +5,16 @@ import { Input } from "./ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-// Hero image LOCAL - sin proxy externo para evitar bloqueos de robots.txt
-// CRITICAL: URL MUST match EXACTLY with index.html preload tag
-// Usamos imagen local WebP optimizada (ya comprimida en build)
-const heroImage = "/images/hero-concert.webp";
+// Hero image via ImageKit CDN using Ticketmaster origin
+// OPTIMIZED: Uses Ticketmaster image resized via ImageKit transformations
+// Mobile: Image NOT rendered at all (see conditional render below)
+// Desktop: ImageKit serves optimized WebP with q=70
+const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
+const HERO_PATH = "/dam/a/512/655083a1-b8c6-45f5-ba9a-f7c3bca2c512_EVENT_DETAIL_PAGE_16_9.jpg";
+const getHeroImage = (width: number, quality: number = 70) => 
+  `${IMAGEKIT_ENDPOINT}/tr:w-${width},q-${quality},f-auto${HERO_PATH}`;
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (
@@ -63,6 +68,7 @@ const Hero = () => {
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Close results when clicking outside
   useEffect(() => {
@@ -225,30 +231,23 @@ const Hero = () => {
   return (
     <section className="hero-section relative min-h-[750px] flex items-center justify-center overflow-hidden" style={{ contain: 'layout style paint', contentVisibility: 'auto', containIntrinsicSize: '0 750px' }}>
       {/* Static Image Background - LCP optimized with critical rendering path */}
+      {/* MOBILE: No image rendered at all to maximize LCP performance */}
+      {/* DESKTOP: ImageKit CDN serves optimized WebP */}
       <div className="absolute inset-0 z-0" style={{ contain: 'strict' }}>
-        {/* 
-          LCP Optimization:
-          - fetchpriority="high" tells browser this is critical
-          - loading="eager" disables lazy loading
-          - decoding="sync" ensures immediate decode
-          - width/height prevent layout shift
-        */}
-        {/* 
-          LCP Optimization with responsive images:
-          - srcset provides different image sizes for different viewport widths
-          - sizes tells browser the image will be full viewport width
-          - Vite hashes the image, so we serve appropriately sized versions
-        */}
-        <img
-          src={heroImage}
-          alt="Conciertos y festivales en España - FEELOMOVE+"
-          className="hero-image w-full h-full object-cover"
-          loading="eager"
-          decoding="sync"
-          fetchPriority="high"
-          width={1200}
-          height={675}
-        />
+        {!isMobile && (
+          <img
+            src={getHeroImage(1200, 70)}
+            srcSet={`${getHeroImage(800, 70)} 800w, ${getHeroImage(1200, 70)} 1200w, ${getHeroImage(1600, 65)} 1600w`}
+            sizes="100vw"
+            alt="Conciertos y festivales en España - FEELOMOVE+"
+            className="hero-image w-full h-full object-cover"
+            loading="eager"
+            decoding="sync"
+            fetchPriority="high"
+            width={1200}
+            height={675}
+          />
+        )}
         <div className="hero-overlay absolute inset-0 bg-gradient-to-b from-brand-black/80 via-brand-black/70 to-background" />
       </div>
 
