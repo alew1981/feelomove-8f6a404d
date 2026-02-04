@@ -55,7 +55,7 @@ const Conciertos = () => {
   const [filterGenre, setFilterGenre] = useState<string>(initialGenre);
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
-  const [filterRecent, setFilterRecent] = useState<string>("added");
+  // Removed filterRecent - all events now sorted by updated_at DESC by default
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
@@ -77,20 +77,18 @@ const Conciertos = () => {
     }
   }, [filterGenre, filterCity, searchParams, setSearchParams]);
 
-  // Fetch conciertos using mv_concerts_cards (excluding transport/technical services)
+  // Fetch conciertos using mv_concerts_cards + updated_at from tm_tbl_events for sorting
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mv_concerts_cards")
         .select("*")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
+        .gte("event_date", new Date().toISOString());
       
       if (error) throw error;
       
       // Centralized filter: exclude technical/service events
-      // Keywords: parking, ticketless, upgrade, voucher, shuttle, bus services, VIP packages
       const excludedKeywords = [
         "parking", "ticketless", "upgrade", "voucher", "shuttle", "transfer",
         "transporte", "servicio de autobus", "plaza de parking", "hotel package",
@@ -106,25 +104,37 @@ const Conciertos = () => {
         return !excludedKeywords.some(kw => combined.includes(kw));
       });
 
-      // Ensure on_sale_date is available for the "Inicio ventas" badge in EventCard.
+      // Fetch updated_at and on_sale_date from tm_tbl_events for sorting and badges
       try {
         const ids = filtered.map((e) => e.id).filter(Boolean);
         if (ids.length === 0) return filtered;
 
-        const { data: saleDates, error: saleDatesError } = await supabase
+        const { data: eventMeta, error: metaError } = await supabase
           .from("tm_tbl_events")
-          .select("id, on_sale_date")
+          .select("id, on_sale_date, updated_at")
           .in("id", ids);
 
-        if (saleDatesError) throw saleDatesError;
+        if (metaError) throw metaError;
 
-        const map = new Map<string, string | null>();
-        (saleDates || []).forEach((row) => map.set(String(row.id), row.on_sale_date ?? null));
-
-        return filtered.map((e) => ({
-          ...e,
-          on_sale_date: map.get(String(e.id)) ?? null,
+        const metaMap = new Map<string, { on_sale_date: string | null; updated_at: string | null }>();
+        (eventMeta || []).forEach((row) => metaMap.set(String(row.id), {
+          on_sale_date: row.on_sale_date ?? null,
+          updated_at: row.updated_at ?? null
         }));
+
+        // Merge metadata and sort by updated_at DESC (most recently updated first)
+        const merged = filtered.map((e) => ({
+          ...e,
+          on_sale_date: metaMap.get(String(e.id))?.on_sale_date ?? null,
+          updated_at: metaMap.get(String(e.id))?.updated_at ?? null,
+        }));
+
+        // Sort by updated_at descending (newest/most recently updated first)
+        return merged.sort((a, b) => {
+          const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+          const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+          return dateB - dateA;
+        });
       } catch {
         return filtered;
       }
@@ -195,20 +205,6 @@ const Conciertos = () => {
       });
     }
 
-    // Apply recent filter (events in next 30 days or recently added)
-    if (filterRecent === "recent") {
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      filtered = filtered.filter(event => {
-        if (!event.event_date) return false;
-        const eventDate = new Date(event.event_date);
-        return eventDate <= thirtyDaysFromNow;
-      });
-    } else if (filterRecent === "added") {
-      // Sort by ID descending as proxy for recently added (higher IDs = newer)
-      filtered = [...filtered].sort((a, b) => String(b.id).localeCompare(String(a.id)));
-    }
-    
     // Apply VIP filter (check badges for VIP or name contains VIP)
     if (filterVip === "vip") {
       filtered = filtered.filter(event => {
@@ -219,13 +215,11 @@ const Conciertos = () => {
       });
     }
 
-    // Sort by date ascending only when explicitly selected (not "added" mode)
-    if (filterRecent !== "added") {
-      filtered.sort((a, b) => new Date(a.event_date || 0).getTime() - new Date(b.event_date || 0).getTime());
-    }
+    // Events are already sorted by updated_at DESC from the query
+    // No additional sorting needed - most recently updated events appear first
     
     return filtered;
-  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterRecent, filterVip]);
+  }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterVip]);
 
   // Display only the first displayCount events
   const displayedEvents = useMemo(() => {
@@ -452,7 +446,7 @@ const Conciertos = () => {
             </div>
 
             {/* Filters Row */}
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
                   <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
@@ -501,16 +495,7 @@ const Conciertos = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterRecent} onValueChange={setFilterRecent}>
-                <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterRecent !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterRecent === "all" ? "Próximos" : filterRecent === "recent" ? "30 días" : "Recientes"}</span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="recent">Próximos 30 días</SelectItem>
-                  <SelectItem value="added">Añadidos recientemente</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Removed filterRecent - events sorted by updated_at by default */}
 
               <Select value={filterVip} onValueChange={setFilterVip}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterVip !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
@@ -523,7 +508,7 @@ const Conciertos = () => {
               </Select>
             </div>
 
-            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterRecent !== "all" || filterVip !== "all") && (
+            {(filterCity !== "all" || filterGenre !== "all" || filterArtist !== "all" || filterMonthYear !== "all" || filterVip !== "all") && (
               <div className="flex justify-end">
                 <button
                   onClick={() => {
@@ -531,7 +516,6 @@ const Conciertos = () => {
                     setFilterGenre("all");
                     setFilterArtist("all");
                     setFilterMonthYear("all");
-                    setFilterRecent("all");
                     setFilterVip("all");
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
