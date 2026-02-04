@@ -132,7 +132,8 @@ export function useEventHotels({
           return {
             hotel_id: hotel.id,
             hotel_name: hotel.name,
-            hotel_main_photo: hotel.main_photo || hotel.thumbnail || "/placeholder.svg",
+            // Priority: thumbnail (smaller/faster) > main_photo > placeholder
+            hotel_main_photo: hotel.thumbnail || hotel.main_photo || "/placeholder.svg",
             hotel_description: hotel.hotel_description || "Hotel confortable cerca del venue",
             hotel_stars: hotel.stars || 0,
             hotel_rating: Number(hotel.rating) || 0,
