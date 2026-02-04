@@ -2,9 +2,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import { useParams, useLocation } from "react-router-dom";
+import { useLayoutEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
 /**
  * ProductoSkeleton - CLS-optimized skeleton for concert/festival detail pages
  * 
@@ -129,6 +129,53 @@ const ProductoSkeleton = () => {
   const eventType = isFestival ? 'Festival' : 'Concierto';
   const canonicalUrl = `https://feelomove.com${location.pathname}`;
   
+  // CRITICAL SEO: Update #seo-fallback in index.html with dynamic content
+  // This runs BEFORE paint so crawlers see relevant content immediately
+  useLayoutEffect(() => {
+    const fallbackDiv = document.getElementById('seo-fallback');
+    if (fallbackDiv && h1) {
+      // Update H1 with event name
+      const fallbackH1 = fallbackDiv.querySelector('h1');
+      if (fallbackH1) {
+        fallbackH1.textContent = `Entradas ${h1} | FEELOMOVE+`;
+      }
+      
+      // Update description
+      const fallbackP = fallbackDiv.querySelector('p');
+      if (fallbackP) {
+        fallbackP.textContent = description;
+      }
+      
+      // Update section heading
+      const sectionH2 = fallbackDiv.querySelector('section h2');
+      if (sectionH2) {
+        sectionH2.textContent = `${eventType}: ${h1}`;
+      }
+      
+      // Update section description
+      const sectionP = fallbackDiv.querySelector('section p');
+      if (sectionP) {
+        sectionP.textContent = city 
+          ? `Compra entradas para ${artist || h1} en ${city}. ${dateText ? `Fecha: ${dateText}.` : ''} Reserva hotel y disfruta del evento.`
+          : `Compra entradas para ${artist || h1}. Reserva hotel cerca del recinto.`;
+      }
+    }
+    
+    // Cleanup: restore original content when unmounting
+    return () => {
+      const fallbackDiv = document.getElementById('seo-fallback');
+      if (fallbackDiv) {
+        const fallbackH1 = fallbackDiv.querySelector('h1');
+        if (fallbackH1) {
+          fallbackH1.textContent = 'FEELOMOVE+ | Entradas Conciertos y Festivales España 2025';
+        }
+        const fallbackP = fallbackDiv.querySelector('p');
+        if (fallbackP) {
+          fallbackP.textContent = 'Compra entradas para los mejores conciertos y festivales de España. Reserva hotel cerca del evento y ahorra tiempo y dinero. Entradas oficiales + alojamiento en un solo lugar.';
+        }
+      }
+    };
+  }, [h1, description, artist, city, dateText, eventType]);
   // JSON-LD for immediate SEO (even during loading)
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
