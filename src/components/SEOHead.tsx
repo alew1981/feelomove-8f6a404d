@@ -309,9 +309,9 @@ export const SEOHead = ({
       {isEventDetailPage && (
         <>
           <link rel="preconnect" href="https://s1.ticketm.net" crossOrigin="anonymous" />
-          <link rel="preconnect" href="https://images.weserv.nl" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="https://s1.ticketm.net" />
-          <link rel="dns-prefetch" href="https://images.weserv.nl" />
+          <link rel="dns-prefetch" href="https://ik.imagekit.io" />
         </>
       )}
       

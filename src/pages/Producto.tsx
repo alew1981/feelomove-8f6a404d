@@ -557,7 +557,7 @@ const Producto = () => {
 
   // ⚡ OPTIMIZACIÓN CRÍTICA #7: URLs RESPONSIVE PARA HERO IMAGE (LCP)
   // En MÓVIL: NO cargar imagen hero para mejor LCP (imagen Ticketmaster ~305px = pixelada al escalar)
-  // En DESKTOP: Cargar imagen con proxy weserv para WebP conversion
+  // En DESKTOP: Cargar imagen con ImageKit CDN para optimización automática
   const heroImageUrls = useMemo(() => {
     // Priorizar image_standard_url (más liviana, ~115px original) sobre image_large_url
     // Solo en desktop donde se escala menos agresivamente
@@ -585,18 +585,14 @@ const Producto = () => {
       }
     }
 
-    // PASO 2: Generar URLs para DESKTOP ONLY (tablet+)
+    // PASO 2: Generar URLs para DESKTOP ONLY usando ImageKit CDN
     // Mobile NO carga imagen para LCP óptimo
+    const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
+    
     const createUrl = (width: number, quality: number = 70) => {
-      const params = new URLSearchParams({
-        url: normalizedUrl,
-        w: width.toString(),
-        output: "webp",
-        q: quality.toString(),
-        il: "", // interlaced for progressive loading
-        maxage: "31d",
-      });
-      return `https://images.weserv.nl/?${params}`;
+      // ImageKit web proxy format - URL NOT encoded
+      const transformations = `tr:w-${width},q-${quality},f-auto`;
+      return `${IMAGEKIT_ENDPOINT}/${transformations}/${normalizedUrl}`;
     };
 
     // OPTIMIZED: Solo para desktop/tablet (sm+), mobile no carga imagen
@@ -877,7 +873,7 @@ const Producto = () => {
   const pricePerPerson = totalPersons > 0 ? totalPrice / totalPersons : 0;
 
   // URL de imagen optimizada para og:image (1200x630 para social sharing)
-  // NOTA: No usar useMemo aquí porque estamos después de returns condicionales
+  // Usando ImageKit CDN en lugar de weserv.nl
   const ogImageUrl = (() => {
     const rawUrl = (eventDetails as any).image_large_url || eventDetails.image_standard_url || "/placeholder.svg";
     if (rawUrl === "/placeholder.svg" || rawUrl.startsWith("/")) {
@@ -891,16 +887,10 @@ const Producto = () => {
         break;
       }
     }
-    const params = new URLSearchParams({
-      url: normalizedUrl,
-      w: "1200",
-      h: "630",
-      fit: "cover",
-      output: "jpg",
-      q: "80",
-      maxage: "31d",
-    });
-    return `https://images.weserv.nl/?${params}`;
+    // ImageKit URL para og:image (1200x630) - URL NOT encoded
+    const IMAGEKIT_ENDPOINT = "https://ik.imagekit.io/feelomove";
+    const transformations = "tr:w-1200,h-630,fo-center,c-at_max,q-80,f-jpg";
+    return `${IMAGEKIT_ENDPOINT}/${transformations}/${normalizedUrl}`;
   })();
 
   const absoluteUrl = `${window.location.origin}${getEventUrl(

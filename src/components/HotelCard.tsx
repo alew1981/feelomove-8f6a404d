@@ -1,7 +1,7 @@
 import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Check, Loader2 } from "lucide-react";
-import { optimizeImageUrl, generateHotelSrcSet } from "@/lib/imageOptimization";
+import { getOptimizedHotelImage, generateHotelSrcSet } from "@/lib/imagekitUtils";
 
 interface HotelCardProps {
   hotel: {
@@ -49,17 +49,18 @@ const getRatingText = (rating: number): string => {
 };
 
 /**
- * Optimized hotel image with WebP conversion via wsrv.nl
- * OPTIMIZATIONS APPLIED (25-01-2026):
- * - WebP conversion: 390KB JPEG → ~150KB WebP (60% reduction)
+ * Optimized hotel image with ImageKit CDN
+ * OPTIMIZATIONS:
+ * - Automatic WebP/AVIF conversion via ImageKit
  * - srcset responsive for different screen sizes
- * - Preload for priority images (LCP optimization)
+ * - DPR-aware for retina displays
+ * - Clean URLs for maximum browser caching
  */
 const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => {
   const [hasError, setHasError] = useState(false);
 
-  // Optimize URL with WebP conversion (w=450 for cards)
-  const optimizedSrc = optimizeImageUrl(src, { width: 450, quality: 75 });
+  // Optimize URL with ImageKit (w=450 for cards)
+  const optimizedSrc = getOptimizedHotelImage(src);
   const srcSet = generateHotelSrcSet(src);
 
   return (

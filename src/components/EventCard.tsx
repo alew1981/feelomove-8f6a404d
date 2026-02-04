@@ -7,7 +7,7 @@ import { CategoryBadge } from "./CategoryBadge";
 import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
-import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
+import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
 import { parseDate, isFuture, isPlaceholderDate, formatDay, formatMonth, formatYear, formatTime, formatShortDate, formatOnSaleBadge } from "@/lib/dateUtils";
 
 // Inline SVGs for critical icons (eliminates lucide-react from critical path)
