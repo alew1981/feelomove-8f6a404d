@@ -89,9 +89,9 @@ const HotelCard = ({
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ImageKit Web Proxy: pass full Cupid URL after /Cupidhotels/
+  // ImageKit Web Proxy: clean original URL params before adding transformations
   const imageUrl = hotel.hotel_main_photo?.includes("static.cupid.travel")
-    ? `https://ik.imagekit.io/feelomove/Cupidhotels/${hotel.hotel_main_photo}?tr=w-600,h-400,fo-auto`
+    ? `https://ik.imagekit.io/feelomove/Cupidhotels/${hotel.hotel_main_photo.split('?')[0]}?tr=w-600,h-400,fo-auto`
     : getOptimizedCardImage(hotel.hotel_main_photo);
 
   console.log("DEBUG HOTEL IMG:", imageUrl);
