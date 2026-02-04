@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
+import { getOptimizedUrl } from "@/lib/imagekitUtils";
 
 interface BreadcrumbItem {
   name: string;
@@ -325,12 +326,12 @@ export const SEOHead = ({
         </>
       )}
       
-      {/* CRITICAL: Preload LCP image BEFORE JS execution for faster discovery */}
+      {/* CRITICAL: Preload LCP image via ImageKit for optimal size & speed */}
       {preloadImage && (
         <link 
           rel="preload" 
           as="image" 
-          href={preloadImage}
+          href={getOptimizedUrl(preloadImage, { width: 800, quality: 70 })}
           type="image/webp"
           // @ts-expect-error - fetchpriority is valid HTML attribute but React doesn't recognize it
           fetchpriority="high"
