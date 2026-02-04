@@ -187,49 +187,49 @@ const ProductoSkeleton = () => {
   
   // CRITICAL SEO: Update #seo-fallback in index.html with dynamic content
   // This runs BEFORE paint so crawlers see relevant content immediately
+  // Uses specific IDs for reliable element targeting
   useLayoutEffect(() => {
-    const fallbackDiv = document.getElementById('seo-fallback');
-    if (fallbackDiv && h1) {
-      // Update H1 with event name
-      const fallbackH1 = fallbackDiv.querySelector('h1');
-      if (fallbackH1) {
-        fallbackH1.textContent = `Entradas ${h1} | FEELOMOVE+`;
-      }
-      
-      // Update description
-      const fallbackP = fallbackDiv.querySelector('p');
-      if (fallbackP) {
-        fallbackP.textContent = description;
-      }
-      
-      // Update section heading
-      const sectionH2 = fallbackDiv.querySelector('section h2');
-      if (sectionH2) {
-        sectionH2.textContent = `${eventType}: ${h1}`;
-      }
-      
-      // Update section description
-      const sectionP = fallbackDiv.querySelector('section p');
-      if (sectionP) {
-        sectionP.textContent = city 
-          ? `Compra entradas para ${artist || h1} en ${city}. ${dateText ? `Fecha: ${dateText}.` : ''} Reserva hotel y disfruta del evento.`
-          : `Compra entradas para ${artist || h1}. Reserva hotel cerca del recinto.`;
-      }
+    if (!h1) return;
+    
+    // Update H1 with event name using ID
+    const fallbackH1 = document.getElementById('seo-fallback-h1');
+    if (fallbackH1) {
+      fallbackH1.textContent = `Entradas ${h1} | FEELOMOVE+`;
     }
     
-    // Cleanup: restore original content when unmounting
+    // Update description using ID
+    const fallbackDescription = document.getElementById('seo-fallback-description');
+    if (fallbackDescription) {
+      fallbackDescription.textContent = description;
+    }
+    
+    // Update section heading using ID
+    const fallbackH2 = document.getElementById('seo-fallback-h2');
+    if (fallbackH2) {
+      fallbackH2.textContent = `${eventType}: ${h1}`;
+    }
+    
+    // Update section description using ID
+    const fallbackSectionText = document.getElementById('seo-fallback-section-text');
+    if (fallbackSectionText) {
+      fallbackSectionText.textContent = city 
+        ? `Compra entradas para ${artist || h1} en ${city}. ${dateText ? `Fecha: ${dateText}.` : ''} Reserva hotel y disfruta del evento.`
+        : `Compra entradas para ${artist || h1}. Reserva hotel cerca del recinto.`;
+    }
+    
+    // Cleanup: restore minimal content when unmounting
     return () => {
-      const fallbackDiv = document.getElementById('seo-fallback');
-      if (fallbackDiv) {
-        const fallbackH1 = fallbackDiv.querySelector('h1');
-        if (fallbackH1) {
-          fallbackH1.textContent = 'FEELOMOVE+ | Entradas Conciertos y Festivales España 2025';
-        }
-        const fallbackP = fallbackDiv.querySelector('p');
-        if (fallbackP) {
-          fallbackP.textContent = 'Compra entradas para los mejores conciertos y festivales de España. Reserva hotel cerca del evento y ahorra tiempo y dinero. Entradas oficiales + alojamiento en un solo lugar.';
-        }
-      }
+      const h1El = document.getElementById('seo-fallback-h1');
+      if (h1El) h1El.textContent = 'FEELOMOVE+';
+      
+      const descEl = document.getElementById('seo-fallback-description');
+      if (descEl) descEl.textContent = '';
+      
+      const h2El = document.getElementById('seo-fallback-h2');
+      if (h2El) h2El.textContent = '';
+      
+      const sectionEl = document.getElementById('seo-fallback-section-text');
+      if (sectionEl) sectionEl.textContent = '';
     };
   }, [h1, description, artist, city, dateText, eventType]);
   // JSON-LD for immediate SEO (even during loading)
