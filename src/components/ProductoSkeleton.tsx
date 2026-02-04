@@ -42,18 +42,47 @@ const parseSlugForSeo = (slug: string | undefined): {
   
   const parts = slug.split('-');
   
-  // Spanish months for detection
+  // Spanish months for date detection
   const spanishMonths = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
   ];
   
-  // Spanish cities for detection
-  const knownCities = [
+  // Extended list of Spanish cities (lowercase)
+  const knownCities = new Set([
     'madrid', 'barcelona', 'valencia', 'sevilla', 'bilbao', 'malaga', 'zaragoza',
     'murcia', 'palma', 'alicante', 'cordoba', 'valladolid', 'vigo', 'gijon',
-    'granada', 'santander', 'pamplona', 'almeria', 'burgos', 'salamanca'
-  ];
+    'granada', 'santander', 'pamplona', 'almeria', 'burgos', 'salamanca',
+    'barakaldo', 'vitoria', 'donostia', 'logroño', 'oviedo', 'leon', 'cadiz',
+    'huelva', 'jaen', 'toledo', 'albacete', 'badajoz', 'caceres', 'castellon',
+    'tarragona', 'girona', 'lleida', 'huesca', 'teruel', 'soria', 'segovia',
+    'avila', 'zamora', 'palencia', 'cuenca', 'guadalajara', 'ciudad real',
+    'tenerife', 'las palmas', 'ibiza', 'menorca', 'mallorca', 'benidorm',
+    'marbella', 'torremolinos', 'fuengirola', 'estepona', 'ronda', 'nerja',
+    'elche', 'cartagena', 'lorca', 'alcoy', 'orihuela', 'torrevieja', 'denia',
+    'gandia', 'sagunto', 'alzira', 'ontinyent', 'xativa', 'manises', 'mislata',
+    'getafe', 'leganes', 'alcorcon', 'mostoles', 'fuenlabrada', 'parla',
+    'alcobendas', 'pozuelo', 'rivas', 'majadahonda', 'boadilla', 'arganda',
+    'coslada', 'torrejon', 'alcala', 'aranjuez', 'villalba', 'collado',
+    'hospitalet', 'badalona', 'sabadell', 'terrassa', 'mataro', 'rubi',
+    'sant cugat', 'viladecans', 'granollers', 'vic', 'manresa', 'igualada',
+    'santiago', 'coruna', 'lugo', 'ourense', 'pontevedra', 'ferrol'
+  ]);
+  
+  // Words that should NOT be capitalized (Spanish articles/prepositions)
+  const lowercaseWords = new Set(['de', 'la', 'el', 'y', 'los', 'las', 'del', 'en', 'con', 'por', 'a']);
+  
+  // Smart capitalization function
+  const smartCapitalize = (text: string): string => {
+    return text.split(' ').map((word, index) => {
+      const lowerWord = word.toLowerCase();
+      // First word always capitalized, rest check against lowercaseWords
+      if (index === 0 || !lowercaseWords.has(lowerWord)) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
+      return lowerWord;
+    }).join(' ');
+  };
   
   let artist = '';
   let city = '';
@@ -61,45 +90,72 @@ const parseSlugForSeo = (slug: string | undefined): {
   let month = '';
   let year = '';
   
-  // Find month index to split artist from date
+  // Step 1: Find month index (anchor for date detection)
   let monthIndex = -1;
   for (let i = 0; i < parts.length; i++) {
     if (spanishMonths.includes(parts[i].toLowerCase())) {
       monthIndex = i;
       month = parts[i];
-      if (i > 0) day = parts[i - 1];
-      if (i < parts.length - 1) year = parts[i + 1];
-      break;
-    }
-  }
-  
-  // Find city
-  for (let i = parts.length - 1; i >= 0; i--) {
-    if (knownCities.includes(parts[i].toLowerCase())) {
-      city = parts[i].charAt(0).toUpperCase() + parts[i].slice(1);
-      
-      // Artist is everything before city
-      if (monthIndex === -1) {
-        // No date found, artist is before city
-        artist = parts.slice(0, i).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-      } else {
-        // Artist is before day (which is before month)
-        const artistEnd = monthIndex > 0 ? monthIndex - 1 : i;
-        artist = parts.slice(0, Math.min(artistEnd, i)).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      // Day is the number before month
+      if (i > 0 && /^\d{1,2}$/.test(parts[i - 1])) {
+        day = parts[i - 1];
+      }
+      // Year is the number after month
+      if (i < parts.length - 1 && /^\d{4}$/.test(parts[i + 1])) {
+        year = parts[i + 1];
       }
       break;
     }
   }
   
-  // Fallback: If no city found, use first few parts as artist
-  if (!artist) {
-    const endIndex = monthIndex > 0 ? monthIndex - 1 : Math.min(3, parts.length);
-    artist = parts.slice(0, endIndex).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+  // Step 2: Find city - search from the end, before any date components
+  let cityIndex = -1;
+  const searchEndIndex = monthIndex > 0 
+    ? (day ? monthIndex - 2 : monthIndex - 1) // Stop before date
+    : parts.length - 1; // No date, check last part
+  
+  // Check from end backwards for a known city
+  for (let i = searchEndIndex; i >= 0; i--) {
+    const potentialCity = parts[i].toLowerCase();
+    if (knownCities.has(potentialCity)) {
+      city = smartCapitalize(parts[i]);
+      cityIndex = i;
+      break;
+    }
+    // Also check for two-word cities like "las palmas"
+    if (i > 0) {
+      const twoWordCity = `${parts[i-1].toLowerCase()} ${potentialCity}`;
+      if (knownCities.has(twoWordCity)) {
+        city = smartCapitalize(twoWordCity);
+        cityIndex = i - 1;
+        break;
+      }
+    }
+  }
+  
+  // If no known city found, assume the part right before date (or last part) is the city
+  if (!city && searchEndIndex >= 0) {
+    // Only if it doesn't look like a common word
+    const lastPart = parts[searchEndIndex].toLowerCase();
+    if (!lowercaseWords.has(lastPart) && lastPart.length > 2) {
+      city = smartCapitalize(parts[searchEndIndex]);
+      cityIndex = searchEndIndex;
+    }
+  }
+  
+  // Step 3: Extract artist - everything before city (or before date if no city before date)
+  const artistEndIndex = cityIndex > 0 
+    ? cityIndex 
+    : (monthIndex > 0 && day ? monthIndex - 2 : (monthIndex > 0 ? monthIndex - 1 : parts.length));
+  
+  if (artistEndIndex > 0) {
+    const artistParts = parts.slice(0, artistEndIndex);
+    artist = smartCapitalize(artistParts.join(' '));
   }
   
   // Format date text
   const dateText = month 
-    ? `${day} de ${month.charAt(0).toUpperCase() + month.slice(1)}${year ? ` ${year}` : ''}`
+    ? `${day} de ${smartCapitalize(month)}${year ? ` ${year}` : ''}`
     : year || '';
   
   // Build title and H1
@@ -109,7 +165,7 @@ const parseSlugForSeo = (slug: string | undefined): {
   
   const h1 = city 
     ? `${artist} en ${city}`
-    : artist;
+    : artist || 'Evento';
   
   const description = city
     ? `Compra entradas para ${artist} en ${city}. ${dateText ? `Fecha: ${dateText}.` : ''} Reserva tu hotel cerca del recinto y disfruta del concierto sin preocupaciones.`
