@@ -123,48 +123,8 @@ const ArtistaDetalle = () => {
     enabled: !!artistSlug,
   });
 
-  // CRITICAL SEO: If artist has exactly 1 event, redirect directly to event page
-  // Uses useLayoutEffect + window.location.replace for IMMEDIATE redirect before paint
-  // This ensures Googlebot sees the redirect in the first cycle, not a rendered page
-  useLayoutEffect(() => {
-    if (isLoading || events === undefined || isRedirecting) return;
-    
-    // No events → 404
-    if (events.length === 0) {
-      setIsRedirecting(true);
-      window.location.replace("/404");
-      return;
-    }
-    
-    // Single event → FORCE immediate redirect to event detail
-    // This is critical for SEO: Google must not index this intermediate page
-    if (events.length === 1) {
-      const singleEvent = events[0] as any;
-      const eventSlug = singleEvent.slug || singleEvent.canonical_slug;
-      if (eventSlug) {
-        setIsRedirecting(true);
-        
-        // Determine if festival or concert
-        const isFestival = singleEvent.main_attraction || singleEvent.artist_count > 1;
-        const targetPath = isFestival 
-          ? `/festival/${eventSlug}` 
-          : `/concierto/${eventSlug}`;
-        
-        console.log(`[SEO] Immediate redirect: ${artistSlug} → ${targetPath}`);
-        
-        // window.location.replace executes synchronously and prevents further rendering
-        window.location.replace(targetPath);
-        return;
-      }
-    }
-  }, [events, isLoading, artistSlug, isRedirecting]);
-  
-  // Block rendering completely if redirect is in progress
-  if (isRedirecting) {
-    return null;
-  }
-
   // Get artist name from first event - check both artist_name (concerts) and main_attraction (festivals)
+  // IMPORTANT: Must be defined BEFORE any conditional returns to maintain hook order
   const artistName = events && events.length > 0 
     ? (events[0] as any).artist_name || (events[0] as any).main_attraction || artistSlug.replace(/-/g, ' ')
     : artistSlug.replace(/-/g, ' ');
@@ -177,6 +137,7 @@ const ArtistaDetalle = () => {
   const genreSlug = (events?.[0] as any)?.genre_slug || null;
 
   // Extract unique cities for filters with event counts
+  // IMPORTANT: All useMemo hooks must be called BEFORE any conditional returns
   const cities = useMemo(() => {
     if (!events) return [];
     const uniqueCities = [...new Set(events.map(e => e.venue_city).filter(Boolean))];
@@ -210,6 +171,7 @@ const ArtistaDetalle = () => {
   }, [events]);
 
   // Fetch related artists from the same genre
+  // IMPORTANT: All useQuery hooks must be called BEFORE any conditional returns
   const { data: relatedArtists } = useQuery({
     queryKey: ["related-artists", artistGenre, artistName],
     queryFn: async () => {
@@ -241,7 +203,7 @@ const ArtistaDetalle = () => {
       
       return Array.from(artistMap.values()).slice(0, 4);
     },
-    enabled: !!artistGenre && !!artistName,
+    enabled: !!artistGenre && !!artistName && !isRedirecting,
   });
 
   // Native date formatting (replaces date-fns)
@@ -328,13 +290,6 @@ const ArtistaDetalle = () => {
     return filteredAndSortedEvents.slice(0, displayCount);
   }, [filteredAndSortedEvents, displayCount]);
 
-  // Load more when scrolling to bottom
-  useEffect(() => {
-    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
-      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
-    }
-  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
-
   // SEO Gold Format: [Artista]: Conciertos, Gira y Entradas 2026 | FEELOMOVE+
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
@@ -399,6 +354,57 @@ const ArtistaDetalle = () => {
 
     return artistSchema;
   }, [artistName, artistSlug, heroImage, artistGenre, events]);
+
+  // CRITICAL SEO: If artist has exactly 1 event, redirect directly to event page
+  // Uses useLayoutEffect + window.location.replace for IMMEDIATE redirect before paint
+  // This ensures Googlebot sees the redirect in the first cycle, not a rendered page
+  // IMPORTANT: This hook must be AFTER all other hooks to maintain consistent hook order
+  useLayoutEffect(() => {
+    if (isLoading || events === undefined || isRedirecting) return;
+    
+    // No events → 404
+    if (events.length === 0) {
+      setIsRedirecting(true);
+      window.location.replace("/404");
+      return;
+    }
+    
+    // Single event → FORCE immediate redirect to event detail
+    // This is critical for SEO: Google must not index this intermediate page
+    if (events.length === 1) {
+      const singleEvent = events[0] as any;
+      const eventSlug = singleEvent.slug || singleEvent.canonical_slug;
+      if (eventSlug) {
+        setIsRedirecting(true);
+        
+        // Determine if festival or concert
+        const isFestival = singleEvent.main_attraction || singleEvent.artist_count > 1;
+        const targetPath = isFestival 
+          ? `/festival/${eventSlug}` 
+          : `/concierto/${eventSlug}`;
+        
+        console.log(`[SEO] Immediate redirect: ${artistSlug} → ${targetPath}`);
+        
+        // window.location.replace executes synchronously and prevents further rendering
+        window.location.replace(targetPath);
+        return;
+      }
+    }
+  }, [events, isLoading, artistSlug, isRedirecting]);
+
+  // Load more when scrolling to bottom
+  useEffect(() => {
+    if (inView && displayedEvents.length < filteredAndSortedEvents.length) {
+      setDisplayCount(prev => Math.min(prev + 30, filteredAndSortedEvents.length));
+    }
+  }, [inView, displayedEvents.length, filteredAndSortedEvents.length]);
+  
+  // Block rendering completely if redirect is in progress
+  // IMPORTANT: This conditional return is AFTER all hooks
+  if (isRedirecting) {
+    return null;
+  }
+
 
   return (
     <>
