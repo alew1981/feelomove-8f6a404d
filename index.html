@@ -28,12 +28,7 @@
     <link rel="dns-prefetch" href="https://s1.ticketm.net">
     <link rel="dns-prefetch" href="https://ik.imagekit.io">
     
-    <!-- Preload critical font for faster text rendering (reduced to single weight) -->
-    <link rel="preload" 
-          href="https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2" 
-          as="font" 
-          type="font/woff2" 
-          crossorigin>
+    <!-- Font preload removed - inline @font-face with font-display:swap is sufficient -->
     
     <!-- LCP Hero: NO preload - la imagen de 1.3MB no se carga en móvil (conditional render via React) -->
     <!-- Desktop carga bajo demanda via ImageKit CDN con compresión automática -->
