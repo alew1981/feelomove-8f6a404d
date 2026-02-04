@@ -77,7 +77,7 @@ const Conciertos = () => {
     }
   }, [filterGenre, filterCity, searchParams, setSearchParams]);
 
-  // Fetch conciertos using mv_concerts_cards + updated_at from tm_tbl_events for sorting
+  // Fetch conciertos from mv_concerts_cards (includes updated_at and on_sale_date)
   const { data: events, isLoading } = useQuery({
     queryKey: ["conciertos"],
     queryFn: async () => {
@@ -104,40 +104,12 @@ const Conciertos = () => {
         return !excludedKeywords.some(kw => combined.includes(kw));
       });
 
-      // Fetch updated_at and on_sale_date from tm_tbl_events for sorting and badges
-      try {
-        const ids = filtered.map((e) => e.id).filter(Boolean);
-        if (ids.length === 0) return filtered;
-
-        const { data: eventMeta, error: metaError } = await supabase
-          .from("tm_tbl_events")
-          .select("id, on_sale_date, updated_at")
-          .in("id", ids);
-
-        if (metaError) throw metaError;
-
-        const metaMap = new Map<string, { on_sale_date: string | null; updated_at: string | null }>();
-        (eventMeta || []).forEach((row) => metaMap.set(String(row.id), {
-          on_sale_date: row.on_sale_date ?? null,
-          updated_at: row.updated_at ?? null
-        }));
-
-        // Merge metadata and sort by updated_at DESC (most recently updated first)
-        const merged = filtered.map((e) => ({
-          ...e,
-          on_sale_date: metaMap.get(String(e.id))?.on_sale_date ?? null,
-          updated_at: metaMap.get(String(e.id))?.updated_at ?? null,
-        }));
-
-        // Sort by updated_at descending (newest/most recently updated first)
-        return merged.sort((a, b) => {
-          const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-          const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-          return dateB - dateA;
-        });
-      } catch {
-        return filtered;
-      }
+      // Sort by updated_at DESC (most recently updated first)
+      return filtered.sort((a, b) => {
+        const dateA = (a as any).updated_at ? new Date((a as any).updated_at).getTime() : 0;
+        const dateB = (b as any).updated_at ? new Date((b as any).updated_at).getTime() : 0;
+        return dateB - dateA;
+      });
     }
   });
 

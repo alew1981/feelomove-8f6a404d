@@ -1115,12 +1115,14 @@ export type Database = {
           meta_description: string | null
           min_hotel_distance_km: number | null
           name: string | null
+          on_sale_date: string | null
           price_max_incl_fees: number | null
           price_min_incl_fees: number | null
           seo_keywords: string[] | null
           seo_title: string | null
           slug: string | null
           sold_out: boolean | null
+          updated_at: string | null
           url: string | null
           venue_city: string | null
           venue_city_slug: string | null
