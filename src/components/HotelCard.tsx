@@ -89,10 +89,10 @@ const HotelCard = ({
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Simplified & robust ImageKit URL for cupid.travel images
-  // Format: https://ik.imagekit.io/feelomove/{full_original_url}?tr=w-600,h-400,fo-auto
+  // ImageKit Origin "Cupidhotels" has https://static.cupid.travel/ as root.
+  // We strip the domain and pass only the path: /hotels/foto.jpg → hotels/foto.jpg
   const imageUrl = hotel.hotel_main_photo?.includes("static.cupid.travel")
-    ? `https://ik.imagekit.io/feelomove/${hotel.hotel_main_photo.split('?')[0]}?tr=w-600,h-400,fo-auto`
+    ? `https://ik.imagekit.io/feelomove/${hotel.hotel_main_photo.replace('https://static.cupid.travel/', '').split('?')[0]}?tr=w-600,h-400,fo-auto`
     : getOptimizedCardImage(hotel.hotel_main_photo);
 
   console.log("DEBUG HOTEL IMG:", imageUrl);
