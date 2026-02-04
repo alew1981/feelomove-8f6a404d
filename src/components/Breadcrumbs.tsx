@@ -334,6 +334,30 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
   });
 
   // ============================================
+  // DATA FETCHING - Artist event count (to avoid breadcrumb loops)
+  // ============================================
+
+  const primaryAttractionId = (eventDetails as any)?.primary_attraction_id as string | null | undefined;
+
+  const { data: artistEventCount } = useQuery({
+    queryKey: ["artist-event-count", primaryAttractionId],
+    queryFn: async () => {
+      if (!primaryAttractionId) return null;
+
+      // mv_attractions provides aggregated counts for the artist
+      const { data } = await supabase
+        .from("mv_attractions")
+        .select("event_count")
+        .eq("attraction_id", primaryAttractionId)
+        .maybeSingle();
+
+      return (data as any)?.event_count ?? null;
+    },
+    enabled: isConcertProductPage && !!primaryAttractionId,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  // ============================================
   // DATA FETCHING - Artist Details (for artist pages)
   // ============================================
   
@@ -419,9 +443,13 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
       const artistName = (eventDetails as any).primary_attraction_name;
       if (artistName) {
         const artistSlug = generateSlug(artistName);
+
+        // If the artist has only 1 upcoming event, the artist page force-redirects
+        // back to the event detail for SEO; linking would create a UX loop.
+        const shouldLinkToArtistPage = typeof artistEventCount === 'number' ? artistEventCount > 1 : true;
         items.push({
           name: artistName,
-          url: `/artista/${artistSlug}`
+          url: shouldLinkToArtistPage ? `/conciertos/${artistSlug}` : undefined,
         });
       }
       
@@ -562,7 +590,8 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     destinoSlug, 
     destinoData, 
     artistSlug, 
-    artistData
+    artistData,
+    artistEventCount
   ]);
 
   // ============================================
