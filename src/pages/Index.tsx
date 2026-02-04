@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
+import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
 
 // Featured cities for display order
 const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];

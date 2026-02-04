@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getOptimizedHeroImage, generateHeroSrcSet } from "@/lib/imageOptimization";
+import { getOptimizedHeroImage, generateHeroSrcSet } from "@/lib/imagekitUtils";
 
 interface PageHeroProps {
   title: string;
@@ -14,7 +14,7 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
   const defaultImage = "https://s1.ticketm.net/dam/a/512/655083a1-b8c6-45f5-ba9a-f7c3bca2c512_EVENT_DETAIL_PAGE_16_9.jpg";
   const rawImage = imageUrl && imageUrl !== "/placeholder.svg" ? imageUrl : defaultImage;
   
-  // AGGRESSIVE optimization: compress via weserv proxy
+  // Use ImageKit CDN for optimization
   const finalImage = getOptimizedHeroImage(rawImage);
   const srcSet = generateHeroSrcSet(rawImage);
   

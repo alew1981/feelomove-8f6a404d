@@ -5,8 +5,7 @@
     
     <!-- CRITICAL: Preconnect hints FIRST for maximum effect (max 4 recommended) -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link rel="preconnect" href="https://wsrv.nl" crossorigin="">
-    <link rel="preconnect" href="https://images.weserv.nl" crossorigin="">
+    <link rel="preconnect" href="https://ik.imagekit.io" crossorigin="">
     <link rel="preconnect" href="https://wcyjuytpxxqailtixept.supabase.co" crossorigin="">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,7 +26,7 @@
     
     <!-- dns-prefetch for secondary/tertiary origins -->
     <link rel="dns-prefetch" href="https://s1.ticketm.net">
-    <link rel="dns-prefetch" href="https://images.weserv.nl">
+    <link rel="dns-prefetch" href="https://ik.imagekit.io">
     
     <!-- Preload critical font for faster text rendering (reduced to single weight) -->
     <link rel="preload" 
@@ -36,9 +35,8 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- LCP Hero image preload - imagen LOCAL sin proxy externo -->
-    <!-- Mobile: 600px, Desktop: 1200px - DIRECTO desde nuestro dominio -->
-    <link rel="preload" href="/images/hero-concert.webp" as="image" type="image/webp" fetchpriority="high">
+    <!-- LCP Hero: NO preload - la imagen de 1.3MB no se carga en móvil (conditional render via React) -->
+    <!-- Desktop carga bajo demanda via ImageKit CDN con compresión automática -->
     
     
     <!-- CRITICAL CSS: Inline styles for instant FCP (< 0.5s) -->

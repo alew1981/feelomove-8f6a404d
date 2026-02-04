@@ -9,7 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { Star, Calendar, ChevronRight } from "lucide-react";
-import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imageOptimization";
+import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
 
 interface InspirationDeal {
   event_id: string | null;
