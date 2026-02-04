@@ -102,30 +102,50 @@
   </head>
 
   <body>
-    <!-- CRITICAL SKELETON: Paints instantly before React hydrates -->
+    <!-- SEO FALLBACK: Contenido visible para crawlers antes de que React hidrate -->
+    <!-- Este contenido se oculta cuando React monta, pero es indexable por Google/Ahrefs -->
+    <div id="seo-fallback" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;">
+      <h1>FEELOMOVE+ | Entradas Conciertos y Festivales España 2025</h1>
+      <p>Compra entradas para los mejores conciertos y festivales de España. Reserva hotel cerca del evento y ahorra tiempo y dinero. Entradas oficiales + alojamiento en un solo lugar.</p>
+      <nav aria-label="Navegación principal">
+        <a href="/conciertos">Conciertos en España</a>
+        <a href="/festivales">Festivales de Música</a>
+        <a href="/destinos">Destinos</a>
+        <a href="/artistas">Artistas</a>
+        <a href="/musica">Géneros Musicales</a>
+      </nav>
+      <section>
+        <h2>Eventos Destacados</h2>
+        <p>Los conciertos y festivales más populares de 2025 en Barcelona, Madrid, Valencia y Sevilla.</p>
+      </section>
+    </div>
+    
+    <!-- CRITICAL SKELETON: Visual placeholder while React loads -->
     <div id="critical-skeleton">
       <!-- Navbar skeleton -->
       <div class="navbar-critical">
-        <svg class="logo" viewBox="0 0 120 32" fill="none">
-          <text x="0" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="18">FEELOMOVE</text>
-          <text x="108" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="14">+</text>
-        </svg>
-        <div class="nav-skeleton">
-          <div class="nav-item"></div>
-          <div class="nav-item"></div>
-          <div class="nav-item"></div>
-        </div>
+        <a href="/" title="FEELOMOVE+ - Inicio">
+          <svg class="logo" viewBox="0 0 120 32" fill="none" aria-label="FEELOMOVE+ Logo">
+            <text x="0" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="18">FEELOMOVE</text>
+            <text x="108" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="14">+</text>
+          </svg>
+        </a>
+        <nav class="nav-skeleton" aria-label="Navegación">
+          <a href="/conciertos" class="nav-item" style="color:transparent;">Conciertos</a>
+          <a href="/festivales" class="nav-item" style="color:transparent;">Festivales</a>
+          <a href="/destinos" class="nav-item" style="color:transparent;">Destinos</a>
+        </nav>
       </div>
-      <!-- Hero skeleton -->
-      <div class="hero-skeleton">
+      <!-- Hero skeleton with semantic content -->
+      <main class="hero-skeleton">
         <div class="breadcrumb"></div>
-        <div class="image-container"></div>
+        <div class="image-container" role="img" aria-label="Imagen del evento"></div>
         <div class="content-skeleton">
           <div class="title"></div>
           <div class="subtitle"></div>
           <div class="meta"></div>
         </div>
-      </div>
+      </main>
     </div>
     
     <!-- React root - skeleton hidden when React mounts -->
