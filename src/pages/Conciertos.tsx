@@ -224,7 +224,7 @@ const Conciertos = () => {
         "endDate": event.event_date,
         "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "url": `https://feelomove.com/concierto/${event.slug || event.id}`,
+        "url": `https://feelomove.com/conciertos/${event.slug || event.id}`,
         "image": [event.image_large_url || event.image_standard_url || "https://feelomove.com/og-image.jpg"],
         "location": {
           "@type": "Place",
@@ -244,7 +244,7 @@ const Conciertos = () => {
         },
         "offers": {
           "@type": "Offer",
-          "url": `https://feelomove.com/concierto/${event.slug || event.id}`,
+          "url": `https://feelomove.com/conciertos/${event.slug || event.id}`,
           "price": event.price_min_incl_fees || 0,
           "priceCurrency": event.currency || "EUR",
           "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",

@@ -72,6 +72,7 @@ export function useEventData(
         if (isWrongRoute) {
           // Return route correction info but DON'T trigger redirect here
           // Let the component handle it to avoid loops
+          // CRITICAL SEO: Use plural routes (/conciertos/, /festivales/)
           return {
             data: data as unknown as EventProductPage[],
             canonicalSlug: null,
@@ -79,8 +80,8 @@ export function useEventData(
             redirectPath: null,
             needsRouteCorrection: true,
             correctRoutePath: shouldBeFestival
-              ? `/festival/${slug}`
-              : `/concierto/${slug}`,
+              ? `/festivales/${slug}`
+              : `/conciertos/${slug}`,
             notFound: false,
           };
         }
@@ -109,6 +110,7 @@ export function useEventData(
       
       if (alternateData && alternateData.length > 0) {
         // Found in alternate view - needs route correction
+        // CRITICAL SEO: Use plural routes (/conciertos/, /festivales/)
         const shouldBeFestival = alternateViewName === "lovable_mv_event_product_page_festivales";
         return {
           data: alternateData as unknown as EventProductPage[],
@@ -117,8 +119,8 @@ export function useEventData(
           redirectPath: null,
           needsRouteCorrection: true,
           correctRoutePath: shouldBeFestival
-            ? `/festival/${slug}`
-            : `/concierto/${slug}`,
+            ? `/festivales/${slug}`
+            : `/conciertos/${slug}`,
           notFound: false,
         };
       }
@@ -141,9 +143,10 @@ export function useEventData(
           .maybeSingle();
         
         if (targetEvent?.slug && targetEvent.slug !== slug) {
+          // CRITICAL SEO: Use plural routes (/conciertos/, /festivales/)
           const targetPath = targetEvent.event_type === "festival"
-            ? `/festival/${targetEvent.slug}`
-            : `/concierto/${targetEvent.slug}`;
+            ? `/festivales/${targetEvent.slug}`
+            : `/conciertos/${targetEvent.slug}`;
           
           return {
             data: null,
@@ -175,9 +178,10 @@ export function useEventData(
         
         if (matchedSlug && matchedSlug !== slug) {
           console.log(`[SEO] Partial match redirect: ${slug} → ${matchedSlug}`);
+          // CRITICAL SEO: Use plural routes (/conciertos/, /festivales/)
           const targetPath = matchedType === "festival" || isFestivalRoute
-            ? `/festival/${matchedSlug}`
-            : `/concierto/${matchedSlug}`;
+            ? `/festivales/${matchedSlug}`
+            : `/conciertos/${matchedSlug}`;
           
           return {
             data: null,

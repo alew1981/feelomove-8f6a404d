@@ -263,9 +263,10 @@ const DestinoDetalle = () => {
   const jsonLdData = useMemo(() => {
     const itemList = (events || []).slice(0, 15).map((event: any, index: number) => {
       const isConcert = "artist_name" in event;
+      // CRITICAL SEO: Use plural routes as canonical
       const eventUrl = isConcert
-        ? `https://feelomove.com/concierto/${event.slug}`
-        : `https://feelomove.com/festival/${event.slug}`;
+        ? `https://feelomove.com/conciertos/${event.slug}`
+        : `https://feelomove.com/festivales/${event.slug}`;
       const artistName = event.artist_name || event.main_attraction || event.name;
 
       return {

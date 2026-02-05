@@ -56,14 +56,26 @@ export const generateFestivalSlug = (
 
 /**
  * Genera la URL correcta para un evento según su tipo
- * Para festivales usa /festival/, para conciertos usa /concierto/
+ * CRITICAL SEO: Usa /conciertos/ (plural) como estándar unificado
+ * Para festivales usa /festivales/, para conciertos usa /conciertos/
  */
 export const getEventUrl = (slug: string, isFestival?: boolean | null): string => {
-  return `/${isFestival ? 'festival' : 'concierto'}/${slug}`;
+  return `/${isFestival ? 'festivales' : 'conciertos'}/${slug}`;
+};
+
+/**
+ * Genera la URL canónica absoluta para SEO
+ * CRITICAL: Esta es la fuente única de verdad para canonical URLs
+ */
+export const getCanonicalEventUrl = (slug: string, isFestival?: boolean | null): string => {
+  const baseUrl = 'https://feelomove.com';
+  const path = isFestival ? 'festivales' : 'conciertos';
+  return `${baseUrl}/${path}/${slug}`;
 };
 
 /**
  * Generates the full festival URL with proper slug format
+ * CRITICAL SEO: Uses /festivales/ (plural) as canonical
  */
 export const getFestivalUrl = (
   festivalName: string,
@@ -73,12 +85,12 @@ export const getFestivalUrl = (
 ): string => {
   // If an existing slug is provided and it's valid, use it
   if (existingSlug && existingSlug.length > 0) {
-    return `/festival/${existingSlug}`;
+    return `/festivales/${existingSlug}`;
   }
   
   // Generate new slug based on festival data
   const slug = generateFestivalSlug(festivalName, city, eventDate);
-  return `/festival/${slug}`;
+  return `/festivales/${slug}`;
 };
 
 /**

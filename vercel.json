@@ -114,42 +114,42 @@
     },
     {
       "source": "/conciertos/:artista/:ciudad",
-      "destination": "/concierto/:artista",
+      "destination": "/conciertos/:artista",
       "permanent": true
     },
     {
       "source": "/conciertos/:artista/:ciudad/:extra",
-      "destination": "/concierto/:artista",
+      "destination": "/conciertos/:artista",
       "permanent": true
     },
     {
-      "source": "/conciertos/:slug",
-      "destination": "/concierto/:slug",
+      "source": "/concierto/:slug",
+      "destination": "/conciertos/:slug",
       "permanent": true
     },
     {
-      "source": "/festivales/:slug",
-      "destination": "/festival/:slug",
+      "source": "/festival/:slug",
+      "destination": "/festivales/:slug",
       "permanent": true
     },
     {
-      "source": "/concierto/:slug-1",
-      "destination": "/concierto/:slug",
+      "source": "/conciertos/:slug-1",
+      "destination": "/conciertos/:slug",
       "permanent": true
     },
     {
-      "source": "/concierto/:slug-2",
-      "destination": "/concierto/:slug",
+      "source": "/conciertos/:slug-2",
+      "destination": "/conciertos/:slug",
       "permanent": true
     },
     {
-      "source": "/festival/:slug-1",
-      "destination": "/festival/:slug",
+      "source": "/festivales/:slug-1",
+      "destination": "/festivales/:slug",
       "permanent": true
     },
     {
-      "source": "/festival/:slug-2",
-      "destination": "/festival/:slug",
+      "source": "/festivales/:slug-2",
+      "destination": "/festivales/:slug",
       "permanent": true
     },
     {
@@ -169,12 +169,12 @@
     },
     {
       "source": "/producto/:slug",
-      "destination": "/concierto/:slug",
+      "destination": "/conciertos/:slug",
       "permanent": true
     },
     {
       "source": "/producto/:slug/feed",
-      "destination": "/concierto/:slug",
+      "destination": "/conciertos/:slug",
       "permanent": true
     },
     {

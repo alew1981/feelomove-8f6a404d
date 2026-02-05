@@ -215,7 +215,11 @@ const App = () => (
                 <Route path="/favoritos" element={<Favoritos />} />
                 <Route path="/inspiration" element={<Inspiration />} />
                 
-                {/* Direct product routes - load Producto directly for fastest render */}
+                {/* Direct product routes - canonical plural routes */}
+                <Route path="/conciertos/:slug" element={<Producto />} />
+                <Route path="/festivales/:slug" element={<Producto />} />
+                
+                {/* Legacy singular routes - redirect to plural for SEO */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
                 <Route path="/concierto/:slug" element={<Producto />} />
                 <Route path="/festival" element={<Navigate to="/festivales" replace />} />

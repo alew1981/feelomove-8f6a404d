@@ -30,9 +30,10 @@ export const handleLegacyRedirect = async (
     if (!error && data?.event_slug) {
       // Redirect to the new SEO-friendly URL
       const isFestival = data.event_type === 'festival';
+      // CRITICAL SEO: Use plural routes as canonical
       const newPath = isFestival 
-        ? `/festival/${data.event_slug}` 
-        : `/concierto/${data.event_slug}`;
+        ? `/festivales/${data.event_slug}` 
+        : `/conciertos/${data.event_slug}`;
       navigate(newPath, { replace: true });
       return true;
     }
