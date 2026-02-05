@@ -268,8 +268,13 @@ const MobileCartSkeleton = memo(() => (
 
 const FooterSkeleton = memo(() => <div className="w-full bg-card border-t border-border" style={{ minHeight: "200px" }} />);
 
-const Producto = () => {
-  const { slug } = useParams();
+interface ProductoProps {
+  slugProp?: string;
+}
+
+const Producto = ({ slugProp }: ProductoProps) => {
+  const { slug: routeSlug } = useParams();
+  const slug = slugProp || routeSlug;
   const navigate = useNavigate();
   const location = useLocation();
   const { toggleFavorite, isFavorite } = useFavorites();

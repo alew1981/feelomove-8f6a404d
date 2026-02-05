@@ -29,14 +29,21 @@ const generateSlug = (name: string): string => {
     .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 };
 
-const ArtistaDetalle = () => {
-  const { artistSlug: slugParam } = useParams<{ artistSlug: string }>();
+interface ArtistaDetalleProps {
+  slugProp?: string;
+}
+
+const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
+  const params = useParams<{ artistSlug?: string; slug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Normalize slug: decode URI and collapse multiple dashes into one
-  const rawSlug = slugParam ? decodeURIComponent(slugParam) : "";
-  const artistSlug = rawSlug.replace(/-+/g, '-');
+  // Priority: prop > :slug > :artistSlug (legacy compatibility)
+  const rawSlug = slugProp 
+    || params.slug 
+    || params.artistSlug 
+    || "";
+  const artistSlug = rawSlug ? decodeURIComponent(rawSlug).replace(/-+/g, '-') : "";
   
   // CRITICAL SEO: Detect if we're on plural /conciertos/ and need redirect
   // This must run BEFORE any rendering for Googlebot to see 301

@@ -50,9 +50,9 @@ export default function ConciertosSlugRouter() {
     return <ArtistaDetalle />;
   }
 
-  if (existsAsEvent) return <Producto />;
+  if (existsAsEvent) return <Producto slugProp={slug} />;
 
   // Si no existe como evento, tratamos el slug como artista.
   // ArtistaDetalle ya maneja su propio "no encontrado".
-  return <ArtistaDetalle />;
+  return <ArtistaDetalle slugProp={slug} />;
 }
