@@ -752,77 +752,23 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   Ver todos <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-              {/* Desktop: Visual Cards Grid */}
-              <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-4">
-                {links.genres.slice(0, 4).map((genre) => (
+              {/* Master Pill Style - No images for reliability */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {links.genres.slice(0, 8).map((genre) => (
                   <Link
                     key={genre.slug}
                     to={genre.url}
-                    className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                    className="group flex items-center justify-between gap-3 px-4 py-3 bg-card border-2 border-foreground rounded-xl transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
                   >
-                    {genre.image ? (
-                      <img 
-                        src={genre.image} 
-                        alt={genre.label.replace('Explorar música ', '')}
-                        width={300}
-                        height={225}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
-                        <Music className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h5 className="font-semibold text-white text-sm line-clamp-1">
-                        {genre.label.replace('Explorar música ', '')}
-                      </h5>
-                      {genre.event_count && genre.event_count > 0 && (
-                        <span className="text-xs text-white/70">{genre.event_count} eventos</span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              {/* Mobile: Compact List View */}
-              <div className="md:hidden bg-card border border-border rounded-xl divide-y divide-border">
-                {links.genres.slice(0, 6).map((genre) => (
-                  <Link
-                    key={genre.slug}
-                    to={genre.url}
-                    className="flex items-center justify-between p-4 hover:bg-accent/5 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-transparent group-hover:ring-accent transition-all">
-                        {genre.image ? (
-                          <img 
-                            src={genre.image} 
-                            alt={genre.label.replace('Explorar música ', '')}
-                            width={40}
-                            height={40}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
-                            <Music className="w-4 h-4 text-accent/50" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Music className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" />
+                      <span className="font-bold text-foreground text-sm truncate group-hover:text-black transition-colors duration-200">
                         {genre.label.replace('Explorar música ', '')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
-                        {genre.event_count || 0} evento{(genre.event_count || 0) === 1 ? '' : 's'}
-                      </span>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                    </div>
+                    <span className="flex-shrink-0 text-xs font-bold bg-foreground text-background px-2.5 py-1 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                      {genre.event_count || 0}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -841,77 +787,23 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                   Ver todos <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-              {/* Desktop: Visual Cards Grid */}
-              <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-4">
-                {links.top_artists.slice(0, 4).map((artist) => (
+              {/* Master Pill Style - No images for reliability */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {links.top_artists.slice(0, 8).map((artist) => (
                   <Link
                     key={artist.slug}
                     to={artist.url}
-                    className="group relative aspect-[4/3] rounded-xl overflow-hidden"
+                    className="group flex items-center justify-between gap-3 px-4 py-3 bg-card border-2 border-foreground rounded-xl transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
                   >
-                    {artist.image ? (
-                      <img 
-                        src={artist.image} 
-                        alt={artist.label.replace('Ver conciertos de ', '')}
-                        width={300}
-                        height={225}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-accent/30 via-accent/10 to-muted flex items-center justify-center">
-                        <Users className="w-12 h-12 text-accent/50 group-hover:text-accent transition-colors" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h5 className="font-semibold text-white text-sm line-clamp-1">
-                        {artist.label.replace('Ver conciertos de ', '')}
-                      </h5>
-                      {artist.event_count && artist.event_count > 0 && (
-                        <span className="text-xs text-white/70">{artist.event_count} conciertos</span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              {/* Mobile: Compact List View */}
-              <div className="md:hidden bg-card border border-border rounded-xl divide-y divide-border">
-                {links.top_artists.slice(0, 6).map((artist) => (
-                  <Link
-                    key={artist.slug}
-                    to={artist.url}
-                    className="flex items-center justify-between p-4 hover:bg-accent/5 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-transparent group-hover:ring-accent transition-all">
-                        {artist.image ? (
-                          <img 
-                            src={artist.image} 
-                            alt={artist.label.replace('Ver conciertos de ', '')}
-                            width={40}
-                            height={40}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-accent/20 to-muted flex items-center justify-center">
-                            <Users className="w-4 h-4 text-accent/50" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-semibold text-foreground group-hover:text-accent transition-colors">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Users className="h-4 w-4 flex-shrink-0 text-accent group-hover:text-black transition-colors duration-200" />
+                      <span className="font-bold text-foreground text-sm truncate group-hover:text-black transition-colors duration-200">
                         {artist.label.replace('Ver conciertos de ', '')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
-                        {artist.event_count || 0} concierto{(artist.event_count || 0) === 1 ? '' : 's'}
-                      </span>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                    </div>
+                    <span className="flex-shrink-0 text-xs font-bold bg-foreground text-background px-2.5 py-1 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                      {artist.event_count || 0}
+                    </span>
                   </Link>
                 ))}
               </div>
