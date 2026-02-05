@@ -361,8 +361,11 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
   // DATA FETCHING - Artist Details (for artist pages)
   // ============================================
   
-  const artistSlugRaw = pathnames[0] === "conciertos" && pathnames.length === 2 && params.artistSlug 
-    ? decodeURIComponent(params.artistSlug) 
+  // Support both :slug and :artistSlug route parameters
+  const artistSlugRaw = pathnames[0] === "conciertos" && pathnames.length === 2 
+    ? (params.slug || params.artistSlug) 
+      ? decodeURIComponent(params.slug || params.artistSlug || "") 
+      : null
     : null;
   const artistSlug = artistSlugRaw ? artistSlugRaw.toLowerCase().replace(/-+/g, '-') : null;
   
