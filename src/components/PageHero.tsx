@@ -12,7 +12,7 @@ interface PageHeroProps {
 const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }: PageHeroProps) => {
   // Use a default concert image if none provided
   const defaultImage = "https://s1.ticketm.net/dam/a/512/655083a1-b8c6-45f5-ba9a-f7c3bca2c512_EVENT_DETAIL_PAGE_16_9.jpg";
-  const rawImage = imageUrl && imageUrl !== "/placeholder.svg" ? imageUrl : defaultImage;
+  const rawImage = imageUrl && imageUrl.trim() !== "" && imageUrl !== "/placeholder.svg" ? imageUrl : defaultImage;
   
   // Use ImageKit CDN for optimization
   const finalImage = getOptimizedHeroImage(rawImage);
@@ -20,6 +20,16 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
   
   const heroRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  
+  // Reset error state when image URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
+  
+  // Fallback image when main image fails
+  const displayImage = imageError ? getOptimizedHeroImage(defaultImage) : finalImage;
+  const displaySrcSet = imageError ? generateHeroSrcSet(defaultImage) : srcSet;
 
   // Parallax effect on scroll - deferred to avoid blocking LCP
   useEffect(() => {
@@ -51,14 +61,15 @@ const PageHero = ({ title, subtitle, imageUrl, className = "", priority = true }
     >
       {/* LCP-optimized hero image with WebP proxy */}
       <img
-        src={finalImage}
-        srcSet={srcSet || undefined}
+        src={displayImage}
+        srcSet={displaySrcSet || undefined}
         sizes="(max-width: 768px) 100vw, 1200px"
         alt={`${title} - FEELOMOVE+`}
         title={`${title} - FEELOMOVE+`}
         className="w-full h-full object-cover parallax-bg"
         loading={priority ? "eager" : "lazy"}
         decoding={priority ? "sync" : "async"}
+        onError={() => setImageError(true)}
         {...(priority ? { fetchpriority: "high" as const } : {})}
         width={1200}
         height={400}
