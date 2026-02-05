@@ -26,6 +26,7 @@ const Conciertos = lazy(() => import("./pages/Conciertos"));
 const Festivales = lazy(() => import("./pages/Festivales"));
 const FestivalDetalle = lazy(() => import("./pages/FestivalDetalle"));
 const Producto = lazy(() => import("./pages/Producto"));
+const ConciertosSlugRouter = lazy(() => import("./pages/ConciertosSlugRouter"));
 const Favoritos = lazy(() => import("./pages/Favoritos"));
 const Inspiration = lazy(() => import("./pages/Inspiration"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -207,16 +208,15 @@ const App = () => (
                 <Route path="/generos/:genero" element={<RedirectGenerosSlug />} />
                 <Route path="/generos/*" element={<RedirectGeneroCatchAll />} />
                 <Route path="/artistas" element={<Artistas />} />
-                <Route path="/conciertos/:artistSlug" element={<ArtistaDetalle />} />
                 <Route path="/eventos" element={<Eventos />} />
                 <Route path="/conciertos" element={<Conciertos />} />
+                <Route path="/conciertos/:slug" element={<ConciertosSlugRouter />} />
                 <Route path="/festivales" element={<Festivales />} />
                 <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
                 <Route path="/favoritos" element={<Favoritos />} />
                 <Route path="/inspiration" element={<Inspiration />} />
                 
                 {/* Direct product routes - canonical plural routes */}
-                <Route path="/conciertos/:slug" element={<Producto />} />
                 <Route path="/festivales/:slug" element={<Producto />} />
                 
                 {/* Legacy singular routes - redirect to plural for SEO */}
