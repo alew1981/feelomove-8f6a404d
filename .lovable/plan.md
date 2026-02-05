@@ -1,166 +1,172 @@
 
-# Plan: Corrección del sistema de enrutamiento para artistas y eventos
 
-## Problema Identificado
+## 📋 Plan: Implementación de 3 Capas para Eliminar 974 Páginas Huérfanas
 
-El componente `ArtistaDetalle` no funciona porque espera un parámetro de ruta llamado `artistSlug`, pero la nueva ruta `/conciertos/:slug` define el parámetro como `slug`. Cuando `ConciertosSlugRouter` renderiza `ArtistaDetalle`, el hook `useParams()` devuelve `undefined` para `artistSlug`.
-
-```text
-Flujo actual (ROTO):
-/conciertos/hombres-g
-    ↓
-ConciertosSlugRouter (lee :slug = "hombres-g")
-    ↓
-ArtistaDetalle (busca :artistSlug → undefined)
-    ↓
-No encuentra eventos → Redirige a 404
-```
-
-## Solución Propuesta
-
-Modificar los componentes para que el slug se pase como prop, eliminando la dependencia del nombre específico del parámetro de ruta.
-
-### Cambios Necesarios
+### 🎯 Objetivo Final
+Asegurar que los crawlers de Ahrefs descubran enlaces a eventos ANTES de que React se hidrate, eliminando el problema de páginas huérfanas mediante enlazado pre-React con rotación horaria.
 
 ---
 
-### 1. Modificar `ConciertosSlugRouter.tsx`
+## Capa 1: Edge Function con Randomización Horaria
 
-Pasar el slug como prop a los componentes hijos:
+**Archivo**: `supabase/functions/popular-events/index.ts`
 
-```typescript
-export default function ConciertosSlugRouter() {
-  const { slug } = useParams<{ slug: string }>();
+**Lógica Core**:
+- Query a `mv_concerts_cards` con offset dinámico basado en la hora actual
+- Cada hora devuelve 20 eventos diferentes (rotación automática)
+- Formula: `offset = (hora_actual % total_eventos_dividido_20) * 20`
+- Response en JSON: `[{ slug, artist_name, name }, ...]`
+- Headers: `Cache-Control: public, max-age=3600` para caché CDN
+- CORS headers para acceso desde `index.html`
+- Manejo de errores graceful (si falla, retorna 500 silenciosamente)
+
+**Timing**: 
+- Executes en <100ms (caché CDN hit)
+- Before Ahrefs completes HTML parse
+
+**Archivo**: `supabase/functions/popular-events/deno.json`
+
+**Contenido**:
+- Imports con `npm:` specifier (igual que sitemap)
+- Especificar `@supabase/supabase-js` version 2
+
+---
+
+## Capa 2: Script Inline Pre-React en index.html
+
+**Ubicación**: Insertar ANTES de `<script type="module" src="/src/main.tsx">` (line 166)
+
+**Lógica**:
+- IIFE que ejecuta inmediatamente cuando HTML se parsea
+- Fetch a `/functions/v1/popular-events` usando la URL completa del proyecto
+- Crea `<ul id="seo-fallback-event-links">` dentro de `#seo-fallback`
+- Itera sobre los 20 eventos y crea `<li><a href="/conciertos/${slug}">...</a></li>`
+- Timeout de 5 segundos (si tarda más, se ignora gracefully)
+- Manejo de errores: Si el fetch falla, el script no rompe nada
+
+**Contenido del Script**:
+```javascript
+(function() {
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), 5000);
   
-  // ... lógica existente de verificación ...
+  fetch('https://wcyjuytpxxqailtixept.supabase.co/functions/v1/popular-events', {
+    signal: abortController.signal
+  })
+    .then(r => r.json())
+    .then(events => {
+      clearTimeout(timeoutId);
+      const fallback = document.getElementById('seo-fallback');
+      if (!fallback) return;
+      
+      const ul = document.createElement('ul');
+      ul.id = 'seo-fallback-event-links';
+      ul.setAttribute('aria-label', 'Eventos populares');
+      
+      events.forEach(e => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `/conciertos/${e.slug}`;
+        a.textContent = `Entradas ${e.artist_name || e.name}`;
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      
+      fallback.appendChild(ul);
+    })
+    .catch(() => clearTimeout(timeoutId));
+})();
+```
 
-  if (existsAsEvent) {
-    return <Producto slugProp={slug} />;
-  }
+**Tamaño**: ~600 bytes (no afecta LCP)
 
-  return <ArtistaDetalle slugProp={slug} />;
+---
+
+## Capa 3: Optimizar SeoFallbackLinks.tsx
+
+**Cambios**:
+1. Agregar timeout de 500ms antes de hacer fetch post-React
+2. Al inyectar enlaces contextuales, NO sobreescribir los globales
+3. Append contexto-específico a `#seo-fallback-event-links` en lugar de reemplazar
+4. Mantener la funcionalidad existente pero complementar, no reemplazar
+
+**Beneficio**:
+- Global links (20 eventos) → Disponibles antes de hidratación
+- Contextual links (10-15 eventos del contexto) → Se agregan cuando React está listo
+- Total crawleable: 30-35 enlaces por página
+
+**Cambios específicos en el código**:
+```typescript
+// Agregar timeout antes de hacer fetch
+useLayoutEffect(() => {
+  const fetchTimeoutId = setTimeout(() => {
+    // Lógica de fetch existente aquí
+  }, 500);
+  
+  return () => clearTimeout(fetchTimeoutId);
+}, [pageContext]);
+
+// Al agregar eventos, hacer append en lugar de innerHTML = ''
+if (linksContainer) {
+  const newEvents = events.filter(e => {
+    // Evitar duplicados checando slugs existentes
+    const existing = Array.from(linksContainer.querySelectorAll('a'))
+      .some(a => a.href.includes(e.slug));
+    return !existing;
+  });
+  
+  newEvents.forEach(event => {
+    // Crear elemento y appendear
+    const li = document.createElement('li');
+    // ... resto del código ...
+    linksContainer.appendChild(li);
+  });
 }
 ```
 
 ---
 
-### 2. Modificar `ArtistaDetalle.tsx`
+## 📁 Resumen de Archivos
 
-Aceptar el slug como prop opcional, con fallback al parámetro de ruta:
-
-```typescript
-interface ArtistaDetalleProps {
-  slugProp?: string;
-}
-
-const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
-  const params = useParams<{ artistSlug?: string; slug?: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Prioridad: prop > :slug > :artistSlug (compatibilidad)
-  const rawSlug = slugProp 
-    || params.slug 
-    || params.artistSlug 
-    || "";
-  const artistSlug = rawSlug ? decodeURIComponent(rawSlug).replace(/-+/g, '-') : "";
-  
-  // ... resto del componente sin cambios ...
-};
-```
+| Archivo | Acción | Líneas | Descripción |
+|---------|--------|--------|-------------|
+| `supabase/functions/popular-events/index.ts` | **Crear** | ~80 | Edge Function con randomización |
+| `supabase/functions/popular-events/deno.json` | **Crear** | ~10 | Dependencias Deno |
+| `index.html` | **Editar** | 165-166 | Insertar script inline |
+| `src/components/SeoFallbackLinks.tsx` | **Editar** | 69-147 | Agregar timeout + append en lugar de replace |
 
 ---
 
-### 3. Modificar `Breadcrumbs.tsx`
+## 🔍 Verificación Técnica (Post-implementación)
 
-Actualizar la lógica de obtención del slug de artista para soportar ambos nombres de parámetro:
+**En `view-source` de cualquier página**:
+1. Buscar `id="seo-fallback-event-links"`
+2. Encontrar 20+ elementos `<a href="/conciertos/...">`
+3. Los slugs deben ser diferentes cada hora (validar a las 13:00 y 14:00)
 
-```typescript
-// Soportar tanto :slug como :artistSlug
-const artistSlugRaw = pathnames[0] === "conciertos" && pathnames.length === 2 
-  ? (params.slug || params.artistSlug) 
-    ? decodeURIComponent(params.slug || params.artistSlug || "") 
-    : null
-  : null;
-```
-
----
-
-### 4. Verificar `Producto.tsx`
-
-Asegurar que también pueda recibir el slug como prop (para consistencia, aunque ya funciona porque usa `slug`):
-
-```typescript
-interface ProductoProps {
-  slugProp?: string;
-}
-
-const Producto = ({ slugProp }: ProductoProps) => {
-  const { slug: routeSlug } = useParams();
-  const slug = slugProp || routeSlug;
-  // ... resto sin cambios ...
-};
-```
+**Logs esperados**:
+- Edge Function: ~100ms response time
+- Script inline: Ejecuta antes de `<script type="module">`
+- SeoFallbackLinks: Agrega enlaces contextuales después
 
 ---
 
-## Resultado Esperado
+## ✨ Beneficios Esperados
 
-```text
-Flujo corregido:
-/conciertos/hombres-g
-    ↓
-ConciertosSlugRouter (lee :slug = "hombres-g")
-    ↓
-Verifica en DB: ¿existe como evento? NO
-    ↓
-ArtistaDetalle (recibe slugProp = "hombres-g")
-    ↓
-Busca eventos del artista "Hombres G"
-    ↓
-Muestra página de artista correctamente
-
-/conciertos/hard-gz-bilbao
-    ↓
-ConciertosSlugRouter (lee :slug = "hard-gz-bilbao")
-    ↓
-Verifica en DB: ¿existe como evento? SÍ
-    ↓
-Producto (recibe slugProp = "hard-gz-bilbao")
-    ↓
-Muestra página de evento correctamente
-```
-
----
-
-## Archivos a Modificar
-
-| Archivo | Cambio |
+| Métrica | Impacto |
 |---------|--------|
-| `src/pages/ConciertosSlugRouter.tsx` | Pasar `slug` como prop a componentes hijos |
-| `src/pages/ArtistaDetalle.tsx` | Aceptar `slugProp`, fallback a params |
-| `src/pages/Producto.tsx` | Aceptar `slugProp` opcional |
-| `src/components/Breadcrumbs.tsx` | Leer `slug` o `artistSlug` de params |
+| Páginas huérfanas | 974 → ~0 (en 2-3 días de rastreo) |
+| Enlaces en HTML inicial | 0 → 20 |
+| Velocidad de descubrimiento | +240-480 eventos/24h (con rotación) |
+| LCP impact | Neutral (<600 bytes JS) |
+| Cache hits | 90%+ (CDN caché 1h) |
 
 ---
 
-## Sección Técnica
+## 🚀 Orden de Implementación
 
-### Compatibilidad con rutas existentes
+1. Crear Edge Function + deno.json
+2. Editar index.html (insertar script)
+3. Editar SeoFallbackLinks.tsx (timeout + append)
+4. Desplegar y verificar en view-source
 
-La solución mantiene compatibilidad hacia atrás:
-- Rutas legacy que usen `:artistSlug` seguirán funcionando
-- El nuevo router unificado pasará el slug como prop
-- No se rompen enlaces existentes
-
-### Orden de prioridad para obtener el slug
-
-```typescript
-const effectiveSlug = slugProp || params.slug || params.artistSlug || "";
-```
-
-Esto asegura que:
-1. Si viene como prop (desde ConciertosSlugRouter), lo usa
-2. Si la ruta define `:slug`, lo usa
-3. Si la ruta define `:artistSlug` (legacy), lo usa
-4. Fallback a string vacío (manejado como error más adelante)
