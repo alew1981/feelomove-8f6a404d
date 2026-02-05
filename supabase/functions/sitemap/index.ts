@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Concerts Sitemap (only concerts, using /concierto/, excluding VIP variants)
+    // Concerts Sitemap (only concerts, using /conciertos/ plural, excluding VIP variants)
     if (type === "concerts") {
       const { data: concerts, error } = await supabase
         .from("tm_tbl_events")
@@ -119,8 +119,9 @@ Deno.serve(async (req) => {
         .filter(e => e.slug)
         .map(e => {
           const lastmod = e.event_date ? e.event_date.split('T')[0] : today;
+          // CRITICAL SEO: Use plural route /conciertos/ as canonical
           return `  <url>
-    <loc>${BASE_URL}/concierto/${e.slug}</loc>
+    <loc>${BASE_URL}/conciertos/${e.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -265,7 +266,7 @@ ${urlsXml}
         headers: { ...corsHeaders, "Content-Type": "application/xml" },
       });
     }
-    // Festivals Sitemap (individual festival events using /festival/ and /concierto/, excluding VIP variants)
+    // Festivals Sitemap (individual festival events using /festivales/ plural, excluding VIP variants)
     if (type === "festivals") {
       // Get individual festival events (INCLUDING festivals without confirmed date - 9999)
       const { data: festivalEvents, error: eventsError } = await supabase
@@ -324,7 +325,7 @@ ${urlsXml}
 
       const urlsArr: string[] = [];
 
-      // Add individual festival events (using /festival/) - deduplicate by slug
+      // Add individual festival events (using /festivales/ plural) - deduplicate by slug
       const addedSlugs = new Set<string>();
       filteredFestivalEvents.forEach(f => {
         if (f.slug && !addedSlugs.has(f.slug)) {
@@ -344,8 +345,9 @@ ${urlsXml}
             }
           }
           
+          // CRITICAL SEO: Use plural route /festivales/ as canonical
           urlsArr.push(`  <url>
-    <loc>${BASE_URL}/festival/${f.slug}</loc>
+    <loc>${BASE_URL}/festivales/${f.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>

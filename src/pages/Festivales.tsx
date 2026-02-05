@@ -470,7 +470,7 @@ const Festivales = () => {
         "name": festival.event_name,
         "startDate": festival.festival_start_date,
         "endDate": festival.festival_end_date,
-        "url": `https://feelomove.com/festival/${festival.event_slug}`,
+        "url": `https://feelomove.com/festivales/${festival.event_slug}`,
         "image": festival.image_large_url,
         "location": {
           "@type": "Place",

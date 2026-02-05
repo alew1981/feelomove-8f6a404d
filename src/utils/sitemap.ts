@@ -60,8 +60,9 @@ export const generateSitemap = async (): Promise<string> => {
     concerts.forEach((concert) => {
       if (concert.slug) {
         const eventDate = concert.event_date ? new Date(concert.event_date).toISOString().split('T')[0] : today;
+        // CRITICAL SEO: Use plural route /conciertos/ as canonical
         concertUrls.push({
-          loc: `${baseUrl}/concierto/${concert.slug}`,
+          loc: `${baseUrl}/conciertos/${concert.slug}`,
           lastmod: eventDate,
           changefreq: 'daily',
           priority: 0.8
@@ -117,8 +118,9 @@ export const generateSitemap = async (): Promise<string> => {
     festivalEvents.forEach((event) => {
       if (event.slug) {
         const eventDate = event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : today;
+        // CRITICAL SEO: Use plural route /festivales/ as canonical
         festivalUrls.push({
-          loc: `${baseUrl}/festival/${event.slug}`,
+          loc: `${baseUrl}/festivales/${event.slug}`,
           lastmod: eventDate,
           changefreq: 'daily',
           priority: 0.8

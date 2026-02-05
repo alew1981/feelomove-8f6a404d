@@ -32,7 +32,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useCart } from "@/contexts/CartContext";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
-import { getEventUrl } from "@/lib/eventUtils";
+import { getEventUrl, getCanonicalEventUrl } from "@/lib/eventUtils";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
@@ -292,8 +292,9 @@ const Producto = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const isConcierto = location.pathname.startsWith("/concierto/");
-  const isFestivalRoute = location.pathname.startsWith("/festival/");
+  // Route detection - support both singular (legacy) and plural (canonical)
+  const isConcierto = location.pathname.startsWith("/concierto/") || location.pathname.startsWith("/conciertos/");
+  const isFestivalRoute = location.pathname.startsWith("/festival/") || location.pathname.startsWith("/festivales/");
 
   // CRITICAL: URL Normalization - handles numeric suffixes, noise words, plural→singular
   // This runs BEFORE data fetch to intercept dirty URLs
@@ -907,10 +908,10 @@ const Producto = () => {
     }
   })();
 
-  const absoluteUrl = `${window.location.origin}${getEventUrl(
-    rpcCanonicalSlug || eventDetails.event_slug || "",
-    eventDetails.is_festival || false,
-  )}`;
+  // CRITICAL SEO: Use getCanonicalEventUrl for pure canonical generation
+  // This ensures canonical is ALWAYS built from slug, never from window.location
+  const canonicalSlug = rpcCanonicalSlug || eventDetails.event_slug || "";
+  const absoluteUrl = getCanonicalEventUrl(canonicalSlug, eventDetails.is_festival || false);
 
   const eventStatus = getEventStatus(
     eventDetails.cancelled,

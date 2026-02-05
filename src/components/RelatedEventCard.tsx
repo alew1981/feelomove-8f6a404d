@@ -53,9 +53,10 @@ interface RelatedEventCardProps {
 export const RelatedEventCard = memo(({ event, className }: RelatedEventCardProps) => {
   const { month, day, year, time } = useMemo(() => formatEventDate(event.event_date), [event.event_date]);
   
+  // CRITICAL SEO: Use plural routes as canonical
   const eventUrl = event.is_festival 
-    ? `/festival/${event.slug}` 
-    : `/concierto/${event.slug}`;
+    ? `/festivales/${event.slug}` 
+    : `/conciertos/${event.slug}`;
   
   const displayName = event.artist_name || event.name.split(' - ')[0] || event.name;
 

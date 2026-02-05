@@ -53,7 +53,8 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
         .maybeSingle();
       
       if (data?.slug) {
-        const path = data.event_type === 'festival' ? `/festival/${data.slug}` : `/concierto/${data.slug}`;
+        // CRITICAL SEO: Use plural routes as canonical
+        const path = data.event_type === 'festival' ? `/festivales/${data.slug}` : `/conciertos/${data.slug}`;
         navigate(path);
       }
     }
@@ -158,7 +159,8 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
         .maybeSingle();
       
       if (data?.slug) {
-        const path = data.event_type === 'festival' ? `/festival/${data.slug}` : `/concierto/${data.slug}`;
+        // CRITICAL SEO: Use plural routes as canonical
+        const path = data.event_type === 'festival' ? `/festivales/${data.slug}` : `/conciertos/${data.slug}`;
         navigate(path);
       }
     }

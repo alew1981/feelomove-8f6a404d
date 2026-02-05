@@ -141,7 +141,8 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
   // If seats_available is null/undefined, don't show any availability badge
 
   // Determine if it's a festival based on is_festival OR event_type
-  // BUT if forceConcierto is true (e.g., when inside FestivalDetalle), always use /concierto/
+  // BUT if forceConcierto is true (e.g., when inside FestivalDetalle), always use /conciertos/
+  // NOTE: getEventUrl now returns plural routes as canonical
   const isFestival = forceConcierto ? false : (event.is_festival === true || event.event_type === 'festival');
   const eventUrl = getEventUrl(eventSlug || '', isFestival);
   

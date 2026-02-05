@@ -72,9 +72,10 @@ const RedirectEvento = () => {
   useEffect(() => {
     if (eventData) {
       const isFestival = eventData.event_type === 'festival';
+      // CRITICAL SEO: Use plural routes as canonical
       const newPath = isFestival 
-        ? `/festival/${eventData.slug}` 
-        : `/concierto/${eventData.slug}`;
+        ? `/festivales/${eventData.slug}` 
+        : `/conciertos/${eventData.slug}`;
       navigate(newPath, { replace: true });
     } else if (!isLoading && !eventData) {
       navigate('/404', { replace: true });

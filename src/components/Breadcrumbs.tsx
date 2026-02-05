@@ -223,11 +223,11 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
   const { prefetch } = usePrefetch();
 
   // ============================================
-  // PAGE TYPE DETECTION
+  // PAGE TYPE DETECTION (support both singular and plural)
   // ============================================
   
-  const isConcertProductPage = pathnames[0] === "concierto";
-  const isFestivalProductPage = pathnames[0] === "festival";
+  const isConcertProductPage = pathnames[0] === "concierto" || pathnames[0] === "conciertos";
+  const isFestivalProductPage = pathnames[0] === "festival" || pathnames[0] === "festivales";
   const isProductPage = isConcertProductPage || isFestivalProductPage;
   const productSlug = isProductPage ? params.slug : null;
 
@@ -476,12 +476,13 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
       });
       
       // Level 3: Festival Name (linked to festival profile)
+      // CRITICAL SEO: Use plural route /festivales/ as canonical
       const festivalName = eventDetails.event_name || (eventDetails as any).primary_attraction_name;
       if (festivalName) {
         const festivalSlug = eventDetails.event_slug || generateSlug(festivalName);
         items.push({
           name: festivalName,
-          url: `/festival/${festivalSlug}`
+          url: `/festivales/${festivalSlug}`
         });
       }
       

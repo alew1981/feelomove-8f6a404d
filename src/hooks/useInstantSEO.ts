@@ -139,9 +139,9 @@ export const useInstantSEO = () => {
     
     let title = 'FEELOMOVE+ | Entradas Conciertos y Festivales España';
     
-    // Concert detail page: /concierto/:slug
-    if (cleanPath.startsWith('/concierto/')) {
-      const slug = cleanPath.replace('/concierto/', '');
+    // Concert detail page: /concierto/:slug or /conciertos/:slug
+    if (cleanPath.startsWith('/concierto/') || cleanPath.startsWith('/conciertos/')) {
+      const slug = cleanPath.replace('/concierto/', '').replace('/conciertos/', '');
       if (slug) {
         const parsed = parseEventSlug(slug, false);
         title = generateSEOTitle(parsed);

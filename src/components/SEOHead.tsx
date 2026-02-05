@@ -33,12 +33,15 @@ const TRACKING_PARAMS = ['fbclid', 'gclid', 'utm_source', 'utm_medium', 'utm_cam
 
 /**
  * Determines if the current URL should be noindexed
- * CRITICAL: Main content pages (concierto, festival, destinos) should ALWAYS be indexed
+ * CRITICAL: Main content pages (conciertos, festivales, destinos) should ALWAYS be indexed
  */
 const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean => {
   // FORCE INDEX: Main content routes must always be indexed (no query params = index)
+  // Support both singular (legacy) and plural (canonical) routes
   const isMainContentRoute = 
+    pathname.startsWith('/conciertos/') ||
     pathname.startsWith('/concierto/') ||
+    pathname.startsWith('/festivales/') ||
     pathname.startsWith('/festival/') ||
     pathname.startsWith('/destinos/') ||
     pathname === '/conciertos' ||
@@ -76,6 +79,8 @@ const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean
 
 /**
  * Generates clean canonical URL for any page
+ * CRITICAL SEO: This is the SINGLE SOURCE OF TRUTH for canonical URLs
+ * - Uses plural routes (/conciertos/, /festivales/) as canonical standard
  * - Strips ALL query parameters and tracking params
  * - Ensures lowercase
  * - Removes trailing slashes
@@ -92,9 +97,14 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
   
   // If canonical is explicitly provided (can be absolute or relative)
   if (providedCanonical) {
+    // If already absolute URL starting with our domain, use it directly
+    if (providedCanonical.startsWith(siteUrl)) {
+      return providedCanonical.split('?')[0].split('#')[0].replace(/\/+$/, '');
+    }
+    
     let cleanUrl = providedCanonical;
     
-    // If it's already absolute, extract the path for cleaning
+    // If it's another absolute URL, extract the path for cleaning
     if (cleanUrl.startsWith('http')) {
       try {
         const urlObj = new URL(cleanUrl);
@@ -112,6 +122,14 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
       .toLowerCase()
       .replace(/\/+$/, ''); // Remove trailing slashes
     
+    // CRITICAL: Normalize singular routes to plural for canonical
+    if (cleanUrl.startsWith('/concierto/')) {
+      cleanUrl = cleanUrl.replace('/concierto/', '/conciertos/');
+    }
+    if (cleanUrl.startsWith('/festival/')) {
+      cleanUrl = cleanUrl.replace('/festival/', '/festivales/');
+    }
+    
     // Ensure it starts with /
     if (!cleanUrl.startsWith('/')) {
       cleanUrl = `/${cleanUrl}`;
@@ -124,6 +142,14 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
   let cleanPath = pathname
     .toLowerCase()
     .replace(/\/+$/, ''); // Remove trailing slashes
+  
+  // CRITICAL: Normalize singular routes to plural for canonical
+  if (cleanPath.startsWith('/concierto/')) {
+    cleanPath = cleanPath.replace('/concierto/', '/conciertos/');
+  }
+  if (cleanPath.startsWith('/festival/')) {
+    cleanPath = cleanPath.replace('/festival/', '/festivales/');
+  }
   
   // Remove numeric suffix (-1, -2, -99) but NOT years (-2026)
   if (/-\d{1,2}$/.test(cleanPath) && !/-20[2-9]\d$/.test(cleanPath)) {

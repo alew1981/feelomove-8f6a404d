@@ -197,9 +197,10 @@ export const RelatedEventsSection = ({
       {/* Horizontal Pill Layout with Scroll on Mobile - Same as "Ver en otros destinos" */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
         {events.map((event) => {
+          // CRITICAL SEO: Use plural routes as canonical (/conciertos/, /festivales/)
           const eventUrl = event.is_festival 
-            ? `/festival/${event.slug}` 
-            : `/concierto/${event.slug}`;
+            ? `/festivales/${event.slug}` 
+            : `/conciertos/${event.slug}`;
           const displayName = event.artist_name || event.name.split(' - ')[0] || event.name;
           
           return (

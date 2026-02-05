@@ -113,7 +113,8 @@ export function useSlugNormalization(
       isCheckingRef.current = true;
       
       try {
-        const prefix = isFestival ? '/festival' : '/concierto';
+        // CRITICAL SEO: Use plural routes as standard (/conciertos/, /festivales/)
+        const prefix = isFestival ? '/festivales' : '/conciertos';
         const viewName = isFestival 
           ? "lovable_mv_event_product_page_festivales" 
           : "lovable_mv_event_product_page_conciertos";
@@ -127,9 +128,13 @@ export function useSlugNormalization(
           .maybeSingle();
         
         if (directMatch?.event_slug) {
-          // Slug exists as-is, only check for plural prefix redirect
-          if (location.pathname.startsWith('/conciertos/') && !isFestival) {
-            console.log(`[SEO] Plural prefix redirect: /conciertos/${slug} → /concierto/${slug}`);
+          // Slug exists as-is, only check for singular prefix redirect to plural
+          if (location.pathname.startsWith('/concierto/') && !isFestival) {
+            console.log(`[SEO] Singular to plural redirect: /concierto/${slug} → /conciertos/${slug}`);
+            hasRedirectedRef.current = true;
+            navigate(`${prefix}/${slug}`, { replace: true });
+          } else if (location.pathname.startsWith('/festival/') && isFestival) {
+            console.log(`[SEO] Singular to plural redirect: /festival/${slug} → /festivales/${slug}`);
             hasRedirectedRef.current = true;
             navigate(`${prefix}/${slug}`, { replace: true });
           }
