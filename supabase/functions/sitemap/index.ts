@@ -101,10 +101,11 @@ Deno.serve(async (req) => {
     }
 
     // Concerts Sitemap (only concerts, using /conciertos/ plural, excluding VIP variants)
+    // CRITICAL SEO: Uses updated_at for lastmod to force re-crawling
     if (type === "concerts") {
       const { data: concerts, error } = await supabase
         .from("tm_tbl_events")
-        .select("slug, event_date")
+        .select("slug, event_date, updated_at")
         .eq("event_type", "concert")
         .eq("cancelled", false)
         .gte("event_date", new Date().toISOString())
@@ -118,7 +119,10 @@ Deno.serve(async (req) => {
       const urlsXml = (concerts || [])
         .filter(e => e.slug)
         .map(e => {
-          const lastmod = e.event_date ? e.event_date.split('T')[0] : today;
+          // Prefer updated_at for lastmod, fallback to event_date
+          const lastmod = e.updated_at 
+            ? e.updated_at.split('T')[0] 
+            : (e.event_date ? e.event_date.split('T')[0] : today);
           // CRITICAL SEO: Use plural route /conciertos/ as canonical
           return `  <url>
     <loc>${BASE_URL}/conciertos/${e.slug}</loc>
@@ -140,6 +144,7 @@ ${urlsXml}
     }
 
     // Artists Sitemap - ONLY artists with future events (excluding festivals)
+    // CRITICAL SEO: Uses next_event_date as lastmod for freshness signal
     if (type === "artists") {
       // Query from mv_attractions which has proper slugs, then filter by future events
       const { data: attractions, error: attractionsError } = await supabase

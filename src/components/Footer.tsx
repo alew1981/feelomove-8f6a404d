@@ -21,10 +21,118 @@ const PinterestIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// SEO: Top destinations and genres for crawler discovery (hub pages)
+const TOP_CITIES = [
+  { name: 'Madrid', slug: 'madrid' },
+  { name: 'Barcelona', slug: 'barcelona' },
+  { name: 'Valencia', slug: 'valencia' },
+  { name: 'Sevilla', slug: 'sevilla' },
+  { name: 'Bilbao', slug: 'bilbao' },
+];
+
+const TOP_GENRES = [
+  { name: 'Rock', slug: 'rock' },
+  { name: 'Pop', slug: 'pop' },
+  { name: 'Electrónica', slug: 'electronica' },
+  { name: 'Latino', slug: 'latino' },
+  { name: 'Hip-Hop', slug: 'hip-hop' },
+];
+
 const Footer = () => {
   return (
     <footer className="bg-card border-t-2 border-border py-16 content-visibility-auto min-h-[400px]" style={{ containIntrinsicSize: '0 400px' }}>
       <div className="container mx-auto px-4">
+        {/* SEO Directory: Hub links for crawler discovery */}
+        <nav className="mb-12 pb-8 border-b border-border" aria-label="Directorio de eventos">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {/* Conciertos por Ciudad */}
+            <div>
+              <span className="font-semibold text-sm text-foreground mb-3 block">Conciertos por Ciudad</span>
+              <ul className="space-y-1.5 text-sm">
+                {TOP_CITIES.map(city => (
+                  <li key={city.slug}>
+                    <NavLink 
+                      to={`/destinos/${city.slug}`} 
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title={`Conciertos en ${city.name}`}
+                    >
+                      Conciertos en {city.name}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Festivales por Ciudad */}
+            <div>
+              <span className="font-semibold text-sm text-foreground mb-3 block">Festivales por Ciudad</span>
+              <ul className="space-y-1.5 text-sm">
+                {TOP_CITIES.map(city => (
+                  <li key={city.slug}>
+                    <NavLink 
+                      to={`/destinos/${city.slug}?tipo=festival`} 
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title={`Festivales en ${city.name}`}
+                    >
+                      Festivales en {city.name}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Géneros Musicales */}
+            <div>
+              <span className="font-semibold text-sm text-foreground mb-3 block">Géneros Musicales</span>
+              <ul className="space-y-1.5 text-sm">
+                {TOP_GENRES.map(genre => (
+                  <li key={genre.slug}>
+                    <NavLink 
+                      to={`/musica/${genre.slug}`} 
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title={`Conciertos de ${genre.name}`}
+                    >
+                      {genre.name}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Categorías */}
+            <div>
+              <span className="font-semibold text-sm text-foreground mb-3 block">Categorías</span>
+              <ul className="space-y-1.5 text-sm">
+                <li>
+                  <NavLink to="/conciertos" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Todos los Conciertos
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/festivales" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Todos los Festivales
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/artistas" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Artistas
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/destinos" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Destinos
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/musica" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Géneros
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="space-y-4">

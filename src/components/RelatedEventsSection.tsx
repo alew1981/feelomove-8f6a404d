@@ -46,6 +46,9 @@ const formatShortDate = (dateStr: string) => {
  * Related Events Section - "También te puede interesar"
  * Pill/Chip format matching "Ver en otros destinos" for performance
  * No images - just text pills with hover effects
+ * 
+ * CRITICAL SEO: Links render immediately in DOM for crawler discovery.
+ * The <a> tags exist even during loading state to ensure indexability.
  */
 export const RelatedEventsSection = ({
   currentEventId,
@@ -161,17 +164,23 @@ export const RelatedEventsSection = ({
     fetchRelatedEvents();
   }, [currentEventId, currentArtist, currentCity, currentGenre, maxItems]);
 
+  // SEO: Show skeleton with crawlable placeholder links during loading
   if (isLoading) {
     return (
       <div className="mt-10 pt-8 border-t border-border">
         <div className="flex items-center justify-between mb-4">
-          <div className="h-6 w-48 bg-muted animate-pulse rounded" />
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <IconTicket className="h-5 w-5 text-accent" />
+            También te puede interesar
+          </h3>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-10 w-32 rounded-full bg-muted animate-pulse" />
-          ))}
-        </div>
+        {/* SEO: Crawlable placeholder links visible in DOM */}
+        <nav aria-label="Eventos relacionados" className="flex gap-2 flex-wrap">
+          <a href="/conciertos" className="h-10 w-32 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Conciertos</a>
+          <a href="/festivales" className="h-10 w-28 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Festivales</a>
+          <a href="/destinos/madrid" className="h-10 w-36 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Madrid</a>
+          <a href="/destinos/barcelona" className="h-10 w-36 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Barcelona</a>
+        </nav>
       </div>
     );
   }
