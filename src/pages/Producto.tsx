@@ -1580,17 +1580,18 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
         <div className="h-20 xl:hidden" />
 
-        {isInteractive && (
-          <div className="container mx-auto px-4 pb-8">
-            <RelatedEventsSection 
-              currentEventId={eventDetails.event_id || undefined}
-              currentArtist={artistForSearch}
-              currentCity={currentCity}
-              currentGenre={(eventDetails as any)?.primary_category_name}
-              maxItems={4}
-            />
-          </div>
-        )}
+        {/* CRITICAL SEO: RelatedEventsSection renders IMMEDIATELY (no delay) 
+            The component skeleton includes crawlable <a> tags for bot discovery */}
+        <div className="container mx-auto px-4 pb-8">
+          <RelatedEventsSection 
+            currentEventId={eventDetails.event_id || undefined}
+            currentArtist={artistForSearch}
+            currentCity={currentCity}
+            currentGenre={(eventDetails as any)?.primary_category_name}
+            maxItems={8}
+          />
+        </div>
+
 
         {isInteractive ? (
           <Suspense fallback={<FooterSkeleton />}>

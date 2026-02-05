@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useInstantSEO } from "@/hooks/useInstantSEO";
+import SeoFallbackLinks from "@/components/SeoFallbackLinks";
 
 // Lazy load Radix-heavy UI components to reduce initial JS execution time
 // These are not critical for first paint
@@ -81,7 +82,7 @@ const useInteractionDeferred = () => {
   return isReady;
 };
 
-// Scroll to top on route change + inject instant SEO
+// Scroll to top on route change + inject instant SEO + inject event links for crawlers
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   
@@ -91,7 +92,9 @@ const ScrollToTop = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-  return null;
+  
+  // SEO: Inject dynamic event links into #seo-fallback for crawler discovery
+  return <SeoFallbackLinks />;
 };
 
 // CSS-only loading fallback - no Radix/Skeleton dependency for faster initial load
