@@ -113,24 +113,66 @@ export function useSlugNormalization(
       isCheckingRef.current = true;
       
       try {
-        // Step 1: Quick client-side checks
         const prefix = isFestival ? '/festival' : '/concierto';
+        const viewName = isFestival 
+          ? "lovable_mv_event_product_page_festivales" 
+          : "lovable_mv_event_product_page_conciertos";
+        
+        // Step 1: Check if current slug exists DIRECTLY in the database
+        // This prevents false redirects when slug with suffix is actually valid
+        const { data: directMatch } = await (supabase
+          .from(viewName as any)
+          .select("event_slug") as any)
+          .eq("event_slug", slug.toLowerCase())
+          .maybeSingle();
+        
+        if (directMatch?.event_slug) {
+          // Slug exists as-is, only check for plural prefix redirect
+          if (location.pathname.startsWith('/conciertos/') && !isFestival) {
+            console.log(`[SEO] Plural prefix redirect: /conciertos/${slug} → /concierto/${slug}`);
+            hasRedirectedRef.current = true;
+            navigate(`${prefix}/${slug}`, { replace: true });
+          }
+          // Valid slug, no redirect needed
+          return;
+        }
+        
+        // Step 2: Slug doesn't exist directly - check slug_redirects table
+        const { data: redirectData } = await supabase
+          .from("slug_redirects")
+          .select("event_id")
+          .eq("old_slug", slug.toLowerCase())
+          .maybeSingle();
+        
+        if (redirectData?.event_id) {
+          // Get current slug from event table (single-hop redirect)
+          const { data: eventData } = await supabase
+            .from("tm_tbl_events")
+            .select("slug, event_type")
+            .eq("id", redirectData.event_id)
+            .maybeSingle();
+          
+          if (eventData?.slug && eventData.slug.toLowerCase() !== slug.toLowerCase()) {
+            const correctPrefix = eventData.event_type === 'festival' ? '/festival' : '/concierto';
+            console.log(`[SEO] Redirect from DB: ${slug} → ${eventData.slug}`);
+            hasRedirectedRef.current = true;
+            navigate(`${correctPrefix}/${eventData.slug}`, { replace: true });
+            return;
+          }
+        }
+        
+        // Step 3: No direct match and no redirect - try cleaning the slug
         let cleanedSlug = slug.toLowerCase();
         let needsRedirect = false;
         
-        // Check for plural prefix (/conciertos/ → /concierto/)
-        if (location.pathname.startsWith('/conciertos/') && !isFestival) {
-          needsRedirect = true;
-        }
-        
-        // Strip numeric suffix
+        // Strip numeric suffix (but not years)
         const { cleaned: noSuffix, hadSuffix } = stripNumericSuffix(cleanedSlug);
         if (hadSuffix) {
           cleanedSlug = noSuffix;
           needsRedirect = true;
         }
         
-        // Strip old date suffixes (e.g., -2025-01-15 for outdated URLs)
+        // Strip old date suffixes
         const { cleaned: noOldDate, hadOldDate } = stripOldDateSuffix(cleanedSlug);
         if (hadOldDate) {
           cleanedSlug = noOldDate;
@@ -144,49 +186,18 @@ export function useSlugNormalization(
           needsRedirect = true;
         }
         
-        // If slug changed, verify the clean slug exists
-        if (needsRedirect && cleanedSlug !== slug) {
-          // Check if clean slug exists in database
-          const viewName = isFestival 
-            ? "lovable_mv_event_product_page_festivales" 
-            : "lovable_mv_event_product_page_conciertos";
-          
-          const { data } = await (supabase
+        // Only redirect if we actually cleaned something AND the clean version exists
+        if (needsRedirect && cleanedSlug !== slug.toLowerCase()) {
+          const { data: cleanMatch } = await (supabase
             .from(viewName as any)
             .select("event_slug") as any)
             .eq("event_slug", cleanedSlug)
             .maybeSingle();
           
-          if (data?.event_slug) {
-            // Clean slug exists - redirect to it
-            console.log(`[SEO] Redirecting: ${slug} → ${cleanedSlug}`);
+          if (cleanMatch?.event_slug) {
+            console.log(`[SEO] Cleaned slug redirect: ${slug} → ${cleanedSlug}`);
             hasRedirectedRef.current = true;
             navigate(`${prefix}/${cleanedSlug}`, { replace: true });
-            return;
-          }
-          
-          // Clean slug doesn't exist - check slug_redirects
-          const { data: redirectData } = await supabase
-            .from("slug_redirects")
-            .select("event_id")
-            .eq("old_slug", slug)
-            .maybeSingle();
-          
-          if (redirectData?.event_id) {
-            // Get current slug from event table
-            const { data: eventData } = await supabase
-              .from("tm_tbl_events")
-              .select("slug, event_type")
-              .eq("id", redirectData.event_id)
-              .maybeSingle();
-            
-            if (eventData?.slug && eventData.slug !== slug) {
-              const correctPrefix = eventData.event_type === 'festival' ? '/festival' : '/concierto';
-              console.log(`[SEO] Redirect from DB: ${slug} → ${eventData.slug}`);
-              hasRedirectedRef.current = true;
-              navigate(`${correctPrefix}/${eventData.slug}`, { replace: true });
-              return;
-            }
           }
         }
       } catch (error) {
