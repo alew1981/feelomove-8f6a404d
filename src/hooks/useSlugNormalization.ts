@@ -109,6 +109,20 @@ export function useSlugNormalization(
   useEffect(() => {
     if (!slug || hasRedirectedRef.current || isCheckingRef.current) return;
     
+    // CRITICAL: Skip normalization if already on canonical plural routes
+    // Only process singular routes that need redirect to plural
+    const isOnPluralRoute = location.pathname.startsWith('/conciertos/') || location.pathname.startsWith('/festivales/');
+    const isOnSingularRoute = location.pathname.startsWith('/concierto/') || location.pathname.startsWith('/festival/');
+    
+    // If already on plural route, let useEventData handle the lookup - no normalization needed
+    if (isOnPluralRoute) {
+      console.log(`[SEO] Already on plural route, skipping normalization for: ${slug}`);
+      return;
+    }
+    
+    // Only proceed with normalization for singular routes
+    if (!isOnSingularRoute) return;
+    
     const normalizeAndRedirect = async () => {
       isCheckingRef.current = true;
       
@@ -128,17 +142,10 @@ export function useSlugNormalization(
           .maybeSingle();
         
         if (directMatch?.event_slug) {
-          // Slug exists as-is, only check for singular prefix redirect to plural
-          if (location.pathname.startsWith('/concierto/') && !isFestival) {
-            console.log(`[SEO] Singular to plural redirect: /concierto/${slug} → /conciertos/${slug}`);
-            hasRedirectedRef.current = true;
-            navigate(`${prefix}/${slug}`, { replace: true });
-          } else if (location.pathname.startsWith('/festival/') && isFestival) {
-            console.log(`[SEO] Singular to plural redirect: /festival/${slug} → /festivales/${slug}`);
-            hasRedirectedRef.current = true;
-            navigate(`${prefix}/${slug}`, { replace: true });
-          }
-          // Valid slug, no redirect needed
+          // Slug exists as-is, redirect from singular to plural
+          console.log(`[SEO] Singular to plural redirect: ${location.pathname} → ${prefix}/${slug}`);
+          hasRedirectedRef.current = true;
+          window.location.replace(`${prefix}/${slug}`);
           return;
         }
         
@@ -158,10 +165,10 @@ export function useSlugNormalization(
             .maybeSingle();
           
           if (eventData?.slug && eventData.slug.toLowerCase() !== slug.toLowerCase()) {
-            const correctPrefix = eventData.event_type === 'festival' ? '/festival' : '/concierto';
+            const correctPrefix = eventData.event_type === 'festival' ? '/festivales' : '/conciertos';
             console.log(`[SEO] Redirect from DB: ${slug} → ${eventData.slug}`);
             hasRedirectedRef.current = true;
-            navigate(`${correctPrefix}/${eventData.slug}`, { replace: true });
+            window.location.replace(`${correctPrefix}/${eventData.slug}`);
             return;
           }
         }
@@ -202,7 +209,7 @@ export function useSlugNormalization(
           if (cleanMatch?.event_slug) {
             console.log(`[SEO] Cleaned slug redirect: ${slug} → ${cleanedSlug}`);
             hasRedirectedRef.current = true;
-            navigate(`${prefix}/${cleanedSlug}`, { replace: true });
+            window.location.replace(`${prefix}/${cleanedSlug}`);
           }
         }
       } catch (error) {
