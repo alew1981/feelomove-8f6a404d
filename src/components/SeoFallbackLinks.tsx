@@ -65,98 +65,103 @@ export const SeoFallbackLinks = () => {
     return { type: 'home' as const, slug: null };
   }, [location.pathname]);
 
-  // Inject links into #seo-fallback on mount
+  // Inject contextual links into #seo-fallback on mount
+  // Uses a 500ms delay to let the pre-React script inject global links first
+  // Then APPENDS context-specific links without overwriting the global ones
   useLayoutEffect(() => {
     const seoFallback = document.getElementById('seo-fallback');
     if (!seoFallback) return;
 
-    // Find or create the event links container
-    let linksContainer = document.getElementById('seo-fallback-event-links');
-    if (!linksContainer) {
-      linksContainer = document.createElement('ul');
-      linksContainer.id = 'seo-fallback-event-links';
-      linksContainer.setAttribute('aria-label', 'Próximos eventos');
-      seoFallback.appendChild(linksContainer);
-    }
+    let isCancelled = false;
 
-    // Fetch events based on context
-    const fetchAndInjectEvents = async () => {
+    // Delay to let the inline script populate global links first
+    const fetchTimeoutId = setTimeout(async () => {
+      if (isCancelled) return;
+
+      // Find or create the event links container
+      let linksContainer = document.getElementById('seo-fallback-event-links');
+      if (!linksContainer) {
+        linksContainer = document.createElement('ul');
+        linksContainer.id = 'seo-fallback-event-links';
+        linksContainer.setAttribute('aria-label', 'Próximos eventos');
+        seoFallback.appendChild(linksContainer);
+      }
+
       try {
         let events: SeoEvent[] = [];
         const today = new Date().toISOString();
 
+        // Only fetch contextual events for specific page types
+        // Home and listing pages already have global links from the pre-React script
         if (pageContext.type === 'city' && pageContext.slug) {
-          // Fetch events for this city
           const { data } = await supabase
             .from('mv_concerts_cards')
             .select('slug, name, artist_name')
             .ilike('venue_city_slug', pageContext.slug)
             .gte('event_date', today)
             .order('event_date', { ascending: true })
-            .limit(20);
+            .limit(15);
           events = (data || []) as SeoEvent[];
         } else if (pageContext.type === 'genre' && pageContext.slug) {
-          // Fetch events for this genre
           const { data } = await supabase
             .from('mv_concerts_cards')
             .select('slug, name, artist_name')
             .ilike('genre_slug', pageContext.slug)
             .gte('event_date', today)
             .order('event_date', { ascending: true })
-            .limit(20);
-          events = (data || []) as SeoEvent[];
-        } else if (pageContext.type === 'listing' || pageContext.type === 'home') {
-          // Fetch top upcoming events
-          const { data } = await supabase
-            .from('mv_concerts_cards')
-            .select('slug, name, artist_name')
-            .gte('event_date', today)
-            .order('event_date', { ascending: true })
-            .limit(20);
+            .limit(15);
           events = (data || []) as SeoEvent[];
         } else if (pageContext.type === 'festivals') {
-          // Fetch top upcoming festivals
           const { data } = await supabase
             .from('mv_festivals_cards')
             .select('slug, name, main_attraction')
             .gte('event_date', today)
             .order('event_date', { ascending: true })
-            .limit(20);
+            .limit(15);
           events = (data || []).map(f => ({
             slug: f.slug,
             name: f.name,
             artist_name: f.main_attraction
           })) as SeoEvent[];
         }
+        // Skip for 'home', 'listing', and 'event' - these get global links from pre-React script
 
-        // Clear previous links
-        if (linksContainer) {
-          linksContainer.innerHTML = '';
+        if (events.length === 0) return;
+
+        // Get existing slugs to avoid duplicates
+        const existingSlugs = new Set(
+          Array.from(linksContainer.querySelectorAll('a'))
+            .map(a => {
+              const href = a.getAttribute('href') || '';
+              const match = href.match(/\/conciertos\/([^/]+)$/) || href.match(/\/festivales\/([^/]+)$/);
+              return match ? match[1] : null;
+            })
+            .filter(Boolean)
+        );
+
+        // Append only non-duplicate events
+        const isFestival = pageContext.type === 'festivals';
+        events.forEach(event => {
+          if (!event.slug || existingSlugs.has(event.slug)) return;
           
-          // Add event links
-          events.forEach(event => {
-            if (!event.slug) return;
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            const isFestival = pageContext.type === 'festivals';
-            a.href = `/${isFestival ? 'festivales' : 'conciertos'}/${event.slug}`;
-            a.textContent = `Entradas ${event.artist_name || event.name}`;
-            li.appendChild(a);
-            linksContainer.appendChild(li);
-          });
-        }
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = `/${isFestival ? 'festivales' : 'conciertos'}/${event.slug}`;
+          a.textContent = `Entradas ${event.artist_name || event.name}`;
+          li.appendChild(a);
+          linksContainer!.appendChild(li);
+          existingSlugs.add(event.slug); // Track to avoid future duplicates
+        });
+
       } catch (error) {
-        console.error('[SeoFallbackLinks] Error fetching events:', error);
+        console.error('[SeoFallbackLinks] Error fetching contextual events:', error);
       }
-    };
+    }, 500); // 500ms delay to let pre-React script execute first
 
-    fetchAndInjectEvents();
-
-    // Cleanup on unmount
+    // Cleanup on unmount - don't clear links, they might be from the global script
     return () => {
-      if (linksContainer) {
-        linksContainer.innerHTML = '';
-      }
+      isCancelled = true;
+      clearTimeout(fetchTimeoutId);
     };
   }, [pageContext]);
 

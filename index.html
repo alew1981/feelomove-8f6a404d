@@ -162,6 +162,42 @@
       });
     </script>
     
+    <!-- SEO PRE-REACT: Inject popular event links BEFORE React hydrates -->
+    <!-- This ensures crawlers (Ahrefs, Google) see links immediately in raw HTML -->
+    <script>
+      (function() {
+        var abortController = new AbortController();
+        var timeoutId = setTimeout(function() { abortController.abort(); }, 5000);
+        
+        fetch('https://wcyjuytpxxqailtixept.supabase.co/functions/v1/popular-events', {
+          signal: abortController.signal
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(events) {
+            clearTimeout(timeoutId);
+            var fallback = document.getElementById('seo-fallback');
+            if (!fallback || !Array.isArray(events)) return;
+            
+            var ul = document.createElement('ul');
+            ul.id = 'seo-fallback-event-links';
+            ul.setAttribute('aria-label', 'Eventos populares');
+            
+            events.forEach(function(e) {
+              if (!e.slug) return;
+              var li = document.createElement('li');
+              var a = document.createElement('a');
+              a.href = '/conciertos/' + e.slug;
+              a.textContent = 'Entradas ' + (e.artist_name || e.name);
+              li.appendChild(a);
+              ul.appendChild(li);
+            });
+            
+            fallback.appendChild(ul);
+          })
+          .catch(function() { clearTimeout(timeoutId); });
+      })();
+    </script>
+    
     <!-- Main app script -->
     <script type="module" src="/src/main.tsx"></script>
     
