@@ -222,34 +222,40 @@ const siteNavigationSchema = {
 };
 
 // Generate BreadcrumbList schema from breadcrumbs array
-// CRITICAL: Google requires 'item' field on ALL ListItems EXCEPT the last one
-const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]) => {
+// NOTE: Some GSC validations require 'item' on ALL ListItems (including last)
+const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[], currentUrl: string) => {
   if (!breadcrumbs || breadcrumbs.length === 0) return null;
-  
+
   // Filter out empty names and generate valid schema
-  const validBreadcrumbs = breadcrumbs.filter(item => item.name && item.name.trim());
-  
+  const validBreadcrumbs = breadcrumbs.filter((item) => item.name && item.name.trim());
   if (validBreadcrumbs.length === 0) return null;
-  
+
+  const safeCurrentUrl = (currentUrl || "https://feelomove.com").split("?")[0].split("#")[0];
+
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": validBreadcrumbs.map((item, index, arr) => {
       const isLast = index === arr.length - 1;
-      
-      // Build the item URL - required for all except last
-      const itemUrl = item.url 
-        ? (item.url.startsWith('http') ? item.url : `https://feelomove.com${item.url}`)
-        : `https://feelomove.com`; // Fallback to homepage if URL missing
-      
+
+      // Build the item URL:
+      // - intermediate nodes: use provided url (absolute/relative) or fallback to homepage
+      // - last node (current page): always use canonical/current URL
+      const absoluteItemUrl = item.url
+        ? item.url.startsWith("http")
+          ? item.url
+          : `https://feelomove.com${item.url}`
+        : "https://feelomove.com";
+
+      const finalItemUrl = isLast ? safeCurrentUrl : absoluteItemUrl;
+
       return {
         "@type": "ListItem",
         "position": index + 1,
         "name": item.name,
-        // CRITICAL: Only last item omits 'item', all others MUST have it
-        ...(!isLast && { "item": itemUrl })
+        "item": finalItemUrl,
       };
-    })
+    }),
   };
 };
 
@@ -322,7 +328,7 @@ export const SEOHead = ({
   } : null;
 
   // Generate breadcrumb schema if provided
-  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs || []);
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs || [], fullCanonical);
 
   // Combine all JSON-LD schemas
   // For event pages, skip Organization and WebPage schemas (handled by EventSeo)
