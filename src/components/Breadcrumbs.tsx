@@ -134,6 +134,9 @@ const cleanCityName = (city: string): string => {
 
 const linkClass = "hover:text-foreground hover:underline transition-colors";
 
+// Base URL for absolute schema.org URLs (must be absolute, never relative)
+const SITE_URL = "https://feelomove.com";
+
 // ============================================
 // TYPES
 // ============================================
@@ -157,73 +160,75 @@ interface BreadcrumbsProps {
 /**
  * Generates BreadcrumbList JSON-LD schema for SEO
  * Follows Google's structured data guidelines for breadcrumbs
- * CRITICAL: All items MUST include the 'item' field with absolute URL
+ * CRITICAL: All items MUST include the 'item' field with ABSOLUTE URL
  */
 const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) => {
   if (!items || items.length === 0) return null;
-  
-  const validItems = items.filter(item => item.name && item.name.trim());
+
+  const validItems = items.filter((item) => item.name && item.name.trim());
   if (validItems.length === 0) return null;
-  
+
   // Clean current URL (remove query params and hash)
-  const safeCurrentUrl = (currentUrl || "https://feelomove.com")
+  const safeCurrentUrl = (currentUrl || SITE_URL)
     .split("?")[0]
     .split("#")[0];
-  
+
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": validItems.map((item, index, arr) => {
+    itemListElement: validItems.map((item, index, arr) => {
       const isLast = index === arr.length - 1;
-      
-      // Build absolute URL: intermediate items use item.url, last item uses current page URL
+
+      // STRICT URL formatting rules:
+      // - Always absolute
+      // - Always based on SITE_URL
+      // - Ensure leading slash
       const absoluteUrl = item.url
-        ? item.url.startsWith("http")
-          ? item.url
-          : `https://feelomove.com${item.url}`
-        : "https://feelomove.com";
-      
+        ? `${SITE_URL}${item.url.startsWith("/") ? item.url : `/${item.url}`}`
+        : SITE_URL;
+
       return {
         "@type": "ListItem",
-        "position": index + 1,
-        "name": item.name,
-        "item": isLast ? safeCurrentUrl : absoluteUrl  // ✅ ALWAYS include item field
+        position: index + 1,
+        name: item.name,
+        // Last item MUST use the browser URL (origin + pathname)
+        item: isLast ? safeCurrentUrl : absoluteUrl,
       };
-    })
+    }),
   };
 };
 
 /**
  * Injects BreadcrumbList JSON-LD into document head
- * Uses current pathname to ensure last item always has valid URL
+ * Uses current browser URL to ensure last item always has valid absolute URL
  */
 const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) => {
   const location = useLocation();
-  
+
   useEffect(() => {
     if (!enabled || !items || items.length === 0) return;
-    
-    // Build canonical URL from current pathname
-    const currentUrl = `https://feelomove.com${location.pathname}`;
-    
-    const scriptId = 'breadcrumb-jsonld';
-    
+
+    // Last item MUST be the actual browser URL (origin + pathname)
+    const currentUrl = `${window.location.origin}${window.location.pathname}`;
+
+    const scriptId = "breadcrumb-jsonld";
+
     // Remove existing script
     const existingScript = document.getElementById(scriptId);
     if (existingScript) {
       existingScript.remove();
     }
-    
+
     // Create and inject new script with current URL
     const jsonLd = generateBreadcrumbJsonLd(items, currentUrl);
     if (jsonLd) {
-      const script = document.createElement('script');
+      const script = document.createElement("script");
       script.id = scriptId;
-      script.type = 'application/ld+json';
+      script.type = "application/ld+json";
       script.textContent = JSON.stringify(jsonLd);
       document.head.appendChild(script);
     }
-    
+
     // Cleanup on unmount
     return () => {
       const script = document.getElementById(scriptId);
