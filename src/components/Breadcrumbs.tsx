@@ -157,32 +157,54 @@ interface BreadcrumbsProps {
 /**
  * Generates BreadcrumbList JSON-LD schema for SEO
  * Follows Google's structured data guidelines for breadcrumbs
+ * CRITICAL: All items MUST include the 'item' field with absolute URL
  */
-const generateBreadcrumbJsonLd = (items: BreadcrumbItem[]) => {
+const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) => {
   if (!items || items.length === 0) return null;
+  
+  const validItems = items.filter(item => item.name && item.name.trim());
+  if (validItems.length === 0) return null;
+  
+  // Clean current URL (remove query params and hash)
+  const safeCurrentUrl = (currentUrl || "https://feelomove.com")
+    .split("?")[0]
+    .split("#")[0];
   
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": items.map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "name": item.name,
-      ...(item.url && { 
-        "item": item.url.startsWith('http') 
-          ? item.url 
-          : `https://feelomove.com${item.url}` 
-      })
-    }))
+    "itemListElement": validItems.map((item, index, arr) => {
+      const isLast = index === arr.length - 1;
+      
+      // Build absolute URL: intermediate items use item.url, last item uses current page URL
+      const absoluteUrl = item.url
+        ? item.url.startsWith("http")
+          ? item.url
+          : `https://feelomove.com${item.url}`
+        : "https://feelomove.com";
+      
+      return {
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": item.name,
+        "item": isLast ? safeCurrentUrl : absoluteUrl  // ✅ ALWAYS include item field
+      };
+    })
   };
 };
 
 /**
  * Injects BreadcrumbList JSON-LD into document head
+ * Uses current pathname to ensure last item always has valid URL
  */
 const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) => {
+  const location = useLocation();
+  
   useEffect(() => {
     if (!enabled || !items || items.length === 0) return;
+    
+    // Build canonical URL from current pathname
+    const currentUrl = `https://feelomove.com${location.pathname}`;
     
     const scriptId = 'breadcrumb-jsonld';
     
@@ -192,8 +214,8 @@ const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) =
       existingScript.remove();
     }
     
-    // Create and inject new script
-    const jsonLd = generateBreadcrumbJsonLd(items);
+    // Create and inject new script with current URL
+    const jsonLd = generateBreadcrumbJsonLd(items, currentUrl);
     if (jsonLd) {
       const script = document.createElement('script');
       script.id = scriptId;
@@ -209,7 +231,7 @@ const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) =
         script.remove();
       }
     };
-  }, [items, enabled]);
+  }, [items, enabled, location.pathname]);
 };
 
 // ============================================
