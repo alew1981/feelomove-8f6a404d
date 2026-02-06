@@ -1,166 +1,85 @@
 
-## Plan: Corrección Definitiva del Campo 'item' en BreadcrumbList JSON-LD
+## Diagnóstico (por qué sigue fallando aunque el JSON-LD ya esté “bien”)
+El error que estás viendo en Google Search Console (“Falta el campo item” en elementos 3 y 4) **no corresponde al JSON-LD** que genera `generateBreadcrumbJsonLd` (ese ya incluye `item`).
 
-### Problema Confirmado
-Google Search Console reporta que falta el campo `item` en el último elemento de `itemListElement`. Esto ocurre porque hay **dos sistemas paralelos** generando JSON-LD de BreadcrumbList:
+Corresponde al **marcado Microdata en el HTML** que también estás renderizando en `Breadcrumbs.tsx`:
 
-1. **`SEOHead.tsx`**: Ya corregido correctamente en el último diff
-2. **`Breadcrumbs.tsx`**: Tiene su propia función `generateBreadcrumbJsonLd` que aún usa el patrón incorrecto `...(item.url && { "item": ... })`
+- El `<ol>` y cada `<li>` llevan `itemScope/itemType` de `https://schema.org/BreadcrumbList` y `ListItem`.
+- En los elementos enlazables (Link) hay `itemProp="item"`.
+- Pero en el **último nivel** (y en niveles sin URL), renderizas un `<span>` con `itemProp="name"` y **NO existe ningún `itemProp="item"`**, por lo que Google detecta un `ListItem` “sin item”.
 
-El componente `<Breadcrumbs />` inyecta JSON-LD duplicado en el `<head>` mediante `useBreadcrumbJsonLd`, creando conflicto con el schema de `SEOHead`.
+Eso encaja exactamente con tu reporte:
+- Posición 1 y 2: tienen item (Inicio, Conciertos)
+- Posición 3 y 4: faltan item (Jamiroquai, Sevilla) porque ya no son `<Link>` en tu UI
 
----
-
-### Archivos a Modificar
-
-| Archivo | Cambio | Descripción |
-|---------|--------|-------------|
-| `src/components/Breadcrumbs.tsx` | Corregir `generateBreadcrumbJsonLd` (líneas 161-178) | Garantizar que TODOS los items incluyan `item` con URL absoluta |
-| `src/components/Breadcrumbs.tsx` | Modificar `useBreadcrumbJsonLd` (líneas 183-213) | Pasar la URL canónica actual para usarla en el último elemento |
+Resultado: aunque el JSON-LD sea correcto, Google está validando (o también detectando) ese Microdata y lo marca como inválido.
 
 ---
 
-### Cambios Técnicos Detallados
-
-#### 1. Corregir `generateBreadcrumbJsonLd` en Breadcrumbs.tsx
-
-**Antes (problemático):**
-```typescript
-const generateBreadcrumbJsonLd = (items: BreadcrumbItem[]) => {
-  return {
-    "@type": "BreadcrumbList",
-    "itemListElement": items.map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "name": item.name,
-      ...(item.url && { "item": ... })  // ❌ Omite item si no hay URL
-    }))
-  };
-};
-```
-
-**Después (correcto):**
-```typescript
-const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) => {
-  if (!items || items.length === 0) return null;
-  
-  const validItems = items.filter(item => item.name && item.name.trim());
-  if (validItems.length === 0) return null;
-  
-  const safeCurrentUrl = (currentUrl || "https://feelomove.com")
-    .split("?")[0]
-    .split("#")[0];
-  
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": validItems.map((item, index, arr) => {
-      const isLast = index === arr.length - 1;
-      
-      // URL absoluta: intermedios usan item.url, último usa URL actual
-      const absoluteUrl = item.url
-        ? item.url.startsWith("http")
-          ? item.url
-          : `https://feelomove.com${item.url}`
-        : "https://feelomove.com";
-      
-      return {
-        "@type": "ListItem",
-        "position": index + 1,
-        "name": item.name,
-        "item": isLast ? safeCurrentUrl : absoluteUrl  // ✅ SIEMPRE incluye item
-      };
-    })
-  };
-};
-```
-
-#### 2. Actualizar `useBreadcrumbJsonLd` para recibir la URL actual
-
-```typescript
-const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) => {
-  const location = useLocation();
-  
-  useEffect(() => {
-    if (!enabled || !items || items.length === 0) return;
-    
-    // Construir URL canónica actual
-    const currentUrl = `https://feelomove.com${location.pathname}`;
-    
-    const scriptId = 'breadcrumb-jsonld';
-    const existingScript = document.getElementById(scriptId);
-    if (existingScript) existingScript.remove();
-    
-    const jsonLd = generateBreadcrumbJsonLd(items, currentUrl);
-    if (jsonLd) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.type = 'application/ld+json';
-      script.textContent = JSON.stringify(jsonLd);
-      document.head.appendChild(script);
-    }
-    
-    return () => {
-      const script = document.getElementById(scriptId);
-      if (script) script.remove();
-    };
-  }, [items, enabled, location.pathname]);
-};
-```
+## Objetivo
+Eliminar el error de validación de Google garantizando que **no exista ningún BreadcrumbList incompleto**:
+- Mantener JSON-LD como fuente principal (ya corregida para URLs absolutas).
+- Evitar que el Microdata HTML genere “ListItems” sin `item`.
 
 ---
 
-### Formato Esperado del JSON-LD Final
+## Cambios propuestos (implementación)
+### Opción recomendada (más robusta): eliminar Microdata del HTML y dejar solo JSON-LD
+En `src/components/Breadcrumbs.tsx`, en el JSX del render:
+1. Quitar del `<ol>`:
+   - `itemScope`
+   - `itemType="https://schema.org/BreadcrumbList"`
 
-Para la URL `/conciertos/jamiroquai-iconica-santalucia-sevilla-fest-sevilla`:
+2. Quitar de cada `<li>`:
+   - `itemProp="itemListElement"`
+   - `itemScope`
+   - `itemType="https://schema.org/ListItem"`
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position": 1,
-      "name": "Inicio",
-      "item": "https://feelomove.com/"
-    },
-    {
-      "@type": "ListItem",
-      "position": 2,
-      "name": "Conciertos",
-      "item": "https://feelomove.com/conciertos"
-    },
-    {
-      "@type": "ListItem",
-      "position": 3,
-      "name": "Jamiroquai",
-      "item": "https://feelomove.com/conciertos/jamiroquai"
-    },
-    {
-      "@type": "ListItem",
-      "position": 4,
-      "name": "Sevilla",
-      "item": "https://feelomove.com/conciertos/jamiroquai-iconica-santalucia-sevilla-fest-sevilla"
-    }
-  ]
-}
-```
+3. Quitar en los `<Link>`:
+   - `itemProp="item"`
+
+4. Quitar en `<span>` y `<meta>` relacionados con Microdata:
+   - `itemProp="name"`
+   - `<meta itemProp="position" ... />`
+   - `<meta itemProp="name" ... />` del Home
+
+Con esto:
+- Google solo verá **un BreadcrumbList** (el JSON-LD) y no un segundo marcado parcialmente inválido.
+- Evitamos discrepancias futuras entre UI y schema.
+
+### Ajuste adicional (seguridad)
+Mantener tu JSON-LD como está (ya cumple tus 3 reglas estrictas):
+- `SITE_URL = "https://feelomove.com"`
+- Intermedios: `${SITE_URL}${item.url.startsWith('/') ? item.url : '/' + item.url}`
+- Último: `window.location.origin + window.location.pathname`
+- Limpieza: `.split('?')[0].split('#')[0]`
+
+No es necesario cambiar esa parte salvo verificar que **no haya otra inyección duplicada** con BreadcrumbList en páginas específicas.
 
 ---
 
-### Verificación Post-Implementación
-
-1. **Rich Results Test**: Validar URLs afectadas en https://search.google.com/test/rich-results
-2. **View Source**: Confirmar que el JSON-LD de BreadcrumbList tiene `item` en TODOS los elementos
-3. **Evitar Duplicados**: Verificar que solo existe UN script `application/ld+json` con `BreadcrumbList` por página
+## Verificación (pasos concretos para confirmar que se arregló)
+1. En una URL que falle (ejemplo de tu ruta actual):
+   - `/festivales/iberdrola-music-festival-madrid-paquetes-vip-madrid`
+2. “Ver código fuente” / inspección del `<head>`:
+   - Debe existir **solo un** `<script type="application/ld+json">` con `"@type":"BreadcrumbList"`.
+3. Confirmar que cada `itemListElement` tiene:
+   - `"item": "https://..."` (absoluta)
+   - En el último, `"item"` debe ser `window.location.origin + window.location.pathname` sin `?` ni `#`.
+4. Pasar la URL por:
+   - Rich Results Test: https://search.google.com/test/rich-results
+   - (Opcional) Schema Validator: https://validator.schema.org/
+5. Revisar el reporte de GSC tras recrawl (puede tardar).
 
 ---
 
-### Impacto Esperado
+## Riesgos / Consideraciones
+- Quitar Microdata del HTML **no perjudica** el SEO si el JSON-LD está correcto (Google recomienda JSON-LD y es suficiente).
+- Esto es la forma más estable de evitar que Google “prefiera” o detecte el marcado incorrecto del HTML.
 
-| Métrica | Antes | Después |
-|---------|-------|---------|
-| Elementos con error "item" | 128 | 0 |
-| BreadcrumbList válidos | ~85% | 100% |
-| Duplicación de schemas | Posible | Eliminada |
+---
+
+## Archivos implicados
+- `src/components/Breadcrumbs.tsx` (solo cambios en el render JSX, no en la lógica de `generateBreadcrumbJsonLd` salvo que detectemos duplicados adicionales)
+
+---
