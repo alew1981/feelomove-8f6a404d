@@ -214,13 +214,11 @@ const App = () => (
                 <Route path="/eventos" element={<Eventos />} />
                 <Route path="/conciertos" element={<Conciertos />} />
                 <Route path="/conciertos/:slug" element={<ConciertosSlugRouter />} />
-                <Route path="/festivales" element={<Festivales />} />
-                <Route path="/festivales/:festivalSlug" element={<FestivalDetalle />} />
+<Route path="/festivales" element={<Festivales />} />
+                {/* Single festival event pages - uses Producto for event_slug format */}
+                <Route path="/festivales/:slug" element={<Producto />} />
                 <Route path="/favoritos" element={<Favoritos />} />
                 <Route path="/inspiration" element={<Inspiration />} />
-                
-                {/* Direct product routes - canonical plural routes */}
-                <Route path="/festivales/:slug" element={<Producto />} />
                 
                 {/* Legacy singular routes - redirect to plural for SEO */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
