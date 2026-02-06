@@ -651,11 +651,12 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
 
   return (
     <nav className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-4 pb-1" aria-label="Breadcrumb">
-      <ol 
-        className="flex items-center text-xs sm:text-sm text-muted-foreground whitespace-nowrap" 
-        itemScope 
-        itemType="https://schema.org/BreadcrumbList"
-      >
+      {/* 
+        NOTE: Microdata removed intentionally. 
+        Google structured data comes ONLY from JSON-LD (injected via useBreadcrumbJsonLd).
+        This prevents "missing item field" errors when non-link breadcrumbs lack itemProp="item".
+      */}
+      <ol className="flex items-center text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
         {breadcrumbItems.map((item, index) => {
           const isFirst = index === 0;
           const isLast = index === breadcrumbItems.length - 1;
@@ -664,9 +665,6 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
             <li 
               key={`${item.name}-${index}`} 
               className="flex items-center"
-              itemProp="itemListElement"
-              itemScope
-              itemType="https://schema.org/ListItem"
             >
               {/* Separator (not for first item) */}
               {!isFirst && (
@@ -679,17 +677,14 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
                   to={item.url || "/"}
                   className="flex items-center hover:text-foreground transition-colors p-1 -m-1 rounded"
                   aria-label="Inicio"
-                  itemProp="item"
                   onMouseEnter={() => prefetch("/")}
                 >
                   <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <meta itemProp="name" content={item.name} />
                 </Link>
               ) : isLast || !item.url ? (
                 // Last item or no URL: display as plain text (not a link)
                 <span 
                   className="text-foreground font-semibold truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" 
-                  itemProp="name"
                   title={item.name}
                 >
                   {item.name}
@@ -699,15 +694,11 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
                 <Link
                   to={item.url}
                   className={`${linkClass} truncate max-w-[80px] sm:max-w-[150px] md:max-w-none`}
-                  itemProp="item"
                   onMouseEnter={() => item.url && prefetch(item.url)}
                 >
-                  <span itemProp="name">{item.name}</span>
+                  {item.name}
                 </Link>
               )}
-              
-              {/* Position meta for schema.org */}
-              <meta itemProp="position" content={String(index + 1)} />
             </li>
           );
         })}
