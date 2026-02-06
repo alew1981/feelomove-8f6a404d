@@ -160,7 +160,13 @@ interface BreadcrumbsProps {
 /**
  * Generates BreadcrumbList JSON-LD schema for SEO
  * Follows Google's structured data guidelines for breadcrumbs
- * CRITICAL: All items MUST include the 'item' field with ABSOLUTE URL
+ * CRITICAL: All items MUST include the 'item' field with ABSOLUTE URL (never relative)
+ *
+ * URL Construction Rules:
+ * 1. Intermediate items: ${SITE_URL}${item.url.startsWith('/') ? item.url : '/' + item.url}
+ * 2. Last item: window.location.origin + window.location.pathname
+ * 3. All URLs cleaned: .split('?')[0].split('#')[0]
+ * 4. Every item MUST have "item" property with absolute URL
  */
 const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) => {
   if (!items || items.length === 0) return null;
@@ -168,7 +174,7 @@ const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) =
   const validItems = items.filter((item) => item.name && item.name.trim());
   if (validItems.length === 0) return null;
 
-  // Clean current URL (remove query params and hash)
+  // RULE 3: Clean current URL (remove query params and hash)
   const safeCurrentUrl = (currentUrl || SITE_URL)
     .split("?")[0]
     .split("#")[0];
@@ -179,20 +185,28 @@ const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) =
     itemListElement: validItems.map((item, index, arr) => {
       const isLast = index === arr.length - 1;
 
-      // STRICT URL formatting rules:
-      // - Always absolute
-      // - Always based on SITE_URL
-      // - Ensure leading slash
-      const absoluteUrl = item.url
-        ? `${SITE_URL}${item.url.startsWith("/") ? item.url : `/${item.url}`}`
-        : SITE_URL;
+      // RULE 1 & 2: Build absolute URL based on position
+      let itemUrl: string;
 
+      if (isLast) {
+        // Last item: Use actual browser URL (origin + pathname)
+        itemUrl = safeCurrentUrl;
+      } else {
+        // Intermediate items: Use SITE_URL + item.url (with leading slash)
+        if (item.url) {
+          itemUrl = `${SITE_URL}${item.url.startsWith("/") ? item.url : `/${item.url}`}`;
+        } else {
+          itemUrl = SITE_URL;
+        }
+      }
+
+      // RULE 4: Return ListItem with mandatory "item" property
       return {
         "@type": "ListItem",
         position: index + 1,
         name: item.name,
-        // Last item MUST use the browser URL (origin + pathname)
-        item: isLast ? safeCurrentUrl : absoluteUrl,
+        // ✅ ALWAYS included, NEVER relative, ALWAYS absolute
+        item: itemUrl,
       };
     }),
   };
