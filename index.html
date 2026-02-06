@@ -74,7 +74,7 @@
       
       /* === CRITICAL HERO SKELETON (LCP placeholder) === */
       .hero-skeleton{margin-top:80px;padding:0 16px}
-      .hero-skeleton .breadcrumb{height:20px;width:200px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:16px}
+      .hero-skeleton .breadcrumb{min-height:20px;padding:4px 0;font-size:12px;color:rgba(255,255,255,0.4);background:transparent;margin-bottom:16px;display:flex;align-items:center}
       .hero-skeleton .image-container{position:relative;width:100%;height:200px;background:linear-gradient(135deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.02) 100%);border-radius:16px;overflow:hidden}
       @media(min-width:640px){.hero-skeleton .image-container{height:340px}}
       @media(min-width:768px){.hero-skeleton .image-container{height:420px}}
@@ -83,7 +83,8 @@
       
       /* === CRITICAL CONTENT SKELETON === */
       .content-skeleton{padding:16px;display:flex;flex-direction:column;gap:12px}
-      .content-skeleton .title{height:28px;width:70%;background:rgba(255,255,255,0.08);border-radius:6px}
+      .content-skeleton .title{min-height:28px;font-family:'Poppins',system-ui,sans-serif;font-size:1.5rem;font-weight:700;line-height:1.3;color:#fff;margin:0;padding:0;background:transparent;display:flex;align-items:center}
+      @media(min-width:768px){.content-skeleton .title{font-size:2rem}}
       .content-skeleton .subtitle{height:18px;width:50%;background:rgba(255,255,255,0.05);border-radius:4px}
       .content-skeleton .meta{height:14px;width:40%;background:rgba(255,255,255,0.03);border-radius:4px}
       
@@ -138,10 +139,10 @@
       </div>
       <!-- Hero skeleton with semantic content -->
       <main class="hero-skeleton">
-        <div class="breadcrumb"></div>
+        <div class="breadcrumb">Inicio</div>
         <div class="image-container" role="img" aria-label="Imagen del evento"></div>
         <div class="content-skeleton">
-          <div class="title"></div>
+          <h1 class="title">FEELOMOVE+ Conciertos y Festivales 2026</h1>
           <div class="subtitle"></div>
           <div class="meta"></div>
         </div>
