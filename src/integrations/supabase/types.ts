@@ -14,27 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      backup_urls_largas_20260104: {
-        Row: {
-          backup_created_at: string | null
-          id: string | null
-          name: string | null
-          slug_original: string | null
-        }
-        Insert: {
-          backup_created_at?: string | null
-          id?: string | null
-          name?: string | null
-          slug_original?: string | null
-        }
-        Update: {
-          backup_created_at?: string | null
-          id?: string | null
-          name?: string | null
-          slug_original?: string | null
-        }
-        Relationships: []
-      }
       canonical_event_urls: {
         Row: {
           canonical_event_id: string

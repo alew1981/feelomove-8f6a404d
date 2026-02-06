@@ -222,18 +222,34 @@ const siteNavigationSchema = {
 };
 
 // Generate BreadcrumbList schema from breadcrumbs array
+// CRITICAL: Google requires 'item' field on ALL ListItems EXCEPT the last one
 const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]) => {
   if (!breadcrumbs || breadcrumbs.length === 0) return null;
+  
+  // Filter out empty names and generate valid schema
+  const validBreadcrumbs = breadcrumbs.filter(item => item.name && item.name.trim());
+  
+  if (validBreadcrumbs.length === 0) return null;
   
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": breadcrumbs.map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "name": item.name,
-      ...(item.url && { "item": item.url.startsWith('http') ? item.url : `https://feelomove.com${item.url}` })
-    }))
+    "itemListElement": validBreadcrumbs.map((item, index, arr) => {
+      const isLast = index === arr.length - 1;
+      
+      // Build the item URL - required for all except last
+      const itemUrl = item.url 
+        ? (item.url.startsWith('http') ? item.url : `https://feelomove.com${item.url}`)
+        : `https://feelomove.com`; // Fallback to homepage if URL missing
+      
+      return {
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": item.name,
+        // CRITICAL: Only last item omits 'item', all others MUST have it
+        ...(!isLast && { "item": itemUrl })
+      };
+    })
   };
 };
 
