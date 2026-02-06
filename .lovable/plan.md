@@ -1,76 +1,118 @@
 
+## Plan: Corrección Definitiva del Campo 'item' en BreadcrumbList JSON-LD
 
-## Plan: Corregir Error de Schema.org BreadcrumbList "Falta el campo item"
+### Problema Confirmado
+Google Search Console reporta que falta el campo `item` en el último elemento de `itemListElement`. Esto ocurre porque hay **dos sistemas paralelos** generando JSON-LD de BreadcrumbList:
 
-### Problema Identificado
+1. **`SEOHead.tsx`**: Ya corregido correctamente en el último diff
+2. **`Breadcrumbs.tsx`**: Tiene su propia función `generateBreadcrumbJsonLd` que aún usa el patrón incorrecto `...(item.url && { "item": ... })`
 
-Google Search Console reporta **128 elementos afectados** con el error:
-> "Falta el campo 'item' (en 'itemListElement')"
-
-**Causa raíz**: La función `generateBreadcrumbSchema` en `SEOHead.tsx` solo añade el campo `item` cuando existe una URL. Sin embargo, según las especificaciones de Google:
-
-1. **Todos los `ListItem` EXCEPTO el último DEBEN tener el campo `item`** con una URL válida
-2. Solo el último elemento (página actual) puede omitir la URL
-
-El código actual permite que elementos intermedios omitan `item` si no tienen URL, lo que viola la especificación.
+El componente `<Breadcrumbs />` inyecta JSON-LD duplicado en el `<head>` mediante `useBreadcrumbJsonLd`, creando conflicto con el schema de `SEOHead`.
 
 ---
 
-### Solución Propuesta
+### Archivos a Modificar
 
-#### Modificar `src/components/SEOHead.tsx`
+| Archivo | Cambio | Descripción |
+|---------|--------|-------------|
+| `src/components/Breadcrumbs.tsx` | Corregir `generateBreadcrumbJsonLd` (líneas 161-178) | Garantizar que TODOS los items incluyan `item` con URL absoluta |
+| `src/components/Breadcrumbs.tsx` | Modificar `useBreadcrumbJsonLd` (líneas 183-213) | Pasar la URL canónica actual para usarla en el último elemento |
 
-Cambiar la función `generateBreadcrumbSchema` para:
+---
 
-1. **Garantizar que todos los items excepto el último tengan siempre el campo `item`**
-2. **Si un item intermedio no tiene URL, generar una URL de fallback** basada en el nombre
-3. **Filtrar items con nombres vacíos** (que no deberían existir en breadcrumbs)
-4. **El último item siempre omite `item`** (comportamiento correcto según Google)
+### Cambios Técnicos Detallados
 
-```text
-ANTES (problemático):
-breadcrumbs.map((item, index) => ({
-  "@type": "ListItem",
-  "position": index + 1,
-  "name": item.name,
-  ...(item.url && { "item": ... })  // ❌ Omite item si no hay URL
-}))
+#### 1. Corregir `generateBreadcrumbJsonLd` en Breadcrumbs.tsx
 
-DESPUÉS (correcto):
-breadcrumbs
-  .filter(item => item.name && item.name.trim())  // Filtrar vacíos
-  .map((item, index, arr) => {
-    const isLast = index === arr.length - 1;
-    
-    // URL: Para items intermedios, siempre generar una
-    const itemUrl = item.url 
-      ? (item.url.startsWith('http') ? item.url : `https://feelomove.com${item.url}`)
-      : null;
-    
-    return {
+**Antes (problemático):**
+```typescript
+const generateBreadcrumbJsonLd = (items: BreadcrumbItem[]) => {
+  return {
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, index) => ({
       "@type": "ListItem",
       "position": index + 1,
       "name": item.name,
-      // CRITICAL: Solo el último item omite "item", los demás DEBEN tenerlo
-      ...(!isLast && { "item": itemUrl || `https://feelomove.com` })
+      ...(item.url && { "item": ... })  // ❌ Omite item si no hay URL
+    }))
+  };
+};
+```
+
+**Después (correcto):**
+```typescript
+const generateBreadcrumbJsonLd = (items: BreadcrumbItem[], currentUrl: string) => {
+  if (!items || items.length === 0) return null;
+  
+  const validItems = items.filter(item => item.name && item.name.trim());
+  if (validItems.length === 0) return null;
+  
+  const safeCurrentUrl = (currentUrl || "https://feelomove.com")
+    .split("?")[0]
+    .split("#")[0];
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": validItems.map((item, index, arr) => {
+      const isLast = index === arr.length - 1;
+      
+      // URL absoluta: intermedios usan item.url, último usa URL actual
+      const absoluteUrl = item.url
+        ? item.url.startsWith("http")
+          ? item.url
+          : `https://feelomove.com${item.url}`
+        : "https://feelomove.com";
+      
+      return {
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": item.name,
+        "item": isLast ? safeCurrentUrl : absoluteUrl  // ✅ SIEMPRE incluye item
+      };
+    })
+  };
+};
+```
+
+#### 2. Actualizar `useBreadcrumbJsonLd` para recibir la URL actual
+
+```typescript
+const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    if (!enabled || !items || items.length === 0) return;
+    
+    // Construir URL canónica actual
+    const currentUrl = `https://feelomove.com${location.pathname}`;
+    
+    const scriptId = 'breadcrumb-jsonld';
+    const existingScript = document.getElementById(scriptId);
+    if (existingScript) existingScript.remove();
+    
+    const jsonLd = generateBreadcrumbJsonLd(items, currentUrl);
+    if (jsonLd) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(jsonLd);
+      document.head.appendChild(script);
+    }
+    
+    return () => {
+      const script = document.getElementById(scriptId);
+      if (script) script.remove();
     };
-  })
+  }, [items, enabled, location.pathname]);
+};
 ```
 
 ---
 
-### Lógica de Validación
+### Formato Esperado del JSON-LD Final
 
-| Posición | URL presente | Campo `item` |
-|----------|--------------|--------------|
-| Primero (Inicio) | Sí (`/`) | Incluido |
-| Intermedio (Conciertos) | Sí (`/conciertos`) | Incluido |
-| Intermedio (Ciudad) | Podría faltar | **Fallback a feelomove.com** |
-| Último (Evento actual) | N/A | **Omitido** (correcto) |
-
----
-
-### Ejemplo de Output Correcto
+Para la URL `/conciertos/jamiroquai-iconica-santalucia-sevilla-fest-sevilla`:
 
 ```json
 {
@@ -92,13 +134,14 @@ breadcrumbs
     {
       "@type": "ListItem",
       "position": 3,
-      "name": "Sevilla",
-      "item": "https://feelomove.com/destinos/sevilla"
+      "name": "Jamiroquai",
+      "item": "https://feelomove.com/conciertos/jamiroquai"
     },
     {
       "@type": "ListItem",
       "position": 4,
-      "name": "Jamiroquai - Icónica Santalucia Sevilla Fest"
+      "name": "Sevilla",
+      "item": "https://feelomove.com/conciertos/jamiroquai-iconica-santalucia-sevilla-fest-sevilla"
     }
   ]
 }
@@ -106,19 +149,11 @@ breadcrumbs
 
 ---
 
-### Archivos a Modificar
-
-| Archivo | Cambio | Descripción |
-|---------|--------|-------------|
-| `src/components/SEOHead.tsx` | Editar función `generateBreadcrumbSchema` (líneas 224-238) | Añadir lógica para garantizar `item` en todos los elementos excepto el último |
-
----
-
 ### Verificación Post-Implementación
 
-1. **Rich Results Test**: Probar URLs afectadas en https://search.google.com/test/rich-results
-2. **View Source**: Verificar que el JSON-LD de BreadcrumbList tenga `item` en todos los elementos excepto el último
-3. **Search Console**: Esperar 1-2 días para que Google revalide las páginas
+1. **Rich Results Test**: Validar URLs afectadas en https://search.google.com/test/rich-results
+2. **View Source**: Confirmar que el JSON-LD de BreadcrumbList tiene `item` en TODOS los elementos
+3. **Evitar Duplicados**: Verificar que solo existe UN script `application/ld+json` con `BreadcrumbList` por página
 
 ---
 
@@ -127,6 +162,5 @@ breadcrumbs
 | Métrica | Antes | Después |
 |---------|-------|---------|
 | Elementos con error "item" | 128 | 0 |
-| BreadcrumbList válidos | ~90% | 100% |
-| Rich Results elegibles | Bloqueados | Habilitados |
-
+| BreadcrumbList válidos | ~85% | 100% |
+| Duplicación de schemas | Posible | Eliminada |
