@@ -1,146 +1,155 @@
 
-## Plan: Optimización LCP con Hydration Overlay + CLS Prevention
 
-### Problema Identificado
-El plan anterior sugería cambiar `.content-skeleton .title` a `background:transparent` sin preservar el `min-height`, lo que podría causar un Layout Shift micro cuando el texto se renderice. Es crítico mantener el espacio "reservado" incluso con fondo transparente.
+## Plan: Sold Out Badge + "Ver otros conciertos" Section
+
+### Resumen
+Cuando un evento no tiene entradas disponibles (todos agotados o sin datos de tickets), se mostrara:
+1. Un badge "AGOTADO" visible en el bloque de entradas
+2. Una seccion de pills (estilo "Ver en otros destinos") mostrando las otras ciudades donde toca el artista, con titulo "Ver otros conciertos de [Artista]" y enlace "Ver todos" que lleva a la pagina del artista
 
 ### Archivos a Modificar
-- `index.html` (línea 77 y 86 para CSS, línea 141 y 144 para HTML)
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/pages/Producto.tsx` | Agregar badge AGOTADO + seccion de otros conciertos cuando no hay disponibilidad |
 
 ---
 
-### Cambios CSS (Línea 77 - Breadcrumb)
+### Cambio 1: Badge "AGOTADO" en la seccion de entradas
 
-**Actual:**
-```css
-.hero-skeleton .breadcrumb{height:20px;width:200px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:16px}
+Cuando `!isEventAvailable` (todas las entradas agotadas o sin ticket_types), mostrar un badge "AGOTADO" prominente encima del listado de tickets (o en lugar de la seccion vacia).
+
+**Logica de deteccion sold out:**
+- `ticketPrices.length === 0` (sin datos de tickets, como HUMBE)
+- `ticketPrices.length > 0 && !hasAvailableTickets` (todos con availability "none", como Caifanes/BTS)
+- En ambos casos: `!isEventAvailable` es true
+
+**Ubicacion:** Justo antes del bloque de tickets (linea ~1240), agregar un condicional:
+
+```tsx
+{/* Seccion de entradas */}
+{!isEventAvailable && !isNotYetOnSale && (
+  <div className="mb-6">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+      <h2 className="text-xl sm:text-2xl font-bold">Entradas</h2>
+    </div>
+    <Card className="border-2 border-muted">
+      <CardContent className="p-6 text-center space-y-3">
+        <Badge variant="agotado" className="text-sm px-4 py-1.5">AGOTADO</Badge>
+        <p className="text-sm text-muted-foreground">
+          Las entradas para este evento se han agotado
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+)}
 ```
 
-**Propuesto (con min-height para CLS prevention):**
-```css
-.hero-skeleton .breadcrumb{
-  min-height:20px;
-  padding:4px 0;
-  font-size:12px;
-  color:rgba(255,255,255,0.4);
-  background:transparent;
-  margin-bottom:16px;
-  display:flex;
-  align-items:center
-}
-```
-
-**Justificación:**
-- `min-height:20px` reserva espacio aunque el fondo sea `transparent`
-- Cuando React hidrata, el ancho y altura del layout ya están "reservados", evitando saltos
-- `display:flex;align-items:center` asegura alineación vertical consistente
+Esto se mostrara ANTES del bloque `ticketPrices.length > 0 && (...)` existente, y ese bloque seguira mostrando tickets individuales (con opacity reducida) si los hay.
 
 ---
 
-### Cambios CSS (Línea 86 - Título)
+### Cambio 2: Seccion "Ver otros conciertos de [Artista]" cuando sold out
 
-**Actual:**
-```css
-.content-skeleton .title{height:28px;width:70%;background:rgba(255,255,255,0.08);border-radius:6px}
-```
+**Ubicacion:** Despues del bloque de entradas agotadas y ANTES de la seccion de hoteles (linea ~1379).
 
-**Propuesto (manteniendo min-height):**
-```css
-.content-skeleton .title{
-  min-height:28px;
-  font-family:'Poppins',system-ui,sans-serif;
-  font-size:1.5rem;
-  font-weight:700;
-  line-height:1.3;
-  color:#fff;
-  margin:0;
-  padding:0;
-  background:transparent;
-  display:flex;
-  align-items:center
-}
-@media(min-width:768px){.content-skeleton .title{font-size:2rem}}
-```
+Reutilizar los datos de `artistOtherCities` que ya se obtienen en la query existente (linea 440-505). La seccion usa el mismo diseno de pills que `ArtistDestinationsList` pero con:
 
-**Justificación:**
-- `min-height:28px` preserva el espacio para CLS prevention, incluso cuando el fondo es `transparent`
-- El texto se alineará verticalmente al centro del espacio reservado
-- Al cambiar de skeleton a contenido React, no hay salto porque el contenedor ya existía con esas dimensiones
+- Titulo: "Ver otros conciertos de [artistName]" (con icono de ticket en vez de pin)
+- "Ver todos" enlaza a `/artista/[artist-slug]`
+- Cada pill enlaza a `/destinos/[city-slug]` (igual que ahora)
 
----
-
-### Cambios HTML (Línea 141 - Breadcrumb)
-
-**Actual:**
-```html
-<div class="breadcrumb"></div>
-```
-
-**Propuesto:**
-```html
-<div class="breadcrumb">Inicio</div>
-```
-
----
-
-### Cambios HTML (Línea 144 - Título)
-
-**Actual:**
-```html
-<div class="title"></div>
-```
-
-**Propuesto:**
-```html
-<h1 class="title">FEELOMOVE+ Conciertos y Festivales 2026</h1>
+```tsx
+{/* Seccion "Ver otros conciertos" - Solo cuando agotado */}
+{!isEventAvailable && !isNotYetOnSale && artistOtherCities && artistOtherCities.length > 0 && (
+  <section className="mb-10">
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+        <IconTicket className="h-5 w-5 text-accent" />
+        Ver otros conciertos de {mainArtist}
+      </h2>
+      <Link
+        to={`/artista/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+        className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
+      >
+        Ver todos <IconChevronRight />
+      </Link>
+    </div>
+    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
+      {artistOtherCities.map((city) => (
+        <Link key={city.slug} to={`/destinos/${city.slug}`}
+          className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
+        >
+          <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
+            {city.name}
+          </span>
+          <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+            {city.count}
+          </span>
+        </Link>
+      ))}
+    </div>
+  </section>
+)}
 ```
 
 ---
 
-### Cronología de Renderizado + CLS
+### Cambio 3: Sidebar "Tu Pack" - Estado sold out
+
+En el sidebar desktop (linea 1553-1562), cuando el evento esta agotado, mostrar mensaje adecuado en vez de "Empieza seleccionando tus entradas":
+
+```tsx
+{/* Estado vacio del sidebar */}
+<div className="text-center py-8">
+  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+    <IconTicket className="h-6 w-6 text-muted-foreground" />
+  </div>
+  {!isEventAvailable && !isNotYetOnSale ? (
+    <>
+      <Badge variant="agotado" className="mb-2">AGOTADO</Badge>
+      <p className="text-xs text-muted-foreground">
+        Las entradas para este evento se han agotado
+      </p>
+    </>
+  ) : (
+    <>
+      <p className="text-foreground font-medium mb-2">Empieza seleccionando tus entradas</p>
+      <p className="text-xs text-muted-foreground">
+        Elige las entradas y despues anade un hotel para completar tu pack
+      </p>
+    </>
+  )}
+</div>
+```
+
+---
+
+### Flujo Visual (Evento Agotado)
 
 ```text
-T=0ms      HTML parsed, CSS crítico aplicado
-           .breadcrumb reserves 20px (min-height)
-           .title reserves 28px (min-height)
-           ✓ Layout "locked in" para prevenir CLS
-
-T=50ms     "Inicio" text rendered
-           fits within reserved 20px
-           ✓ NO layout shift
-
-T=100ms    <h1> "FEELOMOVE+ Conciertos..." rendered
-           fits within reserved 28px
-           ✓ NO layout shift
-           = LCP Candidato
-
-T=300ms    Fonts swap complete
-           = LCP Confirmado (~0.3-0.5s)
-
-T=2000ms   React mounts, skeleton hidden
-           Content from React replaces skeleton
-           #critical-skeleton { display: none }
-           ✓ NO layout shift (elemento completo se oculta)
++------------------------------------------+
+|  [1] Entradas                            |
+|  ┌────────────────────────────────────┐  |
+|  |         [ AGOTADO ]                |  |
+|  |  Las entradas se han agotado       |  |
+|  └────────────────────────────────────┘  |
+|                                          |
+|  🎫 Ver otros conciertos de Caifanes     |
+|                                 Ver todos|
+|  [Barcelona 1] [Madrid 2] [Sevilla 1]   |
+|                                          |
+|  [2] Hoteles cerca del evento            |
+|  ...                                     |
++------------------------------------------+
 ```
 
 ---
 
-### Verificación de CLS
+### Resumen de Archivos
 
-| Propiedad | Skeleton | React Component | Impacto |
-|-----------|----------|-----------------|---------|
-| `.breadcrumb` min-height | 20px | N/A (se oculta) | ✓ No CLS |
-| `.title` min-height | 28px | N/A (se oculta) | ✓ No CLS |
-| Padding contenedor | 16px | 16px (px-4) | ✓ Idéntico |
-| Font family | Poppins | Poppins | ✓ Idéntico |
+- `src/pages/Producto.tsx`: 3 cambios (badge agotado, seccion pills, sidebar)
+- No se necesitan iconos SVG nuevos (IconTicket y IconChevronRight ya existen inline en el archivo)
+- No se necesitan queries adicionales (reutiliza `artistOtherCities`)
 
-**Conclusión:** El skeleton se oculta completamente (`#critical-skeleton { display: none }`), por lo que no hay transición gradual que cause CLS. El espacio reservado con `min-height` es un "seguro de vida" contra micro-saltos durante la renderización inicial del texto.
-
----
-
-### Por qué este enfoque es robusto
-
-1. **Space Reservation**: `min-height` garantiza que el contenedor existe aunque sea transparente
-2. **Font Rendering Buffer**: Si la fuente tarda un ms extra, el texto ya tiene su espacio reservado
-3. **No Competing Layouts**: Un solo layout (skeleton o React), nunca transición que cause CLS
-4. **Google-Safe**: El contenido de texto visible desde T=0 es considerado LCP principal, deteniendo el cronómetro antes de React
