@@ -1408,7 +1408,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                       Ver otros conciertos de {mainArtist}
                     </h2>
                     <Link
-                      to={`/artista/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                      to={`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
                       className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
                     >
                       Ver todos <IconChevronRight className="h-4 w-4" />
