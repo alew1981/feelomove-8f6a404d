@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef, lazy, Suspense, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -183,6 +183,11 @@ const IconBuilding2 = ({ className = "" }: { className?: string }) => (
     <path d="M10 10h4" />
     <path d="M10 14h4" />
     <path d="M10 18h4" />
+  </svg>
+);
+const IconChevronRight = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m9 18 6-6-6-6"/>
   </svg>
 );
 
@@ -1237,6 +1242,24 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-2 space-y-8">
+              {/* Sold out badge when no tickets available */}
+              {!isEventAvailable && !isNotYetOnSale && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                    <h2 className="text-xl sm:text-2xl font-bold">Entradas</h2>
+                  </div>
+                  <Card className="border-2 border-muted">
+                    <CardContent className="p-6 text-center space-y-3">
+                      <Badge variant="agotado" className="text-sm px-4 py-1.5">AGOTADO</Badge>
+                      <p className="text-sm text-muted-foreground">
+                        Las entradas para este evento se han agotado
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               {ticketPrices.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -1374,6 +1397,38 @@ const Producto = ({ slugProp }: ProductoProps) => {
                   festivalName={eventDetails?.primary_attraction_name || eventDetails?.event_name}
                   className="mt-6"
                 />
+              )}
+
+              {/* "Ver otros conciertos" section - Only when sold out */}
+              {!isEventAvailable && !isNotYetOnSale && artistOtherCities && artistOtherCities.length > 0 && (
+                <section className="mb-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <IconTicket className="h-5 w-5 text-accent" />
+                      Ver otros conciertos de {mainArtist}
+                    </h2>
+                    <Link
+                      to={`/artista/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                      className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
+                    >
+                      Ver todos <IconChevronRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
+                    {artistOtherCities.map((city) => (
+                      <Link key={city.slug} to={`/destinos/${city.slug}`}
+                        className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
+                      >
+                        <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
+                          {city.name}
+                        </span>
+                        <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
+                          {city.count}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
               )}
 
               {(eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
@@ -1555,10 +1610,21 @@ const Producto = ({ slugProp }: ProductoProps) => {
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
                         <IconTicket className="h-6 w-6 text-muted-foreground" />
                       </div>
-                      <p className="text-foreground font-medium mb-2">Empieza seleccionando tus entradas</p>
-                      <p className="text-xs text-muted-foreground">
-                        Elige las entradas y después añade un hotel para completar tu pack
-                      </p>
+                      {!isEventAvailable && !isNotYetOnSale ? (
+                        <>
+                          <Badge variant="agotado" className="mb-2">AGOTADO</Badge>
+                          <p className="text-xs text-muted-foreground">
+                            Las entradas para este evento se han agotado
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-foreground font-medium mb-2">Empieza seleccionando tus entradas</p>
+                          <p className="text-xs text-muted-foreground">
+                            Elige las entradas y después añade un hotel para completar tu pack
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
                 </CardContent>

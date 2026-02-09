@@ -768,6 +768,24 @@ export type Database = {
           },
         ]
       }
+      tm_translations: {
+        Row: {
+          english_text: string
+          field_type: string
+          spanish_text: string
+        }
+        Insert: {
+          english_text: string
+          field_type: string
+          spanish_text: string
+        }
+        Update: {
+          english_text?: string
+          field_type?: string
+          spanish_text?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       geography_columns: {
