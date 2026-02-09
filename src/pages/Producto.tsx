@@ -450,14 +450,14 @@ const Producto = ({ slugProp }: ProductoProps) => {
       const [concertsRes, festivalsRes] = await Promise.all([
         supabase
           .from("mv_concerts_cards")
-          .select("venue_city, venue_city_slug, image_standard_url, slug, canonical_slug")
+          .select("venue_city, venue_city_slug, image_standard_url, slug")
           .ilike("artist_name", `%${artistForSearch}%`)
           .gte("event_date", new Date().toISOString())
           .neq("venue_city", currentCity)
           .limit(50),
         supabase
           .from("mv_festivals_cards")
-          .select("venue_city, venue_city_slug, image_standard_url, attraction_names, slug, canonical_slug")
+          .select("venue_city, venue_city_slug, image_standard_url, attraction_names, slug")
           .gte("event_date", new Date().toISOString())
           .neq("venue_city", currentCity)
           .limit(50),
@@ -468,7 +468,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
       (concertsRes.data || []).forEach((event: any) => {
         if (event.venue_city) {
           const existing = cityMap.get(event.venue_city);
-          const eventSlug = event.canonical_slug || event.slug;
+          const eventSlug = event.slug;
           if (existing) {
             existing.count++;
             existing.eventSlug = null; // multiple events, can't link to single one
@@ -493,7 +493,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
         if (artistInLineup && event.venue_city) {
           const existing = cityMap.get(event.venue_city);
-          const eventSlug = event.canonical_slug || event.slug;
+          const eventSlug = event.slug;
           if (existing) {
             existing.count++;
             existing.eventSlug = null;
