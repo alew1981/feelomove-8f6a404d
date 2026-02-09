@@ -463,7 +463,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
           .limit(50),
       ]);
 
-      const cityMap = new Map<string, { count: number; image: string | null; slug: string; eventSlug: string | null }>();
+      const cityMap = new Map<string, { count: number; image: string | null; slug: string; eventSlug: string | null; eventRoute: string | null }>();
 
       (concertsRes.data || []).forEach((event: any) => {
         if (event.venue_city) {
@@ -472,12 +472,14 @@ const Producto = ({ slugProp }: ProductoProps) => {
           if (existing) {
             existing.count++;
             existing.eventSlug = null; // multiple events, can't link to single one
+            existing.eventRoute = null;
           } else {
             cityMap.set(event.venue_city, {
               count: 1,
               image: event.image_standard_url,
               slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, "-"),
               eventSlug: eventSlug || null,
+              eventRoute: eventSlug ? `/conciertos/${eventSlug}` : null,
             });
           }
         }
@@ -495,12 +497,14 @@ const Producto = ({ slugProp }: ProductoProps) => {
           if (existing) {
             existing.count++;
             existing.eventSlug = null;
+            existing.eventRoute = null;
           } else {
             cityMap.set(event.venue_city, {
               count: 1,
               image: event.image_standard_url,
               slug: event.venue_city_slug || event.venue_city.toLowerCase().replace(/\s+/g, "-"),
               eventSlug: eventSlug || null,
+              eventRoute: eventSlug ? `/festivales/${eventSlug}` : null,
             });
           }
         }
@@ -1422,7 +1426,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
                     {artistOtherCities.map((city) => (
-                      <Link key={city.slug} to={city.eventSlug ? `/conciertos/${city.eventSlug}` : `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                      <Link key={city.slug} to={city.eventRoute || `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
                         className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
                       >
                         <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
