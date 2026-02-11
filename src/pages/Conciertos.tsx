@@ -104,10 +104,10 @@ const Conciertos = () => {
         return !excludedKeywords.some(kw => combined.includes(kw));
       });
 
-      // Sort by updated_at DESC (most recently updated first)
+      // Sort by created_at DESC (most recently created/added first)
       return filtered.sort((a, b) => {
-        const dateA = (a as any).updated_at ? new Date((a as any).updated_at).getTime() : 0;
-        const dateB = (b as any).updated_at ? new Date((b as any).updated_at).getTime() : 0;
+        const dateA = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const dateB = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
         return dateB - dateA;
       });
     }
@@ -187,8 +187,8 @@ const Conciertos = () => {
       });
     }
 
-    // Events are already sorted by updated_at DESC from the query
-    // No additional sorting needed - most recently updated events appear first
+    // Events are already sorted by created_at DESC from the query
+    // No additional sorting needed - most recently created events appear first
     
     return filtered;
   }, [events, searchQuery, filterCity, filterGenre, filterArtist, filterMonthYear, filterVip]);
