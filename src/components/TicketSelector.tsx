@@ -119,7 +119,7 @@ const TicketSelector = ({
                 </p>
               </div>
 
-              {/* Bottom row: Price + Badge + Controls */}
+              {/* Bottom row: Price + Controls */}
               <div className="flex items-end justify-between gap-2">
                 <div>
                   <span
@@ -142,23 +142,25 @@ const TicketSelector = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
+                  {/* Badge above selector */}
                   <div className="shrink-0">
                     {isSoldOut ? (
-                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded">
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded">
                         AGOTADO
                       </span>
                     ) : isLimited ? (
-                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
                         ÚLTIMAS
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-1 rounded">
+                      <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-0.5 rounded">
                         DISPONIBLE
                       </span>
                     )}
                   </div>
 
+                  {/* Quantity controls */}
                   <div
                     className={cn(
                       "flex items-center gap-1.5 sm:gap-2 rounded-full p-1",
