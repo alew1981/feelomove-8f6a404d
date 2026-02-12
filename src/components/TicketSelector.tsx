@@ -100,43 +100,26 @@ const TicketSelector = ({
                 </div>
               )}
 
-              {/* Top row: Name + Badge */}
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  {ticket.isVip && (
-                    <span className="text-[10px] font-bold text-background bg-foreground px-2 py-0.5 rounded shrink-0">
-                      VIP
-                    </span>
+              {/* Top row: Name */}
+              <div className="flex items-center gap-2 min-w-0 mb-3">
+                {ticket.isVip && (
+                  <span className="text-[10px] font-bold text-background bg-foreground px-2 py-0.5 rounded shrink-0">
+                    VIP
+                  </span>
+                )}
+                <p
+                  className={cn(
+                    "text-sm sm:text-base font-bold uppercase line-clamp-2",
+                    isSoldOut ? "text-muted-foreground" : "text-foreground"
                   )}
-                  <p
-                    className={cn(
-                      "text-sm sm:text-base font-bold uppercase line-clamp-2",
-                      isSoldOut ? "text-muted-foreground" : "text-foreground"
-                    )}
-                  >
-                    {ticket.description && ticket.description !== ticket.name
-                      ? `${ticket.description} (${ticket.name})`
-                      : ticket.name}
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  {isSoldOut ? (
-                    <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded">
-                      AGOTADO
-                    </span>
-                  ) : isLimited ? (
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
-                      ÚLTIMAS
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-1 rounded">
-                      DISPONIBLE
-                    </span>
-                  )}
-                </div>
+                >
+                  {ticket.description && ticket.description !== ticket.name
+                    ? `${ticket.description} (${ticket.name})`
+                    : ticket.name}
+                </p>
               </div>
 
-              {/* Bottom row: Price + Controls */}
+              {/* Bottom row: Price + Badge + Controls */}
               <div className="flex items-end justify-between gap-2">
                 <div>
                   <span
@@ -146,14 +129,6 @@ const TicketSelector = ({
                     )}
                   >
                     €{ticket.price.toFixed(0)}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-sm ml-0.5",
-                      isSoldOut ? "text-muted-foreground" : "text-muted-foreground"
-                    )}
-                  >
-                    /ud
                   </span>
                   {ticket.fees > 0 && (
                     <p
@@ -167,46 +142,64 @@ const TicketSelector = ({
                   )}
                 </div>
 
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 rounded-full p-1",
-                    isSoldOut ? "bg-muted/50" : "bg-muted/50"
-                  )}
-                >
-                  <button
-                    className={cn(
-                      "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-colors",
-                      isSoldOut || qty === 0
-                        ? "text-muted-foreground/40 cursor-not-allowed"
-                        : "hover:bg-background text-foreground"
+                <div className="flex items-center gap-2">
+                  <div className="shrink-0">
+                    {isSoldOut ? (
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded">
+                        AGOTADO
+                      </span>
+                    ) : isLimited ? (
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
+                        ÚLTIMAS
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-1 rounded">
+                        DISPONIBLE
+                      </span>
                     )}
-                    onClick={() => onQuantityChange(ticket.id, -1)}
-                    disabled={qty === 0 || isSoldOut}
-                    aria-label={`Reducir cantidad de ${ticket.name}`}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span
+                  </div>
+
+                  <div
                     className={cn(
-                      "w-7 text-center font-bold text-lg",
-                      isSoldOut ? "text-muted-foreground/60" : "text-foreground"
+                      "flex items-center gap-1.5 sm:gap-2 rounded-full p-1",
+                      "bg-muted/50"
                     )}
                   >
-                    {qty}
-                  </span>
-                  <button
-                    className={cn(
-                      "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-colors",
-                      isSoldOut || qty >= maxPerTicket
-                        ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
-                        : "bg-accent text-accent-foreground hover:bg-accent/80"
-                    )}
-                    onClick={() => onQuantityChange(ticket.id, 1)}
-                    disabled={qty >= maxPerTicket || isSoldOut}
-                    aria-label={`Aumentar cantidad de ${ticket.name}`}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                    <button
+                      className={cn(
+                        "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-colors",
+                        isSoldOut || qty === 0
+                          ? "text-muted-foreground/40 cursor-not-allowed"
+                          : "hover:bg-background text-foreground"
+                      )}
+                      onClick={() => onQuantityChange(ticket.id, -1)}
+                      disabled={qty === 0 || isSoldOut}
+                      aria-label={`Reducir cantidad de ${ticket.name}`}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span
+                      className={cn(
+                        "w-7 text-center font-bold text-lg",
+                        isSoldOut ? "text-muted-foreground/60" : "text-foreground"
+                      )}
+                    >
+                      {qty}
+                    </span>
+                    <button
+                      className={cn(
+                        "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center transition-colors",
+                        isSoldOut || qty >= maxPerTicket
+                          ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                          : "bg-accent text-accent-foreground hover:bg-accent/80"
+                      )}
+                      onClick={() => onQuantityChange(ticket.id, 1)}
+                      disabled={qty >= maxPerTicket || isSoldOut}
+                      aria-label={`Aumentar cantidad de ${ticket.name}`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
