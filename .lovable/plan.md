@@ -1,155 +1,109 @@
 
 
-## Plan: Sold Out Badge + "Ver otros conciertos" Section
+## Rediseno de la seccion de entradas (TicketSelector)
 
 ### Resumen
-Cuando un evento no tiene entradas disponibles (todos agotados o sin datos de tickets), se mostrara:
-1. Un badge "AGOTADO" visible en el bloque de entradas
-2. Una seccion de pills (estilo "Ver en otros destinos") mostrando las otras ciudades donde toca el artista, con titulo "Ver otros conciertos de [Artista]" y enlace "Ver todos" que lleva a la pagina del artista
+Crear un componente `TicketSelector` reutilizable con el diseno del mockup y reemplazar el bloque actual de tickets en `Producto.tsx`.
 
-### Archivos a Modificar
+### Cambios visuales respecto al diseno actual
 
-| Archivo | Cambio |
+| Aspecto | Actual | Nuevo (mockup) |
+|---------|--------|----------------|
+| Titulo | Numero en circulo + "Selecciona tus entradas" | Check verde en circulo + titulo + contador a la derecha ("1 entrada") |
+| Subtitulo | Texto pequeno debajo | Texto verde con check: "Entradas anadidas! Ahora elige tu alojamiento" |
+| Layout tarjeta | Badge arriba-izq, nombre, precio y +/- a la derecha en vertical | Nombre arriba-izq, badge DISPONIBLE/AGOTADO arriba-derecha, precio grande abajo-izq con "/ud" y gastos, +/- abajo-derecha |
+| Tarjeta seleccionada | Borde accent | Borde verde + check verde arriba-izq de la tarjeta |
+| Tarjeta agotada | Opacity 60% | Texto y controles grises, badge AGOTADO gris, botones deshabilitados |
+| Boton "Ver mas" | Boton outline | Texto "VER X MAS" con chevron, centrado |
+
+### Archivos
+
+| Archivo | Accion |
 |---------|--------|
-| `src/pages/Producto.tsx` | Agregar badge AGOTADO + seccion de otros conciertos cuando no hay disponibilidad |
+| `src/components/TicketSelector.tsx` | **Crear** - Componente nuevo con toda la logica visual |
+| `src/pages/Producto.tsx` | **Modificar** - Reemplazar el bloque de tickets (lineas ~1273-1401) por `<TicketSelector />` |
 
 ---
 
-### Cambio 1: Badge "AGOTADO" en la seccion de entradas
+### Componente TicketSelector
 
-Cuando `!isEventAvailable` (todas las entradas agotadas o sin ticket_types), mostrar un badge "AGOTADO" prominente encima del listado de tickets (o en lugar de la seccion vacia).
+**Props:**
+```
+interface TicketOption {
+  id: string;
+  name: string;        // tipo de entrada (AR, GENERAL, VR)
+  description?: string; // nombre completo
+  price: number;
+  fees: number;
+  status: "available" | "limited" | "sold-out";
+  isVip?: boolean;
+}
 
-**Logica de deteccion sold out:**
-- `ticketPrices.length === 0` (sin datos de tickets, como HUMBE)
-- `ticketPrices.length > 0 && !hasAvailableTickets` (todos con availability "none", como Caifanes/BTS)
-- En ambos casos: `!isEventAvailable` es true
+interface TicketSelectorProps {
+  title?: string;            // default "Selecciona tus entradas"
+  subtitle?: string;         // texto cuando hay entradas seleccionadas
+  tickets: TicketOption[];
+  quantities: Record<string, number>;  // estado actual de cantidades
+  onQuantityChange: (id: string, delta: number) => void;
+  maxPerTicket?: number;     // default 10
+  initialVisible?: number;   // default 4, para "Ver mas"
+}
+```
 
-**Ubicacion:** Justo antes del bloque de tickets (linea ~1240), agregar un condicional:
+**Estructura visual de cada tarjeta:**
+```
++----------------------------------------------------+
+| [check]  Nombre completo (TIPO)      [DISPONIBLE]  |
+|                                                     |
+|   E38 /ud                          [ - ] 1 [ + ]   |
+|   + E5.00 gastos                                    |
++----------------------------------------------------+
+```
+
+- Tarjeta con `quantity > 0`: borde verde (`border-accent`), icono check verde flotando arriba-izquierda
+- Tarjeta `sold-out`: todo en gris (texto `text-muted-foreground`), badge AGOTADO gris, botones deshabilitados con opacidad reducida
+- Tarjeta `limited`: badge ULTIMAS (naranja/amber)
+- Tarjeta disponible sin seleccion: borde neutro, hover sutil
+
+**Header de la seccion:**
+- Izquierda: circulo con numero "1" (sin seleccion) o check verde (con seleccion) + titulo
+- Derecha: contador "X entrada(s)" en color accent cuando hay seleccion
+- Debajo del titulo: subtitulo verde con check cuando `completed`
+
+**Boton "Ver mas":**
+- Texto centrado "VER X MAS" con chevron hacia abajo (o arriba si expandido)
+- Estilo texto, no boton outline
+
+---
+
+### Cambios en Producto.tsx
+
+1. Importar `TicketSelector`
+2. Reemplazar el bloque entre lineas ~1273-1401 por:
 
 ```tsx
-{/* Seccion de entradas */}
-{!isEventAvailable && !isNotYetOnSale && (
-  <div className="mb-6">
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
-      <h2 className="text-xl sm:text-2xl font-bold">Entradas</h2>
-    </div>
-    <Card className="border-2 border-muted">
-      <CardContent className="p-6 text-center space-y-3">
-        <Badge variant="agotado" className="text-sm px-4 py-1.5">AGOTADO</Badge>
-        <p className="text-sm text-muted-foreground">
-          Las entradas para este evento se han agotado
-        </p>
-      </CardContent>
-    </Card>
-  </div>
+{ticketPrices.length > 0 && (
+  <TicketSelector
+    tickets={ticketPrices.map((t: any) => ({
+      id: t.id,
+      name: t.type,
+      description: t.description,
+      price: t.price,
+      fees: t.fees,
+      status: t.availability === "none" ? "sold-out" 
+             : t.availability === "limited" ? "limited" 
+             : "available",
+      isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
+    }))}
+    quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
+      acc[t.id] = getTicketQuantity(t.id);
+      return acc;
+    }, {})}
+    onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
+    completed={isEventInCart && totalPersons > 0}
+  />
 )}
 ```
 
-Esto se mostrara ANTES del bloque `ticketPrices.length > 0 && (...)` existente, y ese bloque seguira mostrando tickets individuales (con opacity reducida) si los hay.
-
----
-
-### Cambio 2: Seccion "Ver otros conciertos de [Artista]" cuando sold out
-
-**Ubicacion:** Despues del bloque de entradas agotadas y ANTES de la seccion de hoteles (linea ~1379).
-
-Reutilizar los datos de `artistOtherCities` que ya se obtienen en la query existente (linea 440-505). La seccion usa el mismo diseno de pills que `ArtistDestinationsList` pero con:
-
-- Titulo: "Ver otros conciertos de [artistName]" (con icono de ticket en vez de pin)
-- "Ver todos" enlaza a `/artista/[artist-slug]`
-- Cada pill enlaza a `/destinos/[city-slug]` (igual que ahora)
-
-```tsx
-{/* Seccion "Ver otros conciertos" - Solo cuando agotado */}
-{!isEventAvailable && !isNotYetOnSale && artistOtherCities && artistOtherCities.length > 0 && (
-  <section className="mb-10">
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-        <IconTicket className="h-5 w-5 text-accent" />
-        Ver otros conciertos de {mainArtist}
-      </h2>
-      <Link
-        to={`/artista/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
-        className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
-      >
-        Ver todos <IconChevronRight />
-      </Link>
-    </div>
-    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
-      {artistOtherCities.map((city) => (
-        <Link key={city.slug} to={`/destinos/${city.slug}`}
-          className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
-        >
-          <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
-            {city.name}
-          </span>
-          <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
-            {city.count}
-          </span>
-        </Link>
-      ))}
-    </div>
-  </section>
-)}
-```
-
----
-
-### Cambio 3: Sidebar "Tu Pack" - Estado sold out
-
-En el sidebar desktop (linea 1553-1562), cuando el evento esta agotado, mostrar mensaje adecuado en vez de "Empieza seleccionando tus entradas":
-
-```tsx
-{/* Estado vacio del sidebar */}
-<div className="text-center py-8">
-  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-    <IconTicket className="h-6 w-6 text-muted-foreground" />
-  </div>
-  {!isEventAvailable && !isNotYetOnSale ? (
-    <>
-      <Badge variant="agotado" className="mb-2">AGOTADO</Badge>
-      <p className="text-xs text-muted-foreground">
-        Las entradas para este evento se han agotado
-      </p>
-    </>
-  ) : (
-    <>
-      <p className="text-foreground font-medium mb-2">Empieza seleccionando tus entradas</p>
-      <p className="text-xs text-muted-foreground">
-        Elige las entradas y despues anade un hotel para completar tu pack
-      </p>
-    </>
-  )}
-</div>
-```
-
----
-
-### Flujo Visual (Evento Agotado)
-
-```text
-+------------------------------------------+
-|  [1] Entradas                            |
-|  ┌────────────────────────────────────┐  |
-|  |         [ AGOTADO ]                |  |
-|  |  Las entradas se han agotado       |  |
-|  └────────────────────────────────────┘  |
-|                                          |
-|  🎫 Ver otros conciertos de Caifanes     |
-|                                 Ver todos|
-|  [Barcelona 1] [Madrid 2] [Sevilla 1]   |
-|                                          |
-|  [2] Hoteles cerca del evento            |
-|  ...                                     |
-+------------------------------------------+
-```
-
----
-
-### Resumen de Archivos
-
-- `src/pages/Producto.tsx`: 3 cambios (badge agotado, seccion pills, sidebar)
-- No se necesitan iconos SVG nuevos (IconTicket y IconChevronRight ya existen inline en el archivo)
-- No se necesitan queries adicionales (reutiliza `artistOtherCities`)
+Esto mantiene toda la logica de negocio (handleTicketQuantityChange, getTicketQuantity, cart) en Producto.tsx y delega solo la presentacion al nuevo componente.
 
