@@ -17,6 +17,7 @@ import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
 import ArtistDestinationsList from "@/components/ArtistDestinationsList";
 import { FestivalServiceAddons } from "@/components/FestivalServiceAddons";
 import RelatedEventsSection from "@/components/RelatedEventsSection";
+import TicketSelector from "@/components/TicketSelector";
 
 // LAZY: Below-the-fold components with fixed-height Suspense fallbacks
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
@@ -1271,134 +1272,25 @@ const Producto = ({ slugProp }: ProductoProps) => {
               )}
 
               {ticketPrices.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        isEventInCart && totalPersons > 0
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-foreground text-background"
-                      }`}
-                    >
-                      {isEventInCart && totalPersons > 0 ? <IconCheck className="h-4 w-4" /> : "1"}
-                    </div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-bold">Selecciona tus entradas</h2>
-                      {isEventInCart && totalPersons > 0 && (
-                        <p className="text-sm text-foreground flex items-center gap-1 mt-0.5">
-                          <IconCheck className="h-3 w-3 text-accent" />
-                          ¡Entradas añadidas! Ahora elige tu alojamiento abajo
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {displayedTickets.map((ticket: any) => {
-                      const quantity = getTicketQuantity(ticket.id);
-                      const isSoldOut = ticket.availability === "none";
-                      const isLimited = ticket.availability === "limited";
-                      const isVIP =
-                        /vip/i.test(ticket.type || "") ||
-                        /vip/i.test(ticket.description || "") ||
-                        /vip/i.test(ticket.code || "");
-
-                      return (
-                        <Card
-                          key={ticket.id}
-                          className={`border-2 overflow-hidden transition-all ${
-                            isSoldOut
-                              ? "opacity-60 border-muted"
-                              : quantity > 0
-                                ? "border-accent shadow-lg shadow-accent/20"
-                                : "hover:border-accent/50"
-                          }`}
-                        >
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start sm:items-center justify-between gap-3">
-                              <div className="flex-1 min-w-0 pr-2">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  {isVIP && (
-                                    <span className="text-[10px] font-bold text-white bg-foreground px-2 py-0.5 rounded">
-                                      VIP
-                                    </span>
-                                  )}
-                                  {isLimited ? (
-                                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
-                                      ÚLTIMAS
-                                    </span>
-                                  ) : !isSoldOut ? (
-                                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-200 dark:bg-emerald-900/50 dark:border-emerald-700">
-                                      DISPONIBLE
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <p className="text-sm sm:text-base font-bold uppercase text-foreground">
-                                  {ticket.type}
-                                </p>
-                                {ticket.description && ticket.description !== ticket.type && (
-                                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 sm:line-clamp-1">
-                                    {ticket.description}
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                                <div className="text-center">
-                                  <span className="text-xl sm:text-2xl font-black text-foreground">
-                                    €{ticket.price.toFixed(0)}
-                                  </span>
-                                  {ticket.fees > 0 && (
-                                    <p className="text-[10px] text-muted-foreground">
-                                      + €{ticket.fees.toFixed(2)} gastos
-                                    </p>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/50 rounded-full p-1 flex-shrink-0">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="ticket-qty-decrease h-7 w-7 sm:h-9 sm:w-9 rounded-full hover:bg-background hover:text-foreground transition-colors disabled:opacity-30"
-                                    onClick={() => handleTicketQuantityChange(ticket.id, -1)}
-                                    disabled={quantity === 0 || isSoldOut}
-                                    aria-label={`Reducir cantidad de ${ticket.type}`}
-                                  >
-                                    <IconMinus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                  </Button>
-                                  <span className="w-6 sm:w-8 text-center font-bold text-base sm:text-lg">
-                                    {quantity}
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="ticket-qty-increase h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-colors disabled:opacity-30"
-                                    onClick={() => handleTicketQuantityChange(ticket.id, 1)}
-                                    disabled={quantity >= 10 || isSoldOut}
-                                    aria-label={`Aumentar cantidad de ${ticket.type}`}
-                                  >
-                                    <IconPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-
-                  {hasMoreTickets && (
-                    <div className="mt-4 text-center">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowAllTickets(!showAllTickets)}
-                        className="border-2 hover:border-accent hover:text-accent font-bold px-8"
-                      >
-                        {showAllTickets ? "Ver menos" : `Ver ${ticketPrices.length - 4} más`}
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                <TicketSelector
+                  tickets={ticketPrices.map((t: any) => ({
+                    id: t.id,
+                    name: t.type,
+                    description: t.description,
+                    price: t.price,
+                    fees: t.fees,
+                    status: t.availability === "none" ? "sold-out" as const
+                           : t.availability === "limited" ? "limited" as const
+                           : "available" as const,
+                    isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
+                  }))}
+                  quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
+                    acc[t.id] = getTicketQuantity(t.id);
+                    return acc;
+                  }, {})}
+                  onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
+                  completed={isEventInCart && totalPersons > 0}
+                />
               )}
 
               {isFestivalDisplay && eventDetails?.event_id && (
