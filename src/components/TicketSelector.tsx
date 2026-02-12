@@ -110,7 +110,7 @@ const TicketSelector = ({
                   )}
                   <p
                     className={cn(
-                      "text-sm sm:text-base font-bold uppercase truncate",
+                      "text-sm sm:text-base font-bold uppercase line-clamp-2",
                       isSoldOut ? "text-muted-foreground" : "text-foreground"
                     )}
                   >
