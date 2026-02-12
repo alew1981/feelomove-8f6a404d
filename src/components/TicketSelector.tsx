@@ -100,23 +100,40 @@ const TicketSelector = ({
                 </div>
               )}
 
-              {/* Top row: Name */}
-              <div className="flex items-center gap-2 min-w-0 mb-3">
-                {ticket.isVip && (
-                  <span className="text-[10px] font-bold text-background bg-foreground px-2 py-0.5 rounded shrink-0">
-                    VIP
-                  </span>
-                )}
-                <p
-                  className={cn(
-                    "text-sm sm:text-base font-bold uppercase line-clamp-2",
-                    isSoldOut ? "text-muted-foreground" : "text-foreground"
+              {/* Top row: Name + Badge */}
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  {ticket.isVip && (
+                    <span className="text-[10px] font-bold text-background bg-foreground px-2 py-0.5 rounded shrink-0">
+                      VIP
+                    </span>
                   )}
-                >
-                  {ticket.description && ticket.description !== ticket.name
-                    ? `${ticket.description} (${ticket.name})`
-                    : ticket.name}
-                </p>
+                  <p
+                    className={cn(
+                      "text-sm sm:text-base font-bold uppercase line-clamp-2",
+                      isSoldOut ? "text-muted-foreground" : "text-foreground"
+                    )}
+                  >
+                    {ticket.description && ticket.description !== ticket.name
+                      ? `${ticket.description} (${ticket.name})`
+                      : ticket.name}
+                  </p>
+                </div>
+                <div className="shrink-0 mt-0.5">
+                  {isSoldOut ? (
+                    <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded">
+                      AGOTADO
+                    </span>
+                  ) : isLimited ? (
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
+                      ÚLTIMAS
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-0.5 rounded">
+                      DISPONIBLE
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Bottom row: Price + Controls */}
@@ -143,23 +160,6 @@ const TicketSelector = ({
                 </div>
 
                 <div className="flex flex-col items-center gap-1">
-                  {/* Badge above selector */}
-                  <div className="shrink-0">
-                    {isSoldOut ? (
-                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded">
-                        AGOTADO
-                      </span>
-                    ) : isLimited ? (
-                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
-                        ÚLTIMAS
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-0.5 rounded">
-                        DISPONIBLE
-                      </span>
-                    )}
-                  </div>
-
                   {/* Quantity controls */}
                   <div
                     className={cn(
