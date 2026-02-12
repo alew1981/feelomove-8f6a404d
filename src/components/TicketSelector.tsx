@@ -145,7 +145,7 @@ const TicketSelector = ({
                       isSoldOut ? "text-muted-foreground" : "text-foreground"
                     )}
                   >
-                    €{ticket.price.toFixed(0)}
+                    {ticket.price.toFixed(0)}€
                   </span>
                   {ticket.fees > 0 && (
                     <p
@@ -154,7 +154,7 @@ const TicketSelector = ({
                         isSoldOut ? "text-muted-foreground/60" : "text-muted-foreground"
                       )}
                     >
-                      + €{ticket.fees.toFixed(2)} gastos
+                      + {ticket.fees.toFixed(2)}€ gastos
                     </p>
                   )}
                 </div>
