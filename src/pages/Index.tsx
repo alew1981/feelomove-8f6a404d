@@ -15,32 +15,35 @@ import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
 
 // Featured cities for display order
 const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];
-const FEATURED_IDS = ['172524182', '35655583', '854574106', '2034594644'];
-
 const Index = () => {
-  // Fetch featured events by specific IDs
-  const { data: featuredConcerts = [] } = useQuery({
-    queryKey: ["home-featured-concerts"],
+  // Fetch featured events - newest by creation date from both concerts and festivals
+  const { data: featuredEvents = [], isLoading: loadingFeatured } = useQuery({
+    queryKey: ["home-featured-newest"],
     queryFn: async () => {
       const supabase = await getSupabase();
-      const { data } = await supabase
-        .from('mv_concerts_cards')
-        .select('*')
-        .in('id', FEATURED_IDS);
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: featuredFestivals = [] } = useQuery({
-    queryKey: ["home-featured-festivals"],
-    queryFn: async () => {
-      const supabase = await getSupabase();
-      const { data } = await supabase
-        .from('mv_festivals_cards')
-        .select('*')
-        .in('id', FEATURED_IDS);
-      return data || [];
+      // Get newest event IDs (mix of concerts + festivals) by created_at
+      const { data: newestIds } = await supabase
+        .from('tm_tbl_events')
+        .select('id, event_type')
+        .eq('is_package', false)
+        .eq('is_transport', false)
+        .gte('event_date', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(8);
+      
+      if (!newestIds?.length) return [];
+      
+      const concertIds = newestIds.filter(e => e.event_type !== 'festival').map(e => e.id);
+      const festivalIds = newestIds.filter(e => e.event_type === 'festival').map(e => e.id);
+      
+      const [concertsRes, festivalsRes] = await Promise.all([
+        concertIds.length ? supabase.from('mv_concerts_cards').select('*').in('id', concertIds) : { data: [] },
+        festivalIds.length ? supabase.from('mv_festivals_cards').select('*').in('id', festivalIds) : { data: [] },
+      ]);
+      
+      const all = [...(concertsRes.data || []), ...(festivalsRes.data || [])];
+      const idOrder = newestIds.map(e => e.id);
+      return all.sort((a: any, b: any) => idOrder.indexOf(a.id) - idOrder.indexOf(b.id));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -171,13 +174,7 @@ const Index = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = loadingConcerts || loadingFestivals;
-
-  // Featured events - combine featured queries and maintain order
-  const allFeatured = [...featuredConcerts, ...featuredFestivals];
-  const featuredEvents = FEATURED_IDS
-    .map(id => allFeatured.find(e => e.id === id))
-    .filter(Boolean);
+  const isLoading = loadingConcerts || loadingFestivals || loadingFeatured;
 
   // All events for city sections
   const allEvents = [...concerts, ...festivals];
