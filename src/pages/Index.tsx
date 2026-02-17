@@ -21,20 +21,29 @@ const Index = () => {
     queryKey: ["home-featured-newest"],
     queryFn: async () => {
       const supabase = await getSupabase();
-      // Get newest event IDs (mix of concerts + festivals) by created_at
+      // Get newest events by created_at, fetch extra to deduplicate by artist
       const { data: newestIds } = await supabase
         .from('tm_tbl_events')
-        .select('id, event_type')
+        .select('id, event_type, primary_attraction_id')
         .eq('is_package', false)
         .eq('is_transport', false)
         .gte('event_date', new Date().toISOString())
         .order('created_at', { ascending: false })
-        .limit(8);
+        .limit(40);
       
       if (!newestIds?.length) return [];
       
-      const concertIds = newestIds.filter(e => e.event_type !== 'festival').map(e => e.id);
-      const festivalIds = newestIds.filter(e => e.event_type === 'festival').map(e => e.id);
+      // Deduplicate: keep only the first (newest) event per artist
+      const seenArtists = new Set<string>();
+      const uniqueIds = newestIds.filter(e => {
+        const artistKey = e.primary_attraction_id || e.id; // fallback to id if no artist
+        if (seenArtists.has(artistKey)) return false;
+        seenArtists.add(artistKey);
+        return true;
+      }).slice(0, 8);
+      
+      const concertIds = uniqueIds.filter(e => e.event_type !== 'festival').map(e => e.id);
+      const festivalIds = uniqueIds.filter(e => e.event_type === 'festival').map(e => e.id);
       
       const [concertsRes, festivalsRes] = await Promise.all([
         concertIds.length ? supabase.from('mv_concerts_cards').select('*').in('id', concertIds) : { data: [] },
@@ -42,7 +51,7 @@ const Index = () => {
       ]);
       
       const all = [...(concertsRes.data || []), ...(festivalsRes.data || [])];
-      const idOrder = newestIds.map(e => e.id);
+      const idOrder = uniqueIds.map(e => e.id);
       return all.sort((a: any, b: any) => idOrder.indexOf(a.id) - idOrder.indexOf(b.id));
     },
     staleTime: 5 * 60 * 1000,
