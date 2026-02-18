@@ -1,6 +1,8 @@
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import { getOptimizedUrl } from "@/lib/imagekitUtils";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getAlternateUrl, detectLocaleFromPath } from "@/lib/i18nRoutes";
 
 interface BreadcrumbItem {
   name: string;
@@ -28,8 +30,6 @@ interface SEOHeadProps {
 // Parameters that should trigger noindex
 const NOINDEX_PARAMS = ['sort', 'order', 'orderBy', 'page'];
 const FILTER_PARAMS = ['ciudad', 'city', 'genero', 'genre', 'artista', 'artist', 'mes', 'month', 'fecha', 'date', 'precio', 'price', 'duracion', 'duration'];
-// Marketing/tracking params to strip from canonical
-const TRACKING_PARAMS = ['fbclid', 'gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ref', 'source'];
 
 /**
  * Determines if the current URL should be noindexed
@@ -37,17 +37,25 @@ const TRACKING_PARAMS = ['fbclid', 'gclid', 'utm_source', 'utm_medium', 'utm_cam
  */
 const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean => {
   // FORCE INDEX: Main content routes must always be indexed (no query params = index)
-  // Support both singular (legacy) and plural (canonical) routes
+  // Support both singular (legacy), plural (canonical), and EN routes
   const isMainContentRoute = 
     pathname.startsWith('/conciertos/') ||
     pathname.startsWith('/concierto/') ||
     pathname.startsWith('/festivales/') ||
     pathname.startsWith('/festival/') ||
     pathname.startsWith('/destinos/') ||
+    pathname.startsWith('/en/tickets/') ||
+    pathname.startsWith('/en/festivals/') ||
+    pathname.startsWith('/en/destinations/') ||
+    pathname.startsWith('/en/artists') ||
     pathname === '/conciertos' ||
     pathname === '/festivales' ||
     pathname === '/destinos' ||
-    pathname === '/artistas';
+    pathname === '/artistas' ||
+    pathname === '/en/tickets' ||
+    pathname === '/en/festivals' ||
+    pathname === '/en/destinations' ||
+    pathname === '/en/artists';
   
   // If it's a main content route with no params, always index
   if (isMainContentRoute && searchParams.toString() === '') {
@@ -81,6 +89,7 @@ const shouldNoIndex = (searchParams: URLSearchParams, pathname: string): boolean
  * Generates clean canonical URL for any page
  * CRITICAL SEO: This is the SINGLE SOURCE OF TRUTH for canonical URLs
  * - Uses plural routes (/conciertos/, /festivales/) as canonical standard
+ * - For EN routes, canonical points to the EN version
  * - Strips ALL query parameters and tracking params
  * - Ensures lowercase
  * - Removes trailing slashes
@@ -110,17 +119,16 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
         const urlObj = new URL(cleanUrl);
         cleanUrl = urlObj.pathname;
       } catch {
-        // If URL parsing fails, try to clean as-is
         cleanUrl = cleanUrl.replace(/^https?:\/\/[^/]+/, '');
       }
     }
     
     // Clean the path
     cleanUrl = cleanUrl
-      .split('?')[0]  // Strip query params
-      .split('#')[0]  // Strip hash
+      .split('?')[0]
+      .split('#')[0]
       .toLowerCase()
-      .replace(/\/+$/, ''); // Remove trailing slashes
+      .replace(/\/+$/, '');
     
     // CRITICAL: Normalize singular routes to plural for canonical
     if (cleanUrl.startsWith('/concierto/')) {
@@ -130,7 +138,6 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
       cleanUrl = cleanUrl.replace('/festival/', '/festivales/');
     }
     
-    // Ensure it starts with /
     if (!cleanUrl.startsWith('/')) {
       cleanUrl = `/${cleanUrl}`;
     }
@@ -138,10 +145,10 @@ const getCleanCanonical = (pathname: string, providedCanonical?: string): string
     return `${siteUrl}${cleanUrl}`;
   }
   
-  // Generate from pathname - remove numeric suffixes but not years
+  // Generate from pathname
   let cleanPath = pathname
     .toLowerCase()
-    .replace(/\/+$/, ''); // Remove trailing slashes
+    .replace(/\/+$/, '');
   
   // CRITICAL: Normalize singular routes to plural for canonical
   if (cleanPath.startsWith('/concierto/')) {
@@ -222,11 +229,9 @@ const siteNavigationSchema = {
 };
 
 // Generate BreadcrumbList schema from breadcrumbs array
-// NOTE: Some GSC validations require 'item' on ALL ListItems (including last)
 const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[], currentUrl: string) => {
   if (!breadcrumbs || breadcrumbs.length === 0) return null;
 
-  // Filter out empty names and generate valid schema
   const validBreadcrumbs = breadcrumbs.filter((item) => item.name && item.name.trim());
   if (validBreadcrumbs.length === 0) return null;
 
@@ -238,9 +243,6 @@ const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[], currentUrl: str
     "itemListElement": validBreadcrumbs.map((item, index, arr) => {
       const isLast = index === arr.length - 1;
 
-      // Build the item URL:
-      // - intermediate nodes: use provided url (absolute/relative) or fallback to homepage
-      // - last node (current page): always use canonical/current URL
       const absoluteItemUrl = item.url
         ? item.url.startsWith("http")
           ? item.url
@@ -285,6 +287,7 @@ export const SEOHead = ({
   artistName
 }: SEOHeadProps) => {
   const location = useLocation();
+  const { locale } = useLanguage();
   const searchParams = new URLSearchParams(location.search);
   
   // Determine if page should be noindexed
@@ -297,14 +300,22 @@ export const SEOHead = ({
   
   const fullTitle = `${finalTitle} | FEELOMOVE+`;
   
-  // Use unified canonical generator - strips all query params and tracking
-  // ALWAYS returns absolute URL (https://feelomove.com/...)
+  // Use unified canonical generator
   const fullCanonical = getCleanCanonical(location.pathname, canonical);
 
+  // --- i18n: hreflang alternate URLs ---
+  const currentPath = location.pathname;
+  const esUrl = getAlternateUrl(currentPath, 'es');
+  const enUrl = getAlternateUrl(currentPath, 'en');
+
+  // OG locale values
+  const ogLocale = locale === 'en' ? 'en_US' : 'es_ES';
+  const ogLocaleAlternate = locale === 'en' ? 'es_ES' : 'en_US';
+
+  // inLanguage for WebPage schema
+  const inLanguage = locale === 'en' ? 'en-US' : 'es-ES';
+
   // For event pages (og:type="event"), we skip the generic WebPage schema
-  // since EventSeo component provides the proper Event structured data
-  
-  // Detect if we're on event detail page for critical preconnects (LCP optimization)
   const isEventDetailPage = location.pathname.startsWith('/concierto/') || location.pathname.startsWith('/festival/');
   const isEventPage = ogType === 'event';
 
@@ -324,14 +335,13 @@ export const SEOHead = ({
       "@type": "Organization",
       "name": "FEELOMOVE+"
     },
-    "inLanguage": "es-ES"
+    "inLanguage": inLanguage
   } : null;
 
   // Generate breadcrumb schema if provided
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs || [], fullCanonical);
 
   // Combine all JSON-LD schemas
-  // For event pages, skip Organization and WebPage schemas (handled by EventSeo)
   const allSchemas = isEventPage
     ? [
         ...(breadcrumbSchema ? [breadcrumbSchema] : []),
@@ -350,6 +360,7 @@ export const SEOHead = ({
 
   return (
     <Helmet>
+      <html lang={locale === 'en' ? 'en' : 'es'} />
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
@@ -389,6 +400,11 @@ export const SEOHead = ({
       {/* Canonical URL */}
       {fullCanonical && <link rel="canonical" href={fullCanonical} />}
       
+      {/* CRITICAL i18n: Hreflang tags - bidirectional + x-default */}
+      <link rel="alternate" hrefLang="es" href={esUrl} />
+      <link rel="alternate" hrefLang="en" href={enUrl} />
+      <link rel="alternate" hrefLang="x-default" href={esUrl} />
+      
       {/* Open Graph / Facebook - Optimized 1200x630 */}
       <meta property="og:type" content={ogType} />
       <meta property="og:title" content={fullTitle} />
@@ -399,7 +415,8 @@ export const SEOHead = ({
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={finalTitle} />
       <meta property="og:site_name" content="FEELOMOVE+" />
-      <meta property="og:locale" content="es_ES" />
+      <meta property="og:locale" content={ogLocale} />
+      <meta property="og:locale:alternate" content={ogLocaleAlternate} />
       
       {/* Twitter Card - summary_large_image */}
       <meta name="twitter:card" content="summary_large_image" />

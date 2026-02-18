@@ -137,54 +137,70 @@ export const useInstantSEO = () => {
     const pathname = location.pathname;
     const cleanPath = pathname.split('?')[0].split('#')[0];
     
+    // Detect EN locale from path
+    const isEN = cleanPath.startsWith('/en/') || cleanPath === '/en';
+    
     let title = 'FEELOMOVE+ | Entradas Conciertos y Festivales España';
     
-    // Concert detail page: /concierto/:slug or /conciertos/:slug
-    if (cleanPath.startsWith('/concierto/') || cleanPath.startsWith('/conciertos/')) {
-      const slug = cleanPath.replace('/concierto/', '').replace('/conciertos/', '');
+    // EN routes: strip /en/ prefix then match
+    const effectivePath = isEN ? cleanPath.replace(/^\/en\/?/, '/') : cleanPath;
+    
+    // Concert detail page: /concierto/:slug, /conciertos/:slug, or /en/tickets/:slug
+    if (effectivePath.startsWith('/concierto/') || effectivePath.startsWith('/conciertos/') || effectivePath.startsWith('/tickets/')) {
+      const slug = effectivePath.replace(/^\/(concierto|conciertos|tickets)\//, '');
       if (slug) {
         const parsed = parseEventSlug(slug, false);
-        title = generateSEOTitle(parsed);
-        // description handled by SEOHead.tsx
+        if (isEN) {
+          title = `Tickets ${parsed.artistName} ${parsed.cityName} ${parsed.year} | FEELOMOVE+`;
+        } else {
+          title = generateSEOTitle(parsed);
+        }
       }
     }
     
-    // Festival detail page: /festival/:slug
-    else if (cleanPath.startsWith('/festival/')) {
-      const slug = cleanPath.replace('/festival/', '');
+    // Festival detail page: /festival/:slug, /festivales/:slug, or /en/festivals/:slug
+    else if (effectivePath.startsWith('/festival/') || effectivePath.startsWith('/festivales/') || effectivePath.startsWith('/festivals/')) {
+      const slug = effectivePath.replace(/^\/(festival|festivales|festivals)\//, '');
       if (slug) {
         const parsed = parseEventSlug(slug, true);
-        title = generateSEOTitle(parsed);
-        // description handled by SEOHead.tsx
+        if (isEN) {
+          title = `${parsed.artistName} ${parsed.year} - Tickets & Hotel | FEELOMOVE+`;
+        } else {
+          title = generateSEOTitle(parsed);
+        }
       }
     }
     
-    // Artist page: /conciertos/:artistSlug
-    else if (cleanPath.startsWith('/conciertos/') && cleanPath !== '/conciertos') {
-      const artistSlug = cleanPath.replace('/conciertos/', '');
+    // Artist/tickets listing page
+    else if ((effectivePath.startsWith('/conciertos/') || effectivePath.startsWith('/tickets/')) && effectivePath !== '/conciertos' && effectivePath !== '/tickets') {
+      const artistSlug = effectivePath.replace(/^\/(conciertos|tickets)\//, '');
       if (artistSlug) {
         const seo = generateArtistSEO(artistSlug);
-        title = seo.title;
-        // description handled by SEOHead.tsx
+        if (isEN) {
+          const artistName = toTitleCase(artistSlug.replace(/-/g, ' '));
+          const year = new Date().getFullYear();
+          title = `${artistName}: Concerts, Tour & Tickets ${year} | FEELOMOVE+`;
+        } else {
+          title = seo.title;
+        }
       }
     }
     
-    // Destination page: /destinos/:city
-    else if (cleanPath.startsWith('/destinos/') && cleanPath !== '/destinos') {
-      const citySlug = cleanPath.replace('/destinos/', '');
+    // Destination page: /destinos/:city or /en/destinations/:city
+    else if ((effectivePath.startsWith('/destinos/') || effectivePath.startsWith('/destinations/')) && effectivePath !== '/destinos' && effectivePath !== '/destinations') {
+      const citySlug = effectivePath.replace(/^\/(destinos|destinations)\//, '');
       if (citySlug) {
         const cityName = toTitleCase(citySlug.replace(/-/g, ' '));
         const year = new Date().getFullYear();
-        title = `Conciertos en ${cityName} ${year} | FEELOMOVE+`;
-        // description handled by SEOHead.tsx
+        title = isEN
+          ? `Concerts in ${cityName} ${year} | FEELOMOVE+`
+          : `Conciertos en ${cityName} ${year} | FEELOMOVE+`;
       }
     }
     
-    // IMPORTANT: Only update <title>. Do NOT write meta/canonical here;
-    // that would create duplicates alongside react-helmet-async (data-rh="true").
+    // IMPORTANT: Only update <title>. Do NOT write meta/canonical here.
     document.title = title;
     
   }, [location.pathname]);
 };
-
 export default useInstantSEO;

@@ -9,15 +9,15 @@ const SUPABASE_URL = "https://wcyjuytpxxqailtixept.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeWp1eXRweHhxYWlsdGl4ZXB0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MDMzMzksImV4cCI6MjA4MDE3OTMzOX0.hp94Zif6FlBkKEa3vXVGUOVeesjDnBQWvNb0uktgj2I";
 const BASE_URL = "https://feelomove.com";
 
-function normalizeSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[ñ]/g, 'n')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .trim();
+// xmlns for hreflang in sitemaps
+const XMLNS_XHTML = 'xmlns:xhtml="http://www.w3.org/1999/xhtml"';
+
+/** Generate hreflang <xhtml:link> tags for a URL pair */
+function hreflangLinks(esLoc: string, enLoc: string): string {
+  return `
+    <xhtml:link rel="alternate" hreflang="es" href="${esLoc}" />
+    <xhtml:link rel="alternate" hreflang="en" href="${enLoc}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${esLoc}" />`;
 }
 
 Deno.serve(async (req) => {
@@ -43,13 +43,26 @@ Deno.serve(async (req) => {
     }
 
     if (type === "pages") {
+      // Static pages with hreflang alternates
+      const pages = [
+        { es: "/", en: "/en/", priority: "1.0", freq: "daily" },
+        { es: "/conciertos", en: "/en/tickets", priority: "0.9", freq: "daily" },
+        { es: "/festivales", en: "/en/festivals", priority: "0.9", freq: "daily" },
+        { es: "/artistas", en: "/en/artists", priority: "0.9", freq: "daily" },
+        { es: "/destinos", en: "/en/destinations", priority: "0.8", freq: "weekly" },
+        { es: "/inspiration", en: "/en/inspiration", priority: "0.6", freq: "weekly" },
+        { es: "/about", en: "/en/about", priority: "0.5", freq: "monthly" },
+      ];
+
+      const urls = pages.map(p => `  <url>
+    <loc>${BASE_URL}${p.es}</loc>
+    <changefreq>${p.freq}</changefreq>
+    <priority>${p.priority}</priority>${hreflangLinks(`${BASE_URL}${p.es}`, `${BASE_URL}${p.en}`)}
+  </url>`).join('\n');
+
       return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${BASE_URL}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
-  <url><loc>${BASE_URL}/conciertos</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
-  <url><loc>${BASE_URL}/festivales</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
-  <url><loc>${BASE_URL}/artistas</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
-  <url><loc>${BASE_URL}/destinos</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ${XMLNS_XHTML}>
+${urls}
 </urlset>`, { headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
@@ -68,10 +81,17 @@ Deno.serve(async (req) => {
 
       const urls = (data || []).filter(e => e.slug).map(e => {
         const lastmod = e.updated_at?.split('T')[0] || e.event_date?.split('T')[0] || today;
-        return `  <url><loc>${BASE_URL}/conciertos/${e.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`;
+        const esLoc = `${BASE_URL}/conciertos/${e.slug}`;
+        const enLoc = `${BASE_URL}/en/tickets/${e.slug}`;
+        return `  <url>
+    <loc>${esLoc}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>${hreflangLinks(esLoc, enLoc)}
+  </url>`;
       }).join('\n');
 
-      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`, 
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ${XMLNS_XHTML}>\n${urls}\n</urlset>`, 
         { headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
@@ -92,10 +112,17 @@ Deno.serve(async (req) => {
         return !exclude.some(p => slug.includes(p));
       }).map(a => {
         const lastmod = a.next_event_date?.split('T')[0] || today;
-        return `  <url><loc>${BASE_URL}/conciertos/${a.attraction_slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`;
+        const esLoc = `${BASE_URL}/conciertos/${a.attraction_slug}`;
+        const enLoc = `${BASE_URL}/en/tickets/${a.attraction_slug}`;
+        return `  <url>
+    <loc>${esLoc}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>${hreflangLinks(esLoc, enLoc)}
+  </url>`;
       }).join('\n');
 
-      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`, 
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ${XMLNS_XHTML}>\n${urls}\n</urlset>`, 
         { headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
@@ -108,11 +135,18 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      const urls = (data || []).filter(d => d.city_slug).map(d => 
-        `  <url><loc>${BASE_URL}/destinos/${d.city_slug}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`
-      ).join('\n');
+      const urls = (data || []).filter(d => d.city_slug).map(d => {
+        const esLoc = `${BASE_URL}/destinos/${d.city_slug}`;
+        const enLoc = `${BASE_URL}/en/destinations/${d.city_slug}`;
+        return `  <url>
+    <loc>${esLoc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>${hreflangLinks(esLoc, enLoc)}
+  </url>`;
+      }).join('\n');
 
-      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`, 
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ${XMLNS_XHTML}>\n${urls}\n</urlset>`, 
         { headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
@@ -136,10 +170,17 @@ Deno.serve(async (req) => {
         return true;
       }).map(f => {
         const lastmod = f.updated_at?.split('T')[0] || f.event_date?.split('T')[0] || today;
-        return `  <url><loc>${BASE_URL}/festivales/${f.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`;
+        const esLoc = `${BASE_URL}/festivales/${f.slug}`;
+        const enLoc = `${BASE_URL}/en/festivals/${f.slug}`;
+        return `  <url>
+    <loc>${esLoc}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>${hreflangLinks(esLoc, enLoc)}
+  </url>`;
       }).join('\n');
 
-      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`, 
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ${XMLNS_XHTML}>\n${urls}\n</urlset>`, 
         { headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
