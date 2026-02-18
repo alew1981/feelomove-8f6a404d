@@ -58,10 +58,12 @@
 - i18nRoutes.ts: segmentos `politica-privacidad` ↔ `privacy-policy`, `terminos-uso` ↔ `terms-of-use`
 - Disclaimer legal en ambas páginas (revisión jurídica pendiente)
 
-## Fase 6 - PENDIENTE: Testing
+## Fase 6 - COMPLETADA ✅: Testing
 
-- Tests automatizados para slugs, rutas, hreflang
-- Validación SEO con herramientas externas
+- Infraestructura: vitest + @testing-library/react + jsdom configurados
+- `src/test/i18nRoutes.test.ts` - 33 tests: detectLocaleFromPath, translateSegment, localePath, stripLocalePrefix, toCanonicalPath, getAlternateUrl (hreflang round-trips)
+- `src/test/slugUtils.test.ts` - 34 tests: normalizeToSlug, generateSeoSlug, isCleanSeoUrl, hasNoisePatterns, isFestivalSlug, extractCityFromSlug, isValidSeoSlug, cleanSlug
+- **67 tests, 0 failures** ✅
 
 ## Acciones Search Console (post-deploy)
 
