@@ -1,0 +1,17 @@
+INSERT INTO tm_translations (spanish_text, english_text, field_type) VALUES
+  ('ciudad', 'city', 'ui_label'),
+  ('R&B', 'R&B', 'genre'),
+  ('Hip-Hop/Rap', 'Hip-Hop/Rap', 'genre'),
+  ('Electrónica', 'Electronic', 'genre'),
+  ('Country y Folk', 'Country & Folk', 'genre'),
+  ('Clásica', 'Classical', 'genre'),
+  ('Jazz', 'Jazz', 'genre'),
+  ('Blues', 'Blues', 'genre'),
+  ('Metal', 'Metal', 'genre'),
+  ('Alternativa', 'Alternative', 'genre'),
+  ('Punk', 'Punk', 'genre'),
+  ('Flamenco', 'Flamenco', 'genre'),
+  ('Dance', 'Dance', 'genre'),
+  ('Indie', 'Indie', 'genre'),
+  ('New Age', 'New Age', 'genre'),
+  ('Funk', 'Funk', 'genre');

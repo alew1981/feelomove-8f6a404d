@@ -138,7 +138,7 @@ const Artistas = () => {
       id: "genre",
       label: t("Género"),
       value: filterGenre,
-      options: genres.map(g => ({ value: g, label: g })),
+      options: genres.map(g => ({ value: g, label: t(g) })),
       onChange: setFilterGenre,
     },
     {
@@ -274,7 +274,7 @@ const Artistas = () => {
               <SelectContent>
                 <SelectItem value="all">{t("Todos los géneros")}</SelectItem>
                 {genres.map((genre: string) => (
-                  <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                  <SelectItem key={genre} value={genre}>{t(genre)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -355,7 +355,7 @@ const Artistas = () => {
                         {artist.genres && artist.genres[0] && (
                           <div className="absolute bottom-3 left-3">
                             <Badge variant="secondary" className="text-xs">
-                              {artist.genres[0]}
+                              {t(artist.genres[0])}
                             </Badge>
                           </div>
                         )}
@@ -366,7 +366,7 @@ const Artistas = () => {
                         </h3>
                         {artist.city_count && (
                           <p className="text-sm text-muted-foreground">
-                            {artist.city_count} {t("ciudades")}
+                            {artist.city_count} {artist.city_count === 1 ? t("ciudad") : t("ciudades")}
                           </p>
                         )}
                       </CardContent>
