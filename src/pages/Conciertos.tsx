@@ -214,7 +214,7 @@ const Conciertos = () => {
     "description": locale === 'en' ? "List of concerts and music events in Spain. Buy tickets and book hotels." : "Listado de conciertos y eventos musicales en España. Compra entradas y reserva hotel.",
     "url": "https://feelomove.com/conciertos",
     "numberOfItems": events.length,
-    "itemListElement": events.slice(0, 20).filter(e => e.event_date).map((event, index) => ({
+    "itemListElement": events.slice(0, 20).filter(e => e.event_date && !e.event_date.startsWith('9999')).map((event, index) => ({
       "@type": "ListItem",
       "position": index + 1,
       "item": {
