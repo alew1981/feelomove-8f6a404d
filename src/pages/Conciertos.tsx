@@ -248,10 +248,10 @@ const Conciertos = () => {
         "offers": {
           "@type": "Offer",
           "url": `https://feelomove.com/${locale === 'en' ? 'en/tickets' : 'conciertos'}/${event.slug || event.id}`,
-          "price": event.price_min_incl_fees || 0,
+          ...(event.price_min_incl_fees != null && { "price": event.price_min_incl_fees }),
           "priceCurrency": event.currency || "EUR",
           "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
-          "validFrom": new Date().toISOString()
+          ...(event.on_sale_date && { "validFrom": event.on_sale_date })
         },
         "performer": {
           "@type": "MusicGroup",

@@ -480,31 +480,47 @@ const Festivales = () => {
     "name": "Festivales en España",
     "description": "Lista de festivales de música disponibles en España",
     "numberOfItems": allFilteredFestivals.length,
-    "itemListElement": allFilteredFestivals.slice(0, 20).map((festival, index) => ({
+    "itemListElement": allFilteredFestivals.slice(0, 20).filter(f => f.festival_start_date && !f.festival_start_date.startsWith('9999')).map((festival, index) => ({
       "@type": "ListItem",
       "position": index + 1,
       "item": {
         "@type": "Festival",
         "name": festival.event_name,
         "startDate": festival.festival_start_date,
-        "endDate": festival.festival_end_date,
-        "url": `https://feelomove.com/festivales/${festival.event_slug}`,
-        "image": festival.image_large_url,
+        "endDate": festival.festival_end_date || festival.festival_start_date,
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": festival.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/EventScheduled",
+        "url": `https://feelomove.com/${locale === 'en' ? 'en/festivals' : 'festivales'}/${festival.event_slug}`,
+        "description": locale === 'en'
+          ? `${festival.event_name} music festival in ${festival.venue_city}, Spain. Buy tickets and book nearby hotels.`
+          : `Festival de música ${festival.event_name} en ${festival.venue_city}. Compra entradas y reserva hotel cercano.`,
+        ...(festival.image_large_url && { "image": [festival.image_large_url] }),
         "location": {
           "@type": "Place",
-          "name": festival.venue_name,
+          "name": festival.venue_name || festival.venue_city,
           "address": {
             "@type": "PostalAddress",
-            "addressLocality": festival.venue_city
+            "addressLocality": festival.venue_city,
+            "addressCountry": "ES"
           }
         },
-        ...(festival.price_min_incl_fees && festival.price_min_incl_fees > 0 && {
-          "offers": {
-            "@type": "Offer",
-            "price": festival.price_min_incl_fees,
-            "priceCurrency": "EUR",
-            "availability": "https://schema.org/InStock"
-          }
+        "organizer": {
+          "@type": "Organization",
+          "name": "FEELOMOVE+",
+          "url": "https://feelomove.com"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": `https://feelomove.com/${locale === 'en' ? 'en/festivals' : 'festivales'}/${festival.event_slug}`,
+          ...(festival.price_min_incl_fees != null && festival.price_min_incl_fees > 0 && { "price": festival.price_min_incl_fees }),
+          "priceCurrency": "EUR",
+          "availability": festival.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock"
+        },
+        ...(festival.festival_headliners && festival.festival_headliners.length > 0 && {
+          "performer": festival.festival_headliners.map(name => ({
+            "@type": "MusicGroup",
+            "name": name
+          }))
         })
       }
     }))
