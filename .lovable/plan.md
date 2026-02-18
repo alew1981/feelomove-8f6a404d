@@ -1,109 +1,47 @@
 
+# Fase 0 + Preparacion: Redirects /es/* y traducciones faltantes
 
-## Rediseno de la seccion de entradas (TicketSelector)
+## Que se hace en esta iteracion
 
-### Resumen
-Crear un componente `TicketSelector` reutilizable con el diseno del mockup y reemplazar el bloque actual de tickets en `Producto.tsx`.
+### 1. Redirects 301 de /es/* a /* en vercel.json
 
-### Cambios visuales respecto al diseno actual
+Agregar en la seccion "redirects" de `vercel.json` (antes de los redirects existentes):
 
-| Aspecto | Actual | Nuevo (mockup) |
-|---------|--------|----------------|
-| Titulo | Numero en circulo + "Selecciona tus entradas" | Check verde en circulo + titulo + contador a la derecha ("1 entrada") |
-| Subtitulo | Texto pequeno debajo | Texto verde con check: "Entradas anadidas! Ahora elige tu alojamiento" |
-| Layout tarjeta | Badge arriba-izq, nombre, precio y +/- a la derecha en vertical | Nombre arriba-izq, badge DISPONIBLE/AGOTADO arriba-derecha, precio grande abajo-izq con "/ud" y gastos, +/- abajo-derecha |
-| Tarjeta seleccionada | Borde accent | Borde verde + check verde arriba-izq de la tarjeta |
-| Tarjeta agotada | Opacity 60% | Texto y controles grises, badge AGOTADO gris, botones deshabilitados |
-| Boton "Ver mas" | Boton outline | Texto "VER X MAS" con chevron, centrado |
-
-### Archivos
-
-| Archivo | Accion |
-|---------|--------|
-| `src/components/TicketSelector.tsx` | **Crear** - Componente nuevo con toda la logica visual |
-| `src/pages/Producto.tsx` | **Modificar** - Reemplazar el bloque de tickets (lineas ~1273-1401) por `<TicketSelector />` |
-
----
-
-### Componente TicketSelector
-
-**Props:**
-```
-interface TicketOption {
-  id: string;
-  name: string;        // tipo de entrada (AR, GENERAL, VR)
-  description?: string; // nombre completo
-  price: number;
-  fees: number;
-  status: "available" | "limited" | "sold-out";
-  isVip?: boolean;
-}
-
-interface TicketSelectorProps {
-  title?: string;            // default "Selecciona tus entradas"
-  subtitle?: string;         // texto cuando hay entradas seleccionadas
-  tickets: TicketOption[];
-  quantities: Record<string, number>;  // estado actual de cantidades
-  onQuantityChange: (id: string, delta: number) => void;
-  maxPerTicket?: number;     // default 10
-  initialVisible?: number;   // default 4, para "Ver mas"
-}
+```text
+/es/conciertos/:path*  ->  301  ->  /conciertos/:path*
+/es/festivales/:path*  ->  301  ->  /festivales/:path*
+/es/destinos/:path*    ->  301  ->  /destinos/:path*
+/es/artistas/:path*    ->  301  ->  /artistas/:path*
+/es/favoritos/:path*   ->  301  ->  /favoritos/:path*
+/es/inspiration/:path* ->  301  ->  /inspiration/:path*
+/es/about/:path*       ->  301  ->  /about/:path*
+/es/conciertos         ->  301  ->  /conciertos
+/es/festivales         ->  301  ->  /festivales
+/es/destinos           ->  301  ->  /destinos
+/es/artistas           ->  301  ->  /artistas
+/es/favoritos          ->  301  ->  /favoritos
+/es/inspiration        ->  301  ->  /inspiration
+/es/about              ->  301  ->  /about
+/es/                   ->  301  ->  /
+/es                    ->  301  ->  /
 ```
 
-**Estructura visual de cada tarjeta:**
-```
-+----------------------------------------------------+
-| [check]  Nombre completo (TIPO)      [DISPONIBLE]  |
-|                                                     |
-|   E38 /ud                          [ - ] 1 [ + ]   |
-|   + E5.00 gastos                                    |
-+----------------------------------------------------+
+Agregar rewrite para /en/* (antes del catch-all):
+
+```text
+/en/(.*)  ->  rewrite  ->  /index.html
 ```
 
-- Tarjeta con `quantity > 0`: borde verde (`border-accent`), icono check verde flotando arriba-izquierda
-- Tarjeta `sold-out`: todo en gris (texto `text-muted-foreground`), badge AGOTADO gris, botones deshabilitados con opacidad reducida
-- Tarjeta `limited`: badge ULTIMAS (naranja/amber)
-- Tarjeta disponible sin seleccion: borde neutro, hover sutil
+### 2. Insertar traducciones faltantes en tm_translations
 
-**Header de la seccion:**
-- Izquierda: circulo con numero "1" (sin seleccion) o check verde (con seleccion) + titulo
-- Derecha: contador "X entrada(s)" en color accent cuando hay seleccion
-- Debajo del titulo: subtitulo verde con check cuando `completed`
+Ejecutar SQL para insertar los textos identificados que faltan (estados de eventos, hero, secciones, CTAs, legal, etc.).
 
-**Boton "Ver mas":**
-- Texto centrado "VER X MAS" con chevron hacia abajo (o arriba si expandido)
-- Estilo texto, no boton outline
+## Por que esto primero
 
----
+- Los redirects /es/* protegen contra contenido duplicado desde el dia 1
+- Las traducciones deben existir en BD antes de que el codigo las consuma (Fase 1)
+- Son cambios de bajo riesgo que no afectan al sitio actual
 
-### Cambios en Producto.tsx
+## Siguiente paso
 
-1. Importar `TicketSelector`
-2. Reemplazar el bloque entre lineas ~1273-1401 por:
-
-```tsx
-{ticketPrices.length > 0 && (
-  <TicketSelector
-    tickets={ticketPrices.map((t: any) => ({
-      id: t.id,
-      name: t.type,
-      description: t.description,
-      price: t.price,
-      fees: t.fees,
-      status: t.availability === "none" ? "sold-out" 
-             : t.availability === "limited" ? "limited" 
-             : "available",
-      isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
-    }))}
-    quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
-      acc[t.id] = getTicketQuantity(t.id);
-      return acc;
-    }, {})}
-    onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
-    completed={isEventInCart && totalPersons > 0}
-  />
-)}
-```
-
-Esto mantiene toda la logica de negocio (handleTicketQuantityChange, getTicketQuantity, cart) en Producto.tsx y delega solo la presentacion al nuevo componente.
-
+Una vez confirmado que los redirects funcionan y las traducciones estan en BD, pasamos a **Fase 1: Infraestructura i18n** (LanguageContext, useTranslation, i18nRoutes).
