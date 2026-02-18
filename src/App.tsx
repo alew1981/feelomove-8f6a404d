@@ -31,6 +31,8 @@ const Producto = lazy(() => import("./pages/Producto"));
 const ConciertosSlugRouter = lazy(() => import("./pages/ConciertosSlugRouter"));
 const Favoritos = lazy(() => import("./pages/Favoritos"));
 const Inspiration = lazy(() => import("./pages/Inspiration"));
+const PoliticaPrivacidad = lazy(() => import("./pages/PoliticaPrivacidad"));
+const TerminosUso = lazy(() => import("./pages/TerminosUso"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy load redirect components (legacy URL support only)
@@ -221,6 +223,8 @@ const App = () => (
                 <Route path="/festivales/:slug" element={<Producto />} />
                 <Route path="/favoritos" element={<Favoritos />} />
                 <Route path="/inspiration" element={<Inspiration />} />
+                <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+                <Route path="/terminos-uso" element={<TerminosUso />} />
 
                 {/* EN routes - same components, locale detected from URL */}
                 <Route path="/en" element={<Index />} />
@@ -234,6 +238,8 @@ const App = () => (
                 <Route path="/en/favorites" element={<Favoritos />} />
                 <Route path="/en/inspiration" element={<Inspiration />} />
                 <Route path="/en/about" element={<About />} />
+                <Route path="/en/privacy-policy" element={<PoliticaPrivacidad />} />
+                <Route path="/en/terms-of-use" element={<TerminosUso />} />
                 
                 {/* Legacy singular routes - redirect to plural for SEO */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
@@ -249,8 +255,8 @@ const App = () => (
                 <Route path="/artista/:slug" element={<RedirectArtista />} />
                 
                 {/* Legacy WordPress URLs - redirect to appropriate pages */}
-                <Route path="/privacidad" element={<RedirectToAbout />} />
-                <Route path="/cookies" element={<RedirectToAbout />} />
+                <Route path="/privacidad" element={<Navigate to="/politica-privacidad" replace />} />
+                <Route path="/cookies" element={<Navigate to="/politica-privacidad" replace />} />
                 <Route path="/cart" element={<RedirectToConciertos />} />
                 <Route path="/cart/" element={<RedirectToConciertos />} />
                 <Route path="/my-account" element={<RedirectToHome />} />

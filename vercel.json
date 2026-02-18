@@ -148,6 +148,16 @@
       "permanent": true
     },
     {
+      "source": "/es/politica-privacidad",
+      "destination": "/politica-privacidad",
+      "permanent": true
+    },
+    {
+      "source": "/es/terminos-uso",
+      "destination": "/terminos-uso",
+      "permanent": true
+    },
+    {
       "source": "/product/:path*",
       "destination": "/",
       "permanent": true
