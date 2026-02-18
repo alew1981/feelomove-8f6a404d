@@ -18,6 +18,7 @@ import { useInView } from "react-intersection-observer";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
@@ -34,6 +35,7 @@ interface ArtistaDetalleProps {
 }
 
 const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
+  const { t, locale } = useTranslation();
   const params = useParams<{ artistSlug?: string; slug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -472,7 +474,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
               )}
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
-                  {events?.length || 0} eventos
+                  {events?.length || 0} {t('eventos')}
                 </span>
                 {artistGenre && (
                   <Link
@@ -484,7 +486,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                 )}
                 {cities.length > 0 && (
                   <span className="text-muted-foreground text-sm">
-                    en {cities.slice(0, 3).join(", ")}{cities.length > 3 ? ` +${cities.length - 3}` : ""}
+                    {locale === 'en' ? 'in' : 'en'} {cities.slice(0, 3).join(", ")}{cities.length > 3 ? ` +${cities.length - 3}` : ""}
                   </span>
                 )}
               </div>
@@ -513,7 +515,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
             </svg>
             <Input
               type="text"
-              placeholder="Buscar eventos o ciudades..."
+              placeholder={t('Buscar eventos o ciudades...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
@@ -527,10 +529,10 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
-                  <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
-                  <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
-                  <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                  <SelectItem value="date-asc">{t('Fecha (próximos primero)')}</SelectItem>
+                  <SelectItem value="date-desc">{t('Fecha (lejanos primero)')}</SelectItem>
+                  <SelectItem value="price-asc">{t('Precio (menor a mayor)')}</SelectItem>
+                  <SelectItem value="price-desc">{t('Precio (mayor a menor)')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -539,7 +541,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                   <SelectValue placeholder="Todas las fechas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas las fechas</SelectItem>
+                  <SelectItem value="all">{t('Todas las fechas')}</SelectItem>
                   {availableMonths.map(month => (
                     <SelectItem key={month} value={month}>{month}</SelectItem>
                   ))}
@@ -551,7 +553,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                   <SelectValue placeholder="Todas las ciudades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas las ciudades</SelectItem>
+                  <SelectItem value="all">{t('Todas las ciudades')}</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}
@@ -567,7 +569,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
             >
-              Limpiar filtros
+              {t('Limpiar filtros')}
             </button>
             </div>
           </div>
@@ -590,8 +592,8 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
             </>
           ) : filteredAndSortedEvents.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
-              <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+              <p className="text-xl text-muted-foreground mb-4">{t('No se encontraron eventos')}</p>
+              <p className="text-muted-foreground">{t('Prueba ajustando los filtros o la búsqueda')}</p>
             </div>
           ) : (
             <>
@@ -624,7 +626,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                 <div ref={loadMoreRef} className="flex justify-center items-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-                    <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                    <p className="text-sm text-muted-foreground font-['Poppins']">{t('Cargando más eventos...')}</p>
                   </div>
                 </div>
               )}
@@ -635,12 +637,12 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           {citiesWithData.length > 0 && (
             <div className="mt-16 mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-foreground">Destinos de {artistName}</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t('Destinos de')} {artistName}</h2>
                 <Link
                   to="/destinos"
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                 >
-                  Ver todos 
+                    {t('Ver todos')} 
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                 </Link>
               </div>
@@ -684,13 +686,13 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           {relatedArtists && relatedArtists.length > 0 && (
             <div className="mt-12 mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-foreground">Artistas relacionados</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t('Artistas relacionados')}</h2>
                 {genreSlug && (
                   <Link 
                     to={`/generos/${genreSlug}`}
                     className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                   >
-                    Ver todos 
+                    {t('Ver todos')} 
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                   </Link>
                 )}

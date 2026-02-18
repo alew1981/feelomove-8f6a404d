@@ -19,6 +19,7 @@ import { useInView } from "react-intersection-observer";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
 import { buildDestinationSeoDescription } from "@/lib/seoDescriptions";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Normalize slug by removing accents for DB matching
 const normalizeSlug = (slug: string): string => {
@@ -58,6 +59,7 @@ const generateCityNameFromSlug = (slug: string): string => {
 };
 
 const DestinoDetalle = () => {
+  const { t, locale } = useTranslation();
   const { destino } = useParams<{ destino: string }>();
   const rawSlug = destino ? decodeURIComponent(destino) : "";
   const citySlug = normalizeSlug(rawSlug);
@@ -386,24 +388,26 @@ const DestinoDetalle = () => {
           {/* CRITICAL SEO: Static semantic text ALWAYS visible */}
           {/* Google sees this content immediately, even during loading */}
           {/* This prevents Soft 404 by providing substantial text content */}
-          <div className="mb-6 p-5 bg-muted/30 rounded-xl border border-border/50">
+           <div className="mb-6 p-5 bg-muted/30 rounded-xl border border-border/50">
             <h2 className="text-lg font-semibold text-foreground mb-2">
-              Conciertos y Festivales en {cityName} - Temporada 2026
+              {t('Conciertos y Festivales en')} {cityName} - {t('Temporada')} 2026
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-3">
-              Reserva tus entradas para los mejores <strong>conciertos y festivales en {cityName}</strong> para la temporada 2026. 
-              Ofrecemos paquetes exclusivos de entrada + hotel para que disfrutes de una experiencia musical completa sin preocupaciones.
+              {locale === 'en' 
+                ? <>Book your tickets for the best <strong>concerts and festivals in {cityName}</strong> for the 2026 season. We offer exclusive ticket + hotel packages for a complete musical experience.</>
+                : <>Reserva tus entradas para los mejores <strong>conciertos y festivales en {cityName}</strong> para la temporada 2026. Ofrecemos paquetes exclusivos de entrada + hotel para que disfrutes de una experiencia musical completa sin preocupaciones.</>
+              }
             </p>
             <p className="text-muted-foreground leading-relaxed">
               {isLoading ? (
-                <>Cargando la programación musical de {cityName}...</>
+                <>{t('Cargando la programación musical de')} {cityName}...</>
               ) : (
                 <>
-                  {concertsCount > 0 && <><strong>{concertsCount} conciertos</strong> disponibles. </>}
-                  {festivalsCount > 0 && <><strong>{festivalsCount} festivales</strong> próximos. </>}
-                  {minPriceEur && <>Entradas desde <strong>{minPriceEur}€</strong>.</>}
+                  {concertsCount > 0 && <><strong>{concertsCount} {t('conciertos')}</strong> {t('disponibles')}. </>}
+                  {festivalsCount > 0 && <><strong>{festivalsCount} {t('festivales')}</strong> {t('próximos')}. </>}
+                  {minPriceEur && <>{t('Entradas desde')} <strong>{minPriceEur}€</strong>.</>}
                   {concertsCount === 0 && festivalsCount === 0 && (
-                    <>Actualmente no hay eventos programados en {cityName}. Consulta otras ciudades cercanas o vuelve pronto para nuevas fechas.</>
+                    <>{t('Actualmente no hay eventos programados en')} {cityName}. {t('Consulta otras ciudades cercanas o vuelve pronto para nuevas fechas.')}</>
                   )}
                 </>
               )}
@@ -424,7 +428,7 @@ const DestinoDetalle = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar eventos o artistas..."
+              placeholder={t('Buscar eventos o artistas...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
@@ -438,10 +442,10 @@ const DestinoDetalle = () => {
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
-                <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
-                <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
-                <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                <SelectItem value="date-asc">{t('Fecha (próximos primero)')}</SelectItem>
+                <SelectItem value="date-desc">{t('Fecha (lejanos primero)')}</SelectItem>
+                <SelectItem value="price-asc">{t('Precio (menor a mayor)')}</SelectItem>
+                <SelectItem value="price-desc">{t('Precio (mayor a menor)')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -450,7 +454,7 @@ const DestinoDetalle = () => {
                 <SelectValue placeholder="Todos los géneros" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los géneros</SelectItem>
+                <SelectItem value="all">{t('Todos los géneros')}</SelectItem>
                 {genres.map(genre => (
                   <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                 ))}
@@ -462,7 +466,7 @@ const DestinoDetalle = () => {
                 <SelectValue placeholder="Todos los artistas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los artistas</SelectItem>
+                <SelectItem value="all">{t('Todos los artistas')}</SelectItem>
                 {artists.map(artist => (
                   <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                 ))}
@@ -478,7 +482,7 @@ const DestinoDetalle = () => {
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
             >
-              Limpiar filtros
+              {t('Limpiar filtros')}
             </button>
           </div>
         </div>
@@ -501,8 +505,8 @@ const DestinoDetalle = () => {
           </>
         ) : filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
-            <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+            <p className="text-xl text-muted-foreground mb-4">{t('No se encontraron eventos')}</p>
+            <p className="text-muted-foreground">{t('Prueba ajustando los filtros o la búsqueda')}</p>
           </div>
         ) : (
           <>
@@ -535,7 +539,7 @@ const DestinoDetalle = () => {
               <div ref={loadMoreRef} className="flex justify-center items-center py-12">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                  <p className="text-sm text-muted-foreground font-['Poppins']">{t('Cargando más eventos...')}</p>
                 </div>
               </div>
             )}

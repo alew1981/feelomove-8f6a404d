@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Heart } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { getEventUrl } from "@/lib/eventUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Favoritos = () => {
+  const { t, locale } = useTranslation();
   const { favorites, removeFavorite } = useFavorites();
 
   // Get first favorite image for hero
@@ -19,10 +21,10 @@ const Favoritos = () => {
   return (
     <>
       <SEOHead
-        title="Mis Favoritos - Eventos Guardados"
-        description="Tus conciertos y festivales favoritos guardados. Accede rápidamente a los eventos que más te interesan."
+        title={t('Mis Favoritos - Eventos Guardados')}
+        description={t('Tus conciertos y festivales favoritos guardados. Accede rápidamente a los eventos que más te interesan.')}
         canonical="/favoritos"
-        keywords="favoritos, eventos guardados, conciertos favoritos"
+        keywords={locale === 'en' ? "favorites, saved events, favorite concerts" : "favoritos, eventos guardados, conciertos favoritos"}
         pageType="CollectionPage"
       />
       <div className="min-h-screen bg-background">
@@ -36,15 +38,17 @@ const Favoritos = () => {
           
           {/* Hero Image */}
           <PageHero 
-            title="Mis Eventos Favoritos" 
+            title={t('Mis Eventos Favoritos')} 
             imageUrl={heroImage || "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1920"} 
           />
         
         <div className="mb-8">
           <p className="text-muted-foreground">
             {favorites.length === 0 
-              ? "No tienes eventos favoritos guardados"
-              : `Tienes ${favorites.length} ${favorites.length === 1 ? 'evento favorito' : 'eventos favoritos'}`
+              ? t('No tienes eventos favoritos guardados')
+              : locale === 'en'
+                ? `You have ${favorites.length} ${favorites.length === 1 ? 'favorite event' : 'favorite events'}`
+                : `Tienes ${favorites.length} ${favorites.length === 1 ? 'evento favorito' : 'eventos favoritos'}`
             }
           </p>
         </div>
@@ -53,12 +57,12 @@ const Favoritos = () => {
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">No hay favoritos aún</h2>
+              <h2 className="text-xl font-semibold mb-2">{t('No hay favoritos aún')}</h2>
               <p className="text-muted-foreground mb-6">
-                Explora eventos y añade tus favoritos haciendo clic en el corazón
+                {t('Explora eventos y añade tus favoritos haciendo clic en el corazón')}
               </p>
               <Button asChild>
-                <Link to="/eventos">Explorar Eventos</Link>
+                <Link to="/eventos">{t('Explorar Eventos')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -89,7 +93,7 @@ const Favoritos = () => {
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" aria-hidden="true" />
                       <time dateTime={favorite.event_date}>
-                        {new Date(favorite.event_date).toLocaleDateString('es-ES', {
+                        {new Date(favorite.event_date).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',
@@ -98,12 +102,12 @@ const Favoritos = () => {
                     </div>
                     <address className="flex items-center gap-2 not-italic">
                       <MapPin className="h-4 w-4" aria-hidden="true" />
-                      <span>{favorite.venue_city || 'Por confirmar'}</span>
+                      <span>{favorite.venue_city || t('Por confirmar')}</span>
                     </address>
                   </div>
                   <Button asChild className="w-full">
                     <Link to={getEventUrl(favorite.event_slug, favorite.is_festival)}>
-                      Ver Detalles
+                      {t('Ver Detalles')}
                     </Link>
                   </Button>
                 </CardContent>
