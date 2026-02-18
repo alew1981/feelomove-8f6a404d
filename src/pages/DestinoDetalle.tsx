@@ -360,7 +360,7 @@ const DestinoDetalle = () => {
   return (
     <>
       <SEOHead
-        title={`Conciertos en ${cityName} - Entradas y Hoteles`}
+        title={locale === 'en' ? `Concerts in ${cityName} - Tickets & Hotels` : `Conciertos en ${cityName} - Entradas y Hoteles`}
         description={seoDescription}
         canonical={`https://feelomove.com/destinos/${citySlug}`}
         pageType="CollectionPage"
@@ -439,7 +439,7 @@ const DestinoDetalle = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="h-11 border-2">
-                <SelectValue placeholder="Ordenar por" />
+                <SelectValue placeholder={t("Ordenar por")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="date-asc">{t('Fecha (próximos primero)')}</SelectItem>
@@ -451,7 +451,7 @@ const DestinoDetalle = () => {
 
             <Select value={filterGenre} onValueChange={setFilterGenre}>
               <SelectTrigger className="h-11 border-2">
-                <SelectValue placeholder="Todos los géneros" />
+                <SelectValue placeholder={t("Todos los géneros")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('Todos los géneros')}</SelectItem>
@@ -463,7 +463,7 @@ const DestinoDetalle = () => {
 
             <Select value={filterArtist} onValueChange={setFilterArtist}>
               <SelectTrigger className="h-11 border-2">
-                <SelectValue placeholder="Todos los artistas" />
+                <SelectValue placeholder={t("Todos los artistas")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('Todos los artistas')}</SelectItem>

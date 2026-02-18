@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, enGB } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { Star, Calendar, ChevronRight } from "lucide-react";
 import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface InspirationDeal {
   event_id: string | null;
@@ -38,9 +39,10 @@ const HotelStars = ({ stars }: { stars: number }) => (
 // Desktop Card (Grid view)
 const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
   const navigate = useNavigate();
+  const { t, locale, localePath } = useTranslation();
 
   const formattedDate = deal.event_date
-    ? format(new Date(deal.event_date), "EEE d MMM yyyy", { locale: es })
+    ? format(new Date(deal.event_date), "EEE d MMM yyyy", { locale: locale === 'en' ? enGB : es })
     : null;
 
   const handleClick = async () => {
@@ -53,22 +55,20 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
         .maybeSingle();
       
       if (data?.slug) {
-        // CRITICAL SEO: Use plural routes as canonical
-        const path = data.event_type === 'festival' ? `/festivales/${data.slug}` : `/conciertos/${data.slug}`;
-        navigate(path);
+        const esPath = data.event_type === 'festival' ? `/festivales/${data.slug}` : `/conciertos/${data.slug}`;
+        navigate(localePath(esPath));
       }
     }
   };
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-card shadow-card group h-[420px] cursor-pointer" onClick={handleClick}>
-      {/* Background Image with Overlay */}
       {deal.image_url && (
         <img
           src={getOptimizedCardImage(deal.image_url)}
           srcSet={generateCardSrcSet(deal.image_url)}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          alt={deal.artist_name || "Evento"}
+          alt={deal.artist_name || "Event"}
           width={300}
           height={400}
           loading="lazy"
@@ -76,30 +76,20 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       )}
-      {/* Subtle gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-
-      {/* Content */}
       <div className="relative p-5 flex flex-col h-full justify-end text-white">
-        {/* Location Badge */}
         <span className="text-xs font-bold uppercase tracking-wider text-primary mb-1">
           {deal.city}
         </span>
-
-        {/* Artist Name - 15% larger */}
         <h3 className="text-3xl font-bold line-clamp-2">
           {deal.artist_name || deal.event_name}
         </h3>
-
-        {/* Event Date */}
         {formattedDate && (
           <div className="flex items-center gap-1.5 mt-2 text-sm opacity-90">
             <Calendar className="w-3.5 h-3.5" />
             <span className="capitalize">{formattedDate}</span>
           </div>
         )}
-
-        {/* Hotel Info - Glassmorphism container */}
         {deal.hotel_name && (
           <div className="mt-4 p-3 bg-black/40 backdrop-blur-md rounded-lg border border-white/10">
             <div className="flex items-center gap-2">
@@ -108,19 +98,17 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
             <p className="text-sm font-medium mt-1 line-clamp-1">{deal.hotel_name}</p>
           </div>
         )}
-
-        {/* Pricing & CTA */}
         <div className="mt-4 flex items-end justify-between gap-3">
           <div>
             {deal.price_per_person && (
               <p className="text-4xl font-black">
                 €{Math.round(deal.price_per_person)}
-                <span className="text-base font-medium opacity-80"> / pers.</span>
+                <span className="text-base font-medium opacity-80"> {t('/ pers.')}</span>
               </p>
             )}
             {deal.total_pack_pair && (
               <p className="text-xs opacity-70 mt-1">
-                Hotel & Entrada: €{Math.round(deal.total_pack_pair)} para 2pers.
+                {t('Hotel & Entrada:')} €{Math.round(deal.total_pack_pair)} {t('para 2pers.')}
               </p>
             )}
           </div>
@@ -133,7 +121,7 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
             className="shrink-0"
             size="sm"
           >
-            Ver Oferta
+            {t('Ver Oferta')}
           </Button>
         </div>
       </div>
@@ -144,9 +132,10 @@ const InspirationCardDesktop = ({ deal }: { deal: InspirationDeal }) => {
 // Mobile Card (List view - matching artist list design with CTA)
 const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDeal; priority?: boolean }) => {
   const navigate = useNavigate();
+  const { t, locale, localePath } = useTranslation();
 
   const formattedDate = deal.event_date
-    ? format(new Date(deal.event_date), "EEE d MMM", { locale: es })
+    ? format(new Date(deal.event_date), "EEE d MMM", { locale: locale === 'en' ? enGB : es })
     : null;
 
   const handleClick = async () => {
@@ -159,9 +148,8 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
         .maybeSingle();
       
       if (data?.slug) {
-        // CRITICAL SEO: Use plural routes as canonical
-        const path = data.event_type === 'festival' ? `/festivales/${data.slug}` : `/conciertos/${data.slug}`;
-        navigate(path);
+        const esPath = data.event_type === 'festival' ? `/festivales/${data.slug}` : `/conciertos/${data.slug}`;
+        navigate(localePath(esPath));
       }
     }
   };
@@ -225,7 +213,7 @@ const InspirationCardMobile = ({ deal, priority = false }: { deal: InspirationDe
           e.stopPropagation();
           handleClick();
         }}
-        aria-label="Ver oferta"
+        aria-label={t('Ver oferta')}
       >
         <ChevronRight className="w-5 h-5 text-primary-foreground" />
       </button>
@@ -272,6 +260,7 @@ const InspirationCardSkeletonMobile = () => (
 );
 
 const Inspiration = () => {
+  const { t, locale } = useTranslation();
   const { data: deals, isLoading, error } = useQuery({
     queryKey: ["inspiration-deals"],
     queryFn: async () => {
@@ -317,8 +306,8 @@ const Inspiration = () => {
   return (
     <>
       <SEOHead
-        title="Inspiración | Ofertas de Conciertos con Hotel | Feelomove"
-        description="Descubre las mejores ofertas para conciertos y festivales con hotel incluido. Packs completos desde el mejor precio por persona."
+        title={locale === 'en' ? "Inspiration | Concert + Hotel Deals | Feelomove" : "Inspiración | Ofertas de Conciertos con Hotel | Feelomove"}
+        description={locale === 'en' ? "Discover the best concert and festival deals with hotel included. Complete packages at the best price per person." : "Descubre las mejores ofertas para conciertos y festivales con hotel incluido. Packs completos desde el mejor precio por persona."}
         canonical="/inspiration"
       />
       
@@ -330,35 +319,39 @@ const Inspiration = () => {
             {/* Hero Section */}
             <div className="text-center mb-8 md:mb-10">
               <h1 className="text-3xl md:text-5xl font-black mb-3 md:mb-4">
-                <span className="text-primary">Inspírate</span> para tu próximo viaje
+                <span className="text-primary">{t('Inspírate')}</span> {t('para tu próximo viaje')}
               </h1>
               <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-                Ofertas exclusivas de conciertos y festivales con hotel incluido. 
-                Experiencias completas al mejor precio.
+                {t('Ofertas exclusivas de conciertos y festivales con hotel incluido.')} {t('Experiencias completas al mejor precio.')}
               </p>
             </div>
 
             {/* SEO Content Section */}
             <div className="bg-muted/30 rounded-xl p-5 md:p-8 mb-8 md:mb-10">
               <h2 className="text-xl md:text-2xl font-bold mb-3">
-                Packs de Concierto + Hotel: Tu Escapada Musical Perfecta
+                {t('Packs de Concierto + Hotel: Tu Escapada Musical Perfecta')}
               </h2>
               <div className="text-sm md:text-base text-muted-foreground space-y-3">
                 <p>
-                  En <strong className="text-foreground">Feelomove</strong> seleccionamos las mejores combinaciones de 
-                  <strong className="text-foreground"> entradas para conciertos y festivales con alojamiento</strong> en hoteles 
-                  cercanos al venue. Cada pack incluye <strong className="text-foreground">1 noche de hotel</strong> y está 
-                  calculado por persona, ideal para planificar tu escapada musical sin complicaciones.
+                  {locale === 'en' ? (
+                    <>At <strong className="text-foreground">Feelomove</strong> we select the best combinations of <strong className="text-foreground">concert and festival tickets with accommodation</strong> in hotels near the venue. Each pack includes <strong className="text-foreground">1 hotel night</strong> and is calculated per person, ideal for planning your musical getaway hassle-free.</>
+                  ) : (
+                    <>En <strong className="text-foreground">Feelomove</strong> seleccionamos las mejores combinaciones de <strong className="text-foreground"> entradas para conciertos y festivales con alojamiento</strong> en hoteles cercanos al venue. Cada pack incluye <strong className="text-foreground">1 noche de hotel</strong> y está calculado por persona, ideal para planificar tu escapada musical sin complicaciones.</>
+                  )}
                 </p>
                 <p className="hidden md:block">
-                  Nuestras ofertas se actualizan diariamente para mostrarte los precios más competitivos en 
-                  <strong className="text-foreground"> Madrid, Barcelona, Valencia, Sevilla</strong> y las principales ciudades 
-                  españolas. Desde conciertos de artistas internacionales hasta festivales de música electrónica, 
-                  rock o indie: encuentra el pack perfecto y reserva con total confianza.
+                  {locale === 'en' ? (
+                    <>Our deals are updated daily to show you the most competitive prices in <strong className="text-foreground">Madrid, Barcelona, Valencia, Seville</strong> and major Spanish cities. From international artist concerts to electronic, rock or indie music festivals: find the perfect pack and book with confidence.</>
+                  ) : (
+                    <>Nuestras ofertas se actualizan diariamente para mostrarte los precios más competitivos en <strong className="text-foreground"> Madrid, Barcelona, Valencia, Sevilla</strong> y las principales ciudades españolas. Desde conciertos de artistas internacionales hasta festivales de música electrónica, rock o indie: encuentra el pack perfecto y reserva con total confianza.</>
+                  )}
                 </p>
                 <p className="text-xs md:text-sm opacity-80">
-                  💡 <em>Consejo:</em> Los packs para parejas (precio total indicado) son la opción más económica 
-                  para disfrutar de tu artista favorito con acompañante.
+                  {locale === 'en' ? (
+                    <>💡 <em>Tip:</em> Couple packs (total price shown) are the most affordable option to enjoy your favorite artist with a companion.</>
+                  ) : (
+                    <>💡 <em>Consejo:</em> Los packs para parejas (precio total indicado) son la opción más económica para disfrutar de tu artista favorito con acompañante.</>
+                  )}
                 </p>
               </div>
             </div>
@@ -366,7 +359,7 @@ const Inspiration = () => {
             {/* Error State */}
             {error && (
               <div className="text-center py-12">
-                <p className="text-destructive">Error al cargar las ofertas. Inténtalo de nuevo.</p>
+                <p className="text-destructive">{t('Error al cargar las ofertas. Inténtalo de nuevo.')}</p>
               </div>
             )}
 
@@ -407,10 +400,10 @@ const Inspiration = () => {
             {!isLoading && (!deals || deals.length === 0) && !error && (
               <div className="text-center py-16">
                 <p className="text-muted-foreground text-lg">
-                  No hay ofertas disponibles en este momento.
+                  {t('No hay ofertas disponibles en este momento.')}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Vuelve pronto para descubrir nuevas experiencias.
+                  {t('Vuelve pronto para descubrir nuevas experiencias.')}
                 </p>
               </div>
             )}

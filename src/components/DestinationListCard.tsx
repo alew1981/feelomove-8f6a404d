@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { memo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefetch } from "@/hooks/usePrefetch";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // === INLINE SVG ICON (replaces lucide-react for TBT optimization) ===
 const IconMapPin = ({ className = "" }: { className?: string }) => (
@@ -31,6 +32,7 @@ interface DestinationListCardProps {
  */
 const DestinationListCard = memo(({ city, priority = false }: DestinationListCardProps) => {
   const { prefetchDestination } = usePrefetch();
+  const { t, localePath } = useTranslation();
   const hasPrefetched = useRef(false);
   const eventCount = city.event_count || 0;
   const concertsCount = city.concerts_count || 0;
@@ -38,9 +40,9 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
   
   // Build event summary
   const eventSummary = [];
-  if (concertsCount > 0) eventSummary.push(`${concertsCount} conciertos`);
-  if (festivalsCount > 0) eventSummary.push(`${festivalsCount} festivales`);
-  const eventText = eventSummary.length > 0 ? eventSummary.join(' · ') : `${eventCount} eventos`;
+  if (concertsCount > 0) eventSummary.push(`${concertsCount} ${t('conciertos')}`);
+  if (festivalsCount > 0) eventSummary.push(`${festivalsCount} ${t('festivales')}`);
+  const eventText = eventSummary.length > 0 ? eventSummary.join(' · ') : `${eventCount} ${t('eventos')}`;
 
   const citySlug = city.city_slug || encodeURIComponent(city.city_name);
 
@@ -54,9 +56,9 @@ const DestinationListCard = memo(({ city, priority = false }: DestinationListCar
 
   return (
     <Link 
-      to={`/destinos/${citySlug}`} 
+      to={localePath(`/destinos/${citySlug}`)} 
       className="block group touch-manipulation" 
-      title={`Eventos en ${city.city_name}`}
+      title={`${t('Eventos en')} ${city.city_name}`}
       onMouseEnter={handlePrefetch}
       onTouchStart={handlePrefetch}
     >

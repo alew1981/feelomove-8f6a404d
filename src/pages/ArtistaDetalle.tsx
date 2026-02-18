@@ -471,9 +471,16 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight">
                 {seoContent?.h1Content || artistName}
               </h1>
-              {seoContent?.introText && (
+              {seoContent?.introText ? (
                 <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
                   {seoContent.introText}
+                </p>
+              ) : events && events.length > 0 && (
+                <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
+                  {locale === 'en'
+                    ? `Discover all concerts by ${artistName} in Spain. We have ${events.length} confirmed events in ${cities.length} different cities.${events[0]?.event_date ? ` The next concert will be on ${new Date(events[0].event_date).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}.` : ''} Don't miss the chance to see ${artistName} live!`
+                    : `Descubre todos los conciertos de ${artistName} en España. Tenemos ${events.length} eventos confirmados en ${cities.length} ciudades diferentes.${events[0]?.event_date ? ` El próximo concierto será el ${new Date(events[0].event_date).toLocaleDateString('es-ES')}.` : ''} ¡No te pierdas la oportunidad de ver a ${artistName} en directo!`
+                  }
                 </p>
               )}
               <div className="flex items-center gap-3 mt-3 flex-wrap">
@@ -641,7 +648,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           {citiesWithData.length > 0 && (
             <div className="mt-16 mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-foreground">{t('Destinos de')} {artistName}</h2>
+                <h2 className="text-2xl font-bold text-foreground">{locale === 'en' ? `Destinations for ${artistName}` : `Destinos de ${artistName}`}</h2>
                 <Link
                   to={localePath('/destinos')}
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"

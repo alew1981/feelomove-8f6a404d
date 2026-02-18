@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Inline SVG icons to reduce bundle size (aria-hidden for accessibility)
 const IconMapPin = ({ className = "" }: { className?: string }) => (
@@ -110,6 +111,7 @@ const CITY_PROXIMITY: Record<string, string[]> = {
 };
 
 export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedLinksProps) => {
+  const { t, locale, localePath } = useTranslation();
   const [links, setLinks] = useState<RelatedLink[] | RelatedLinksData | null>(null);
   const [fallbackDestinations, setFallbackDestinations] = useState<RelatedLink[]>([]);
   const [fallbackGenres, setFallbackGenres] = useState<RelatedLink[]>([]);
@@ -522,19 +524,19 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
   return (
     <div className="mt-10 pt-8 border-t border-border min-h-[500px]" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}>
       <h3 className="text-xl font-bold text-foreground mb-6">
-        También te puede interesar
+        {t('También te puede interesar')}
       </h3>
 
       {/* Context-aware links for destinations - Master Card Compact Style */}
       {type === 'city' && contextLinks.showDestinations && contextLinks.destinations && contextLinks.destinations.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-bold text-foreground">Otros destinos populares</h4>
+            <h4 className="text-lg font-bold text-foreground">{locale === 'en' ? 'Other popular destinations' : 'Otros destinos populares'}</h4>
             <Link 
-              to="/destinos" 
+              to={localePath("/destinos")} 
               className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
             >
-              Ver todos <ChevronRight className="h-4 w-4" />
+              {t('Ver todos')} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           {/* Master Card Grid - Compact variant */}
@@ -555,7 +557,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                     </div>
                     {dest.event_count && dest.event_count > 0 && (
                       <p className="text-xs text-muted-foreground ml-6 group-hover:text-black/70 transition-colors duration-200">
-                        {dest.event_count} eventos
+                        {dest.event_count} {t('eventos')}
                       </p>
                     )}
                   </div>
@@ -570,12 +572,12 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
       {type === 'genre' && contextLinks.showGenres && contextLinks.genres && contextLinks.genres.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-bold text-foreground">Géneros relacionados</h4>
+            <h4 className="text-lg font-bold text-foreground">{locale === 'en' ? 'Related genres' : 'Géneros relacionados'}</h4>
             <Link 
-              to="/musica" 
+              to={localePath("/musica")} 
               className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
             >
-              Ver todos <ChevronRight className="h-4 w-4" />
+              {t('Ver todos')} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -606,7 +608,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
                     {genre.label.replace('Explorar música ', '')}
                   </h5>
                   {genre.event_count && genre.event_count > 0 && (
-                    <span className="text-xs text-white/70">{genre.event_count} eventos</span>
+                    <span className="text-xs text-white/70">{genre.event_count} {t('eventos')}</span>
                   )}
                 </div>
               </Link>
@@ -621,13 +623,13 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Music className="h-5 w-5 text-accent" />
-              Géneros musicales
+              {t('Géneros musicales')}
             </h4>
             <Link 
-              to="/musica" 
+              to={localePath("/musica")} 
               className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
             >
-              Ver todos <ChevronRight className="h-4 w-4" />
+              {t('Ver todos')} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -662,7 +664,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
               <MapPin className="h-5 w-5 text-accent" />
-              Hoteles en destinos con eventos
+              {t('Hoteles en destinos con eventos')}
             </h4>
             <a 
               href="https://feelomove.nuitee.link/?language=es&currency=EUR" 
@@ -670,7 +672,7 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
             >
-              Ver todos <ChevronRight className="h-4 w-4" />
+              {t('Ver todos')} <ChevronRight className="h-4 w-4" />
             </a>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -744,12 +746,12 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
           {links.genres && links.genres.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-bold text-foreground">Géneros disponibles</h4>
+                <h4 className="text-lg font-bold text-foreground">{locale === 'en' ? 'Available genres' : 'Géneros disponibles'}</h4>
                 <Link 
-                  to="/musica" 
+                  to={localePath("/musica")} 
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                 >
-                  Ver todos <ChevronRight className="h-4 w-4" />
+                  {t('Ver todos')} <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
               {/* Master Pill Style - No images for reliability */}
@@ -779,12 +781,12 @@ export const RelatedLinks = ({ slug, type, currentCity, currentGenre }: RelatedL
           {links.top_artists && links.top_artists.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-bold text-foreground">Artistas destacados</h4>
+                <h4 className="text-lg font-bold text-foreground">{locale === 'en' ? 'Featured artists' : 'Artistas destacados'}</h4>
                 <Link 
-                  to="/artistas" 
+                  to={localePath("/artistas")} 
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                 >
-                  Ver todos <ChevronRight className="h-4 w-4" />
+                  {t('Ver todos')} <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
               {/* Master Pill Style - No images for reliability */}
