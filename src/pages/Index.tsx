@@ -12,10 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Featured cities for display order
 const FEATURED_CITIES = ['Barcelona', 'Madrid', 'Valencia', 'Sevilla'];
 const Index = () => {
+  const { t, localePath, locale } = useTranslation();
   // Fetch featured events - newest by creation date from both concerts and festivals
   const { data: featuredEvents = [], isLoading: loadingFeatured } = useQuery({
     queryKey: ["home-featured-newest"],
@@ -244,13 +246,13 @@ const Index = () => {
       <main className="container mx-auto px-4 py-12 space-y-16">
         {/* Feelomove + love - Featured Events */}
         <section aria-labelledby="featured-heading">
-          <div className="flex items-center justify-between mb-8">
+           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 id="featured-heading" className="text-3xl font-bold mb-1 flex items-center gap-2">
-                Eventos Destacados
+                {t('Eventos Destacados')}
                 <Heart className="h-5 w-5 text-accent fill-accent" aria-hidden="true" />
               </h2>
-              <p className="text-muted-foreground">Los conciertos y festivales más populares de 2025</p>
+              <p className="text-muted-foreground">{t('Los conciertos y festivales más populares de 2025')}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -270,11 +272,11 @@ const Index = () => {
         <section aria-labelledby="festivals-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 id="festivals-heading" className="text-3xl font-bold mb-2">Festivales de Música en España</h2>
-              <p className="text-muted-foreground">Los mejores festivales con hoteles cerca del recinto</p>
+              <h2 id="festivals-heading" className="text-3xl font-bold mb-2">{t('Festivales de Música en España')}</h2>
+              <p className="text-muted-foreground">{t('Los mejores festivales con hoteles cerca del recinto')}</p>
             </div>
-            <Link to="/festivales" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los festivales de música">
-              Ver todos →
+            <Link to={localePath("/festivales")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver todos los festivales de música')}>
+              {t('Ver todos')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -285,7 +287,7 @@ const Index = () => {
                 <EventCard key={event.id} event={event} />
               ))
             ) : (
-              <p className="text-muted-foreground col-span-4">No hay festivales próximos</p>
+              <p className="text-muted-foreground col-span-4">{t('No hay festivales próximos')}</p>
             )}
           </div>
         </section>
@@ -295,11 +297,15 @@ const Index = () => {
           <section key={city} aria-labelledby={`city-${city.toLowerCase()}-heading`}>
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 id={`city-${city.toLowerCase()}-heading`} className="text-3xl font-bold mb-2">Conciertos y Festivales en {city}</h2>
-                <p className="text-muted-foreground">Entradas y hoteles para eventos en {city}</p>
+                <h2 id={`city-${city.toLowerCase()}-heading`} className="text-3xl font-bold mb-2">
+                  {locale === 'en' ? `Concerts & Festivals in ${city}` : `Conciertos y Festivales en ${city}`}
+                </h2>
+                <p className="text-muted-foreground">
+                  {locale === 'en' ? `Tickets and hotels for events in ${city}` : `Entradas y hoteles para eventos en ${city}`}
+                </p>
               </div>
-              <Link to={`/destinos/${city.toLowerCase().replace(/\s+/g, '-')}`} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={`Ver todos los eventos en ${city}`}>
-                Ver todos →
+              <Link to={localePath(`/destinos/${city.toLowerCase().replace(/\s+/g, '-')}`)} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={locale === 'en' ? `See all events in ${city}` : `Ver todos los eventos en ${city}`}>
+                {t('Ver todos')} →
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -310,7 +316,9 @@ const Index = () => {
                   <EventCard key={event.id} event={event} />
                 ))
               ) : (
-                <p className="text-muted-foreground col-span-4">No hay eventos próximos en {city}</p>
+                <p className="text-muted-foreground col-span-4">
+                  {locale === 'en' ? `No upcoming events in ${city}` : `No hay eventos próximos en ${city}`}
+                </p>
               )}
             </div>
           </section>
@@ -320,11 +328,11 @@ const Index = () => {
         <section aria-labelledby="concerts-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">Conciertos en España 2025</h2>
-              <p className="text-muted-foreground">Compra entradas para los conciertos más esperados</p>
+              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">{t('Conciertos en España 2025')}</h2>
+              <p className="text-muted-foreground">{t('Compra entradas para los conciertos más esperados')}</p>
             </div>
-            <Link to="/conciertos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los conciertos en España">
-              Ver todos →
+            <Link to={localePath("/conciertos")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver todos los conciertos en España')}>
+              {t('Ver todos')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -343,11 +351,11 @@ const Index = () => {
         <section aria-labelledby="hotels-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 id="hotels-heading" className="text-3xl font-bold mb-2">Hoteles para Festivales y Conciertos</h2>
-              <p className="text-muted-foreground">Paquetes de entradas + alojamiento cerca del evento</p>
+              <h2 id="hotels-heading" className="text-3xl font-bold mb-2">{t('Hoteles para Festivales y Conciertos')}</h2>
+              <p className="text-muted-foreground">{t('Paquetes de entradas + alojamiento cerca del evento')}</p>
             </div>
-            <Link to="/conciertos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver paquetes de eventos con hotel">
-              Ver todos →
+            <Link to={localePath("/conciertos")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver paquetes de eventos con hotel')}>
+              {t('Ver todos')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -364,9 +372,9 @@ const Index = () => {
         {/* Destinos Populares */}
         <section aria-labelledby="destinations-heading">
           <div className="flex items-center justify-between mb-8">
-            <h2 id="destinations-heading" className="text-3xl font-bold">Ciudades con Eventos Musicales</h2>
-            <Link to="/destinos" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los destinos con eventos">
-              Ver todos →
+            <h2 id="destinations-heading" className="text-3xl font-bold">{t('Ciudades con Eventos Musicales')}</h2>
+            <Link to={localePath("/destinos")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver todos los destinos con eventos')}>
+              {t('Ver todos')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -413,9 +421,9 @@ const Index = () => {
         {/* Artistas */}
         <section aria-labelledby="artists-heading">
           <div className="flex items-center justify-between mb-8">
-            <h2 id="artists-heading" className="text-3xl font-bold">Artistas en Gira por España</h2>
-            <Link to="/artistas" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Ver todos los artistas con conciertos">
-              Ver todos →
+            <h2 id="artists-heading" className="text-3xl font-bold">{t('Artistas en Gira por España')}</h2>
+            <Link to={localePath("/artistas")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver todos los artistas con conciertos')}>
+              {t('Ver todos')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -459,9 +467,9 @@ const Index = () => {
         {/* Géneros */}
         <section aria-labelledby="genres-heading">
           <div className="flex items-center justify-between mb-8">
-            <h2 id="genres-heading" className="text-3xl font-bold">Géneros Musicales</h2>
-            <Link to="/musica" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label="Explorar todos los géneros musicales">
-              Ver todos →
+            <h2 id="genres-heading" className="text-3xl font-bold">{t('Géneros Musicales')}</h2>
+            <Link to="/musica" className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Explorar todos los géneros musicales')}>
+              {t('Ver todos')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -507,7 +515,7 @@ const Index = () => {
         <section className="mt-20 pt-16 pb-8 border-t border-border bg-muted/30" aria-labelledby="seo-content-heading">
           <div className="max-w-4xl mx-auto">
             <h2 id="seo-content-heading" className="text-2xl md:text-3xl font-bold mb-8 text-foreground">
-              La forma más inteligente de vivir la música en España
+              {t('La forma más inteligente de vivir la música en España')}
             </h2>
             <div className="space-y-6 text-base md:text-lg leading-relaxed text-muted-foreground">
               <p>

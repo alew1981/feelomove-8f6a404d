@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import { useEffect, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { detectLocaleFromPath, stripLocalePrefix } from "@/lib/i18nRoutes";
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -260,15 +262,19 @@ const useBreadcrumbJsonLd = (items: BreadcrumbItem[], enabled: boolean = true) =
 const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsProps) => {
   const location = useLocation();
   const params = useParams();
-  const pathnames = location.pathname.split("/").filter((x) => x);
   const { prefetch } = usePrefetch();
+  const { t, localePath, locale } = useLanguage();
+
+  // Strip locale prefix for path parsing
+  const barePath = stripLocalePrefix(location.pathname);
+  const pathnames = barePath.split("/").filter((x) => x);
 
   // ============================================
-  // PAGE TYPE DETECTION (support both singular and plural)
+  // PAGE TYPE DETECTION (support both singular and plural + EN segments)
   // ============================================
   
-  const isConcertProductPage = pathnames[0] === "concierto" || pathnames[0] === "conciertos";
-  const isFestivalProductPage = pathnames[0] === "festival" || pathnames[0] === "festivales";
+  const isConcertProductPage = pathnames[0] === "concierto" || pathnames[0] === "conciertos" || pathnames[0] === "tickets";
+  const isFestivalProductPage = pathnames[0] === "festival" || pathnames[0] === "festivales" || pathnames[0] === "festivals";
   const isProductPage = isConcertProductPage || isFestivalProductPage;
   const productSlug = isProductPage ? params.slug : null;
 
@@ -469,7 +475,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     }
     
     const items: BreadcrumbItem[] = [
-      { name: "Inicio", url: "/" }
+      { name: locale === 'en' ? "Home" : "Inicio", url: localePath('/') }
     ];
 
     // ----------------------------------------
@@ -477,10 +483,10 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     // Inicio > Conciertos > Artista (link) > Ciudad
     // ----------------------------------------
     if (isConcertProductPage && eventDetails) {
-      // Level 2: Conciertos
+      // Level 2: Conciertos / Tickets
       items.push({
-        name: "Conciertos",
-        url: "/conciertos"
+        name: t("Conciertos"),
+        url: localePath("/conciertos")
       });
       
       // Level 3: Artist (linked to profile)
@@ -493,7 +499,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
         const shouldLinkToArtistPage = typeof artistEventCount === 'number' ? artistEventCount > 1 : true;
         items.push({
           name: artistName,
-          url: shouldLinkToArtistPage ? `/conciertos/${artistSlug}` : undefined,
+          url: shouldLinkToArtistPage ? localePath(`/conciertos/${artistSlug}`) : undefined,
         });
       }
       
@@ -513,10 +519,10 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     // Inicio > Festivales > [Nombre del Festival] (link) > [Ciudad]
     // ----------------------------------------
     if (isFestivalProductPage && eventDetails) {
-      // Level 2: Festivales
+      // Level 2: Festivales / Festivals
       items.push({
-        name: "Festivales",
-        url: "/festivales"
+        name: t("Festivales"),
+        url: localePath("/festivales")
       });
       
       // Level 3: Festival Name (linked to festival profile)
@@ -526,7 +532,7 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
         const festivalSlug = eventDetails.event_slug || generateSlug(festivalName);
         items.push({
           name: festivalName,
-          url: `/festivales/${festivalSlug}`
+          url: localePath(`/festivales/${festivalSlug}`)
         });
       }
       
@@ -546,27 +552,25 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     // Inicio > Géneros > Nombre del Género
     // ----------------------------------------
     if (pathnames[0] === "generos" && genreFromPath) {
-      items.push({ name: "Géneros", url: "/generos" });
+      items.push({ name: t("Géneros"), url: "/generos" });
       items.push({ name: formatDisplayText(genreFromPath) });
       return items;
     }
     
     // ----------------------------------------
     // MUSIC/GENRE PAGE (legacy)
-    // Inicio > Géneros > Nombre del Género
     // ----------------------------------------
     if (pathnames[0] === "musica" && pathnames.length === 2) {
-      items.push({ name: "Géneros", url: "/generos" });
+      items.push({ name: t("Géneros"), url: "/generos" });
       items.push({ name: formatDisplayText(pathnames[1]) });
       return items;
     }
 
     // ----------------------------------------
     // DESTINATION PAGE
-    // Inicio > Destinos > Ciudad
     // ----------------------------------------
-    if (pathnames[0] === "destinos" && destinoSlug) {
-      items.push({ name: "Destinos", url: "/destinos" });
+    if ((pathnames[0] === "destinos" || pathnames[0] === "destinations") && destinoSlug) {
+      items.push({ name: t("Destinos"), url: localePath("/destinos") });
       const cityName = destinoData || formatDisplayText(destinoSlug);
       items.push({ name: cityName });
       return items;
@@ -574,22 +578,19 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
 
     // ----------------------------------------
     // ARTIST PAGE
-    // Inicio > Artistas > Nombre del Artista
     // ----------------------------------------
-    if (pathnames[0] === "conciertos" && artistSlug) {
-      items.push({ name: "Artistas", url: "/artistas" });
+    if ((pathnames[0] === "conciertos" || pathnames[0] === "tickets") && artistSlug) {
+      items.push({ name: t("Artistas"), url: localePath("/artistas") });
       const artistName = artistData || formatDisplayText(artistSlug);
       items.push({ name: artistName });
       return items;
     }
 
     // ----------------------------------------
-    // FESTIVAL DETAIL PAGE (from /festivales/:slug)
-    // Inicio > Festivales > Nombre del Festival
+    // FESTIVAL DETAIL PAGE (from /festivales/:slug or /festivals/:slug)
     // ----------------------------------------
-    if (pathnames[0] === "festivales" && pathnames.length === 2) {
-      items.push({ name: "Festivales", url: "/festivales" });
-      // Decode URL encoding first, then extract festival name before underscore
+    if ((pathnames[0] === "festivales" || pathnames[0] === "festivals") && pathnames.length === 2) {
+      items.push({ name: t("Festivales"), url: localePath("/festivales") });
       const decodedSlug = decodeURIComponent(pathnames[1]);
       const festivalName = formatDisplayText(decodedSlug.split('_')[0]);
       items.push({ name: festivalName });
@@ -600,15 +601,20 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     // DEFAULT: Map pathnames to breadcrumb names
     // ----------------------------------------
     const breadcrumbNames: Record<string, string> = {
-      about: "Nosotros",
-      destinos: "Destinos",
-      musica: "Géneros",
-      generos: "Géneros",
-      eventos: "Eventos",
-      conciertos: "Conciertos",
-      festivales: "Festivales",
-      artistas: "Artistas",
-      favoritos: "Favoritos",
+      about: t("Nosotros"),
+      destinos: t("Destinos"),
+      destinations: t("Destinos"),
+      musica: t("Géneros"),
+      generos: t("Géneros"),
+      eventos: t("Eventos"),
+      conciertos: t("Conciertos"),
+      tickets: t("Conciertos"),
+      festivales: t("Festivales"),
+      festivals: t("Festivales"),
+      artistas: t("Artistas"),
+      artists: t("Artistas"),
+      favoritos: t("Favoritos"),
+      favorites: t("Favoritos"),
     };
 
     pathnames.forEach((name, index) => {
@@ -636,7 +642,10 @@ const Breadcrumbs = ({ items: customItems, injectJsonLd = true }: BreadcrumbsPro
     destinoData, 
     artistSlug, 
     artistData,
-    artistEventCount
+    artistEventCount,
+    locale,
+    t,
+    localePath
   ]);
 
   // ============================================
