@@ -35,7 +35,7 @@ interface ArtistaDetalleProps {
 }
 
 const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
-  const { t, locale } = useTranslation();
+  const { t, locale, localePath } = useTranslation();
   const params = useParams<{ artistSlug?: string; slug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,9 +47,8 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
     || "";
   const artistSlug = rawSlug ? decodeURIComponent(rawSlug).replace(/-+/g, '-') : "";
   
-  // CRITICAL SEO: Detect if we're on plural /conciertos/ and need redirect
-  // This must run BEFORE any rendering for Googlebot to see 301
-  const isOnPluralRoute = location.pathname.startsWith('/conciertos/');
+  // CRITICAL SEO: Detect if we're on plural /conciertos/ or /en/tickets/ and need redirect
+  const isOnPluralRoute = location.pathname.startsWith('/conciertos/') || location.pathname.startsWith('/en/tickets/');
   
   // State to track if we've already initiated a redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -57,9 +56,9 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   // Redirect to normalized URL if slug has double dashes
   useEffect(() => {
     if (rawSlug !== artistSlug && artistSlug) {
-      navigate(`/conciertos/${artistSlug}`, { replace: true });
+      navigate(localePath(`/conciertos/${artistSlug}`), { replace: true });
     }
-  }, [rawSlug, artistSlug, navigate]);
+  }, [rawSlug, artistSlug, navigate, localePath]);
 
   // Fetch SEO content from materialized view
   const { seoContent } = useAggregationSEO(artistSlug, 'artist');
@@ -388,9 +387,10 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
         
         // Determine if festival or concert - use plural routes as canonical
         const isFestival = singleEvent.main_attraction || singleEvent.artist_count > 1;
-        const targetPath = isFestival 
+        const esPath = isFestival 
           ? `/festivales/${eventSlug}` 
           : `/conciertos/${eventSlug}`;
+        const targetPath = localePath(esPath);
         
         console.log(`[SEO] Immediate redirect: ${artistSlug} → ${targetPath}`);
         
@@ -639,7 +639,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-foreground">{t('Destinos de')} {artistName}</h2>
                 <Link
-                  to="/destinos"
+                  to={localePath('/destinos')}
                   className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                 >
                     {t('Ver todos')} 
@@ -650,7 +650,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                 {citiesWithData.map((city, index) => (
                   <Link
                     key={city.name}
-                    to={`/destinos/${city.slug}`}
+                    to={localePath(`/destinos/${city.slug}`)}
                     className="flex items-center justify-between p-4 hover:bg-accent/5 transition-colors group animate-fade-in"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
@@ -701,7 +701,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                 {relatedArtists.map((artist: any, index: number) => (
                   <Link
                     key={artist.slug}
-                    to={`/conciertos/${artist.slug}`}
+                    to={localePath(`/conciertos/${artist.slug}`)}
                     className="group relative aspect-square rounded-xl overflow-hidden animate-fade-in"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >

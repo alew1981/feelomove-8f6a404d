@@ -16,6 +16,7 @@ import {
 import { matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SearchBarProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ const SEARCH_HISTORY_KEY = 'feelomove_search_history';
 const MAX_HISTORY_ITEMS = 5;
 
 const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
+  const { locale } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState("");
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
@@ -249,7 +251,7 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       autocompleteSuggestions.push({
         type: 'event',
         name: event.name,
-        path: getEventUrl(event.slug, false),
+        path: getEventUrl(event.slug, false, locale),
         id: event.id,
         subtitle: `${event.venue_city} · ${new Date(event.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`,
         icon: <Music className="h-4 w-4" />
@@ -261,7 +263,7 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       autocompleteSuggestions.push({
         type: 'event',
         name: event.name,
-        path: getEventUrl(event.slug, true),
+        path: getEventUrl(event.slug, true, locale),
         id: event.id,
         subtitle: `${event.venue_city} · ${new Date(event.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`,
         icon: <Sparkles className="h-4 w-4" />

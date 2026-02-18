@@ -3,6 +3,7 @@ import { memo, useCallback } from "react";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Inline SVG icons (eliminate lucide-react for mobile perf)
 const IconChevronRight = () => (
@@ -89,8 +90,9 @@ const EventListCard = memo(({ event, priority = false, forceConcierto = false }:
   const isEventPast = eventDate && isPastDate(eventDate);
 
   // Determine route
+  const { locale } = useTranslation();
   const isFestival = forceConcierto ? false : (event.is_festival === true || event.event_type === 'festival');
-  const eventUrl = getEventUrl(eventSlug || '', isFestival);
+  const eventUrl = getEventUrl(eventSlug || '', isFestival, locale);
 
   // Display name - for concerts show artist, for festivals show event name
   const displayName = isFestival ? eventName : (artistName || eventName);
