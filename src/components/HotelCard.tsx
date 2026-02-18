@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Check, Loader2 } from "lucide-react";
 import { getOptimizedCardImage } from "@/lib/imagekitUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface HotelCardProps {
   hotel: {
@@ -39,18 +40,8 @@ const stripHtml = (html: string): string => {
     .trim();
 };
 
-// Get rating text based on score
-const getRatingText = (rating: number): string => {
-  if (rating >= 9) return "Excelente";
-  if (rating >= 8) return "Muy bien";
-  if (rating >= 7) return "Bien";
-  if (rating >= 6) return "Aceptable";
-  return "Regular";
-};
-
 /**
  * Optimized hotel image
- * All configured origins (Ticketmaster, Supabase, cupid.travel) use ImageKit CDN
  */
 const HotelImage = memo(({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => {
   const [hasError, setHasError] = useState(false);
@@ -86,10 +77,19 @@ const HotelCard = ({
   isAdded = false,
   priority = false,
 }: HotelCardProps) => {
+  const { t } = useTranslation();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ImageKit Web Proxy: clean original URL params before adding transformations
+  // Get rating text based on score
+  const getRatingText = (rating: number): string => {
+    if (rating >= 9) return t("Excelente");
+    if (rating >= 8) return t("Muy bien");
+    if (rating >= 7) return t("Bien");
+    if (rating >= 6) return t("Aceptable");
+    return t("Regular");
+  };
+
   const imageUrl = hotel.hotel_main_photo?.includes("static.cupid.travel")
     ? `https://ik.imagekit.io/feelomove/Cupidhotels/${hotel.hotel_main_photo.split('?')[0]}?tr=w-600,h-400,fo-auto`
     : getOptimizedCardImage(hotel.hotel_main_photo);
@@ -100,12 +100,11 @@ const HotelCard = ({
   const reviewScore = hotel.hotel_rating || hotel.hotel_stars;
   const reviewCount = hotel.hotel_reviews || 0;
 
-  // Strip HTML from description
-  const rawDescription = stripHtml(hotel.hotel_description) || "Hotel confortable cerca del venue";
+  const defaultDesc = t("Hotel confortable cerca del venue");
+  const rawDescription = stripHtml(hotel.hotel_description) || defaultDesc;
   const shortDescription = rawDescription.length > 100 ? rawDescription.substring(0, 100) + "..." : rawDescription;
   const distanceText = hotel.distance_km > 0 ? `${hotel.distance_km.toFixed(1)} km` : "";
 
-  // Render stars
   const renderStars = (starCount: number) => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
@@ -133,14 +132,12 @@ const HotelCard = ({
     <div
       className={`rounded-lg shadow-lg bg-card overflow-visible relative w-full transition-all ${isAdded ? "ring-2 ring-accent" : ""}`}
     >
-      {/* Added badge */}
       {isAdded && (
         <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground rounded-full p-1">
           <Check className="h-4 w-4" />
         </div>
       )}
 
-      {/* Review Box - Top Right */}
       {reviewScore > 0 && (
         <div className="absolute top-2.5 right-2.5 z-10 flex items-start p-1.5 bg-background/95 rounded-md shadow-sm">
           <span className="bg-accent text-accent-foreground px-1.5 py-1 rounded font-bold text-sm mr-1.5 leading-none">
@@ -155,26 +152,21 @@ const HotelCard = ({
         </div>
       )}
 
-      {/* Hotel Image */}
       <div className="h-[140px] sm:h-[200px] overflow-hidden rounded-t-lg bg-muted">
         <HotelImage
           src={imageUrl || "/placeholder.svg"}
-          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + " estrellas" : ""} en ${hotel.hotel_city || "España"} para eventos`}
+          alt={`${hotel.hotel_name} - Hotel ${hotel.hotel_stars > 0 ? hotel.hotel_stars + ` ${t("estrellas")}` : ""} ${t("en")} ${hotel.hotel_city || "España"}`}
           priority={priority}
         />
       </div>
 
-      {/* Hotel Details */}
       <div className="p-4 pb-2.5">
-        {/* Stars */}
         {hotel.hotel_stars > 0 && <div className="mb-1 leading-none">{renderStars(hotel.hotel_stars)}</div>}
 
-        {/* Hotel Name */}
         <h3 className="text-base sm:text-xl font-bold text-foreground leading-tight mb-1 line-clamp-2 min-h-[2.4em]">
           {hotel.hotel_name}
         </h3>
 
-        {/* Hotel Address and City */}
         {(hotel.hotel_address || hotel.hotel_city) && (
           <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
             {hotel.hotel_address}
@@ -183,11 +175,10 @@ const HotelCard = ({
           </p>
         )}
 
-        {/* Distance to Event */}
         {distanceText && (
           <div className="text-sm text-muted-foreground mt-1 leading-snug">
             <strong className="font-bold">
-              <MapPin className="h-3 w-3 inline-block mr-1" />a {distanceText} de:
+              <MapPin className="h-3 w-3 inline-block mr-1" />{t("a")} {distanceText} {t("de")}:
             </strong>
             {eventName && (
               <span className="block text-muted-foreground font-normal mt-0.5 leading-tight">{eventName}</span>
@@ -195,7 +186,6 @@ const HotelCard = ({
           </div>
         )}
 
-        {/* Description with Toggle */}
         <div className="pt-2.5 mt-2.5 border-t border-border leading-relaxed">
           {showFullDescription ? (
             <div className="text-sm text-muted-foreground">
@@ -203,9 +193,9 @@ const HotelCard = ({
               <button
                 onClick={() => setShowFullDescription(false)}
                 className="text-primary font-medium text-xs ml-1 hover:underline whitespace-nowrap"
-                aria-label="Ver menos descripción del hotel"
+                aria-label={t("ver menos")}
               >
-                ver menos
+                {t("ver menos")}
               </button>
             </div>
           ) : (
@@ -215,9 +205,9 @@ const HotelCard = ({
                 <button
                   onClick={() => setShowFullDescription(true)}
                   className="text-primary font-medium text-xs ml-1 hover:underline whitespace-nowrap"
-                  aria-label="Ver más descripción del hotel"
+                  aria-label={t("ver más")}
                 >
-                  ver más
+                  {t("ver más")}
                 </button>
               )}
             </div>
@@ -225,17 +215,16 @@ const HotelCard = ({
         </div>
       </div>
 
-      {/* Footer with Price */}
       <div className="bg-muted p-3 sm:p-4 flex justify-end">
         <div className="text-right flex flex-col items-end w-full">
           <span className="text-2xl sm:text-3xl font-bold text-foreground block mb-0.5">
             €{pricePerNight.toFixed(0)}
           </span>
           <span className="text-xs text-muted-foreground block leading-tight">
-            1 habitación x 1 noche impuestos incluidos
+            {t("1 habitación x 1 noche impuestos incluidos")}
           </span>
           {showTicketHint && (
-            <span className="text-[10px] text-accent font-medium block mt-0.5">+ entradas seleccionadas</span>
+            <span className="text-[10px] text-accent font-medium block mt-0.5">{t("+ entradas seleccionadas")}</span>
           )}
           <Button
             size="sm"
@@ -252,10 +241,10 @@ const HotelCard = ({
             ) : isAdded ? (
               <>
                 <Check className="h-4 w-4 mr-1" />
-                Añadido
+                {t("Añadido")}
               </>
             ) : (
-              "Añadir al pack"
+              t("Añadir al pack")
             )}
           </Button>
         </div>
