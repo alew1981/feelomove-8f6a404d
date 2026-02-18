@@ -170,7 +170,8 @@ export const EventSeo = ({
   url,
   organizerName = 'FEELOMOVE+',
   organizerUrl = 'https://feelomove.com',
-}: EventSeoProps) => {
+  locale = 'es',
+}: EventSeoProps & { locale?: 'es' | 'en' }) => {
   
   // Build the JSON-LD object with proper escaping
   const jsonLd = useMemo(() => {
@@ -323,7 +324,7 @@ export const EventSeo = ({
       // Festival-specific: OfflineEventAttendanceMode indicates in-person attendance
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       url: absoluteUrl,
-      inLanguage: 'es',
+      inLanguage: locale === 'en' ? 'en-US' : 'es-ES',
       // For festivals, use a more descriptive organizer structure
       organizer: {
         '@type': 'Organization',

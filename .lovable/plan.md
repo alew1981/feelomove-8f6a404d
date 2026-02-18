@@ -24,13 +24,13 @@
 - Rutas /en/* registradas en App.tsx (tickets, festivals, destinations, artists, favorites, inspiration, about)
 - LanguageProvider wrapper dentro de BrowserRouter
 
-## Fase 3 - PENDIENTE: SEO
+## Fase 3 - COMPLETADA ✅: SEO
 
-- Hreflang tags en SEOHead.tsx
-- OG locale tags
-- Schema.org bilingüe (inLanguage)
-- Prerender edge function con locale
-- Sitemap con xhtml:link hreflang
+- `SEOHead.tsx` - Hreflang tags (es, en, x-default), og:locale dinámico, og:locale:alternate, html lang, inLanguage en WebPage schema
+- `EventSeo.tsx` - inLanguage parametrizado (es-ES / en-US) según locale
+- `useInstantSEO.ts` - Soporte para rutas /en/* (titles EN instantáneos)
+- `seo-prerender/index.ts` - Detecta locale desde path, HTML bilingüe, hreflang en prerender, labels/textos traducidos
+- `sitemap/index.ts` - xmlns:xhtml, xhtml:link hreflang en todas las URLs (pages, concerts, festivals, artists, destinations)
 
 ## Fase 4 - PENDIENTE: UI Translation
 

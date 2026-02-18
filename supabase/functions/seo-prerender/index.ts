@@ -10,6 +10,64 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const SITE_URL = "https://feelomove.com";
 
+// ─── i18n route mapping ───
+const EN_TO_ES_SEGMENTS: Record<string, string> = {
+  tickets: "conciertos",
+  festivals: "festivales",
+  destinations: "destinos",
+  artists: "artistas",
+};
+
+interface LocaleConfig {
+  locale: "es" | "en";
+  htmlLang: string;
+  ogLocale: string;
+  ogLocaleAlt: string;
+  inLanguage: string;
+  routePrefix: string; // "conciertos" or "tickets" etc
+}
+
+function detectLocale(path: string): LocaleConfig {
+  if (path.startsWith("/en/") || path === "/en") {
+    return {
+      locale: "en",
+      htmlLang: "en",
+      ogLocale: "en_US",
+      ogLocaleAlt: "es_ES",
+      inLanguage: "en-US",
+      routePrefix: "en",
+    };
+  }
+  return {
+    locale: "es",
+    htmlLang: "es",
+    ogLocale: "es_ES",
+    ogLocaleAlt: "en_US",
+    inLanguage: "es-ES",
+    routePrefix: "",
+  };
+}
+
+/** Build the ES canonical path for an event slug */
+function esCanonical(routeType: string, slug: string): string {
+  const prefix = routeType === "festival" ? "festivales" : "conciertos";
+  return `${SITE_URL}/${prefix}/${slug}`;
+}
+
+/** Build the EN alternate path for an event slug */
+function enAlternate(routeType: string, slug: string): string {
+  const prefix = routeType === "festival" ? "festivals" : "tickets";
+  return `${SITE_URL}/en/${prefix}/${slug}`;
+}
+
+/** Generate hreflang link tags */
+function hreflangTags(esUrl: string, enUrl: string): string {
+  return `
+  <link rel="alternate" hreflang="es" href="${esUrl}" />
+  <link rel="alternate" hreflang="en" href="${enUrl}" />
+  <link rel="alternate" hreflang="x-default" href="${esUrl}" />`;
+}
+
 interface EventData {
   event_name: string;
   event_date: string;
@@ -27,10 +85,10 @@ interface EventData {
   seo_keywords: string[];
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: "es" | "en" = "es"): string {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("es-ES", {
+    return date.toLocaleDateString(locale === "en" ? "en-US" : "es-ES", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -51,12 +109,23 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
-function generateHTML(event: EventData, slug: string, routeType: "concierto" | "festival"): string {
-  const title = event.seo_title || `${event.event_name} - Entradas y Hotel | FEELOMOVE+`;
-  const description = event.meta_description || 
-    `Compra entradas para ${event.event_name} en ${event.venue_city}. ${formatDate(event.event_date)} en ${event.venue_name}. Reserva hotel cercano incluido.`;
-  const canonicalUrl = `${SITE_URL}/${routeType}/${slug}`;
-  // Ensure image URL is always from production domain or fallback to og-image
+function generateHTML(event: EventData, slug: string, routeType: "concierto" | "festival", lc: LocaleConfig): string {
+  const isEN = lc.locale === "en";
+  
+  // Titles & descriptions
+  const title = isEN
+    ? `${event.event_name} - Tickets & Hotel | FEELOMOVE+`
+    : (event.seo_title || `${event.event_name} - Entradas y Hotel | FEELOMOVE+`);
+  
+  const description = isEN
+    ? `Buy tickets for ${event.event_name} in ${event.venue_city}. ${formatDate(event.event_date, "en")} at ${event.venue_name}. Book a nearby hotel.`
+    : (event.meta_description || 
+      `Compra entradas para ${event.event_name} en ${event.venue_city}. ${formatDate(event.event_date)} en ${event.venue_name}. Reserva hotel cercano incluido.`);
+  
+  const canonicalUrl = isEN ? enAlternate(routeType, slug) : esCanonical(routeType, slug);
+  const esUrl = esCanonical(routeType, slug);
+  const enUrl = enAlternate(routeType, slug);
+  
   const rawImageUrl = event.image_large_url || `${SITE_URL}/og-image.jpg`;
   const imageUrl = rawImageUrl.includes('lovable.app') ? `${SITE_URL}/og-image.jpg` : rawImageUrl;
   
@@ -65,13 +134,12 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
     : event.primary_attraction_name || event.event_name;
   
   const priceText = event.price_min_incl_fees 
-    ? `Desde ${event.price_min_incl_fees}€` 
-    : "Consultar precio";
+    ? (isEN ? `From €${event.price_min_incl_fees}` : `Desde ${event.price_min_incl_fees}€`)
+    : (isEN ? "Check price" : "Consultar precio");
 
   const keywords = event.seo_keywords?.join(", ") || 
-    `${event.event_name}, entradas ${event.venue_city}, conciertos ${event.venue_city}, hotel ${event.venue_city}`;
+    `${event.event_name}, ${isEN ? 'tickets' : 'entradas'} ${event.venue_city}`;
 
-  // Generate JSON-LD Schema with complete Event structure for Google
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": event.event_type === "Festival" ? "Festival" : "MusicEvent",
@@ -85,12 +153,12 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
     "image": [imageUrl],
     "location": {
       "@type": "Place",
-      "name": event.venue_name || "Recinto del evento",
+      "name": event.venue_name || (isEN ? "Event venue" : "Recinto del evento"),
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": event.venue_address || event.venue_name || "Recinto del evento",
+        "streetAddress": event.venue_address || event.venue_name || "",
         "addressLocality": event.venue_city,
-        "addressRegion": "España",
+        "addressRegion": isEN ? "Spain" : "España",
         "addressCountry": "ES"
       }
     },
@@ -111,11 +179,16 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
       "@type": "MusicGroup",
       "name": event.primary_attraction_name || event.event_name
     },
-    "inLanguage": "es"
+    "inLanguage": lc.inLanguage
   };
 
+  // Labels
+  const lbl = isEN
+    ? { details: "Event Details", artist: "Artist(s)", date: "Date", venue: "Venue", city: "City", price: "Price", about: "About this event", cta: "View tickets & hotels", footer: "Tickets for Concerts and Festivals in Spain + Hotel" }
+    : { details: "Detalles del evento", artist: "Artista(s)", date: "Fecha", venue: "Lugar", city: "Ciudad", price: "Precio", about: "Sobre este evento", cta: "Ver entradas y hoteles disponibles", footer: "Entradas para Conciertos y Festivales en España + Hotel" };
+
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${lc.htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -123,9 +196,10 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
   <meta name="description" content="${escapeHtml(description)}">
   <meta name="keywords" content="${escapeHtml(keywords)}">
   <meta name="author" content="FEELOMOVE+">
-  <meta name="language" content="es">
+  <meta name="language" content="${lc.locale}">
   <link rel="canonical" href="${canonicalUrl}">
   <link rel="publisher" href="${SITE_URL}">
+  ${hreflangTags(esUrl, enUrl)}
   
   <!-- Open Graph -->
   <meta property="og:type" content="event">
@@ -134,7 +208,8 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
   <meta property="og:image" content="${imageUrl}">
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:site_name" content="FEELOMOVE+">
-  <meta property="og:locale" content="es_ES">
+  <meta property="og:locale" content="${lc.ogLocale}">
+  <meta property="og:locale:alternate" content="${lc.ogLocaleAlt}">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -143,10 +218,7 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${imageUrl}">
   
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="${SITE_URL}/favicon.svg">
-  
-  <!-- JSON-LD Schema -->
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   
   <style>
@@ -170,82 +242,41 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
     </header>
     
     <main>
-      <article itemscope itemtype="https://schema.org/MusicEvent">
-        <h1 itemprop="name">${escapeHtml(event.event_name)}</h1>
+      <article>
+        <h1>${escapeHtml(event.event_name)}</h1>
         
         <p class="meta">
-          <time itemprop="startDate" datetime="${event.event_date}">${formatDate(event.event_date)}</time>
-          · <span itemprop="location" itemscope itemtype="https://schema.org/Place">
-            <span itemprop="name">${escapeHtml(event.venue_name)}</span>, 
-            <span itemprop="address">${escapeHtml(event.venue_city)}</span>
-          </span>
+          <time datetime="${event.event_date}">${formatDate(event.event_date, lc.locale)}</time>
+          · ${escapeHtml(event.venue_name)}, ${escapeHtml(event.venue_city)}
         </p>
         
-        ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(event.event_name)} - Entradas en ${escapeHtml(event.venue_city)}" itemprop="image">` : ""}
+        ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(event.event_name)}">` : ""}
         
-        <p class="description" itemprop="description">${escapeHtml(description)}</p>
+        <p class="description">${escapeHtml(description)}</p>
         
         <div class="details">
-          <h2>Detalles del evento</h2>
-          <div class="detail-row">
-            <span class="label">Artista(s):</span>
-            <span class="value" itemprop="performer">${escapeHtml(artists)}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Fecha:</span>
-            <span class="value">${formatDate(event.event_date)}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Lugar:</span>
-            <span class="value">${escapeHtml(event.venue_name)}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Ciudad:</span>
-            <span class="value">${escapeHtml(event.venue_city)}</span>
-          </div>
-          <div class="detail-row" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-            <span class="label">Precio:</span>
-            <span class="value">
-              <span itemprop="price" content="${event.price_min_incl_fees || 0}">${priceText}</span>
-              <meta itemprop="priceCurrency" content="${event.event_currency || 'EUR'}">
-              <meta itemprop="availability" content="https://schema.org/InStock">
-            </span>
-          </div>
+          <h2>${lbl.details}</h2>
+          <div class="detail-row"><span class="label">${lbl.artist}:</span><span class="value">${escapeHtml(artists)}</span></div>
+          <div class="detail-row"><span class="label">${lbl.date}:</span><span class="value">${formatDate(event.event_date, lc.locale)}</span></div>
+          <div class="detail-row"><span class="label">${lbl.venue}:</span><span class="value">${escapeHtml(event.venue_name)}</span></div>
+          <div class="detail-row"><span class="label">${lbl.city}:</span><span class="value">${escapeHtml(event.venue_city)}</span></div>
+          <div class="detail-row"><span class="label">${lbl.price}:</span><span class="value">${priceText}</span></div>
         </div>
         
-        <a href="${canonicalUrl}" class="cta">Ver entradas y hoteles disponibles</a>
-        
-        <section style="margin-top: 2rem;">
-          <h2>Sobre este evento</h2>
-          <p>
-            Disfruta de ${escapeHtml(event.event_name)} en ${escapeHtml(event.venue_city)}. 
-            FEELOMOVE+ te ofrece la mejor experiencia combinando entradas oficiales con alojamiento 
-            en hoteles cercanos al recinto. ${event.venue_address ? `El evento se celebra en ${escapeHtml(event.venue_address)}.` : ""}
-          </p>
-          <p>
-            Reserva ahora tus entradas para ${escapeHtml(artists)} y asegura tu hotel cerca de ${escapeHtml(event.venue_name)}.
-            Gestión integral de tu viaje musical con transporte y alojamiento incluido.
-          </p>
-        </section>
+        <a href="${canonicalUrl}" class="cta">${lbl.cta}</a>
       </article>
     </main>
     
     <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #333; color: #666;">
-      <p>© ${new Date().getFullYear()} FEELOMOVE+ - Entradas para Conciertos y Festivales en España + Hotel</p>
+      <p>© ${new Date().getFullYear()} FEELOMOVE+ - ${lbl.footer}</p>
       <nav>
-        <a href="${SITE_URL}/conciertos" style="color: #888; margin-right: 1rem;">Conciertos</a>
-        <a href="${SITE_URL}/festivales" style="color: #888; margin-right: 1rem;">Festivales</a>
-        <a href="${SITE_URL}/destinos" style="color: #888; margin-right: 1rem;">Destinos</a>
-        <a href="${SITE_URL}/artistas" style="color: #888;">Artistas</a>
+        <a href="${SITE_URL}/${isEN ? 'en/tickets' : 'conciertos'}" style="color: #888; margin-right: 1rem;">${isEN ? 'Tickets' : 'Conciertos'}</a>
+        <a href="${SITE_URL}/${isEN ? 'en/festivals' : 'festivales'}" style="color: #888; margin-right: 1rem;">${isEN ? 'Festivals' : 'Festivales'}</a>
+        <a href="${SITE_URL}/${isEN ? 'en/destinations' : 'destinos'}" style="color: #888; margin-right: 1rem;">${isEN ? 'Destinations' : 'Destinos'}</a>
+        <a href="${SITE_URL}/${isEN ? 'en/artists' : 'artistas'}" style="color: #888;">${isEN ? 'Artists' : 'Artistas'}</a>
       </nav>
     </footer>
   </div>
-  
-  <!-- This page is pre-rendered for SEO crawlers. Full interactive version at: ${canonicalUrl} -->
-  <noscript>
-    <p>Este contenido requiere JavaScript para la experiencia completa. 
-    <a href="${canonicalUrl}">Visita la página completa</a>.</p>
-  </noscript>
 </body>
 </html>`;
 }
@@ -257,22 +288,29 @@ function buildDestinationSeoDescription(params: {
   festivalsCount: number;
   topArtists: string[];
   minPriceEur: number | null;
-}): string {
+}, locale: "es" | "en"): string {
   const { cityName, totalEvents, concertsCount, festivalsCount, topArtists, minPriceEur } = params;
   const parts: string[] = [];
-  parts.push(`Descubre conciertos y festivales en ${cityName}.`);
-  parts.push(`Hay ${totalEvents} eventos: ${concertsCount} conciertos y ${festivalsCount} festivales.`);
-  const artistsText = topArtists.filter(Boolean).slice(0, 6).join(", ");
-  if (artistsText) parts.push(`Artistas y headliners: ${artistsText}.`);
-  if (minPriceEur && minPriceEur > 0) parts.push(`Precios desde ${Math.round(minPriceEur)}€.`);
-  parts.push("Compra entradas y reserva hotel cerca del evento.");
+  if (locale === "en") {
+    parts.push(`Discover concerts and festivals in ${cityName}.`);
+    parts.push(`${totalEvents} events: ${concertsCount} concerts and ${festivalsCount} festivals.`);
+    const artistsText = topArtists.filter(Boolean).slice(0, 6).join(", ");
+    if (artistsText) parts.push(`Artists & headliners: ${artistsText}.`);
+    if (minPriceEur && minPriceEur > 0) parts.push(`Prices from €${Math.round(minPriceEur)}.`);
+    parts.push("Buy tickets and book a hotel near the venue.");
+  } else {
+    parts.push(`Descubre conciertos y festivales en ${cityName}.`);
+    parts.push(`Hay ${totalEvents} eventos: ${concertsCount} conciertos y ${festivalsCount} festivales.`);
+    const artistsText = topArtists.filter(Boolean).slice(0, 6).join(", ");
+    if (artistsText) parts.push(`Artistas y headliners: ${artistsText}.`);
+    if (minPriceEur && minPriceEur > 0) parts.push(`Precios desde ${Math.round(minPriceEur)}€.`);
+    parts.push("Compra entradas y reserva hotel cerca del evento.");
+  }
   return parts.join(" ");
 }
 
 function formatSlugToName(slug: string): string {
-  return slug
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 function generateDestinationHTML(params: {
@@ -282,20 +320,19 @@ function generateDestinationHTML(params: {
   description: string;
   canonicalUrl: string;
   imageUrl: string;
-  itemList: Array<{
-    name: string;
-    startDate: string;
-    url: string;
-    image: string;
-  }>;
+  itemList: Array<{ name: string; startDate: string; url: string; image: string }>;
+  lc: LocaleConfig;
 }): string {
-  const { citySlug, cityName, title, description, canonicalUrl, imageUrl, itemList } = params;
+  const { citySlug, cityName, title, description, canonicalUrl, imageUrl, itemList, lc } = params;
+  const isEN = lc.locale === "en";
+  
+  const esUrl = `${SITE_URL}/destinos/${citySlug}`;
+  const enUrl = `${SITE_URL}/en/destinations/${citySlug}`;
 
-  // Generate JSON-LD ItemList with complete Event objects for Google
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `Conciertos y Festivales en ${cityName}`,
+    "name": isEN ? `Concerts and Festivals in ${cityName}` : `Conciertos y Festivales en ${cityName}`,
     "description": description,
     "url": canonicalUrl,
     "numberOfItems": itemList.length,
@@ -305,73 +342,52 @@ function generateDestinationHTML(params: {
       "item": {
         "@type": "MusicEvent",
         "name": e.name,
-        "description": `Evento en ${cityName}. Compra entradas y reserva hotel.`,
         "startDate": e.startDate,
-        "endDate": e.startDate,
-        "eventStatus": "https://schema.org/EventScheduled",
-        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
         "url": e.url,
         "image": [e.image],
         "location": {
           "@type": "Place",
-          "name": "Recinto del evento",
+          "name": isEN ? "Event venue" : "Recinto del evento",
           "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Recinto del evento",
             "addressLocality": cityName,
-            "addressRegion": "España",
+            "addressRegion": isEN ? "Spain" : "España",
             "addressCountry": "ES"
           }
         },
-        "organizer": {
-          "@type": "Organization",
-          "name": "FEELOMOVE+",
-          "url": SITE_URL
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": e.url,
-          "price": 0,
-          "priceCurrency": "EUR",
-          "availability": "https://schema.org/InStock",
-          "validFrom": new Date().toISOString()
-        }
+        "inLanguage": lc.inLanguage
       }
     }))
   };
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${lc.htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
   <meta name="author" content="FEELOMOVE+">
-  <meta name="language" content="es">
+  <meta name="language" content="${lc.locale}">
   <link rel="canonical" href="${canonicalUrl}">
-  <link rel="publisher" href="${SITE_URL}">
+  ${hreflangTags(esUrl, enUrl)}
 
-  <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${imageUrl}">
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:site_name" content="FEELOMOVE+">
-  <meta property="og:locale" content="es_ES">
+  <meta property="og:locale" content="${lc.ogLocale}">
+  <meta property="og:locale:alternate" content="${lc.ogLocaleAlt}">
 
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@feelomove">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${imageUrl}">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="${SITE_URL}/favicon.svg">
-
-  <!-- JSON-LD Schema -->
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 
   <style>
@@ -379,7 +395,6 @@ function generateDestinationHTML(params: {
     .container { max-width: 1000px; margin: 0 auto; }
     h1 { font-size: 2rem; margin-bottom: 0.25rem; color: #00ff8f; }
     h2 { font-size: 1.25rem; margin: 0 0 1rem; color: #cfcfcf; font-weight: 600; }
-    .meta { color: #888; margin-bottom: 1rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
     .card { background: #141414; border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; }
     .card img { width: 100%; height: 140px; object-fit: cover; display: block; }
@@ -397,8 +412,7 @@ function generateDestinationHTML(params: {
 
     <main>
       <h1>${escapeHtml(cityName)}</h1>
-      <h2>Eventos y experiencias destacadas en ${escapeHtml(cityName)}</h2>
-      <p class="meta">Listado pre-renderizado para rastreadores · ${escapeHtml(citySlug)}</p>
+      <h2>${isEN ? `Events and experiences in ${escapeHtml(cityName)}` : `Eventos y experiencias destacadas en ${escapeHtml(cityName)}`}</h2>
 
       ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(cityName)} - FEELOMOVE+" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin:12px 0 18px;" />` : ""}
 
@@ -407,11 +421,11 @@ function generateDestinationHTML(params: {
       <section class="grid">
         ${itemList.map((e) => `
           <article class="card">
-            ${e.image ? `<img src="${e.image}" alt="${escapeHtml(e.name)} - ${escapeHtml(cityName)}" />` : ""}
+            ${e.image ? `<img src="${e.image}" alt="${escapeHtml(e.name)}">` : ""}
             <div class="p">
               <p class="name">${escapeHtml(e.name)}</p>
-              <p class="date">${escapeHtml(formatDate(e.startDate))}</p>
-              <a href="${e.url}" style="display:inline-block;margin-top:8px;color:#00ff8f;">Ver evento</a>
+              <p class="date">${escapeHtml(formatDate(e.startDate, lc.locale))}</p>
+              <a href="${e.url}" style="display:inline-block;margin-top:8px;color:#00ff8f;">${isEN ? 'View event' : 'Ver evento'}</a>
             </div>
           </article>
         `).join("")}
@@ -419,115 +433,99 @@ function generateDestinationHTML(params: {
     </main>
 
     <footer style="margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #333; color: #666;">
-      <p>© ${new Date().getFullYear()} FEELOMOVE+ · Destinos musicales</p>
-      <nav>
-        <a href="${SITE_URL}/destinos" style="color: #888; margin-right: 1rem;">Destinos</a>
-        <a href="${SITE_URL}/conciertos" style="color: #888; margin-right: 1rem;">Conciertos</a>
-        <a href="${SITE_URL}/festivales" style="color: #888;">Festivales</a>
-      </nav>
+      <p>© ${new Date().getFullYear()} FEELOMOVE+</p>
     </footer>
   </div>
 </body>
 </html>`;
 }
 
-function generate404HTML(slug: string): string {
+function generate404HTML(slug: string, locale: "es" | "en"): string {
+  const isEN = locale === "en";
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${isEN ? 'en' : 'es'}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evento no encontrado | FEELOMOVE+</title>
+  <title>${isEN ? 'Event not found' : 'Evento no encontrado'} | FEELOMOVE+</title>
   <meta name="robots" content="noindex">
 </head>
 <body style="font-family: system-ui; background: #0a0a0a; color: #fff; padding: 40px; text-align: center;">
-  <h1>Evento no encontrado</h1>
-  <p>El evento "${escapeHtml(slug)}" no existe o ya ha pasado.</p>
-  <a href="${SITE_URL}/conciertos" style="color: #00ff8f;">Ver todos los conciertos</a>
+  <h1>${isEN ? 'Event not found' : 'Evento no encontrado'}</h1>
+  <p>${isEN ? `The event "${escapeHtml(slug)}" does not exist or has already passed.` : `El evento "${escapeHtml(slug)}" no existe o ya ha pasado.`}</p>
+  <a href="${SITE_URL}/${isEN ? 'en/tickets' : 'conciertos'}" style="color: #00ff8f;">${isEN ? 'View all concerts' : 'Ver todos los conciertos'}</a>
 </body>
 </html>`;
 }
 
-function generateHomepageHTML(): string {
-  const title = "FEELOMOVE+ | Entradas Conciertos, Festivales y Hoteles en España";
-  const description = "Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento y ahorra. Gestión integral de movilidad y alojamiento para eventos musicales.";
-  const canonicalUrl = SITE_URL;
+function generateHomepageHTML(lc: LocaleConfig): string {
+  const isEN = lc.locale === "en";
+  const title = isEN
+    ? "FEELOMOVE+ | Concert & Festival Tickets + Hotels in Spain"
+    : "FEELOMOVE+ | Entradas Conciertos, Festivales y Hoteles en España";
+  const description = isEN
+    ? "Buy concert and festival tickets in Spain. Book a hotel near the venue and save. All-in-one music travel platform."
+    : "Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento y ahorra.";
+  const canonicalUrl = isEN ? `${SITE_URL}/en/` : SITE_URL;
+  const esUrl = SITE_URL;
+  const enUrl = `${SITE_URL}/en/`;
   const imageUrl = `${SITE_URL}/og-image.jpg`;
 
-  // Main cities for internal links
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "FEELOMOVE+",
+    "url": SITE_URL,
+    "description": description,
+    "inLanguage": lc.inLanguage,
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${SITE_URL}/conciertos?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   const mainCities = [
     { name: "Madrid", slug: "madrid" },
     { name: "Barcelona", slug: "barcelona" },
     { name: "Valencia", slug: "valencia" },
-    { name: "Sevilla", slug: "sevilla" },
+    { name: "Sevilla", slug: isEN ? "seville" : "sevilla" },
     { name: "Bilbao", slug: "bilbao" },
     { name: "Málaga", slug: "malaga" },
     { name: "Granada", slug: "granada" },
     { name: "Zaragoza", slug: "zaragoza" }
   ];
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "FEELOMOVE+",
-    "url": canonicalUrl,
-    "description": description,
-    "inLanguage": "es",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": `${canonicalUrl}/conciertos?q={search_term_string}`,
-      "query-input": "required name=search_term_string"
-    }
-  };
-
-  const orgJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "FEELOMOVE+",
-    "url": canonicalUrl,
-    "logo": `${SITE_URL}/favicon.svg`,
-    "description": "Plataforma líder en España para compra de entradas de conciertos y festivales con reserva de hotel incluido.",
-    "sameAs": [
-      "https://twitter.com/Feelomove"
-    ]
-  };
+  const destPath = isEN ? "en/destinations" : "destinos";
+  const ticketsPath = isEN ? "en/tickets" : "conciertos";
+  const festivalsPath = isEN ? "en/festivals" : "festivales";
+  const artistsPath = isEN ? "en/artists" : "artistas";
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${lc.htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
-  <meta name="keywords" content="entradas conciertos españa, festivales españa 2025, hoteles para festivales, transporte conciertos, logística eventos musicales, conciertos madrid, festivales barcelona">
-  <meta name="author" content="FEELOMOVE+">
-  <meta name="language" content="es">
+  <meta name="language" content="${lc.locale}">
   <link rel="canonical" href="${canonicalUrl}">
-  <link rel="publisher" href="${canonicalUrl}">
-
-  <!-- Open Graph -->
+  ${hreflangTags(esUrl, enUrl)}
   <meta property="og:type" content="website">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${imageUrl}">
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:site_name" content="FEELOMOVE+">
-  <meta property="og:locale" content="es_ES">
-
-  <!-- Twitter Card -->
+  <meta property="og:locale" content="${lc.ogLocale}">
+  <meta property="og:locale:alternate" content="${lc.ogLocaleAlt}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@Feelomove">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${imageUrl}">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="${SITE_URL}/favicon.svg">
-
-  <!-- JSON-LD Schema -->
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-  <script type="application/ld+json">${JSON.stringify(orgJsonLd)}</script>
-
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background: #0a0a0a; color: #fff; }
     .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -536,15 +534,9 @@ function generateHomepageHTML(): string {
     .hero { background: linear-gradient(180deg, rgba(0,255,143,0.1) 0%, transparent 100%); padding: 60px 20px; text-align: center; }
     .description { line-height: 1.8; color: #cfcfcf; max-width: 800px; margin: 0 auto 2rem; }
     .cities { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 2rem 0; }
-    .city-link { display: inline-block; background: #1a1a1a; color: #00ff8f; padding: 12px 24px; border-radius: 8px; text-decoration: none; border: 1px solid #2a2a2a; transition: all 0.2s; }
-    .city-link:hover { background: #00ff8f; color: #000; }
+    .city-link { display: inline-block; background: #1a1a1a; color: #00ff8f; padding: 12px 24px; border-radius: 8px; text-decoration: none; border: 1px solid #2a2a2a; }
     .nav-links { display: flex; gap: 24px; justify-content: center; margin: 2rem 0; }
     .nav-links a { color: #fff; text-decoration: none; font-weight: 600; }
-    .nav-links a:hover { color: #00ff8f; }
-    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 2rem 0; }
-    .feature { background: #141414; padding: 24px; border-radius: 12px; border: 1px solid #2a2a2a; }
-    .feature h3 { color: #00ff8f; margin: 0 0 12px; }
-    .feature p { color: #9a9a9a; margin: 0; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -552,82 +544,33 @@ function generateHomepageHTML(): string {
     <header style="padding: 20px 0;">
       <a href="${SITE_URL}" style="color: #00ff8f; text-decoration: none; font-weight: bold; font-size: 1.5rem;">FEELOMOVE+</a>
       <nav class="nav-links" style="margin-top: 1rem;">
-        <a href="${SITE_URL}/conciertos">Conciertos</a>
-        <a href="${SITE_URL}/festivales">Festivales</a>
-        <a href="${SITE_URL}/destinos">Destinos</a>
-        <a href="${SITE_URL}/artistas">Artistas</a>
-        <a href="${SITE_URL}/generos">Géneros</a>
+        <a href="${SITE_URL}/${ticketsPath}">${isEN ? 'Tickets' : 'Conciertos'}</a>
+        <a href="${SITE_URL}/${festivalsPath}">${isEN ? 'Festivals' : 'Festivales'}</a>
+        <a href="${SITE_URL}/${destPath}">${isEN ? 'Destinations' : 'Destinos'}</a>
+        <a href="${SITE_URL}/${artistsPath}">${isEN ? 'Artists' : 'Artistas'}</a>
       </nav>
     </header>
-
     <main>
       <section class="hero">
-        <h1>FEELOMOVE+ | Entradas Conciertos, Festivales y Hoteles en España</h1>
-        <p class="description">
-          Bienvenido a FEELOMOVE+, tu plataforma líder para comprar entradas de conciertos y festivales en España. 
-          Ofrecemos una experiencia única combinando la venta de entradas oficiales con reservas de hotel cerca del evento. 
-          Descubre los mejores conciertos de 2025 en Madrid, Barcelona, Valencia, Sevilla y toda España. 
-          Gestión integral de tu viaje musical con transporte y alojamiento incluido.
-        </p>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="description">${escapeHtml(description)}</p>
       </section>
-
       <section>
-        <h2>Conciertos y Festivales por Ciudad</h2>
-        <p style="color: #9a9a9a; margin-bottom: 1.5rem;">Encuentra eventos musicales en las principales ciudades de España</p>
+        <h2>${isEN ? 'Events by City' : 'Conciertos y Festivales por Ciudad'}</h2>
         <div class="cities">
-          ${mainCities.map(city => `<a href="${SITE_URL}/destinos/${city.slug}" class="city-link">Eventos en ${city.name}</a>`).join("\n          ")}
+          ${mainCities.map(city => `<a href="${SITE_URL}/${destPath}/${city.slug}" class="city-link">${isEN ? `Events in ${city.name}` : `Eventos en ${city.name}`}</a>`).join("\n          ")}
         </div>
-      </section>
-
-      <section class="features">
-        <div class="feature">
-          <h3>🎵 Entradas Oficiales</h3>
-          <p>Compra entradas verificadas para los mejores conciertos y festivales de música en España. Rock, pop, electrónica, indie y más géneros disponibles.</p>
-        </div>
-        <div class="feature">
-          <h3>🏨 Hoteles Cercanos</h3>
-          <p>Reserva alojamiento cerca del recinto del evento. Hoteles seleccionados para que disfrutes al máximo de tu experiencia musical.</p>
-        </div>
-        <div class="feature">
-          <h3>📍 Toda España</h3>
-          <p>Cobertura nacional con eventos en Madrid, Barcelona, Valencia, Sevilla, Bilbao, Málaga y muchas más ciudades.</p>
-        </div>
-        <div class="feature">
-          <h3>💰 Mejores Precios</h3>
-          <p>Combina entrada + hotel y ahorra en tu escapada musical. Paquetes desde los precios más competitivos del mercado.</p>
-        </div>
-      </section>
-
-      <section>
-        <h2>Explora por Categoría</h2>
-        <nav class="nav-links" style="justify-content: flex-start; flex-wrap: wrap;">
-          <a href="${SITE_URL}/conciertos">Ver todos los Conciertos →</a>
-          <a href="${SITE_URL}/festivales">Ver todos los Festivales →</a>
-          <a href="${SITE_URL}/destinos">Ver todos los Destinos →</a>
-          <a href="${SITE_URL}/artistas">Ver todos los Artistas →</a>
-          <a href="${SITE_URL}/generos">Ver todos los Géneros →</a>
-        </nav>
       </section>
     </main>
-
     <footer style="margin-top: 3rem; padding: 2rem 0; border-top: 1px solid #333; color: #666;">
-      <p>© ${new Date().getFullYear()} FEELOMOVE+ - Entradas para Conciertos y Festivales en España + Hotel</p>
-      <p style="margin-top: 1rem; font-size: 0.9rem; color: #888;">
-        FEELOMOVE+ es la plataforma líder en España para la compra de entradas de eventos musicales. 
-        Ofrecemos conciertos, festivales, espectáculos y experiencias únicas con la posibilidad de reservar 
-        hotel cercano al recinto. Disfruta de la mejor música en vivo en Madrid, Barcelona, Valencia, 
-        Sevilla, Bilbao, Málaga, Granada, Zaragoza y toda España.
-      </p>
+      <p>© ${new Date().getFullYear()} FEELOMOVE+</p>
     </footer>
   </div>
-
-  <!-- This page is pre-rendered for SEO crawlers. Full interactive version at: ${canonicalUrl} -->
 </body>
 </html>`;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -635,10 +578,14 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const path = url.searchParams.get("path") || "";
+    const lc = detectLocale(path);
+    
+    // Strip /en/ prefix to get the effective path for routing
+    const effectivePath = lc.locale === "en" ? path.replace(/^\/en\/?/, "/") : path;
     
     // Handle homepage prerender
-    if (path === "/" || path === "") {
-      const html = generateHomepageHTML();
+    if (effectivePath === "/" || effectivePath === "") {
+      const html = generateHomepageHTML(lc);
       return new Response(html, {
         status: 200,
         headers: {
@@ -650,8 +597,19 @@ serve(async (req) => {
       });
     }
     
-    // Parse the path: /conciertos/slug, /concierto/slug, /festivales/slug, /festival/slug o /destinos/slug
-    const pathMatch = path.match(/^\/(conciertos?|festivales?|destinos)\/(.+)$/);
+    // Map EN segments to ES for DB lookup: /tickets/slug -> /conciertos/slug
+    let lookupPath = effectivePath;
+    if (lc.locale === "en") {
+      for (const [en, es] of Object.entries(EN_TO_ES_SEGMENTS)) {
+        if (lookupPath.startsWith(`/${en}/`) || lookupPath === `/${en}`) {
+          lookupPath = lookupPath.replace(`/${en}`, `/${es}`);
+          break;
+        }
+      }
+    }
+    
+    // Parse the path: /conciertos/slug, /concierto/slug, /festivales/slug, /festival/slug, /destinos/slug
+    const pathMatch = lookupPath.match(/^\/(conciertos?|festivales?|destinos)\/(.+)$/);
     
     if (!pathMatch) {
       return new Response("Invalid path", { 
@@ -661,15 +619,13 @@ serve(async (req) => {
     }
 
     const [, routeTypeParsed, slug] = pathMatch;
-    // Normalize to singular form for canonical URLs
     const routeType = routeTypeParsed.endsWith('s') && routeTypeParsed !== 'destinos' 
       ? routeTypeParsed.slice(0, -1) 
       : routeTypeParsed;
 
-    // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Destinos: prerender de ItemList con eventos locales
+    // Destinos
     if (routeType === "destinos") {
       const citySlug = slug;
 
@@ -694,31 +650,25 @@ serve(async (req) => {
 
       const cityName = all[0]?.venue_city || formatSlugToName(citySlug);
 
-      const prices = all
-        .map((e) => e.price_min_incl_fees)
-        .filter((p) => typeof p === "number" && p > 0) as number[];
+      const prices = all.map((e) => e.price_min_incl_fees).filter((p) => typeof p === "number" && p > 0) as number[];
       const minPriceEur = prices.length ? Math.min(...prices) : null;
 
-      // Intentar imagen de ciudad (si existe), si no usar imagen de primer evento
       const { data: cityMapping } = await supabase
         .from("lite_tbl_city_mapping")
         .select("ticketmaster_city, imagen_ciudad")
         .not("imagen_ciudad", "is", null);
 
       const mapped = (cityMapping || []).find((c: any) =>
-        (c.ticketmaster_city || "")
-          .toLowerCase()
-          .replace(/\s+/g, "-") === citySlug.toLowerCase(),
+        (c.ticketmaster_city || "").toLowerCase().replace(/\s+/g, "-") === citySlug.toLowerCase(),
       );
 
-      const rawImageUrl =
-        mapped?.imagen_ciudad || all[0]?.image_large_url || all[0]?.image_standard_url || `${SITE_URL}/og-image.jpg`;
+      const rawImageUrl = mapped?.imagen_ciudad || all[0]?.image_large_url || all[0]?.image_standard_url || `${SITE_URL}/og-image.jpg`;
       const imageUrl = rawImageUrl.includes("lovable.app") ? `${SITE_URL}/og-image.jpg` : rawImageUrl;
 
-      const canonicalUrl = `${SITE_URL}/destinos/${citySlug}`;
+      const isEN = lc.locale === "en";
+      const canonicalUrl = isEN ? `${SITE_URL}/en/destinations/${citySlug}` : `${SITE_URL}/destinos/${citySlug}`;
 
       const topArtists: string[] = [];
-      // Usamos el nombre del evento como fallback de “artistas/headliners” en destinos
       for (const e of all) {
         if (topArtists.length >= 6) break;
         if (typeof e.name === "string" && e.name.trim()) topArtists.push(e.name.trim());
@@ -731,13 +681,19 @@ serve(async (req) => {
         festivalsCount: festivals?.length || 0,
         topArtists,
         minPriceEur,
-      });
+      }, lc.locale);
 
-      const title = `Eventos en ${cityName} - Conciertos y Festivales | FEELOMOVE+`;
+      const title = isEN
+        ? `Events in ${cityName} - Concerts & Festivals | FEELOMOVE+`
+        : `Eventos en ${cityName} - Conciertos y Festivales | FEELOMOVE+`;
+
+      const ticketsPrefix = isEN ? "en/tickets" : "conciertos";
+      const festivalsPrefix = isEN ? "en/festivals" : "festivales";
 
       const itemList = all.slice(0, 10).map((e) => {
         const isConcert = !!concerts?.some((c: any) => c.slug === e.slug);
-        const eventUrl = isConcert ? `${SITE_URL}/conciertos/${e.slug}` : `${SITE_URL}/festivales/${e.slug}`;
+        const prefix = isConcert ? ticketsPrefix : festivalsPrefix;
+        const eventUrl = `${SITE_URL}/${prefix}/${e.slug}`;
         const evImage = (e.image_large_url || e.image_standard_url || imageUrl) as string;
         return {
           name: e.name,
@@ -755,6 +711,7 @@ serve(async (req) => {
         canonicalUrl,
         imageUrl,
         itemList,
+        lc,
       });
 
       return new Response(html, {
@@ -772,7 +729,6 @@ serve(async (req) => {
       ? "lovable_mv_event_product_page_festivales" 
       : "lovable_mv_event_product_page_conciertos";
 
-    // Fetch event data
     const { data, error } = await supabase
       .from(viewName)
       .select(`
@@ -796,7 +752,7 @@ serve(async (req) => {
 
     if (error || !data) {
       console.error("Event not found:", slug, error);
-      return new Response(generate404HTML(slug), {
+      return new Response(generate404HTML(slug, lc.locale), {
         status: 404,
         headers: { 
           ...corsHeaders, 
@@ -806,7 +762,7 @@ serve(async (req) => {
       });
     }
 
-    const html = generateHTML(data as EventData, slug, routeType as "concierto" | "festival");
+    const html = generateHTML(data as EventData, slug, routeType as "concierto" | "festival", lc);
 
     return new Response(html, {
       status: 200,
