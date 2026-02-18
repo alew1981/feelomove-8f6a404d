@@ -19,10 +19,10 @@
 - Rutas /en/* registradas (tickets, festivals, destinations, artists, favorites, inspiration, about)
 - Traducciones cargadas desde tm_translations con react-query (cache 24h)
 
-## Fase 2 - PENDIENTE: Routing
+## Fase 2 - COMPLETADA ✅: Routing (integrada en Fase 1)
 
-- Rutas /en/* en App.tsx
-- LanguageProvider wrapper
+- Rutas /en/* registradas en App.tsx (tickets, festivals, destinations, artists, favorites, inspiration, about)
+- LanguageProvider wrapper dentro de BrowserRouter
 
 ## Fase 3 - PENDIENTE: SEO
 
