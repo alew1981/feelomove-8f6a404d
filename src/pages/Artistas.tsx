@@ -19,6 +19,7 @@ import { matchesSearch } from "@/lib/searchUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ArtistListCard, { ArtistListCardSkeleton } from "@/components/ArtistListCard";
 import MobileFilterPills from "@/components/MobileFilterPills";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -36,6 +37,7 @@ const months = [
 ];
 
 const Artistas = () => {
+  const { t, locale } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -177,15 +179,15 @@ const Artistas = () => {
   return (
     <>
       <SEOHead
-        title="Artistas en Concierto España 2025 - Entradas"
-        description="Encuentra conciertos de tus artistas favoritos en España. Entradas para pop, rock, indie, electrónica y más géneros."
+        title={locale === 'en' ? "Artists in Concert Spain 2025 - Tickets" : "Artistas en Concierto España 2025 - Entradas"}
+        description={locale === 'en' ? "Find concerts from your favorite artists in Spain. Tickets for pop, rock, indie, electronic and more genres." : "Encuentra conciertos de tus artistas favoritos en España. Entradas para pop, rock, indie, electrónica y más géneros."}
         canonical="/artistas"
         keywords="artistas conciertos españa, músicos en directo, artistas festivales 2025"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
-          { name: "Artistas" }
+          { name: t("Inicio"), url: "/" },
+          { name: t("Artistas") }
         ]}
       />
       <div className="min-h-screen bg-background">
@@ -201,25 +203,27 @@ const Artistas = () => {
         {/* Hero Image - Hidden on mobile for faster results */}
         <div className="hidden md:block">
           <PageHero 
-            title="Artistas en Concierto" 
-            subtitle="Encuentra eventos de tus artistas favoritos"
+            title={t("Artistas en Concierto")} 
+            subtitle={t("Encuentra eventos de tus artistas favoritos")}
             imageUrl={heroImage} 
             priority={true}
           />
           
           <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
-            Artistas destacados con conciertos y festivales en España
+            {t("Artistas destacados con conciertos y festivales en España")}
           </h2>
           
           <p className="text-muted-foreground text-lg mb-8" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 40px' }}>
-            Explora nuestra colección de {filteredArtists?.length || 0} artistas con eventos en España
+            {locale === 'en' 
+              ? `Explore our collection of ${filteredArtists?.length || 0} artists with events in Spain`
+              : `Explora nuestra colección de ${filteredArtists?.length || 0} artistas con eventos en España`}
           </p>
         </div>
 
         {/* Mobile: Compact Title */}
         <div className="md:hidden mb-4">
           <h1 className="text-xl font-bold text-foreground">
-            Artistas
+            {t("Artistas")}
           </h1>
         </div>
 
@@ -228,7 +232,7 @@ const Artistas = () => {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Buscar artistas..."
+            placeholder={t("Buscar artistas...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
@@ -256,7 +260,7 @@ const Artistas = () => {
                 <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
+                <SelectItem value="all">{t("Todas las ciudades")}</SelectItem>
                 {cities.map((city: string) => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
                 ))}
@@ -268,7 +272,7 @@ const Artistas = () => {
                 <span className="truncate text-sm">{filterGenre === "all" ? "Género" : filterGenre}</span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los géneros</SelectItem>
+                <SelectItem value="all">{t("Todos los géneros")}</SelectItem>
                 {genres.map((genre: string) => (
                   <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                 ))}
@@ -280,7 +284,7 @@ const Artistas = () => {
                 <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los meses</SelectItem>
+                <SelectItem value="all">{t("Todos los meses")}</SelectItem>
                 {months.map((month) => (
                   <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                 ))}
@@ -368,7 +372,7 @@ const Artistas = () => {
                       </CardContent>
                       <CardFooter className="p-4 pt-0">
                         <Button className="w-full bg-accent hover:bg-accent/90 text-brand-black font-semibold py-2 rounded-lg text-sm">
-                          Ver Eventos →
+                          {t("Ver Eventos")} →
                         </Button>
                       </CardFooter>
                     </Card>
@@ -385,7 +389,7 @@ const Artistas = () => {
           </>
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No se encontraron artistas</p>
+            <p className="text-muted-foreground text-lg">{t("No se encontraron artistas")}</p>
           </div>
         )}
       </main>

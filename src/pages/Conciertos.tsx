@@ -16,6 +16,7 @@ import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-rea
 import { useInView } from "react-intersection-observer";
 import { SEOHead } from "@/components/SEOHead";
 import { matchesSearch } from "@/lib/searchUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Generate month-year options dynamically from available events
 const getMonthYearOptions = (events: any[]) => {
@@ -46,6 +47,7 @@ const getMonthYearOptions = (events: any[]) => {
 
 const Conciertos = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t, locale } = useTranslation();
   
   // Initialize filters from URL params
   const initialGenre = searchParams.get("genero") || "all";
@@ -55,7 +57,6 @@ const Conciertos = () => {
   const [filterGenre, setFilterGenre] = useState<string>(initialGenre);
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterMonthYear, setFilterMonthYear] = useState<string>("all");
-  // Removed filterRecent - all events now sorted by updated_at DESC by default
   const [filterVip, setFilterVip] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [displayCount, setDisplayCount] = useState<number>(30);
@@ -209,8 +210,8 @@ const Conciertos = () => {
   const jsonLd = events && events.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Conciertos en España 2025",
-    "description": "Listado de conciertos y eventos musicales en España. Compra entradas y reserva hotel.",
+    "name": locale === 'en' ? "Concerts in Spain 2025" : "Conciertos en España 2025",
+    "description": locale === 'en' ? "List of concerts and music events in Spain. Buy tickets and book hotels." : "Listado de conciertos y eventos musicales en España. Compra entradas y reserva hotel.",
     "url": "https://feelomove.com/conciertos",
     "numberOfItems": events.length,
     "itemListElement": events.slice(0, 20).map((event, index) => ({
@@ -261,15 +262,15 @@ const Conciertos = () => {
   return (
     <>
       <SEOHead
-        title="Conciertos en España 2025 - Entradas y Hoteles"
-        description="Compra entradas para conciertos en Madrid, Barcelona y toda España. Reserva hotel cerca del venue. Rock, pop, indie y más."
+        title={locale === 'en' ? "Concerts in Spain 2025 - Tickets and Hotels" : "Conciertos en España 2025 - Entradas y Hoteles"}
+        description={locale === 'en' ? "Buy tickets for concerts in Madrid, Barcelona and all Spain. Book a hotel near the venue. Rock, pop, indie and more." : "Compra entradas para conciertos en Madrid, Barcelona y toda España. Reserva hotel cerca del venue. Rock, pop, indie y más."}
         canonical="/conciertos"
         keywords="conciertos españa 2025, entradas conciertos madrid, conciertos barcelona, rock pop indie"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
-          { name: "Conciertos" }
+          { name: t("Inicio"), url: "/" },
+          { name: t("Conciertos") }
         ]}
       />
       
@@ -285,8 +286,8 @@ const Conciertos = () => {
           {/* Hero Image - hidden on mobile for faster content access */}
           <div className="hidden md:block">
             <PageHero 
-              title="Conciertos en España" 
-              subtitle="Entradas y hoteles para los mejores conciertos"
+              title={t("Conciertos en España")} 
+              subtitle={t("Entradas y hoteles para los mejores conciertos")}
               imageUrl={heroImage} 
               priority={true}
             />
@@ -294,8 +295,8 @@ const Conciertos = () => {
           
           {/* Mobile Header - compact */}
           <div className="md:hidden mb-3">
-            <h1 className="text-xl font-bold text-foreground">Conciertos en España</h1>
-            <p className="text-sm text-muted-foreground">{filteredAndSortedEvents.length} conciertos disponibles</p>
+            <h1 className="text-xl font-bold text-foreground">{t("Conciertos en España")}</h1>
+            <p className="text-sm text-muted-foreground">{filteredAndSortedEvents.length} {t("conciertos disponibles")}</p>
           </div>
 
           {/* Mobile Search Bar - Above Filters */}
@@ -304,7 +305,7 @@ const Conciertos = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar artista, ciudad..."
+                placeholder={t("Buscar artista, ciudad...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10 h-11 text-sm bg-card border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
@@ -322,14 +323,13 @@ const Conciertos = () => {
           
           {/* Desktop H2 */}
           <h2 className="hidden md:block text-2xl font-semibold text-foreground mt-6 mb-4">
-            Próximos eventos y conciertos destacados en España
+            {t("Próximos eventos y conciertos destacados en España")}
           </h2>
           
           {/* Description - desktop only */}
           <div className="hidden md:block prose prose-lg max-w-none mb-6" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
-              Descubre todos los conciertos en España. Desde rock y pop hasta indie y electrónica. 
-              Encuentra tu concierto perfecto y reserva hotel en la misma ciudad.
+              {t("Descubre todos los conciertos en España. Desde rock y pop hasta indie y electrónica. Encuentra tu concierto perfecto y reserva hotel en la misma ciudad.")}
             </p>
           </div>
 
@@ -341,7 +341,7 @@ const Conciertos = () => {
             >
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
-                <span>Filtros</span>
+                <span>{t("Filtros")}</span>
                 {(filterArtist !== "all" || filterCity !== "all") && (
                   <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
                     {[filterArtist !== "all", filterCity !== "all"].filter(Boolean).length}
@@ -356,10 +356,10 @@ const Conciertos = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <Select value={filterArtist} onValueChange={setFilterArtist}>
                     <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterArtist === "all" ? "Artista" : filterArtist}</span>
+                      <span className="truncate">{filterArtist === "all" ? t("Artista") : filterArtist}</span>
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="all">Todos los artistas</SelectItem>
+                      <SelectItem value="all">{t("Todos los artistas")}</SelectItem>
                       {artists.map(artist => (
                         <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                       ))}
@@ -368,10 +368,10 @@ const Conciertos = () => {
 
                   <Select value={filterCity} onValueChange={setFilterCity}>
                     <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                      <span className="truncate">{filterCity === "all" ? t("Ciudad") : filterCity}</span>
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="all">Todas las ciudades</SelectItem>
+                      <SelectItem value="all">{t("Todas las ciudades")}</SelectItem>
                       {cities.map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
@@ -388,7 +388,7 @@ const Conciertos = () => {
                     }}
                     className="text-xs text-destructive hover:underline w-full text-center pt-1"
                   >
-                    Limpiar filtros
+                    {t("Limpiar filtros")}
                   </button>
                 )}
               </div>
@@ -402,7 +402,7 @@ const Conciertos = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar conciertos..."
+                placeholder={t("Buscar conciertos...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
@@ -421,10 +421,10 @@ const Conciertos = () => {
             <div className="grid grid-cols-5 gap-2">
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                  <span className="truncate text-sm">{filterCity === "all" ? t("Ciudad") : filterCity}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas las ciudades</SelectItem>
+                  <SelectItem value="all">{t("Todas las ciudades")}</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}
@@ -433,10 +433,10 @@ const Conciertos = () => {
 
               <Select value={filterGenre} onValueChange={setFilterGenre}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterGenre === "all" ? "Género" : filterGenre}</span>
+                  <span className="truncate text-sm">{filterGenre === "all" ? t("Género") : filterGenre}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los géneros</SelectItem>
+                  <SelectItem value="all">{t("Todos los géneros")}</SelectItem>
                   {genres.map(genre => (
                     <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                   ))}
@@ -445,10 +445,10 @@ const Conciertos = () => {
 
               <Select value={filterArtist} onValueChange={setFilterArtist}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterArtist !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterArtist === "all" ? "Artista" : filterArtist}</span>
+                  <span className="truncate text-sm">{filterArtist === "all" ? t("Artista") : filterArtist}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los artistas</SelectItem>
+                  <SelectItem value="all">{t("Todos los artistas")}</SelectItem>
                   {artists.map(artist => (
                     <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                   ))}
@@ -457,25 +457,23 @@ const Conciertos = () => {
 
               <Select value={filterMonthYear} onValueChange={setFilterMonthYear}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonthYear !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterMonthYear === "all" ? "Mes" : monthYearOptions.find(m => m.value === filterMonthYear)?.label}</span>
+                  <span className="truncate text-sm">{filterMonthYear === "all" ? t("Mes") : monthYearOptions.find(m => m.value === filterMonthYear)?.label}</span>
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="all">Todos los meses</SelectItem>
+                  <SelectItem value="all">{t("Todos los meses")}</SelectItem>
                   {monthYearOptions.map((month) => (
                     <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              {/* Removed filterRecent - events sorted by updated_at by default */}
-
               <Select value={filterVip} onValueChange={setFilterVip}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterVip !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterVip === "all" ? "Tipo" : "VIP"}</span>
+                  <span className="truncate text-sm">{filterVip === "all" ? t("Tipo") : "VIP"}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="vip">Solo VIP</SelectItem>
+                  <SelectItem value="all">{t("Todos")}</SelectItem>
+                  <SelectItem value="vip">{t("Solo VIP")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -492,7 +490,7 @@ const Conciertos = () => {
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
-                  Limpiar filtros
+                  {t("Limpiar filtros")}
                 </button>
               </div>
             )}
@@ -516,8 +514,8 @@ const Conciertos = () => {
             </>
           ) : filteredAndSortedEvents.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-xl text-muted-foreground mb-4">No se encontraron conciertos</p>
-              <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+              <p className="text-xl text-muted-foreground mb-4">{t("No se encontraron conciertos")}</p>
+              <p className="text-muted-foreground">{t("Prueba ajustando los filtros o la búsqueda")}</p>
             </div>
           ) : (
             <>
@@ -540,7 +538,7 @@ const Conciertos = () => {
                 <div ref={loadMoreRef} className="flex justify-center items-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-                    <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más conciertos...</p>
+                    <p className="text-sm text-muted-foreground font-['Poppins']">{t("Cargando más conciertos...")}</p>
                   </div>
                 </div>
               )}

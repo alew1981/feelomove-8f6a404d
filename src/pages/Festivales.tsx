@@ -16,6 +16,7 @@ import ParentFestivalCard from "@/components/ParentFestivalCard";
 import FestivalListCard, { FestivalListCardSkeleton } from "@/components/FestivalListCard";
 import { FestivalProductPage } from "@/types/events.types";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const months = [
   { value: "01", label: "Enero" },
@@ -223,6 +224,7 @@ const normalizeFestival = (festival: FestivalProductPage): NormalizedFestival =>
 };
 
 const Festivales = () => {
+  const { t, locale } = useTranslation();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -495,15 +497,15 @@ const Festivales = () => {
   return (
     <>
       <SEOHead
-        title="Festivales de Música en España 2025 - Entradas y Hoteles | Feelomove"
-        description="Descubre los mejores festivales de música en España 2025. Compra tus entradas para festivales de rock, electrónica, indie y reserva hotel cerca del recinto."
+        title={locale === 'en' ? "Music Festivals in Spain 2025 - Tickets and Hotels | Feelomove" : "Festivales de Música en España 2025 - Entradas y Hoteles | Feelomove"}
+        description={locale === 'en' ? "Discover the best music festivals in Spain 2025. Buy tickets for rock, electronic, indie festivals and book hotels near the venue." : "Descubre los mejores festivales de música en España 2025. Compra tus entradas para festivales de rock, electrónica, indie y reserva hotel cerca del recinto."}
         canonical="/festivales"
         keywords="festivales españa 2025, festivales música, festivales verano, festivales madrid, festivales barcelona"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
-          { name: "Festivales" }
+          { name: t("Inicio"), url: "/" },
+          { name: t("Festivales") }
         ]}
       />
       
@@ -519,8 +521,8 @@ const Festivales = () => {
           {/* Hero Image - hidden on mobile for faster content access */}
           <div className="hidden md:block">
             <PageHero 
-              title="Festivales de Música en España" 
-              subtitle="Entradas + Hotel para los mejores festivales de 2025"
+              title={t("Festivales de Música en España")} 
+              subtitle={t("Entradas + Hotel para los mejores festivales de 2025")}
               imageUrl={heroImage} 
               priority={true}
             />
@@ -528,8 +530,8 @@ const Festivales = () => {
           
           {/* Mobile Header - compact */}
           <div className="md:hidden mb-3">
-            <h1 className="text-xl font-bold text-foreground">Festivales en España</h1>
-            <p className="text-sm text-muted-foreground">{totalCount} festivales disponibles</p>
+            <h1 className="text-xl font-bold text-foreground">{t("Festivales en España")}</h1>
+            <p className="text-sm text-muted-foreground">{totalCount} {t("festivales disponibles")}</p>
           </div>
 
           {/* Mobile Search Bar - Above Filters */}
@@ -538,7 +540,8 @@ const Festivales = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar artista, festival..."
+                placeholder={t("Buscar artista, festival...")}
+
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10 h-11 text-sm bg-card border border-border rounded-xl focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
@@ -556,14 +559,13 @@ const Festivales = () => {
           
           {/* Desktop H2 */}
           <h2 className="hidden md:block text-2xl font-semibold text-foreground mt-6 mb-4">
-            Próximos festivales y eventos musicales destacados en España
+            {t("Próximos festivales y eventos musicales destacados en España")}
           </h2>
           
           {/* Description - desktop only */}
           <div className="hidden md:block prose prose-lg max-w-none mb-6" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 80px' }}>
             <p className="text-muted-foreground leading-relaxed">
-              Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. 
-              Encuentra tu festival perfecto y reserva hotel cerca del recinto.
+              {t("Descubre todos los festivales de música en España. Desde festivales de verano hasta eventos multi-día. Encuentra tu festival perfecto y reserva hotel cerca del recinto.")}
             </p>
           </div>
 
@@ -575,7 +577,7 @@ const Festivales = () => {
             >
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
-                <span>Filtros</span>
+                <span>{t("Filtros")}</span>
                 {(filterArtist !== "all" || filterCity !== "all") && (
                   <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full">
                     {[filterArtist !== "all", filterCity !== "all"].filter(Boolean).length}
@@ -590,10 +592,10 @@ const Festivales = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <Select value={filterArtist} onValueChange={setFilterArtist}>
                     <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterArtist === "all" ? "Artista" : filterArtist}</span>
+                      <span className="truncate">{filterArtist === "all" ? t("Artista") : filterArtist}</span>
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="all">Todos los artistas</SelectItem>
+                      <SelectItem value="all">{t("Todos los artistas")}</SelectItem>
                       {artists.map(artist => (
                         <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                       ))}
@@ -602,10 +604,10 @@ const Festivales = () => {
 
                   <Select value={filterCity} onValueChange={setFilterCity}>
                     <SelectTrigger className="h-9 text-xs">
-                      <span className="truncate">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                      <span className="truncate">{filterCity === "all" ? t("Ciudad") : filterCity}</span>
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="all">Todas las ciudades</SelectItem>
+                      <SelectItem value="all">{t("Todas las ciudades")}</SelectItem>
                       {cities.map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
@@ -622,7 +624,7 @@ const Festivales = () => {
                     }}
                     className="text-xs text-destructive hover:underline w-full text-center pt-1"
                   >
-                    Limpiar filtros
+                    {t("Limpiar filtros")}
                   </button>
                 )}
               </div>
@@ -636,7 +638,7 @@ const Festivales = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar festivales..."
+                placeholder={t("Buscar festivales...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
@@ -655,20 +657,20 @@ const Festivales = () => {
             <div className="grid grid-cols-5 gap-2">
               <Select value={filterSort} onValueChange={setFilterSort}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterSort !== "proximos" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterSort === "proximos" ? "Próximos" : "Recientes"}</span>
+                  <span className="truncate text-sm">{filterSort === "proximos" ? t("Próximos") : t("Recientes")}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="proximos">Próximos</SelectItem>
-                  <SelectItem value="recientes">Añadidos recientemente</SelectItem>
+                  <SelectItem value="proximos">{t("Próximos")}</SelectItem>
+                  <SelectItem value="recientes">{t("Añadidos recientemente")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={filterCity} onValueChange={setFilterCity}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                  <span className="truncate text-sm">{filterCity === "all" ? t("Ciudad") : filterCity}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas las ciudades</SelectItem>
+                  <SelectItem value="all">{t("Todas las ciudades")}</SelectItem>
                   {cities.map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}
@@ -677,10 +679,10 @@ const Festivales = () => {
 
               <Select value={filterGenre} onValueChange={setFilterGenre}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterGenre === "all" ? "Género" : filterGenre}</span>
+                  <span className="truncate text-sm">{filterGenre === "all" ? t("Género") : filterGenre}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los géneros</SelectItem>
+                  <SelectItem value="all">{t("Todos los géneros")}</SelectItem>
                   {genres.map(genre => (
                     <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                   ))}
@@ -689,10 +691,10 @@ const Festivales = () => {
 
               <Select value={filterMonth} onValueChange={setFilterMonth}>
                 <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                  <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
+                  <span className="truncate text-sm">{filterMonth === "all" ? t("Mes") : months.find(m => m.value === filterMonth)?.label}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los meses</SelectItem>
+                  <SelectItem value="all">{t("Todos los meses")}</SelectItem>
                   {months.map((month) => (
                     <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                   ))}
@@ -711,7 +713,7 @@ const Festivales = () => {
                   }}
                   className="text-sm text-muted-foreground hover:text-destructive transition-colors underline"
                 >
-                  Limpiar filtros
+                  {t("Limpiar filtros")}
                 </button>
               </div>
             )}
@@ -720,7 +722,7 @@ const Festivales = () => {
           {/* Results count */}
           {!isLoading && (
             <p className="text-sm text-muted-foreground mb-4">
-              {totalCount} {totalCount === 1 ? 'festival encontrado' : 'festivales encontrados'}
+              {totalCount} {totalCount === 1 ? t('festival encontrado') : t('festivales encontrados')}
             </p>
           )}
 
@@ -742,8 +744,8 @@ const Festivales = () => {
             </>
           ) : totalCount === 0 ? (
             <div className="text-center py-16" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}>
-              <p className="text-xl text-muted-foreground mb-4">No se encontraron festivales</p>
-              <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+              <p className="text-xl text-muted-foreground mb-4">{t("No se encontraron festivales")}</p>
+              <p className="text-muted-foreground">{t("Prueba ajustando los filtros o la búsqueda")}</p>
             </div>
           ) : (
             <>

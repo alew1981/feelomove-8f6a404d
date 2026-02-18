@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DestinationListCardSkeleton } from "@/components/DestinationListCard";
 import { CACHE_TTL } from "@/lib/cacheClient";
 import { usePrefetch } from "@/hooks/usePrefetch";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // === INLINE SVG ICONS (replaces lucide-react for TBT optimization) ===
 const IconSearch = ({ className = "" }: { className?: string }) => (
@@ -49,6 +50,7 @@ const months = [
 ];
 
 const Destinos = () => {
+  const { t, locale } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -256,7 +258,7 @@ const Destinos = () => {
             contain: 'layout style',
           }}
         >
-          Destinos {!isLoading && filteredCities ? `(${filteredCities.length})` : ''}
+          {t("Destinos")} {!isLoading && filteredCities ? `(${filteredCities.length})` : ''}
         </h1>
 
         {/* Search Bar */}
@@ -264,7 +266,7 @@ const Destinos = () => {
           <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Buscar destino..."
+            placeholder={t("Buscar destino...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 pr-12 h-12 text-base bg-card border-2 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent"
@@ -326,7 +328,7 @@ const Destinos = () => {
               </div>
             </>
           ) : filteredCities.length === 0 ? (
-            <div className="text-center py-16"><p className="text-xl text-muted-foreground">No se encontraron destinos</p></div>
+            <div className="text-center py-16"><p className="text-xl text-muted-foreground">{t("No se encontraron destinos")}</p></div>
           ) : (
             <>
               {/* Mobile: Virtualized List - Only renders visible items */}
