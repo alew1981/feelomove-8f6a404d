@@ -34,6 +34,7 @@ import { useCart } from "@/contexts/CartContext";
 import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl, getCanonicalEventUrl } from "@/lib/eventUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
@@ -303,9 +304,11 @@ const Producto = ({ slugProp }: ProductoProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Route detection - support both singular (legacy) and plural (canonical)
-  const isConcierto = location.pathname.startsWith("/concierto/") || location.pathname.startsWith("/conciertos/");
-  const isFestivalRoute = location.pathname.startsWith("/festival/") || location.pathname.startsWith("/festivales/");
+  const { t, locale, localePath, formatDate: formatDateLocale } = useTranslation();
+
+  // Route detection - support both singular (legacy), plural (canonical) and EN routes
+  const isConcierto = location.pathname.startsWith("/concierto/") || location.pathname.startsWith("/conciertos/") || location.pathname.startsWith("/en/tickets/");
+  const isFestivalRoute = location.pathname.startsWith("/festival/") || location.pathname.startsWith("/festivales/") || location.pathname.startsWith("/en/festivals/");
 
   // CRITICAL: URL Normalization - handles numeric suffixes, noise words, plural→singular
   // This runs BEFORE data fetch to intercept dirty URLs
@@ -733,21 +736,21 @@ const Producto = ({ slugProp }: ProductoProps) => {
                   <IconAlertCircle className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Error al cargar el evento</h2>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">{t('Error al cargar el evento')}</h2>
                   <p className="text-muted-foreground text-sm">
                     {error instanceof Error ? error.message : "Ha ocurrido un error inesperado"}
                   </p>
                 </div>
                 <div className="flex gap-3 justify-center pt-2">
                   <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
-                    Volver atrás
+                    {t('Volver atrás')}
                   </Button>
                   <Button
                     onClick={() => refetch()}
                     className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
                   >
                     <IconRefreshCw className="h-4 w-4" />
-                    Reintentar
+                    {t('Reintentar')}
                   </Button>
                 </div>
               </div>
@@ -775,7 +778,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
   const hasValidDate = !isPlaceholderDate(rawEventDate);
   const eventDate = hasValidDate && rawEventDate ? new Date(rawEventDate) : new Date();
   const formattedTime = hasValidDate ? formatDatePart(eventDate, "time") : null;
-  const monthYear = hasValidDate ? formatDatePart(eventDate, "monthYear") : "Fecha por confirmar";
+  const monthYear = hasValidDate ? formatDatePart(eventDate, "monthYear") : t("Fecha por confirmar");
 
   const now = new Date();
   const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
@@ -798,12 +801,16 @@ const Producto = ({ slugProp }: ProductoProps) => {
   
   // SEO Gold Format: Entradas [Artista] [Ciudad] [Año] | FEELOMOVE+
   const seoTitle = isFestivalDisplay
-    ? `${mainArtist} ${eventYear} - Entradas Festival + Hotel`
-    : `Entradas ${mainArtist} ${eventDetails.venue_city} ${eventYear}`;
+    ? `${mainArtist} ${eventYear} - ${t('Entradas')} Festival + Hotel`
+    : `${t('Entradas')} ${mainArtist} ${eventDetails.venue_city} ${eventYear}`;
   
   const seoDescription = isFestivalDisplay
-    ? `Compra tus entradas para ${mainArtist} ${eventYear}. Festival en ${eventDetails.venue_city}. Incluye opciones de alojamiento cerca del evento. ¡Reserva tu experiencia musical completa!`
-    : `Compra tus entradas para el concierto de ${mainArtist} en ${eventDetails.venue_city}. Incluye opciones de alojamiento y transporte. ¡Reserva tu experiencia musical completa!`;
+    ? locale === 'en'
+      ? `Buy tickets for ${mainArtist} ${eventYear}. Festival in ${eventDetails.venue_city}. Includes accommodation options near the venue. Book your complete music experience!`
+      : `Compra tus entradas para ${mainArtist} ${eventYear}. Festival en ${eventDetails.venue_city}. Incluye opciones de alojamiento cerca del evento. ¡Reserva tu experiencia musical completa!`
+    : locale === 'en'
+      ? `Buy tickets for ${mainArtist} concert in ${eventDetails.venue_city}. Includes accommodation and transport options. Book your complete music experience!`
+      : `Compra tus entradas para el concierto de ${mainArtist} en ${eventDetails.venue_city}. Incluye opciones de alojamiento y transporte. ¡Reserva tu experiencia musical completa!`;
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
   const hasMoreTickets = ticketPrices.length > 4;
@@ -1020,10 +1027,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
         isVipEvent={isVipEventFromSlug}
         artistName={mainArtist}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
+          { name: t("Inicio"), url: localePath("/") },
           {
-            name: eventDetails.is_festival ? "Festivales" : "Conciertos",
-            url: eventDetails.is_festival ? "/festivales" : "/conciertos",
+            name: eventDetails.is_festival ? t("Festivales") : t("Conciertos"),
+            url: localePath(eventDetails.is_festival ? "/festivales" : "/conciertos"),
           },
           ...(eventDetails.is_festival
             ? [
@@ -1258,13 +1265,13 @@ const Producto = ({ slugProp }: ProductoProps) => {
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
-                    <h2 className="text-xl sm:text-2xl font-bold">Entradas</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
                   </div>
                   <Card className="border-2 border-muted">
                     <CardContent className="p-6 text-center space-y-3">
-                      <Badge variant="agotado" className="text-sm px-4 py-1.5">AGOTADO</Badge>
+                      <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
                       <p className="text-sm text-muted-foreground">
-                        Las entradas para este evento se han agotado
+                        {t('Las entradas para este evento se han agotado')}
                       </p>
                     </CardContent>
                   </Card>
@@ -1307,13 +1314,13 @@ const Producto = ({ slugProp }: ProductoProps) => {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                       <IconTicket className="h-5 w-5 text-accent" />
-                      Ver otros conciertos de {mainArtist}
+                      {t('Ver otros conciertos de')} {mainArtist}
                     </h2>
                     <Link
                       to={`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
                       className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
                     >
-                      Ver todos <IconChevronRight className="h-4 w-4" />
+                      {t('Ver todos')} <IconChevronRight className="h-4 w-4" />
                     </Link>
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
@@ -1369,10 +1376,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
               <Card className="sticky top-24 border-2">
                 <CardHeader className="bg-foreground text-background">
                   <CardTitle className="uppercase tracking-wide text-sm flex items-center gap-2">
-                    Tu Pack
+                    {t('Tu Pack')}
                     {isEventInCart && cart?.hotel && (
                       <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded font-bold">
-                        COMPLETO
+                        {t('COMPLETO')}
                       </span>
                     )}
                   </CardTitle>
@@ -1388,7 +1395,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                         <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mb-4">
                           <p className="text-xs text-foreground font-medium flex items-center gap-2">
                             <IconCheck className="h-3 w-3 text-accent" />
-                            ¡Pack completo! Entradas + Hotel
+                            {t('¡Pack completo! Entradas + Hotel')}
                           </p>
                         </div>
                       )}
@@ -1399,7 +1406,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                             <div className="flex-1">
                               <div className="flex items-center gap-1.5 mb-1">
                                 <IconTicket className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-[10px] uppercase text-muted-foreground font-medium">Entrada</span>
+                                <span className="text-[10px] uppercase text-muted-foreground font-medium">{t('Entrada')}</span>
                               </div>
                               <h3 className="font-bold text-sm">{ticketItem.type}</h3>
                               {ticketItem.description && (
@@ -1419,7 +1426,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                           </div>
 
                           <div className="flex items-center justify-between text-xs mb-2">
-                            <span className="text-muted-foreground">Cantidad:</span>
+                            <span className="text-muted-foreground">{t('Cantidad')}:</span>
                             <span className="font-bold">{ticketItem.quantity}</span>
                           </div>
 
@@ -1428,7 +1435,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                               €{((ticketItem.price + ticketItem.fees) * ticketItem.quantity).toFixed(2)}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              €{ticketItem.price.toFixed(2)} + €{ticketItem.fees.toFixed(2)} gastos
+                              €{ticketItem.price.toFixed(2)} + €{ticketItem.fees.toFixed(2)} {t('gastos')}
                             </p>
                           </div>
                         </div>
@@ -1440,7 +1447,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                         asChild
                       >
                         <a href={(eventDetails as any).event_url || "#"} target="_blank" rel="noopener noreferrer">
-                          Reservar Entradas
+                          {t('Reservar Entradas')}
                         </a>
                       </Button>
 
@@ -1473,7 +1480,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                                   })}
                                 </p>
                               )}
-                              <p>{cart.hotel.nights} noches · 2 huéspedes</p>
+                              <p>{cart.hotel.nights} {t('noches')} · 2 {t('huéspedes')}</p>
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold">€{cart.hotel.total_price.toFixed(2)}</div>
@@ -1489,7 +1496,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              Reservar Hotel
+                              {t('Reservar Hotel')}
                             </a>
                           </Button>
                         </>
@@ -1497,12 +1504,12 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
                       <div className="pt-4 border-t-2 space-y-3">
                         <div className="text-center">
-                          <p className="text-sm text-muted-foreground mb-1">Total por persona</p>
+                          <p className="text-sm text-muted-foreground mb-1">{t('Total por persona')}</p>
                           <span className="text-3xl font-black text-foreground">€{pricePerPerson.toFixed(2)}</span>
                         </div>
 
                         <div className="flex items-center justify-between pt-2">
-                          <span className="text-sm text-muted-foreground">Total ({totalPersons} personas)</span>
+                          <span className="text-sm text-muted-foreground">Total ({totalPersons} {t('personas')})</span>
                           <span className="text-base font-bold text-accent">€{totalPrice.toFixed(2)}</span>
                         </div>
                       </div>
@@ -1514,16 +1521,16 @@ const Producto = ({ slugProp }: ProductoProps) => {
                       </div>
                       {!isEventAvailable && !isNotYetOnSale ? (
                         <>
-                          <Badge variant="agotado" className="mb-2">AGOTADO</Badge>
+                          <Badge variant="agotado" className="mb-2">{t('AGOTADO')}</Badge>
                           <p className="text-xs text-muted-foreground">
-                            Las entradas para este evento se han agotado
+                            {t('Las entradas para este evento se han agotado')}
                           </p>
                         </>
                       ) : (
                         <>
-                          <p className="text-foreground font-medium mb-2">Empieza seleccionando tus entradas</p>
+                          <p className="text-foreground font-medium mb-2">{t('Empieza seleccionando tus entradas')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Elige las entradas y después añade un hotel para completar tu pack
+                            {t('Elige las entradas y después añade un hotel para completar tu pack')}
                           </p>
                         </>
                       )}
