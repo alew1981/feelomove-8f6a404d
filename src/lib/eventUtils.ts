@@ -86,15 +86,11 @@ export const getFestivalUrl = (
   festivalName: string,
   city: string,
   eventDate?: string | Date | null,
-  existingSlug?: string
+  existingSlug?: string,
+  locale?: 'es' | 'en'
 ): string => {
-  // If an existing slug is provided and it's valid, use it
-  if (existingSlug && existingSlug.length > 0) {
-    return `/festivales/${existingSlug}`;
-  }
-  
-  // Generate new slug based on festival data
-  const slug = generateFestivalSlug(festivalName, city, eventDate);
+  const slug = (existingSlug && existingSlug.length > 0) ? existingSlug : generateFestivalSlug(festivalName, city, eventDate);
+  if (locale === 'en') return `/en/festivals/${slug}`;
   return `/festivales/${slug}`;
 };
 

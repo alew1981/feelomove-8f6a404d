@@ -150,7 +150,7 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
   const isEventPast = startDate && isPast(startDate);
 
   // Festival URL
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const eventUrl = getEventUrl(festivalSlug || '', true, locale);
 
   // Artist count info
@@ -271,16 +271,16 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
             {isNotYetOnSale ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-500">
                 <ClockIcon />
-                Pronto
+                {t('Pronto')}
               </span>
             ) : isEventPast ? (
               <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                Pasado
+                {t('Pasado')}
               </span>
             ) : artistCount > 0 ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                 <UsersIcon />
-                {artistCount} artistas
+                {artistCount} {t('artistas')}
               </span>
             ) : null}
           </div>

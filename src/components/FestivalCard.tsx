@@ -6,6 +6,7 @@ import { memo, useRef, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFestivalUrl } from "@/lib/eventUtils";
 import { parseDate, isFuture, isPast, formatDay, formatMonth, formatYear } from "@/lib/dateUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Inline SVGs for critical icons (aria-hidden for screen reader accessibility)
 const MapPinIcon = () => (
@@ -32,7 +33,6 @@ interface FestivalCardProps {
     image_standard_url?: string | null;
     sold_out?: boolean | null;
     seats_available?: boolean | null;
-    // Festival-specific fields - prioritize manual dates
     start_date_manual?: string | null;
     end_date_manual?: string | null;
     start_date?: string | null;
@@ -40,10 +40,8 @@ interface FestivalCardProps {
     festival_start_date?: string | null;
     festival_end_date?: string | null;
     festival_duration_days?: number | null;
-    // Primary/Secondary attraction fields for display logic
     primary_attraction_name?: string | null;
     secondary_attraction_name?: string | null;
-    // On sale date for "coming soon" badge
     on_sale_date?: string | null;
   };
   priority?: boolean;
@@ -56,6 +54,7 @@ const isPlaceholderDateCheck = (dateStr: string | null | undefined): boolean => 
 };
 
 const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) => {
+  const { t, locale } = useTranslation();
   const [isInView, setIsInView] = useState(priority);
   const [imageLoaded, setImageLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -92,7 +91,8 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
     festival.event_name || festival.primary_attraction_name || '',
     festival.venue_city || '',
     festival.festival_start_date || festival.event_date,
-    festival.event_slug
+    festival.event_slug,
+    locale
   );
   
   // Display title - use event_name or primary_attraction_name
@@ -128,11 +128,11 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
     // Show "Pendiente fechas" for placeholder dates
     dateDisplay = (
       <div className="text-center px-3 py-3 bg-gradient-to-b from-gray-50 to-white">
-        <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">FECHA</div>
-        <div className="text-xs font-bold text-gray-700 mt-1 px-1">Pendiente</div>
+        <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">{t('FECHA')}</div>
+        <div className="text-xs font-bold text-gray-700 mt-1 px-1">{t('Pendiente')}</div>
         <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-2 border-t border-gray-200 pt-2">
           <MapPinIcon />
-          <span className="line-clamp-1 font-medium">{festival.venue_city || 'Por confirmar'}</span>
+          <span className="line-clamp-1 font-medium">{festival.venue_city || t('Por confirmar')}</span>
         </div>
       </div>
     );
@@ -158,7 +158,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
   }
 
   return (
-    <Link to={festivalUrl} className="block group" title={`Ver detalles de ${displayTitle}`}>
+    <Link to={festivalUrl} className="block group" title={`${t('Ver detalles')} ${displayTitle}`}>
       <Card
         ref={cardRef}
         className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg"
@@ -174,8 +174,8 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
                 )}
                 <img
                   src={imageUrl}
-                  alt={`${displayTitle} - Festival de música en ${festival.venue_city || 'España'}`}
-                  title={`${displayTitle} - Festival en ${festival.venue_city || 'España'}`}
+                  alt={`${displayTitle} - ${locale === 'en' ? 'Music festival in' : 'Festival de música en'} ${festival.venue_city || (locale === 'en' ? 'Spain' : 'España')}`}
+                  title={`${displayTitle} - ${locale === 'en' ? 'Festival in' : 'Festival en'} ${festival.venue_city || (locale === 'en' ? 'Spain' : 'España')}`}
                   loading={priority ? "eager" : "lazy"}
                   decoding={priority ? "sync" : "async"}
                   fetchPriority={priority ? "high" : "low"}
@@ -202,7 +202,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
               <div className="absolute right-2 top-2 z-20">
                 <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
                   <ClockIcon />
-                  A la venta {onSaleDateFormatted}
+                  {t('A la venta')} {onSaleDateFormatted}
                 </Badge>
               </div>
             ) : null}
@@ -211,7 +211,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
             {isEventPast && (
               <div className="absolute left-2 top-2 z-20">
                 <Badge variant="destructive" className="text-[10px] font-bold px-2 py-1 bg-red-600 text-white">
-                  PASADO
+                  {t('PASADO')}
                 </Badge>
               </div>
             )}
@@ -232,7 +232,7 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
           {/* Bottom Section with Button */}
           <div className="bg-background px-4 py-4 flex justify-center items-center">
             <Button variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 py-3 h-auto transition-all duration-300">
-              <span>VER DETALLES</span>
+              <span>{t('VER DETALLES')}</span>
               <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Button>
           </div>
