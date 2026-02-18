@@ -34,23 +34,25 @@ const Footer = lazy(() => import("@/components/Footer"));
 // Desktop filters - lazy loaded since hidden on mobile  
 const DesktopFiltersSection = lazy(() => import("@/components/DestinationDesktopFilters"));
 
-const months = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
-];
+// months will be translated inside the component
 
 const Destinos = () => {
-  const { t, locale } = useTranslation();
+  const { t, locale, localePath } = useTranslation();
+  
+  const months = useMemo(() => [
+    { value: "01", label: t("Enero") },
+    { value: "02", label: t("Febrero") },
+    { value: "03", label: t("Marzo") },
+    { value: "04", label: t("Abril") },
+    { value: "05", label: t("Mayo") },
+    { value: "06", label: t("Junio") },
+    { value: "07", label: t("Julio") },
+    { value: "08", label: t("Agosto") },
+    { value: "09", label: t("Septiembre") },
+    { value: "10", label: t("Octubre") },
+    { value: "11", label: t("Noviembre") },
+    { value: "12", label: t("Diciembre") },
+  ], [t]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -158,19 +160,19 @@ const Destinos = () => {
   const mobileFilters = useMemo(() => [
     {
       id: "city",
-      label: "Ciudad",
+      label: t("Ciudad"),
       value: filterCity,
       options: cityNames.map(c => ({ value: c, label: c })),
       onChange: setFilterCity,
     },
     {
       id: "genre",
-      label: "Género",
+      label: t("Género"),
       value: filterGenre,
       options: genres.map(g => ({ value: g, label: g })),
       onChange: setFilterGenre,
     },
-  ], [filterCity, filterGenre, cityNames, genres]);
+  ], [filterCity, filterGenre, cityNames, genres, t]);
 
   const handleClearFilters = () => {
     setFilterCity("all");
@@ -190,8 +192,8 @@ const Destinos = () => {
   const jsonLd = cities && cities.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Destinos de Eventos en España",
-    "description": "Ciudades con eventos musicales en España",
+    "name": locale === 'en' ? "Music Event Destinations in Spain" : "Destinos de Eventos en España",
+    "description": locale === 'en' ? "Cities with music events in Spain" : "Ciudades con eventos musicales en España",
     "numberOfItems": cities.length,
     "itemListElement": cities.slice(0, 20).map((city: any, index: number) => ({
       "@type": "ListItem",
@@ -208,15 +210,15 @@ const Destinos = () => {
   return (
     <>
       <SEOHead
-        title="Destinos Musicales en España - Eventos por Ciudad"
-        description="Explora conciertos y festivales en Madrid, Barcelona, Valencia y más. Encuentra eventos musicales cerca de ti."
+        title={locale === 'en' ? "Music Destinations in Spain - Events by City" : "Destinos Musicales en España - Eventos por Ciudad"}
+        description={locale === 'en' ? "Explore concerts and festivals in Madrid, Barcelona, Valencia and more. Find music events near you." : "Explora conciertos y festivales en Madrid, Barcelona, Valencia y más. Encuentra eventos musicales cerca de ti."}
         canonical="/destinos"
         keywords="destinos musicales españa, eventos madrid, conciertos barcelona, festivales valencia"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
-          { name: "Destinos" }
+          { name: t("Inicio"), url: "/" },
+          { name: t("Destinos") }
         ]}
       />
       <div className="min-h-screen bg-background">
@@ -234,19 +236,19 @@ const Destinos = () => {
         <div className="hidden md:block" style={{ minHeight: '340px' }}>
           <Suspense fallback={<div className="h-[340px] bg-muted/20 rounded-2xl animate-pulse" />}>
             <PageHero 
-              title="Destinos Musicales en España" 
-              subtitle="Conciertos y festivales por ciudad"
+              title={t("Destinos Musicales en España")} 
+              subtitle={t("Conciertos y festivales por ciudad")}
               imageUrl={heroImage} 
               priority={true}
             />
           </Suspense>
           
           <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-6 mb-4">
-            Ciudades destacadas con eventos musicales en España
+            {t("Ciudades destacadas con eventos musicales en España")}
           </h2>
           
           <p className="text-muted-foreground leading-relaxed mb-8 content-auto">
-            Explora eventos musicales en las mejores ciudades de España.
+            {t("Explora eventos musicales en las mejores ciudades de España.")}
           </p>
         </div>
 
@@ -328,7 +330,7 @@ const Destinos = () => {
               </div>
             </>
           ) : filteredCities.length === 0 ? (
-            <div className="text-center py-16"><p className="text-xl text-muted-foreground">{t("No se encontraron destinos")}</p></div>
+            <div className="text-center py-16"><p className="text-xl text-muted-foreground">{t('No se encontraron destinos')}</p></div>
           ) : (
             <>
               {/* Mobile: Virtualized List - Only renders visible items */}
@@ -354,9 +356,9 @@ const Destinos = () => {
                 return (
                   <Link 
                     key={city.city_name} 
-                    to={`/destinos/${citySlug}`} 
+                    to={localePath(`/destinos/${citySlug}`)} 
                     className="group flex items-center justify-between gap-4 px-5 py-5 bg-card border-2 border-foreground rounded-2xl transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1 hover:shadow-lg"
-                    title={`Descubrir eventos en ${city.city_name}`}
+                    title={`${t('Descubrir eventos en')} ${city.city_name}`}
                     onMouseEnter={() => handleCardPrefetch(citySlug)}
                   >
                     {/* Left: City Name + Artists */}
