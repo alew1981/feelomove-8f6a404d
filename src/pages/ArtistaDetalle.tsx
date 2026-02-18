@@ -303,8 +303,12 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   const nextYear = currentYear + 1;
   const seoYear = events?.some((e: any) => new Date(e.event_date).getFullYear() > currentYear) ? nextYear : currentYear;
   
-  const seoTitle = `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
-  const seoDescription = `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
+  const seoTitle = locale === 'en'
+    ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
+    : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
+  const seoDescription = locale === 'en'
+    ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
+    : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
 
   // Generate JSON-LD structured data for artist and events
   const jsonLdData = useMemo(() => {
@@ -426,8 +430,8 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
         jsonLd={jsonLdData}
         preloadImage={heroImage}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
-          { name: "Artistas", url: "/artistas" },
+          { name: t("Inicio"), url: "/" },
+          { name: t("Artistas"), url: localePath("/artistas") },
           { name: artistName }
         ]}
       />
@@ -446,7 +450,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           {heroImage ? (
             <img
               src={heroImage}
-              alt={`${artistName} - Conciertos y gira en España`}
+              alt={`${artistName} - ${t("Conciertos y gira en España")}`}
               className="w-full h-full object-cover"
               loading="eager"
               decoding="sync"
@@ -672,7 +676,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-background bg-foreground px-3 py-1 rounded-full font-medium">
-                        {city.count} evento{city.count > 1 ? 's' : ''}
+                        {city.count} {city.count === 1 ? t('evento') : t('eventos')}
                       </span>
                       <svg className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                     </div>

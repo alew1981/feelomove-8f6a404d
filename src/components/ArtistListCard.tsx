@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { memo, useRef, useState, useEffect, useCallback } from "react";
+import { memo, useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Thumbnail optimization for smallest possible image
 const getOptimizedThumbnail = (url: string): string => {
@@ -39,14 +40,8 @@ interface ArtistListCardProps {
   priority?: boolean;
 }
 
-/**
- * Compact list-style artist card for mobile
- * - Fixed height 100px for maximum density (5-6 visible per screen)
- * - Circular image on left
- * - Artist name + event count in center
- * - Arrow CTA on right
- */
 const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) => {
+  const { t, localePath } = useTranslation();
   const [isInView, setIsInView] = useState(priority);
   const [imageLoaded, setImageLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -79,13 +74,12 @@ const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) 
   const rawImageUrl = artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg";
   const imageUrl = getOptimizedThumbnail(rawImageUrl);
   const eventCount = artist.event_count || 0;
-  const mainGenre = artist.genres?.[0];
 
   return (
     <Link 
-      to={`/conciertos/${artist.attraction_slug}`} 
+      to={localePath(`/conciertos/${artist.attraction_slug}`)} 
       className="block group touch-manipulation" 
-      title={`Ver conciertos de ${artist.attraction_name}`}
+      title={`${t("Ver conciertos de")} ${artist.attraction_name}`}
     >
       <div 
         ref={cardRef}
@@ -102,13 +96,11 @@ const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) 
           containIntrinsicSize: '0 100px',
         }}
       >
-        {/* Artist Image - Circular */}
         <div className={cn(
           "flex-shrink-0 w-[60px] h-[60px] overflow-hidden relative",
           "rounded-full",
           "bg-foreground/10 dark:bg-zinc-800"
         )}>
-          {/* Shimmer placeholder */}
           {!imageLoaded && (
             <div className={cn(
               "absolute inset-0 rounded-full",
@@ -141,9 +133,7 @@ const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) 
           )}
         </div>
 
-        {/* Info - Center */}
         <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
-          {/* Artist Name */}
           <h3 className={cn(
             "text-sm font-bold text-foreground",
             "truncate leading-tight"
@@ -151,13 +141,11 @@ const ArtistListCard = memo(({ artist, priority = false }: ArtistListCardProps) 
             {artist.attraction_name}
           </h3>
           
-          {/* Event Count Badge - Styled like reference */}
           <span className="inline-flex items-center w-fit text-xs text-background bg-foreground px-2.5 py-0.5 rounded-full font-medium">
-            {eventCount} evento{eventCount === 1 ? '' : 's'}
+            {eventCount} {eventCount === 1 ? t('evento') : t('eventos')}
           </span>
         </div>
 
-        {/* Action Button - Right */}
         <div className={cn(
           "flex-shrink-0 w-10 h-10",
           "flex items-center justify-center",
@@ -177,22 +165,14 @@ ArtistListCard.displayName = "ArtistListCard";
 
 export default ArtistListCard;
 
-/**
- * Skeleton for ArtistListCard - shimmer effect
- */
 export const ArtistListCardSkeleton = memo(() => (
   <div className="flex items-center gap-3 px-3 py-2.5 h-[100px] min-h-[100px] border-b border-border/50">
-    {/* Image */}
     <div className="w-[60px] h-[60px] rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
-    
-    {/* Info */}
     <div className="flex-grow flex flex-col gap-1.5">
       <div className="h-4 w-3/4 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
       <div className="h-3 w-1/2 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
       <div className="h-2.5 w-1/4 rounded bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
     </div>
-    
-    {/* Button */}
     <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
   </div>
 ));

@@ -21,23 +21,8 @@ import ArtistListCard, { ArtistListCardSkeleton } from "@/components/ArtistListC
 import MobileFilterPills from "@/components/MobileFilterPills";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const months = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
-];
-
 const Artistas = () => {
-  const { t, locale } = useTranslation();
+  const { t, locale, localePath } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -46,6 +31,21 @@ const Artistas = () => {
   const isMobile = useIsMobile();
   
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0 });
+
+  const months = useMemo(() => [
+    { value: "01", label: t("Enero") },
+    { value: "02", label: t("Febrero") },
+    { value: "03", label: t("Marzo") },
+    { value: "04", label: t("Abril") },
+    { value: "05", label: t("Mayo") },
+    { value: "06", label: t("Junio") },
+    { value: "07", label: t("Julio") },
+    { value: "08", label: t("Agosto") },
+    { value: "09", label: t("Septiembre") },
+    { value: "10", label: t("Octubre") },
+    { value: "11", label: t("Noviembre") },
+    { value: "12", label: t("Diciembre") },
+  ], [t]);
 
   // Fetch artists from mv_attractions with graceful error handling
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
@@ -129,26 +129,26 @@ const Artistas = () => {
   const mobileFilters = useMemo(() => [
     {
       id: "city",
-      label: "Ciudad",
+      label: t("Ciudad"),
       value: filterCity,
       options: cities.map(c => ({ value: c, label: c })),
       onChange: setFilterCity,
     },
     {
       id: "genre",
-      label: "Género",
+      label: t("Género"),
       value: filterGenre,
       options: genres.map(g => ({ value: g, label: g })),
       onChange: setFilterGenre,
     },
     {
       id: "month",
-      label: "Mes",
+      label: t("Mes"),
       value: filterMonth,
       options: months.map(m => ({ value: m.value, label: m.label })),
       onChange: setFilterMonth,
     },
-  ], [filterCity, filterGenre, filterMonth, cities, genres]);
+  ], [filterCity, filterGenre, filterMonth, cities, genres, months, t]);
 
   const handleClearFilters = () => {
     setFilterCity("all");
@@ -160,8 +160,8 @@ const Artistas = () => {
   const jsonLd = artists && artists.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Artistas con Eventos en España",
-    "description": "Artistas y músicos con conciertos y festivales en España",
+    "name": locale === 'en' ? "Artists with Events in Spain" : "Artistas con Eventos en España",
+    "description": locale === 'en' ? "Artists and musicians with concerts and festivals in Spain" : "Artistas y músicos con conciertos y festivales en España",
     "numberOfItems": artists.length,
     "itemListElement": artists.slice(0, 20).map((artist: any, index: number) => ({
       "@type": "ListItem",
@@ -257,7 +257,7 @@ const Artistas = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Select value={filterCity} onValueChange={setFilterCity}>
               <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterCity !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterCity === "all" ? "Ciudad" : filterCity}</span>
+                <span className="truncate text-sm">{filterCity === "all" ? t("Ciudad") : filterCity}</span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("Todas las ciudades")}</SelectItem>
@@ -269,7 +269,7 @@ const Artistas = () => {
 
             <Select value={filterGenre} onValueChange={setFilterGenre}>
               <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterGenre !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterGenre === "all" ? "Género" : filterGenre}</span>
+                <span className="truncate text-sm">{filterGenre === "all" ? t("Género") : filterGenre}</span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("Todos los géneros")}</SelectItem>
@@ -281,7 +281,7 @@ const Artistas = () => {
 
             <Select value={filterMonth} onValueChange={setFilterMonth}>
               <SelectTrigger className={`h-10 px-3 rounded-lg border-2 transition-all ${filterMonth !== "all" ? "border-accent bg-accent/10 text-accent" : "border-border bg-card hover:border-muted-foreground/50"}`}>
-                <span className="truncate text-sm">{filterMonth === "all" ? "Mes" : months.find(m => m.value === filterMonth)?.label}</span>
+                <span className="truncate text-sm">{filterMonth === "all" ? t("Mes") : months.find(m => m.value === filterMonth)?.label}</span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("Todos los meses")}</SelectItem>
@@ -296,7 +296,7 @@ const Artistas = () => {
                 onClick={handleClearFilters}
                 className="h-10 px-3 rounded-lg border-2 border-border bg-card text-sm text-muted-foreground hover:text-destructive hover:border-destructive transition-colors"
               >
-                Limpiar
+                {t("Limpiar")}
               </button>
             ) : (
               <div />
@@ -333,13 +333,13 @@ const Artistas = () => {
               {displayedArtists.map((artist: any, index: number) => {
                 const isPriority = index < 4;
                 return (
-                  <Link to={`/conciertos/${artist.attraction_slug}`} key={artist.attraction_id} className="block" title={`Ver conciertos y entradas de ${artist.attraction_name}`}>
+                  <Link to={localePath(`/conciertos/${artist.attraction_slug}`)} key={artist.attraction_id} className="block" title={`${t("Ver conciertos de")} ${artist.attraction_name}`}>
                     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative">
                       <div className="relative h-64 overflow-hidden bg-muted">
                         <img
                           src={artist.sample_image_url || artist.sample_image_standard_url || "/placeholder.svg"}
-                          alt={`${artist.attraction_name} - ${artist.event_count} conciertos en España`}
-                          title={`${artist.attraction_name} - Conciertos en España`}
+                          alt={`${artist.attraction_name} - ${artist.event_count} ${t("conciertos en España")}`}
+                          title={`${artist.attraction_name} - ${locale === 'en' ? 'Concerts in Spain' : 'Conciertos en España'}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading={isPriority ? "eager" : "lazy"}
                           decoding={isPriority ? "sync" : "async"}
@@ -349,7 +349,7 @@ const Artistas = () => {
                         />
                         <div className="absolute top-3 right-3">
                           <Badge className="bg-accent text-brand-black hover:bg-accent border-0 font-semibold px-3 py-1 text-xs rounded-md uppercase">
-                            {artist.event_count} eventos
+                            {artist.event_count} {t("eventos")}
                           </Badge>
                         </div>
                         {artist.genres && artist.genres[0] && (
@@ -366,7 +366,7 @@ const Artistas = () => {
                         </h3>
                         {artist.city_count && (
                           <p className="text-sm text-muted-foreground">
-                            {artist.city_count} ciudades
+                            {artist.city_count} {t("ciudades")}
                           </p>
                         )}
                       </CardContent>

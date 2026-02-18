@@ -1,9 +1,10 @@
 import { memo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Filter, X, ChevronDown } from "lucide-react";
+import { Filter, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface FilterOption {
   value: string;
@@ -23,24 +24,16 @@ interface MobileFilterPillsProps {
   onClearAll: () => void;
 }
 
-/**
- * Mobile-optimized filter pills component
- * - Horizontal scrolling pills for active filters
- * - Single "Filtros" button that opens a bottom sheet
- * - Saves vertical space on mobile
- */
 const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   
-  // Check if any filter is active
   const activeFilters = filters.filter(f => f.value !== "all");
   const hasActiveFilters = activeFilters.length > 0;
 
   return (
     <div className="space-y-2">
-      {/* Filter Button + Active Pills Row */}
       <div className="flex items-center gap-2">
-        {/* Filter Button */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <button
@@ -54,7 +47,7 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
               )}
             >
               <Filter className="h-4 w-4" />
-              <span>Filtros</span>
+              <span>{t("Filtros")}</span>
               {hasActiveFilters && (
                 <span className="ml-0.5 bg-accent text-accent-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {activeFilters.length}
@@ -65,7 +58,7 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
           
           <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-2xl">
             <SheetHeader className="pb-4">
-              <SheetTitle className="text-left">Filtros</SheetTitle>
+              <SheetTitle className="text-left">{t("Filtros")}</SheetTitle>
             </SheetHeader>
             
             <div className="space-y-4 pb-6">
@@ -79,7 +72,7 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
                       <SelectValue placeholder={filter.label} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="all">{t("Todos")}</SelectItem>
                       {filter.options.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
@@ -90,7 +83,6 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
                 </div>
               ))}
               
-              {/* Action Buttons */}
               <div className="flex gap-2 pt-4">
                 {hasActiveFilters && (
                   <Button
@@ -101,21 +93,20 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
                       setIsOpen(false);
                     }}
                   >
-                    Limpiar
+                    {t("Limpiar")}
                   </Button>
                 )}
                 <Button
                   className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
                   onClick={() => setIsOpen(false)}
                 >
-                  Aplicar
+                  {t("Aplicar")}
                 </Button>
               </div>
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Active Filter Pills - Horizontal Scroll */}
         {hasActiveFilters && (
           <div className="flex-1 overflow-x-auto scrollbar-hide">
             <div className="flex items-center gap-1.5 min-w-max">
@@ -141,12 +132,11 @@ const MobileFilterPills = memo(({ filters, onClearAll }: MobileFilterPillsProps)
                 );
               })}
               
-              {/* Clear All */}
               <button
                 onClick={onClearAll}
                 className="text-xs text-muted-foreground hover:text-destructive underline whitespace-nowrap ml-1"
               >
-                Limpiar todo
+                {t("Limpiar todo")}
               </button>
             </div>
           </div>
