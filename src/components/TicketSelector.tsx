@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface TicketOption {
   id: string;
@@ -24,8 +25,8 @@ interface TicketSelectorProps {
 }
 
 const TicketSelector = ({
-  title = "Selecciona tus entradas",
-  subtitle = "¡Entradas añadidas! Ahora elige tu alojamiento",
+  title,
+  subtitle,
   tickets,
   quantities,
   onQuantityChange,
@@ -33,6 +34,9 @@ const TicketSelector = ({
   initialVisible = 4,
   completed = false,
 }: TicketSelectorProps) => {
+  const { t } = useTranslation();
+  const resolvedTitle = title || t("Selecciona tus entradas");
+  const resolvedSubtitle = subtitle || t("¡Entradas añadidas! Ahora elige tu alojamiento");
   const [expanded, setExpanded] = useState(false);
 
   const totalSelected = Object.values(quantities).reduce((sum, q) => sum + q, 0);
@@ -57,18 +61,18 @@ const TicketSelector = ({
             {hasSelection ? <Check className="h-4 w-4" /> : "1"}
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold">{resolvedTitle}</h2>
             {completed && (
               <p className="text-sm text-accent flex items-center gap-1 mt-0.5">
                 <Check className="h-3 w-3" />
-                {subtitle}
+                {resolvedSubtitle}
               </p>
             )}
           </div>
         </div>
         {hasSelection && (
           <span className="text-sm font-bold text-accent">
-            {totalSelected} {totalSelected === 1 ? "entrada" : "entradas"}
+            {totalSelected} {totalSelected === 1 ? t("entrada") : t("entradas")}
           </span>
         )}
       </div>
@@ -122,15 +126,15 @@ const TicketSelector = ({
                 <div className="shrink-0 mt-0.5">
                   {isSoldOut ? (
                     <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-0.5 rounded">
-                      AGOTADO
+                      {t('AGOTADO')}
                     </span>
                   ) : isLimited ? (
                     <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded border border-amber-300 dark:text-amber-200 dark:bg-amber-900/50 dark:border-amber-700">
-                      ÚLTIMAS
+                      {t('ÚLTIMAS')}
                     </span>
                   ) : (
                     <span className="text-[10px] font-bold text-accent-foreground bg-accent px-2.5 py-0.5 rounded">
-                      DISPONIBLE
+                      {t('DISPONIBLE')}
                     </span>
                   )}
                 </div>
@@ -154,7 +158,7 @@ const TicketSelector = ({
                         isSoldOut ? "text-muted-foreground/60" : "text-muted-foreground"
                       )}
                     >
-                      + {ticket.fees.toFixed(2)}€ gastos
+                      + {ticket.fees.toFixed(2)}€ {t('gastos')}
                     </p>
                   )}
                 </div>
@@ -217,12 +221,12 @@ const TicketSelector = ({
         >
           {expanded ? (
             <>
-              VER MENOS
+              {t('VER MENOS')}
               <ChevronUp className="h-4 w-4" />
             </>
           ) : (
             <>
-              VER {hiddenCount} MÁS
+              {t('VER')} {hiddenCount} {t('MÁS')}
               <ChevronDown className="h-4 w-4" />
             </>
           )}

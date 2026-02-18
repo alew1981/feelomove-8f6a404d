@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Building2, MapPin, Check, ChevronDown } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import LazyHotelCard from "./LazyHotelCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -81,6 +82,7 @@ const HotelMapTabs = ({
   const [starFilter, setStarFilter] = useState<number | null>(null);
 
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
   
   // Determine if we have hotel card data to show
   const hasHotelCards = hotels.length > 0;
@@ -92,7 +94,7 @@ const HotelMapTabs = ({
   const getDefaultTab = (): TabId => "hotels";
   
   const [activeTab, setActiveTab] = useState<TabId>(getDefaultTab);
-  const cityDisplay = venueCity || "la zona";
+  const cityDisplay = venueCity || t("la zona");
 
   const filteredAndSortedHotels = useMemo(() => {
     let filtered = [...hotels];
@@ -131,10 +133,10 @@ const HotelMapTabs = ({
 
   // Tab labels without icons
   const labels = {
-    hotels: "Feelomove recomienda",
-    accommodations: `+ Hoteles en ${cityDisplay}`,
-    activities: "Actividades",
-    map: "Mapa",
+    hotels: t("Feelomove recomienda"),
+    accommodations: `+ ${t('Hoteles en')} ${cityDisplay}`,
+    activities: t("Actividades"),
+    map: t("Mapa"),
   };
 
   // SEO texts for each tab
@@ -237,11 +239,11 @@ const HotelMapTabs = ({
             {selectedHotelId ? <Check className="h-4 w-4" /> : "2"}
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold">Completa tu pack con un hotel</h2>
+            <h2 className="text-xl sm:text-2xl font-bold">{t('Completa tu pack con un hotel')}</h2>
             {selectedHotelId && (
               <p className="text-sm text-foreground flex items-center gap-1 mt-0.5">
                 <Check className="h-3 w-3 text-accent" />
-                Hotel añadido al pack
+                {t('Hotel añadido al pack')}
               </p>
             )}
           </div>
@@ -333,7 +335,7 @@ const HotelMapTabs = ({
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
-                      Todos
+                      {t('Todos')}
                     </button>
                     {availableStars.map((stars) => (
                       <button
@@ -353,23 +355,23 @@ const HotelMapTabs = ({
                   {/* Sort selector */}
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-full sm:w-64 h-11 text-sm border-2 border-border bg-card font-medium shadow-sm">
-                      <SelectValue placeholder="Ordenar por" />
+                      <SelectValue placeholder={t("Ordenar por")} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-2 w-full min-w-[240px] z-50">
                       <SelectItem value="distance-asc" className="text-sm py-3">
-                        Distancia (más cercano)
+                        {t('Distancia (más cercano)')}
                       </SelectItem>
                       <SelectItem value="price-asc" className="text-sm py-3">
-                        Precio (menor a mayor)
+                        {t('Precio (menor a mayor)')}
                       </SelectItem>
                       <SelectItem value="price-desc" className="text-sm py-3">
-                        Precio (mayor a menor)
+                        {t('Precio (mayor a menor)')}
                       </SelectItem>
                       <SelectItem value="rating-desc" className="text-sm py-3">
-                        Valoración (mejor puntuada)
+                        {t('Valoración (mejor puntuada)')}
                       </SelectItem>
                       <SelectItem value="stars-desc" className="text-sm py-3">
-                        Estrellas (más estrellas)
+                        {t('Estrellas (más estrellas)')}
                       </SelectItem>
                     </SelectContent>
                   </Select>

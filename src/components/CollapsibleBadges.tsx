@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "./ui/badge";
 import { EventProductPage } from "@/types/events.types";
 import { parseDate, isFuture, formatOnSaleBadge } from "@/lib/dateUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Inline SVGs for critical icons (aria-hidden for screen reader accessibility)
 const ChevronDownIcon = () => (
@@ -30,6 +31,7 @@ const CollapsibleBadges = ({
   daysUntil 
 }: CollapsibleBadgesProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation();
 
   const onSaleBadgeFormatted = useMemo(() => {
     const onSaleDateStr = (eventDetails as any).on_sale_date as string | null | undefined;
@@ -52,7 +54,7 @@ const CollapsibleBadges = ({
         <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase flex flex-col items-center leading-tight">
           <span className="flex items-center gap-1">
             <ClockIcon />
-            A la venta:
+            {t('A la venta')}:
           </span>
           <span>{onSaleBadgeFormatted}</span>
         </Badge>
@@ -67,7 +69,7 @@ const CollapsibleBadges = ({
       priority: 1,
       content: (
         <Badge className="bg-accent text-accent-foreground font-black px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-          DISPONIBLE
+          {t('DISPONIBLE')}
         </Badge>
       )
     });
@@ -95,7 +97,7 @@ const CollapsibleBadges = ({
       priority: 4,
       content: (
         <Badge className="bg-white/95 text-foreground font-semibold px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs rounded-full shadow-md whitespace-nowrap uppercase">
-          {eventDetails.day_of_week}
+          {t(eventDetails.day_of_week)}
         </Badge>
       )
     });
