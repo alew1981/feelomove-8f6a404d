@@ -32,12 +32,20 @@
 - `seo-prerender/index.ts` - Detecta locale desde path, HTML bilingüe, hreflang en prerender, labels/textos traducidos
 - `sitemap/index.ts` - xmlns:xhtml, xhtml:link hreflang en todas las URLs (pages, concerts, festivals, artists, destinations)
 
-## Fase 4 - PENDIENTE: UI Translation
+## Fase 4 - EN PROGRESO 🔄: UI Translation
 
-- Navbar, Footer, páginas principales con t()
-- Language switcher
-- Breadcrumbs traducidos
-- Analytics tracking
+### Completado ✅
+- `LanguageSwitcher.tsx` - Componente ES/EN toggle compacto para Navbar
+- `Navbar.tsx` - Todos los labels con t(), links con localePath(), LanguageSwitcher en desktop y mobile
+- `Footer.tsx` - Todos los labels, links, categorías traducidos con t() y localePath()
+- `Hero.tsx` - Headlines, búsqueda, 3 pasos, resultados de búsqueda traducidos con t()
+- `Breadcrumbs.tsx` - Locale-aware: Home/Inicio, labels traducidos, soporte para EN segments (tickets, festivals, etc.)
+- `Index.tsx` - Todos los headings de secciones traducidos con t(), links con localePath()
+
+### Pendiente
+- Conciertos.tsx, Festivales.tsx - Headings y filtros con t()
+- About.tsx - Contenido con t()
+- Otras páginas secundarias (Artistas, Destinos, etc.)
 
 ## Fase 5 - PENDIENTE: Legal Compliance
 

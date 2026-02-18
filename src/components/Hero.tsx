@@ -7,6 +7,7 @@ import { normalizeSearch, matchesSearch } from "@/lib/searchUtils";
 import { getEventUrl } from "@/lib/eventUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getOptimizedCardImage } from "@/lib/imagekitUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Hero image via ImageKit CDN using Ticketmaster origin
 // OPTIMIZED: Uses Ticketmaster image resized via ImageKit transformations
@@ -70,6 +71,7 @@ const Hero = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { t, locale, localePath } = useTranslation();
 
   // Close results when clicking outside
   useEffect(() => {
@@ -256,12 +258,12 @@ const Hero = () => {
       <div className="container mx-auto px-4 z-10 text-center pt-32 pb-20">
         <div className="animate-fade-in">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 text-white tracking-tight">
-            Entradas para Conciertos y Festivales en España
+            {t('Entradas para Conciertos y Festivales en España')}
             <br />
-            <span className="text-accent">+ Hotel. Todo Resuelto.</span>
+            <span className="text-accent">{t('+ Hotel. Todo Resuelto.')}</span>
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto font-medium">
-            Compra entradas y reserva hotel cerca del evento. Ahorra tiempo y dinero con Feelomove+
+            {t('Compra entradas y reserva hotel cerca del evento. Ahorra tiempo y dinero con Feelomove+')}
           </p>
         </div>
 
@@ -274,7 +276,7 @@ const Hero = () => {
             <div className="relative flex-1">
               <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Buscar por evento, artista, destino, género o mes..."
+                placeholder={t('Buscar por evento, artista, destino, género o mes...')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -300,7 +302,7 @@ const Hero = () => {
               onClick={handleSearch}
               className="h-16 px-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all"
             >
-              Buscar
+              {t('Buscar')}
             </Button>
           </div>
 
@@ -319,7 +321,7 @@ const Hero = () => {
               {isSearching ? (
                 <div className="p-6 flex items-center justify-center gap-3 text-muted-foreground">
                   <IconLoader className="h-5 w-5 animate-spin text-accent" />
-                  <span className="font-medium">Buscando experiencias...</span>
+                  <span className="font-medium">{t('Buscando experiencias...')}</span>
                 </div>
               ) : results.length > 0 ? (
                 <div className="py-2">
@@ -354,18 +356,18 @@ const Hero = () => {
                         )}
                       </div>
                       <span className="text-xs font-medium text-accent-foreground capitalize px-3 py-1.5 bg-accent rounded-full">
-                        {result.type === 'event' ? 'Evento' : 
-                         result.type === 'artist' ? 'Artista' :
-                         result.type === 'destination' ? 'Destino' : 'Género'}
+                        {result.type === 'event' ? t('Evento') : 
+                         result.type === 'artist' ? t('Artista') :
+                         result.type === 'destination' ? t('Destino') : t('Género')}
                       </span>
                     </Link>
                   ))}
                 </div>
               ) : searchQuery.length >= 2 ? (
                 <div className="p-6 text-center">
-                  <p className="text-muted-foreground mb-2">No se encontraron resultados para</p>
+                  <p className="text-muted-foreground mb-2">{t('No se encontraron resultados para')}</p>
                   <p className="font-semibold text-foreground">"{searchQuery}"</p>
-                  <p className="text-sm text-muted-foreground mt-3">Prueba con otro término o explora nuestros <Link to="/conciertos" className="text-accent hover:underline">conciertos</Link></p>
+                  <p className="text-sm text-muted-foreground mt-3">{t('Prueba con otro término o explora nuestros')} <Link to={localePath('/conciertos')} className="text-accent hover:underline">{t('conciertos')}</Link></p>
                 </div>
               ) : null}
             </div>
@@ -379,8 +381,8 @@ const Hero = () => {
               1
             </div>
             <div className="text-left">
-              <span className="font-bold text-base block">Busca tu evento</span>
-              <span className="text-sm text-white/70">Encuentra tu concierto ideal</span>
+              <span className="font-bold text-base block">{t('Busca tu evento')}</span>
+              <span className="text-sm text-white/70">{t('Encuentra tu concierto ideal')}</span>
             </div>
           </div>
           
@@ -391,8 +393,8 @@ const Hero = () => {
               2
             </div>
             <div className="text-left">
-              <span className="font-bold text-base block">Elige entradas + hotel</span>
-              <span className="text-sm text-white/70">Paquetes todo incluido</span>
+              <span className="font-bold text-base block">{t('Elige entradas + hotel')}</span>
+              <span className="text-sm text-white/70">{t('Paquetes todo incluido')}</span>
             </div>
           </div>
           
@@ -403,8 +405,8 @@ const Hero = () => {
               3
             </div>
             <div className="text-left">
-              <span className="font-bold text-base block">Disfruta la música</span>
-              <span className="text-sm text-white/70">Vive la experiencia</span>
+              <span className="font-bold text-base block">{t('Disfruta la música')}</span>
+              <span className="text-sm text-white/70">{t('Vive la experiencia')}</span>
             </div>
           </div>
         </div>
