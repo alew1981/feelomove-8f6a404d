@@ -220,21 +220,23 @@ const Conciertos = () => {
       "item": {
         "@type": "MusicEvent",
         "name": event.name,
-        "description": `Concierto de ${event.artist_name || event.name} en ${event.venue_city}. Compra entradas y reserva hotel cercano.`,
+        "description": locale === 'en'
+          ? `Concert of ${event.artist_name || event.name} in ${event.venue_city}. Buy tickets and book a nearby hotel.`
+          : `Concierto de ${event.artist_name || event.name} en ${event.venue_city}. Compra entradas y reserva hotel cercano.`,
         "startDate": event.event_date,
         "endDate": event.event_date,
         "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "url": `https://feelomove.com/conciertos/${event.slug || event.id}`,
+        "url": `https://feelomove.com/${locale === 'en' ? 'en/tickets' : 'conciertos'}/${event.slug || event.id}`,
         "image": [event.image_large_url || event.image_standard_url || "https://feelomove.com/og-image.jpg"],
         "location": {
           "@type": "Place",
-          "name": event.venue_name || "Recinto del evento",
+          "name": event.venue_name || (locale === 'en' ? "Event venue" : "Recinto del evento"),
           "address": {
             "@type": "PostalAddress",
-            "streetAddress": event.venue_name || "Recinto del evento",
+            "streetAddress": event.venue_name || "",
             "addressLocality": event.venue_city,
-            "addressRegion": "España",
+            "addressRegion": locale === 'en' ? "Spain" : "España",
             "addressCountry": "ES"
           }
         },
@@ -245,16 +247,16 @@ const Conciertos = () => {
         },
         "offers": {
           "@type": "Offer",
-          "url": `https://feelomove.com/conciertos/${event.slug || event.id}`,
+          "url": `https://feelomove.com/${locale === 'en' ? 'en/tickets' : 'conciertos'}/${event.slug || event.id}`,
           "price": event.price_min_incl_fees || 0,
           "priceCurrency": event.currency || "EUR",
           "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
           "validFrom": new Date().toISOString()
         },
-        "performer": event.artist_name ? {
+        "performer": {
           "@type": "MusicGroup",
-          "name": event.artist_name
-        } : undefined
+          "name": event.artist_name || event.name
+        }
       }
     }))
   } : null;
