@@ -18,6 +18,7 @@ import { FestivalServices } from "@/components/FestivalServices";
 import { FestivalProductPage } from "@/types/events.types";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo } from "@/components/EventSeo";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Keywords that identify a festival name (case-insensitive)
 const FESTIVAL_KEYWORDS = [
@@ -78,6 +79,7 @@ const getFestivalNombre = (event: FestivalProductPage): string => {
 };
 
 const FestivalDetalle = () => {
+  const { t, locale } = useTranslation();
   const { festivalSlug } = useParams<{ festivalSlug: string }>();
   
   // Decode the festival name and city from slug (format: festival-name_city-name)
@@ -423,7 +425,7 @@ const FestivalDetalle = () => {
             <div className="mb-8 p-6 bg-card rounded-xl border border-border">
               <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
                 <Users className="h-5 w-5 text-accent" />
-                Line-up del Festival
+                {t('Line-up del Festival')}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {festivalData.lineupArtists.map((artist, index) => (
@@ -448,13 +450,13 @@ const FestivalDetalle = () => {
             </div>
           ) : !events || events.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos para este festival</p>
+              <p className="text-xl text-muted-foreground mb-4">{t('No se encontraron eventos para este festival')}</p>
               <Link 
                 to="/festivales" 
                 className="inline-flex items-center gap-2 text-[#00FF8F] hover:underline"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Ver todos los festivales
+                {t('Ver todos los festivales')}
               </Link>
             </div>
           ) : (
@@ -464,7 +466,7 @@ const FestivalDetalle = () => {
                 <TabsList className="mb-6 flex-wrap h-auto gap-1">
                   <TabsTrigger value="conciertos" className="flex items-center gap-2">
                     <Play className="h-4 w-4" />
-                    Entradas
+                    {t('Entradas')}
                   </TabsTrigger>
                   {transportEvents.length > 0 && (
                     <TabsTrigger value="transporte" className="flex items-center gap-2">
@@ -490,7 +492,7 @@ const FestivalDetalle = () => {
               <TabsContent value="conciertos">
                 {concertEvents.length === 0 ? (
                   <div className="text-center py-16">
-                    <p className="text-xl text-muted-foreground">No hay conciertos disponibles</p>
+                    <p className="text-xl text-muted-foreground">{t('No hay conciertos disponibles')}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

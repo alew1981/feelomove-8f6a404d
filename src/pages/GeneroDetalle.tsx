@@ -19,11 +19,13 @@ import { RelatedLinks } from "@/components/RelatedLinks";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { normalizeSearch } from "@/lib/searchUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Keywords that should redirect to /festivales
 const FESTIVAL_GENRE_KEYWORDS = ['festival-de-musica', 'festival de musica', 'festivales'];
 
 const GeneroDetalle = () => {
+  const { t, locale } = useTranslation();
   const { genero } = useParams<{ genero: string }>();
   const genreParam = genero ? decodeURIComponent(genero) : "";
   
@@ -429,7 +431,7 @@ const GeneroDetalle = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar eventos, ciudades o artistas..."
+              placeholder={t('Buscar eventos, ciudades o artistas...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors"
@@ -443,10 +445,10 @@ const GeneroDetalle = () => {
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
-                <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
-                <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
-                <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                <SelectItem value="date-asc">{t('Fecha (próximos primero)')}</SelectItem>
+                <SelectItem value="date-desc">{t('Fecha (lejanos primero)')}</SelectItem>
+                <SelectItem value="price-asc">{t('Precio (menor a mayor)')}</SelectItem>
+                <SelectItem value="price-desc">{t('Precio (mayor a menor)')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -455,7 +457,7 @@ const GeneroDetalle = () => {
                 <SelectValue placeholder="Todas las ciudades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
+                <SelectItem value="all">{t('Todas las ciudades')}</SelectItem>
                 {cities.map(city => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
                 ))}
@@ -467,7 +469,7 @@ const GeneroDetalle = () => {
                 <SelectValue placeholder="Todos los artistas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los artistas</SelectItem>
+                <SelectItem value="all">{t('Todos los artistas')}</SelectItem>
                 {artists.map(artist => (
                   <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                 ))}
@@ -483,7 +485,7 @@ const GeneroDetalle = () => {
               }}
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
             >
-              Limpiar filtros
+              {t('Limpiar filtros')}
             </button>
           </div>
         </div>
@@ -497,8 +499,8 @@ const GeneroDetalle = () => {
           </div>
         ) : filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
-            <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+            <p className="text-xl text-muted-foreground mb-4">{t('No se encontraron eventos')}</p>
+            <p className="text-muted-foreground">{t('Prueba ajustando los filtros o la búsqueda')}</p>
           </div>
         ) : (
           <>
@@ -519,7 +521,7 @@ const GeneroDetalle = () => {
               <div ref={loadMoreRef} className="flex justify-center items-center py-12">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                  <p className="text-sm text-muted-foreground font-['Poppins']">{t('Cargando más eventos...')}</p>
                 </div>
               </div>
             )}
@@ -528,12 +530,12 @@ const GeneroDetalle = () => {
             {topArtists && topArtists.length > 0 && (
               <div className="mt-12 mb-8">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-foreground">Artistas destacados</h2>
+                  <h2 className="text-2xl font-bold text-foreground">{t('Artistas destacados')}</h2>
                   <Link
                     to="/artistas"
                     className="flex items-center gap-1 text-foreground hover:text-foreground/70 font-semibold transition-colors"
                   >
-                    Ver todos <ChevronRight className="h-4 w-4" />
+                    {t('Ver todos')} <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -12,8 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { matchesSearch } from "@/lib/searchUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Eventos = () => {
+  const { t, locale } = useTranslation();
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterArtist, setFilterArtist] = useState<string>("all");
@@ -155,14 +157,14 @@ const Eventos = () => {
         {/* Header */}
         <div className="mb-6 mt-6">
           <h1 className="text-4xl md:text-5xl font-black text-foreground mb-6">
-            Festivales y Conciertos
+            {t('Festivales y Conciertos')}
           </h1>
           <div className="mb-8">
             <Breadcrumbs />
           </div>
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-muted-foreground leading-relaxed">
-              Descubre todos los festivales y conciertos en España. Compra tus entradas y reserva tu hotel en el mismo lugar. Encuentra eventos de todos los géneros y ciudades.
+              {t('Descubre todos los festivales y conciertos en España. Compra tus entradas y reserva tu hotel en el mismo lugar. Encuentra eventos de todos los géneros y ciudades.')}
             </p>
           </div>
         </div>
@@ -174,7 +176,7 @@ const Eventos = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
               type="text" 
-              placeholder="Buscar eventos, ciudades o artistas..." 
+              placeholder={t('Buscar eventos, ciudades o artistas...')} 
               value={searchQuery} 
               onChange={e => setSearchQuery(e.target.value)} 
               className="pl-10 h-12 border-2 border-border focus:border-[#00FF8F] transition-colors" 
@@ -188,10 +190,10 @@ const Eventos = () => {
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-asc">Fecha (próximos primero)</SelectItem>
-                <SelectItem value="date-desc">Fecha (lejanos primero)</SelectItem>
-                <SelectItem value="price-asc">Precio (menor a mayor)</SelectItem>
-                <SelectItem value="price-desc">Precio (mayor a menor)</SelectItem>
+                <SelectItem value="date-asc">{t('Fecha (próximos primero)')}</SelectItem>
+                <SelectItem value="date-desc">{t('Fecha (lejanos primero)')}</SelectItem>
+                <SelectItem value="price-asc">{t('Precio (menor a mayor)')}</SelectItem>
+                <SelectItem value="price-desc">{t('Precio (mayor a menor)')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -200,7 +202,7 @@ const Eventos = () => {
                 <SelectValue placeholder="Todas las ciudades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las ciudades</SelectItem>
+                <SelectItem value="all">{t('Todas las ciudades')}</SelectItem>
                 {cities.map(city => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
                 ))}
@@ -212,7 +214,7 @@ const Eventos = () => {
                 <SelectValue placeholder="Todos los artistas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los artistas</SelectItem>
+                <SelectItem value="all">{t('Todos los artistas')}</SelectItem>
                 {artists.map(artist => (
                   <SelectItem key={artist} value={artist}>{artist}</SelectItem>
                 ))}
@@ -228,7 +230,7 @@ const Eventos = () => {
               }} 
               className="h-11 px-4 border-2 border-border rounded-md hover:border-[#00FF8F] hover:text-[#00FF8F] transition-colors font-semibold"
             >
-              Limpiar filtros
+              {t('Limpiar filtros')}
             </button>
           </div>
         </div>
@@ -242,8 +244,8 @@ const Eventos = () => {
           </div>
         ) : filteredAndSortedEvents.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground mb-4">No se encontraron eventos</p>
-            <p className="text-muted-foreground">Prueba ajustando los filtros o la búsqueda</p>
+            <p className="text-xl text-muted-foreground mb-4">{t('No se encontraron eventos')}</p>
+            <p className="text-muted-foreground">{t('Prueba ajustando los filtros o la búsqueda')}</p>
           </div>
         ) : (
           <>
@@ -264,7 +266,7 @@ const Eventos = () => {
               <div ref={loadMoreRef} className="flex justify-center items-center py-12">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más eventos...</p>
+                  <p className="text-sm text-muted-foreground font-['Poppins']">{t('Cargando más eventos...')}</p>
                 </div>
               </div>
             )}
