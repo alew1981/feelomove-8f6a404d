@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { memo } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Inline SVG icons to reduce bundle size (aria-hidden for accessibility)
 const IconMapPin = ({ className = "" }: { className?: string }) => (
@@ -32,6 +33,7 @@ interface ArtistDestinationsListProps {
  * Feelomove+ Design: Black border, Green hover, 4px lift
  */
 const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }: ArtistDestinationsListProps) => {
+  const { t, localePath } = useTranslation();
   // Filter out current city if provided
   const filteredCities = currentCity 
     ? citiesWithData.filter(city => city.name.toLowerCase() !== currentCity.toLowerCase())
@@ -44,13 +46,13 @@ const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
           <IconMapPin className="h-5 w-5 text-accent" />
-          Ver en otros destinos
+          {t('Ver en otros destinos')}
         </h2>
         <Link
-          to="/destinos"
+          to={localePath("/destinos")}
           className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
         >
-          Ver todos <IconChevronRight className="h-4 w-4" />
+          {t('Ver todos')} <IconChevronRight className="h-4 w-4" />
         </Link>
       </div>
 
@@ -59,7 +61,7 @@ const ArtistDestinationsList = memo(({ artistName, citiesWithData, currentCity }
         {filteredCities.map((city) => (
           <Link
             key={city.slug}
-            to={`/destinos/${city.slug}`}
+            to={localePath(`/destinos/${city.slug}`)}
             className={cn(
               "group inline-flex items-center gap-2 px-4 py-2.5",
               "bg-card border-2 border-foreground rounded-full",
