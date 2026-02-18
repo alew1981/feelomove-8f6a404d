@@ -68,6 +68,86 @@
   ],
   "redirects": [
     {
+      "source": "/es/conciertos/:path*",
+      "destination": "/conciertos/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/festivales/:path*",
+      "destination": "/festivales/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/destinos/:path*",
+      "destination": "/destinos/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/artistas/:path*",
+      "destination": "/artistas/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/favoritos/:path*",
+      "destination": "/favoritos/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/inspiration/:path*",
+      "destination": "/inspiration/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/about/:path*",
+      "destination": "/about/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/es/conciertos",
+      "destination": "/conciertos",
+      "permanent": true
+    },
+    {
+      "source": "/es/festivales",
+      "destination": "/festivales",
+      "permanent": true
+    },
+    {
+      "source": "/es/destinos",
+      "destination": "/destinos",
+      "permanent": true
+    },
+    {
+      "source": "/es/artistas",
+      "destination": "/artistas",
+      "permanent": true
+    },
+    {
+      "source": "/es/favoritos",
+      "destination": "/favoritos",
+      "permanent": true
+    },
+    {
+      "source": "/es/inspiration",
+      "destination": "/inspiration",
+      "permanent": true
+    },
+    {
+      "source": "/es/about",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/es/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/es",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/product/:path*",
       "destination": "/",
       "permanent": true
@@ -296,6 +376,10 @@
     {
       "source": "/sitemap-destinations.xml",
       "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations"
+    },
+    {
+      "source": "/en/(.*)",
+      "destination": "/index.html"
     },
     {
       "source": "/(.*)",

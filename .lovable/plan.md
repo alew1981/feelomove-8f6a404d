@@ -1,47 +1,55 @@
 
-# Fase 0 + Preparacion: Redirects /es/* y traducciones faltantes
+# Plan i18n FEELOMOVE
 
-## Que se hace en esta iteracion
+## Fase 0 - COMPLETADA ✅
 
-### 1. Redirects 301 de /es/* a /* en vercel.json
+### 1. Redirects 301 /es/* → /* en vercel.json ✅
+- 16 reglas de redirect 301 agregadas (7 con :path*, 7 sin path, /es/, /es)
+- Rewrite `/en/(.*)` → `/index.html` agregado antes del catch-all
 
-Agregar en la seccion "redirects" de `vercel.json` (antes de los redirects existentes):
+### 2. Traducciones faltantes insertadas en tm_translations ✅
+- Disponible, Venta finalizada, Próximamente a la venta, Entradas a la venta el, Página no encontrada, Buscar
 
-```text
-/es/conciertos/:path*  ->  301  ->  /conciertos/:path*
-/es/festivales/:path*  ->  301  ->  /festivales/:path*
-/es/destinos/:path*    ->  301  ->  /destinos/:path*
-/es/artistas/:path*    ->  301  ->  /artistas/:path*
-/es/favoritos/:path*   ->  301  ->  /favoritos/:path*
-/es/inspiration/:path* ->  301  ->  /inspiration/:path*
-/es/about/:path*       ->  301  ->  /about/:path*
-/es/conciertos         ->  301  ->  /conciertos
-/es/festivales         ->  301  ->  /festivales
-/es/destinos           ->  301  ->  /destinos
-/es/artistas           ->  301  ->  /artistas
-/es/favoritos          ->  301  ->  /favoritos
-/es/inspiration        ->  301  ->  /inspiration
-/es/about              ->  301  ->  /about
-/es/                   ->  301  ->  /
-/es                    ->  301  ->  /
-```
+## Fase 1 - PENDIENTE: Infraestructura i18n
 
-Agregar rewrite para /en/* (antes del catch-all):
+- LanguageContext (detección de idioma desde URL)
+- useTranslation hook (t(), localePath(), translateCitySlug())
+- i18nRoutes map (ES ↔ EN route mapping)
+- Carga de traducciones con react-query (cache 24h)
+- Formateo de fechas y precios con Intl
 
-```text
-/en/(.*)  ->  rewrite  ->  /index.html
-```
+## Fase 2 - PENDIENTE: Routing
 
-### 2. Insertar traducciones faltantes en tm_translations
+- Rutas /en/* en App.tsx
+- LanguageProvider wrapper
 
-Ejecutar SQL para insertar los textos identificados que faltan (estados de eventos, hero, secciones, CTAs, legal, etc.).
+## Fase 3 - PENDIENTE: SEO
 
-## Por que esto primero
+- Hreflang tags en SEOHead.tsx
+- OG locale tags
+- Schema.org bilingüe (inLanguage)
+- Prerender edge function con locale
+- Sitemap con xhtml:link hreflang
 
-- Los redirects /es/* protegen contra contenido duplicado desde el dia 1
-- Las traducciones deben existir en BD antes de que el codigo las consuma (Fase 1)
-- Son cambios de bajo riesgo que no afectan al sitio actual
+## Fase 4 - PENDIENTE: UI Translation
 
-## Siguiente paso
+- Navbar, Footer, páginas principales con t()
+- Language switcher
+- Breadcrumbs traducidos
+- Analytics tracking
 
-Una vez confirmado que los redirects funcionan y las traducciones estan en BD, pasamos a **Fase 1: Infraestructura i18n** (LanguageContext, useTranslation, i18nRoutes).
+## Fase 5 - PENDIENTE: Legal Compliance
+
+- Páginas legales con disclaimer (revisión jurídica)
+
+## Fase 6 - PENDIENTE: Testing
+
+- Tests automatizados para slugs, rutas, hreflang
+- Validación SEO con herramientas externas
+
+## Acciones Search Console (post-deploy)
+
+1. Enviar sitemap actualizado
+2. Solicitar indexación de páginas clave /en/
+3. Monitorizar informe de Orientación internacional
+4. Comparar rendimiento semana a semana
