@@ -1,0 +1,1 @@
+UPDATE tm_translations SET english_text = 'Tickets' WHERE spanish_text = 'Conciertos' AND field_type = 'nav';
