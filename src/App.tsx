@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useInstantSEO } from "@/hooks/useInstantSEO";
 import SeoFallbackLinks from "@/components/SeoFallbackLinks";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 // Lazy load Radix-heavy UI components to reduce initial JS execution time
 // These are not critical for first paint
@@ -195,7 +196,8 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       {/* Deferred load Radix providers - reduces TBT by ~900ms */}
-      <BrowserRouter>
+        <BrowserRouter>
+        <LanguageProvider>
         <DeferredProviders />
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
@@ -214,11 +216,24 @@ const App = () => (
                 <Route path="/eventos" element={<Eventos />} />
                 <Route path="/conciertos" element={<Conciertos />} />
                 <Route path="/conciertos/:slug" element={<ConciertosSlugRouter />} />
-<Route path="/festivales" element={<Festivales />} />
+                <Route path="/festivales" element={<Festivales />} />
                 {/* Single festival event pages - uses Producto for event_slug format */}
                 <Route path="/festivales/:slug" element={<Producto />} />
                 <Route path="/favoritos" element={<Favoritos />} />
                 <Route path="/inspiration" element={<Inspiration />} />
+
+                {/* EN routes - same components, locale detected from URL */}
+                <Route path="/en" element={<Index />} />
+                <Route path="/en/tickets" element={<Conciertos />} />
+                <Route path="/en/tickets/:slug" element={<ConciertosSlugRouter />} />
+                <Route path="/en/festivals" element={<Festivales />} />
+                <Route path="/en/festivals/:slug" element={<Producto />} />
+                <Route path="/en/destinations" element={<Destinos />} />
+                <Route path="/en/destinations/:destino" element={<DestinoDetalle />} />
+                <Route path="/en/artists" element={<Artistas />} />
+                <Route path="/en/favorites" element={<Favoritos />} />
+                <Route path="/en/inspiration" element={<Inspiration />} />
+                <Route path="/en/about" element={<About />} />
                 
                 {/* Legacy singular routes - redirect to plural for SEO */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
@@ -257,6 +272,7 @@ const App = () => (
               </Routes>
             </PageWrapper>
           </Suspense>
+        </LanguageProvider>
         </BrowserRouter>
     </QueryClientProvider>
   </ErrorBoundary>

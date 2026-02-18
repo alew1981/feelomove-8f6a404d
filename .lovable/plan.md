@@ -10,13 +10,14 @@
 ### 2. Traducciones faltantes insertadas en tm_translations ✅
 - Disponible, Venta finalizada, Próximamente a la venta, Entradas a la venta el, Página no encontrada, Buscar
 
-## Fase 1 - PENDIENTE: Infraestructura i18n
+## Fase 1 - COMPLETADA ✅: Infraestructura i18n
 
-- LanguageContext (detección de idioma desde URL)
-- useTranslation hook (t(), localePath(), translateCitySlug())
-- i18nRoutes map (ES ↔ EN route mapping)
-- Carga de traducciones con react-query (cache 24h)
-- Formateo de fechas y precios con Intl
+- `src/lib/i18nRoutes.ts` - Mapa bidireccional ES↔EN, detectLocaleFromPath, localePath, getAlternateUrl, toCanonicalPath
+- `src/contexts/LanguageContext.tsx` - LanguageProvider con locale, t(), localePath(), translateCitySlug(), formatDate(), formatPrice()
+- `src/hooks/useTranslation.ts` - Re-export de useLanguage como useTranslation
+- App.tsx envuelto con LanguageProvider dentro de BrowserRouter
+- Rutas /en/* registradas (tickets, festivals, destinations, artists, favorites, inspiration, about)
+- Traducciones cargadas desde tm_translations con react-query (cache 24h)
 
 ## Fase 2 - PENDIENTE: Routing
 
