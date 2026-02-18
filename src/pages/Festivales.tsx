@@ -18,7 +18,7 @@ import { FestivalProductPage } from "@/types/events.types";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const months = [
+const monthsEs = [
   { value: "01", label: "Enero" },
   { value: "02", label: "Febrero" },
   { value: "03", label: "Marzo" },
@@ -31,6 +31,21 @@ const months = [
   { value: "10", label: "Octubre" },
   { value: "11", label: "Noviembre" },
   { value: "12", label: "Diciembre" },
+];
+
+const monthsEn = [
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
 ];
 
 // Interface for normalized festival event with corrected names
@@ -225,6 +240,7 @@ const normalizeFestival = (festival: FestivalProductPage): NormalizedFestival =>
 
 const Festivales = () => {
   const { t, locale } = useTranslation();
+  const months = locale === 'en' ? monthsEn : monthsEs;
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterArtist, setFilterArtist] = useState<string>("all");
   const [filterCity, setFilterCity] = useState<string>("all");
