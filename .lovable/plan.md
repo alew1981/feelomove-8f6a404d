@@ -47,9 +47,16 @@
 - About.tsx - Contenido con t()
 - Otras páginas secundarias (Artistas, Destinos, etc.)
 
-## Fase 5 - PENDIENTE: Legal Compliance
+## Fase 5 - COMPLETADA ✅: Legal Compliance
 
-- Páginas legales con disclaimer (revisión jurídica)
+- `src/pages/PoliticaPrivacidad.tsx` - Política de Privacidad bilingüe (ES/EN), GDPR/RGPD
+- `src/pages/TerminosUso.tsx` - Términos de Uso bilingües (ES/EN), disclaimer de agregador
+- Rutas: `/politica-privacidad`, `/terminos-uso`, `/en/privacy-policy`, `/en/terms-of-use`
+- Footer actualizado con NavLink locale-aware (eliminado enlace Cookies separado)
+- Redirects: `/privacidad` → `/politica-privacidad`, `/cookies` → `/politica-privacidad`
+- vercel.json: redirects `/es/politica-privacidad`, `/es/terminos-uso`
+- i18nRoutes.ts: segmentos `politica-privacidad` ↔ `privacy-policy`, `terminos-uso` ↔ `terms-of-use`
+- Disclaimer legal en ambas páginas (revisión jurídica pendiente)
 
 ## Fase 6 - PENDIENTE: Testing
 

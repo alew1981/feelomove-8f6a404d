@@ -16,6 +16,8 @@ const ROUTE_SEGMENTS: Record<string, string> = {
   favoritos: 'favorites',
   inspiration: 'inspiration',
   about: 'about',
+  'politica-privacidad': 'privacy-policy',
+  'terminos-uso': 'terms-of-use',
 };
 
 /** Reverse map: EN → ES */
