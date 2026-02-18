@@ -123,7 +123,7 @@ const Hero = () => {
             searchResults.push({
               type: 'event',
               name: event.name || '',
-              path: getEventUrl(event.slug || '', false),
+              path: getEventUrl(event.slug || '', false, locale),
               subtitle: event.venue_city || '',
               image: getOptimizedCardImage(event.image_standard_url)
             });
@@ -138,7 +138,7 @@ const Hero = () => {
             searchResults.push({
               type: 'event',
               name: event.name || '',
-              path: getEventUrl(event.slug || '', true),
+              path: getEventUrl(event.slug || '', true, locale),
               subtitle: event.venue_city || '',
               image: getOptimizedCardImage(event.image_standard_url)
             });

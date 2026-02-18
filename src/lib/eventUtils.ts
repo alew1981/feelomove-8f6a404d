@@ -58,9 +58,14 @@ export const generateFestivalSlug = (
  * Genera la URL correcta para un evento según su tipo
  * CRITICAL SEO: Usa /conciertos/ (plural) como estándar unificado
  * Para festivales usa /festivales/, para conciertos usa /conciertos/
+ * Supports optional locale for i18n-aware paths (en: /en/tickets/, /en/festivals/)
  */
-export const getEventUrl = (slug: string, isFestival?: boolean | null): string => {
-  return `/${isFestival ? 'festivales' : 'conciertos'}/${slug}`;
+export const getEventUrl = (slug: string, isFestival?: boolean | null, locale?: 'es' | 'en'): string => {
+  const esPath = `/${isFestival ? 'festivales' : 'conciertos'}/${slug}`;
+  if (!locale || locale === 'es') return esPath;
+  // Inline EN translation to avoid circular deps with i18nRoutes
+  const enSegment = isFestival ? 'festivals' : 'tickets';
+  return `/en/${enSegment}/${slug}`;
 };
 
 /**

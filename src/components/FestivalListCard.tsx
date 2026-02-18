@@ -4,6 +4,7 @@ import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 import { parseDate, isFuture, isPast, isPlaceholderDate as isPlaceholder, formatDay, formatMonth, formatYear } from "@/lib/dateUtils";
 
 // Inline SVGs for critical icons (aria-hidden for accessibility)
@@ -149,7 +150,8 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
   const isEventPast = startDate && isPast(startDate);
 
   // Festival URL
-  const eventUrl = getEventUrl(festivalSlug || '', true);
+  const { locale } = useTranslation();
+  const eventUrl = getEventUrl(festivalSlug || '', true, locale);
 
   // Artist count info
   const artistCount = festival.festival_total_artists || festival.attraction_names?.length || festival.festival_lineup_artists?.length || 0;

@@ -8,6 +8,7 @@ import { Skeleton } from "./ui/skeleton";
 import { getEventUrl } from "@/lib/eventUtils";
 import { usePrefetchEvent } from "@/hooks/useEventData";
 import { getOptimizedCardImage, generateCardSrcSet } from "@/lib/imagekitUtils";
+import { useTranslation } from "@/hooks/useTranslation";
 import { parseDate, isFuture, isPlaceholderDate, formatDay, formatMonth, formatYear, formatTime, formatShortDate, formatOnSaleBadge } from "@/lib/dateUtils";
 
 // Inline SVGs for critical icons (eliminates lucide-react from critical path)
@@ -143,8 +144,9 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
   // Determine if it's a festival based on is_festival OR event_type
   // BUT if forceConcierto is true (e.g., when inside FestivalDetalle), always use /conciertos/
   // NOTE: getEventUrl now returns plural routes as canonical
+  const { locale } = useTranslation();
   const isFestival = forceConcierto ? false : (event.is_festival === true || event.event_type === 'festival');
-  const eventUrl = getEventUrl(eventSlug || '', isFestival);
+  const eventUrl = getEventUrl(eventSlug || '', isFestival, locale);
   
   // Determine festival badge name: passed prop or detect from event data
   // If secondary_attraction_name exists and differs from primary, it's likely a festival day entry
