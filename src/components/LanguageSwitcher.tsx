@@ -1,16 +1,38 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toCanonicalPath, localePath as localePathFn } from "@/lib/i18nRoutes";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
-/**
- * Compact ES/EN toggle for the Navbar.
- * Navigates to the equivalent page in the other language.
- */
+const SESSION_KEY = "lang_tooltip_shown";
+
+/** Returns true for individual event/product pages */
+function isEventPage(pathname: string): boolean {
+  // Match /conciertos/slug, /en/tickets/slug, /festivales/slug, /en/festivals/slug, /producto/slug
+  return /^\/(conciertos|en\/tickets|festivales|en\/festivals|producto)\/[^/]+/.test(pathname);
+}
+
 const LanguageSwitcher = () => {
   const { locale } = useLanguage();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
+  const [open, setOpen] = useState(false);
+
+  // Auto-show tooltip once per session on event pages
+  useEffect(() => {
+    if (!isEventPage(pathname)) return;
+    try {
+      if (sessionStorage.getItem(SESSION_KEY)) return;
+    } catch { /* ignore */ }
+
+    const showTimer = setTimeout(() => setOpen(true), 800);
+    const hideTimer = setTimeout(() => {
+      setOpen(false);
+      try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* ignore */ }
+    }, 4500);
+
+    return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
+  }, [pathname]);
 
   const switchLocale = () => {
     const targetLocale = locale === "es" ? "en" : "es";
@@ -21,7 +43,7 @@ const LanguageSwitcher = () => {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <Tooltip>
+      <Tooltip open={open} onOpenChange={setOpen}>
         <TooltipTrigger asChild>
           <button
             onClick={switchLocale}
