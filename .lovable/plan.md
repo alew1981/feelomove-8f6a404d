@@ -1,73 +1,29 @@
 
-# Plan i18n FEELOMOVE
+## Tooltip en el selector de idioma (mobile)
 
-## Fase 0 - COMPLETADA ✅
+### Que se hara
 
-### 1. Redirects 301 /es/* → /* en vercel.json ✅
-- 16 reglas de redirect 301 agregadas (7 con :path*, 7 sin path, /es/, /es)
-- Rewrite `/en/(.*)` → `/index.html` agregado antes del catch-all
+Envolver el boton `LanguageSwitcher` con un componente `Tooltip` de Radix UI (ya disponible en el proyecto como `src/components/ui/tooltip.tsx`). El tooltip mostrara:
 
-### 2. Traducciones faltantes insertadas en tm_translations ✅
-- Disponible, Venta finalizada, Próximamente a la venta, Entradas a la venta el, Página no encontrada, Buscar
+- **ES**: "Selecciona tu idioma"  
+- **EN**: "Select your language"
 
-## Fase 1 - COMPLETADA ✅: Infraestructura i18n
+### Detalles tecnicos
 
-- `src/lib/i18nRoutes.ts` - Mapa bidireccional ES↔EN, detectLocaleFromPath, localePath, getAlternateUrl, toCanonicalPath
-- `src/contexts/LanguageContext.tsx` - LanguageProvider con locale, t(), localePath(), translateCitySlug(), formatDate(), formatPrice()
-- `src/hooks/useTranslation.ts` - Re-export de useLanguage como useTranslation
-- App.tsx envuelto con LanguageProvider dentro de BrowserRouter
-- Rutas /en/* registradas (tickets, festivals, destinations, artists, favorites, inspiration, about)
-- Traducciones cargadas desde tm_translations con react-query (cache 24h)
+**Archivo a modificar:** `src/components/LanguageSwitcher.tsx`
 
-## Fase 2 - COMPLETADA ✅: Routing (integrada en Fase 1)
+1. Importar `Tooltip`, `TooltipTrigger`, `TooltipContent` y `TooltipProvider` desde `@/components/ui/tooltip`.
+2. Envolver el `<button>` existente con `<TooltipProvider>` > `<Tooltip>` > `<TooltipTrigger asChild>`.
+3. Anadir `<TooltipContent>` con el texto localizado.
+4. Se usara `delayDuration={300}` para que no aparezca accidentalmente al hacer scroll.
+5. En mobile, el tooltip se activara con el long-press nativo de Radix (touch devices). En desktop funciona con hover como es habitual.
 
-- Rutas /en/* registradas en App.tsx (tickets, festivals, destinations, artists, favorites, inspiration, about)
-- LanguageProvider wrapper dentro de BrowserRouter
+**Cambio unico** -- no se modifican otros archivos ni estilos.
 
-## Fase 3 - COMPLETADA ✅: SEO
+### Nota sobre los textos
 
-- `SEOHead.tsx` - Hreflang tags (es, en, x-default), og:locale dinámico, og:locale:alternate, html lang, inLanguage en WebPage schema
-- `EventSeo.tsx` - inLanguage parametrizado (es-ES / en-US) según locale
-- `useInstantSEO.ts` - Soporte para rutas /en/* (titles EN instantáneos)
-- `seo-prerender/index.ts` - Detecta locale desde path, HTML bilingüe, hreflang en prerender, labels/textos traducidos
-- `sitemap/index.ts` - xmlns:xhtml, xhtml:link hreflang en todas las URLs (pages, concerts, festivals, artists, destinations)
+Los textos propuestos son correctos:
+- "Selecciona tu idioma" (ES) -- claro y natural
+- "Select your language" (EN) -- estandar internacional
 
-## Fase 4 - EN PROGRESO 🔄: UI Translation
-
-### Completado ✅
-- `LanguageSwitcher.tsx` - Componente ES/EN toggle compacto para Navbar
-- `Navbar.tsx` - Todos los labels con t(), links con localePath(), LanguageSwitcher en desktop y mobile
-- `Footer.tsx` - Todos los labels, links, categorías traducidos con t() y localePath()
-- `Hero.tsx` - Headlines, búsqueda, 3 pasos, resultados de búsqueda traducidos con t()
-- `Breadcrumbs.tsx` - Locale-aware: Home/Inicio, labels traducidos, soporte para EN segments (tickets, festivals, etc.)
-- `Index.tsx` - Todos los headings de secciones traducidos con t(), links con localePath()
-
-### Pendiente
-- Conciertos.tsx, Festivales.tsx - Headings y filtros con t()
-- About.tsx - Contenido con t()
-- Otras páginas secundarias (Artistas, Destinos, etc.)
-
-## Fase 5 - COMPLETADA ✅: Legal Compliance
-
-- `src/pages/PoliticaPrivacidad.tsx` - Política de Privacidad bilingüe (ES/EN), GDPR/RGPD
-- `src/pages/TerminosUso.tsx` - Términos de Uso bilingües (ES/EN), disclaimer de agregador
-- Rutas: `/politica-privacidad`, `/terminos-uso`, `/en/privacy-policy`, `/en/terms-of-use`
-- Footer actualizado con NavLink locale-aware (eliminado enlace Cookies separado)
-- Redirects: `/privacidad` → `/politica-privacidad`, `/cookies` → `/politica-privacidad`
-- vercel.json: redirects `/es/politica-privacidad`, `/es/terminos-uso`
-- i18nRoutes.ts: segmentos `politica-privacidad` ↔ `privacy-policy`, `terminos-uso` ↔ `terms-of-use`
-- Disclaimer legal en ambas páginas (revisión jurídica pendiente)
-
-## Fase 6 - COMPLETADA ✅: Testing
-
-- Infraestructura: vitest + @testing-library/react + jsdom configurados
-- `src/test/i18nRoutes.test.ts` - 33 tests: detectLocaleFromPath, translateSegment, localePath, stripLocalePrefix, toCanonicalPath, getAlternateUrl (hreflang round-trips)
-- `src/test/slugUtils.test.ts` - 34 tests: normalizeToSlug, generateSeoSlug, isCleanSeoUrl, hasNoisePatterns, isFestivalSlug, extractCityFromSlug, isValidSeoSlug, cleanSlug
-- **67 tests, 0 failures** ✅
-
-## Acciones Search Console (post-deploy)
-
-1. Enviar sitemap actualizado
-2. Solicitar indexación de páginas clave /en/
-3. Monitorizar informe de Orientación internacional
-4. Comparar rendimiento semana a semana
+Una alternativa seria usar textos que indiquen la accion directa ("Cambiar a English" / "Switch to Espanol"), pero los textos genericos que propones funcionan mejor como descubrimiento inicial del feature.
