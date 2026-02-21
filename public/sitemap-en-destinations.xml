@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EN Destinations sitemap - Static placeholder. For dynamic content, use the edge function: -->
+<!-- https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations&lang=en -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://feelomove.com/en/destinations</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>
