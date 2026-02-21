@@ -8,13 +8,20 @@ Allow: /
 Allow: /assets/
 Allow: /images/
 
-# Permitir rastreo de secciones clave
+# Permitir rastreo de secciones clave (ES)
 Allow: /conciertos
 Allow: /festivales
 Allow: /artistas
 Allow: /destinos
 Allow: /concierto/
 Allow: /festival/
+
+# Permitir rastreo de secciones clave (EN)
+Allow: /en/
+Allow: /en/tickets
+Allow: /en/festivals
+Allow: /en/artists
+Allow: /en/destinations
 
 # Bloquear búsquedas y contenido duplicado
 Disallow: /buscar
@@ -47,5 +54,6 @@ Allow: /*.css
 Allow: /images/
 Allow: /assets/
 
-# Sitemap principal
+# Sitemaps
 Sitemap: https://feelomove.com/sitemap_index.xml
+Sitemap: https://feelomove.com/sitemap-en.xml

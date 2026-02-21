@@ -388,6 +388,30 @@
       "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations"
     },
     {
+      "source": "/sitemap-en.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index&lang=en"
+    },
+    {
+      "source": "/sitemap-en-pages.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=pages&lang=en"
+    },
+    {
+      "source": "/sitemap-en-tickets.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=concerts&lang=en"
+    },
+    {
+      "source": "/sitemap-en-festivals.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=festivals&lang=en"
+    },
+    {
+      "source": "/sitemap-en-artists.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=artists&lang=en"
+    },
+    {
+      "source": "/sitemap-en-destinations.xml",
+      "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations&lang=en"
+    },
+    {
       "source": "/en/(.*)",
       "destination": "/index.html"
     },
