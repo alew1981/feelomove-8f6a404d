@@ -238,8 +238,7 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         
-        {/* H1 estático para SEO - visible para rastreadores */}
-        <h1 className="sr-only">FEELOMOVE+ | Entradas Conciertos, Festivales y Hoteles en España</h1>
+        {/* H1 is in Hero component - single H1 per page */}
         
         <Hero />
 
