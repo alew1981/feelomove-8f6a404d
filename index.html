@@ -2,6 +2,8 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <!-- i18n: Set lang and title based on URL before first paint -->
+    <script>if(location.pathname.startsWith('/en/') || location.pathname==='/en'){document.documentElement.lang='en';document.title='FEELOMOVE+ | Tickets for Concerts and Festivals in Spain';}</script>
     
     <!-- CRITICAL: Preconnect hints FIRST for maximum effect (max 4 recommended) -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
@@ -106,7 +108,7 @@
     <!-- SEO FALLBACK: Contenido visible para crawlers antes de que React hidrate -->
     <!-- Este contenido se oculta cuando React monta, pero es indexable por Google/Ahrefs -->
     <div id="seo-fallback" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;">
-      <h1 id="seo-fallback-h1">FEELOMOVE+</h1>
+      <span id="seo-fallback-h1">FEELOMOVE+</span>
       <p id="seo-fallback-description"></p>
       <nav aria-label="Navegación principal">
         <a href="/conciertos">Conciertos en España</a>
@@ -142,7 +144,7 @@
         <div class="breadcrumb">Inicio</div>
         <div class="image-container" role="img" aria-label="Imagen del evento"></div>
         <div class="content-skeleton">
-          <h1 class="title">FEELOMOVE+ Conciertos y Festivales 2026</h1>
+          <p class="title">FEELOMOVE+ Conciertos y Festivales 2026</p>
           <div class="subtitle"></div>
           <div class="meta"></div>
         </div>
