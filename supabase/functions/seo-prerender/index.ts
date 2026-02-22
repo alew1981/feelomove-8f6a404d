@@ -140,13 +140,16 @@ function generateHTML(event: EventData, slug: string, routeType: "concierto" | "
   const keywords = event.seo_keywords?.join(", ") || 
     `${event.event_name}, ${isEN ? 'tickets' : 'entradas'} ${event.venue_city}`;
 
-  const jsonLd = {
+  // CRITICAL: Skip startDate/endDate for placeholder dates (9999) to avoid GSC errors
+  const hasValidDate = event.event_date && !event.event_date.startsWith('9999');
+  
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": event.event_type === "Festival" ? "Festival" : "MusicEvent",
     "name": event.event_name,
     "description": description,
-    "startDate": event.event_date,
-    "endDate": event.event_date,
+    ...(hasValidDate && { "startDate": event.event_date }),
+    ...(hasValidDate && { "endDate": event.event_date }),
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "url": canonicalUrl,
