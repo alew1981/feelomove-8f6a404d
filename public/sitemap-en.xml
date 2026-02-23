@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap><loc>https://feelomove.com/sitemap-en-pages.xml</loc></sitemap>
-  <sitemap><loc>https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=concerts&lang=en</loc></sitemap>
-  <sitemap><loc>https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=festivals&lang=en</loc></sitemap>
-  <sitemap><loc>https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=artists&lang=en</loc></sitemap>
-  <sitemap><loc>https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=destinations&lang=en</loc></sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-en-pages.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-en-tickets.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-en-festivals.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-en-artists.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://feelomove.com/sitemap-en-destinations.xml</loc>
+  </sitemap>
 </sitemapindex>

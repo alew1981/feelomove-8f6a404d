@@ -42,9 +42,9 @@ export const generateSitemap = async (): Promise<string> => {
   const today = new Date().toISOString().split('T')[0];
 
   // ========================================
-  // 1. GENERATE sitemap-concerts.xml
+  // 1. CONCERTS (ES + EN)
   // ========================================
-  console.log('Generating sitemap-concerts.xml...');
+  console.log('Generating concert sitemaps...');
   const { data: concerts } = await supabase
     .from("tm_tbl_events")
     .select("slug, event_date")
@@ -55,54 +55,41 @@ export const generateSitemap = async (): Promise<string> => {
     .not("slug", "like", "%-vip%")
     .order("event_date", { ascending: true });
 
-  const concertUrls: SitemapUrl[] = [];
+  const concertUrlsEs: SitemapUrl[] = [];
+  const concertUrlsEn: SitemapUrl[] = [];
   if (concerts) {
     concerts.forEach((concert) => {
       if (concert.slug) {
         const eventDate = concert.event_date ? new Date(concert.event_date).toISOString().split('T')[0] : today;
-        // CRITICAL SEO: Use plural route /conciertos/ as canonical
-        concertUrls.push({
-          loc: `${baseUrl}/conciertos/${concert.slug}`,
-          lastmod: eventDate,
-          changefreq: 'daily',
-          priority: 0.8
-        });
+        concertUrlsEs.push({ loc: `${baseUrl}/conciertos/${concert.slug}`, lastmod: eventDate, changefreq: 'daily', priority: 0.8 });
+        concertUrlsEn.push({ loc: `${baseUrl}/en/tickets/${concert.slug}`, lastmod: eventDate, changefreq: 'daily', priority: 0.8 });
       }
     });
   }
-  const concertsSitemapXml = wrapInUrlset(concertUrls.map(generateUrlXml).join('\n'));
-  console.log(`Generated ${concertUrls.length} concert URLs`);
+  console.log(`Generated ${concertUrlsEs.length} concert URLs (ES + EN)`);
 
   // ========================================
-  // 2. GENERATE sitemap-festivals.xml
+  // 2. FESTIVALS (ES + EN)
   // ========================================
-  console.log('Generating sitemap-festivals.xml...');
-  
-  // Section 1: Festival pages (listings)
+  console.log('Generating festival sitemaps...');
   const { data: festivalPages } = await supabase
     .from("mv_festivals_cards")
     .select("canonical_slug")
     .order("canonical_slug", { ascending: true });
 
-  const festivalUrls: SitemapUrl[] = [];
-  
-  // Add festival listing pages
+  const festivalUrlsEs: SitemapUrl[] = [];
+  const festivalUrlsEn: SitemapUrl[] = [];
   if (festivalPages) {
     const seenSlugs = new Set<string>();
     festivalPages.forEach((festival) => {
       if (festival.canonical_slug && !seenSlugs.has(festival.canonical_slug)) {
         seenSlugs.add(festival.canonical_slug);
-        festivalUrls.push({
-          loc: `${baseUrl}/festivales/${festival.canonical_slug}`,
-          changefreq: 'weekly',
-          priority: 0.7
-        });
+        festivalUrlsEs.push({ loc: `${baseUrl}/festivales/${festival.canonical_slug}`, changefreq: 'weekly', priority: 0.7 });
+        festivalUrlsEn.push({ loc: `${baseUrl}/en/festivals/${festival.canonical_slug}`, changefreq: 'weekly', priority: 0.7 });
       }
     });
   }
-  console.log(`Generated ${festivalUrls.length} festival listing page URLs`);
 
-  // Section 2: Individual festival events
   const { data: festivalEvents } = await supabase
     .from("tm_tbl_events")
     .select("slug, event_date")
@@ -113,78 +100,63 @@ export const generateSitemap = async (): Promise<string> => {
     .not("slug", "like", "%-vip%")
     .order("event_date", { ascending: true });
 
-  const festivalEventCount = festivalUrls.length;
   if (festivalEvents) {
     festivalEvents.forEach((event) => {
       if (event.slug) {
         const eventDate = event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : today;
-        // CRITICAL SEO: Use plural route /festivales/ as canonical
-        festivalUrls.push({
-          loc: `${baseUrl}/festivales/${event.slug}`,
-          lastmod: eventDate,
-          changefreq: 'daily',
-          priority: 0.8
-        });
+        festivalUrlsEs.push({ loc: `${baseUrl}/festivales/${event.slug}`, lastmod: eventDate, changefreq: 'daily', priority: 0.8 });
+        festivalUrlsEn.push({ loc: `${baseUrl}/en/festivals/${event.slug}`, lastmod: eventDate, changefreq: 'daily', priority: 0.8 });
       }
     });
   }
-  console.log(`Generated ${festivalUrls.length - festivalEventCount} individual festival event URLs`);
-
-  const festivalsSitemapXml = wrapInUrlset(festivalUrls.map(generateUrlXml).join('\n'));
+  console.log(`Generated ${festivalUrlsEs.length} festival URLs (ES + EN)`);
 
   // ========================================
-  // 3. GENERATE sitemap-artists.xml
+  // 3. ARTISTS (ES + EN)
   // ========================================
-  console.log('Generating sitemap-artists.xml...');
+  console.log('Generating artist sitemaps...');
   const { data: artists } = await supabase
     .from("mv_attractions")
     .select("attraction_slug")
     .order("attraction_slug", { ascending: true });
 
-  const artistUrls: SitemapUrl[] = [];
+  const artistUrlsEs: SitemapUrl[] = [];
+  const artistUrlsEn: SitemapUrl[] = [];
   if (artists) {
     artists.forEach((artist) => {
       if (artist.attraction_slug) {
-        artistUrls.push({
-          loc: `${baseUrl}/conciertos/${artist.attraction_slug}`,
-          changefreq: 'weekly',
-          priority: 0.7
-        });
+        artistUrlsEs.push({ loc: `${baseUrl}/conciertos/${artist.attraction_slug}`, changefreq: 'weekly', priority: 0.7 });
+        artistUrlsEn.push({ loc: `${baseUrl}/en/tickets/${artist.attraction_slug}`, changefreq: 'weekly', priority: 0.7 });
       }
     });
   }
-  const artistsSitemapXml = wrapInUrlset(artistUrls.map(generateUrlXml).join('\n'));
-  console.log(`Generated ${artistUrls.length} artist URLs`);
+  console.log(`Generated ${artistUrlsEs.length} artist URLs (ES + EN)`);
 
   // ========================================
-  // 4. GENERATE sitemap-destinations.xml
+  // 4. DESTINATIONS (ES + EN)
   // ========================================
-  console.log('Generating sitemap-destinations.xml...');
+  console.log('Generating destination sitemaps...');
   const { data: destinations } = await supabase
     .from("mv_destinations_cards")
     .select("city_slug")
     .order("city_slug", { ascending: true });
 
-  const destinationUrls: SitemapUrl[] = [];
+  const destinationUrlsEs: SitemapUrl[] = [];
+  const destinationUrlsEn: SitemapUrl[] = [];
   if (destinations) {
     destinations.forEach((dest) => {
       if (dest.city_slug) {
-        destinationUrls.push({
-          loc: `${baseUrl}/destinos/${dest.city_slug}`,
-          changefreq: 'weekly',
-          priority: 0.7
-        });
+        destinationUrlsEs.push({ loc: `${baseUrl}/destinos/${dest.city_slug}`, changefreq: 'weekly', priority: 0.7 });
+        destinationUrlsEn.push({ loc: `${baseUrl}/en/destinations/${dest.city_slug}`, changefreq: 'weekly', priority: 0.7 });
       }
     });
   }
-  const destinationsSitemapXml = wrapInUrlset(destinationUrls.map(generateUrlXml).join('\n'));
-  console.log(`Generated ${destinationUrls.length} destination URLs`);
+  console.log(`Generated ${destinationUrlsEs.length} destination URLs (ES + EN)`);
 
   // ========================================
-  // 5. GENERATE sitemap-pages.xml (static pages)
+  // 5. STATIC PAGES (ES + EN)
   // ========================================
-  console.log('Generating sitemap-pages.xml...');
-  const staticPages: SitemapUrl[] = [
+  const staticPagesEs: SitemapUrl[] = [
     { loc: `${baseUrl}/`, changefreq: 'daily', priority: 1.0 },
     { loc: `${baseUrl}/conciertos`, changefreq: 'daily', priority: 0.9 },
     { loc: `${baseUrl}/festivales`, changefreq: 'daily', priority: 0.9 },
@@ -192,14 +164,32 @@ export const generateSitemap = async (): Promise<string> => {
     { loc: `${baseUrl}/destinos`, changefreq: 'weekly', priority: 0.8 },
     { loc: `${baseUrl}/about`, changefreq: 'monthly', priority: 0.5 },
   ];
-  const pagesSitemapXml = wrapInUrlset(staticPages.map(generateUrlXml).join('\n'));
-  console.log(`Generated ${staticPages.length} static page URLs`);
+  const staticPagesEn: SitemapUrl[] = [
+    { loc: `${baseUrl}/en/`, changefreq: 'daily', priority: 1.0 },
+    { loc: `${baseUrl}/en/tickets`, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/en/festivals`, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/en/artists`, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/en/destinations`, changefreq: 'weekly', priority: 0.8 },
+    { loc: `${baseUrl}/en/inspiration`, changefreq: 'weekly', priority: 0.6 },
+    { loc: `${baseUrl}/en/about`, changefreq: 'monthly', priority: 0.5 },
+  ];
 
   // ========================================
-  // 6. GENERATE sitemap_index.xml
+  // 6. GENERATE ALL XML
   // ========================================
-  console.log('Generating sitemap_index.xml...');
-  const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
+  const concertsEsXml = wrapInUrlset(concertUrlsEs.map(generateUrlXml).join('\n'));
+  const concertsEnXml = wrapInUrlset(concertUrlsEn.map(generateUrlXml).join('\n'));
+  const festivalsEsXml = wrapInUrlset(festivalUrlsEs.map(generateUrlXml).join('\n'));
+  const festivalsEnXml = wrapInUrlset(festivalUrlsEn.map(generateUrlXml).join('\n'));
+  const artistsEsXml = wrapInUrlset(artistUrlsEs.map(generateUrlXml).join('\n'));
+  const artistsEnXml = wrapInUrlset(artistUrlsEn.map(generateUrlXml).join('\n'));
+  const destinationsEsXml = wrapInUrlset(destinationUrlsEs.map(generateUrlXml).join('\n'));
+  const destinationsEnXml = wrapInUrlset(destinationUrlsEn.map(generateUrlXml).join('\n'));
+  const pagesEsXml = wrapInUrlset(staticPagesEs.map(generateUrlXml).join('\n'));
+  const pagesEnXml = wrapInUrlset(staticPagesEn.map(generateUrlXml).join('\n'));
+
+  // ES index
+  const sitemapIndexEs = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>${baseUrl}/sitemap-pages.xml</loc>
@@ -223,20 +213,52 @@ export const generateSitemap = async (): Promise<string> => {
   </sitemap>
 </sitemapindex>`;
 
+  // EN index
+  const sitemapIndexEn = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${baseUrl}/sitemap-en-pages.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${baseUrl}/sitemap-en-tickets.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${baseUrl}/sitemap-en-festivals.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${baseUrl}/sitemap-en-artists.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${baseUrl}/sitemap-en-destinations.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+</sitemapindex>`;
+
   // ========================================
-  // 8. WRITE ALL FILES TO PUBLIC + DIST FOLDERS
-  //    (CRITICAL: if we only write to /public in closeBundle,
-  //    Vite has already copied publicDir into dist)
+  // 7. WRITE ALL FILES
   // ========================================
   const writeSitemapsToDir = (dir: string) => {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
-    writeFileSync(resolve(dir, 'sitemap-concerts.xml'), concertsSitemapXml);
-    writeFileSync(resolve(dir, 'sitemap-festivals.xml'), festivalsSitemapXml);
-    writeFileSync(resolve(dir, 'sitemap-artists.xml'), artistsSitemapXml);
-    writeFileSync(resolve(dir, 'sitemap-destinations.xml'), destinationsSitemapXml);
-    writeFileSync(resolve(dir, 'sitemap-pages.xml'), pagesSitemapXml);
-    writeFileSync(resolve(dir, 'sitemap_index.xml'), sitemapIndex);
+    // ES sitemaps
+    writeFileSync(resolve(dir, 'sitemap-concerts.xml'), concertsEsXml);
+    writeFileSync(resolve(dir, 'sitemap-festivals.xml'), festivalsEsXml);
+    writeFileSync(resolve(dir, 'sitemap-artists.xml'), artistsEsXml);
+    writeFileSync(resolve(dir, 'sitemap-destinations.xml'), destinationsEsXml);
+    writeFileSync(resolve(dir, 'sitemap-pages.xml'), pagesEsXml);
+    writeFileSync(resolve(dir, 'sitemap_index.xml'), sitemapIndexEs);
+
+    // EN sitemaps
+    writeFileSync(resolve(dir, 'sitemap-en.xml'), sitemapIndexEn);
+    writeFileSync(resolve(dir, 'sitemap-en-tickets.xml'), concertsEnXml);
+    writeFileSync(resolve(dir, 'sitemap-en-festivals.xml'), festivalsEnXml);
+    writeFileSync(resolve(dir, 'sitemap-en-artists.xml'), artistsEnXml);
+    writeFileSync(resolve(dir, 'sitemap-en-destinations.xml'), destinationsEnXml);
+    writeFileSync(resolve(dir, 'sitemap-en-pages.xml'), pagesEnXml);
   };
 
   try {
@@ -251,13 +273,12 @@ export const generateSitemap = async (): Promise<string> => {
     writeSitemapsToDir(distDir);
     console.log('✅ Written sitemaps to dist');
 
-    console.log('✅ All sitemaps generated successfully!');
+    console.log('✅ All sitemaps (ES + EN) generated successfully!');
   } catch (error) {
     console.error('Error writing sitemap files:', error);
   }
 
-  // Return the main sitemap index for backwards compatibility
-  return sitemapIndex;
+  return sitemapIndexEs;
 };
 
 // Helper function to get event URL (used by components)
