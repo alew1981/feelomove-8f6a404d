@@ -212,7 +212,7 @@ const Destinos = () => {
       <SEOHead
         title={locale === 'en' ? "Music Destinations in Spain - Events by City" : "Destinos Musicales en España - Eventos por Ciudad"}
         description={locale === 'en' ? "Explore concerts and festivals in Madrid, Barcelona, Valencia and more. Find music events near you." : "Explora conciertos y festivales en Madrid, Barcelona, Valencia y más. Encuentra eventos musicales cerca de ti."}
-        canonical="/destinos"
+        canonical={locale === 'en' ? "/en/destinations" : "/destinos"}
         keywords="destinos musicales españa, eventos madrid, conciertos barcelona, festivales valencia"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}

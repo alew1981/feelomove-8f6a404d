@@ -181,7 +181,7 @@ const Artistas = () => {
       <SEOHead
         title={locale === 'en' ? "Artists in Concert Spain 2025 - Tickets" : "Artistas en Concierto España 2025 - Entradas"}
         description={locale === 'en' ? "Find concerts from your favorite artists in Spain. Tickets for pop, rock, indie, electronic and more genres." : "Encuentra conciertos de tus artistas favoritos en España. Entradas para pop, rock, indie, electrónica y más géneros."}
-        canonical="/artistas"
+        canonical={locale === 'en' ? "/en/artists" : "/artistas"}
         keywords="artistas conciertos españa, músicos en directo, artistas festivales 2025"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}

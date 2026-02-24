@@ -308,7 +308,7 @@ const Inspiration = () => {
       <SEOHead
         title={locale === 'en' ? "Inspiration | Concert + Hotel Deals | Feelomove" : "Inspiración | Ofertas de Conciertos con Hotel | Feelomove"}
         description={locale === 'en' ? "Discover the best concert and festival deals with hotel included. Complete packages at the best price per person." : "Descubre las mejores ofertas para conciertos y festivales con hotel incluido. Packs completos desde el mejor precio por persona."}
-        canonical="/inspiration"
+        canonical={locale === 'en' ? "/en/inspiration" : "/inspiration"}
       />
       
       <div className="min-h-screen bg-background flex flex-col">
