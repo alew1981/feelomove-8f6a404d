@@ -531,7 +531,7 @@ const Festivales = () => {
       <SEOHead
         title={locale === 'en' ? "Music Festivals in Spain 2025 - Tickets and Hotels | Feelomove" : "Festivales de Música en España 2025 - Entradas y Hoteles | Feelomove"}
         description={locale === 'en' ? "Discover the best music festivals in Spain 2025. Buy tickets for rock, electronic, indie festivals and book hotels near the venue." : "Descubre los mejores festivales de música en España 2025. Compra tus entradas para festivales de rock, electrónica, indie y reserva hotel cerca del recinto."}
-        canonical="/festivales"
+        canonical={locale === 'en' ? "/en/festivals" : "/festivales"}
         keywords="festivales españa 2025, festivales música, festivales verano, festivales madrid, festivales barcelona"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}

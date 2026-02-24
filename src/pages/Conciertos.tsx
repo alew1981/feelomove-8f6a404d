@@ -266,7 +266,7 @@ const Conciertos = () => {
       <SEOHead
         title={locale === 'en' ? "Concerts in Spain 2025 - Tickets and Hotels" : "Conciertos en España 2025 - Entradas y Hoteles"}
         description={locale === 'en' ? "Buy tickets for concerts in Madrid, Barcelona and all Spain. Book a hotel near the venue. Rock, pop, indie and more." : "Compra entradas para conciertos en Madrid, Barcelona y toda España. Reserva hotel cerca del venue. Rock, pop, indie y más."}
-        canonical="/conciertos"
+        canonical={locale === 'en' ? "/en/tickets" : "/conciertos"}
         keywords="conciertos españa 2025, entradas conciertos madrid, conciertos barcelona, rock pop indie"
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
