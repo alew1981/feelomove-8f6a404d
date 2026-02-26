@@ -3,7 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <!-- i18n: Set lang and title based on URL before first paint -->
-    <script>if(location.pathname.startsWith('/en/') || location.pathname==='/en'){document.documentElement.lang='en';document.title='FEELOMOVE+ | Tickets for Concerts and Festivals in Spain';}</script>
+    <script>
+    (function(){
+      var isEN = location.pathname.startsWith('/en/') || location.pathname==='/en';
+      if(!isEN) return;
+      document.documentElement.lang='en';
+      document.title='FEELOMOVE+ | Concert Tickets & Music Festivals Spain';
+      // Add English meta description
+      var md=document.createElement('meta');md.name='description';
+      md.content='Buy concert and festival tickets in Spain. Find events in Barcelona, Madrid, Seville and more. Compare hotel prices near the venue with FEELOMOVE+';
+      document.head.appendChild(md);
+      // Rewrite SEO fallback after DOM is ready
+      document.addEventListener('DOMContentLoaded',function(){
+        var fb=document.getElementById('seo-fallback');
+        if(fb){
+          var nav=fb.querySelector('nav');
+          if(nav){
+            nav.setAttribute('aria-label','Main navigation');
+            nav.innerHTML='<a href="/en/tickets">Concerts in Spain</a><a href="/en/festivals">Music Festivals</a><a href="/en/destinations">Destinations</a><a href="/en/artists">Artists</a><a href="/en/music">Music Genres</a>';
+          }
+          var h2=document.getElementById('seo-fallback-h2');
+          if(h2) h2.textContent='Upcoming Concerts and Festivals';
+        }
+        // Rewrite skeleton
+        var sk=document.getElementById('critical-skeleton');
+        if(sk){
+          var navLinks=sk.querySelectorAll('.nav-skeleton a');
+          if(navLinks.length>=3){
+            navLinks[0].href='/en/tickets';navLinks[0].textContent='Concerts';
+            navLinks[1].href='/en/festivals';navLinks[1].textContent='Festivals';
+            navLinks[2].href='/en/destinations';navLinks[2].textContent='Destinations';
+          }
+          var bc=sk.querySelector('.breadcrumb');
+          if(bc) bc.textContent='Home';
+          var img=sk.querySelector('.image-container');
+          if(img) img.setAttribute('aria-label','Event image');
+          var title=sk.querySelector('.content-skeleton .title');
+          if(title) title.textContent='FEELOMOVE+ Concerts and Festivals 2026';
+        }
+      });
+    })();
+    </script>
     
     <!-- CRITICAL: Preconnect hints FIRST for maximum effect (max 4 recommended) -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
