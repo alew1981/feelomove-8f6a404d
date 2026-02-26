@@ -1,66 +1,72 @@
 
 
-# Fix /en/ pages serving Spanish content to crawlers
+# Fix 3 Critical SEO Issues for /en/ Pages
 
 ## Problem
-When Google crawls `/en/` URLs, the raw HTML (before React hydrates) shows Spanish nav links, Spanish skeleton text, Spanish fallback content, and no Content-Language header. Google treats these as duplicates of the Spanish pages.
+All `/en/` event pages have their canonical, JSON-LD `@id`/`url`, and internal links hardcoded to Spanish URLs. This tells Google the EN pages are duplicates of the ES pages, blocking EN indexing entirely.
 
 ## Changes
 
-### 1. Edit `index.html` -- Make SEO fallback and skeleton bilingual (MOST CRITICAL)
+### Fix 1 -- Self-referencing canonical for /en/ pages
 
-Extend the existing inline script on line 6 to also rewrite:
-- The SEO fallback nav links (`#seo-fallback` nav) to English paths and text
-- The skeleton nav links to English paths
-- The skeleton title text to English
-- The breadcrumb text from "Inicio" to "Home"
-- The image aria-label to English
-- Add a meta description tag in English
+**File: `src/lib/eventUtils.ts`** (line 75-79)
 
-The extended script will detect `/en/` prefix and use `document.querySelector` / `innerHTML` to rewrite the static HTML elements before any rendering occurs.
+Update `getCanonicalEventUrl` to accept an optional `locale` parameter:
 
-### 2. Edit `vercel.json` -- Add Content-Language HTTP headers
+```ts
+export const getCanonicalEventUrl = (slug: string, isFestival?: boolean | null, locale?: 'es' | 'en'): string => {
+  const baseUrl = 'https://feelomove.com';
+  if (locale === 'en') {
+    const path = isFestival ? 'festivals' : 'tickets';
+    return `${baseUrl}/en/${path}/${slug}`;
+  }
+  const path = isFestival ? 'festivales' : 'conciertos';
+  return `${baseUrl}/${path}/${slug}`;
+};
+```
 
-Add a `headers` array alongside the existing `rewrites`:
-- `/en/(.*)` routes get `Content-Language: en` and `Vary: Accept-Language`
-- All other routes get `Content-Language: es`
+**File: `src/pages/Producto.tsx`** (line 942)
 
-No `_headers` file will be created (Vercel ignores it).
+Pass the current locale to the function:
 
-### 3. Edit `src/contexts/LanguageContext.tsx` -- Inline critical translations fallback
+```ts
+const absoluteUrl = getCanonicalEventUrl(canonicalSlug, eventDetails.is_festival || false, locale);
+```
 
-Add a hardcoded `CRITICAL_TRANSLATIONS` map with ~15 key UI strings (Conciertos->Concerts, Festivales->Festivals, Destinos->Destinations, Artistas->Artists, Inspiración->Inspiration, Hoteles->Hotels, Buscar->Search, Favoritos->Favorites, Entradas->Tickets, Comprar Entradas->Buy Tickets, Encuentra Hoteles->Find Hotels, Ver más->See more, Eventos->Events, Géneros Musicales->Music Genres).
+This single change fixes both the canonical tag (passed to `SEOHead` as `canonical={absoluteUrl}`) and the JSON-LD `@id`/`url` fields (passed to `EventSeo` via `createEventSeoProps` as `url: absoluteUrl`).
 
-Modify the `t()` function to check this map first when `locale === 'en'` and `translationMap` hasn't loaded yet. Once Supabase translations load, they take priority. This ensures the Navbar and above-the-fold content render in English on first paint.
+### Fix 2 -- JSON-LD @id and url (automatically fixed)
 
-### 4. Verify `src/pages/Producto.tsx` SEO metadata (already done)
+No separate change needed. The `absoluteUrl` from Fix 1 flows into `createEventSeoProps({ url: absoluteUrl })` which sets the `url` prop on `EventSeo`. Inside `EventSeo.tsx` (line 310), `@id: absoluteUrl` and `url: absoluteUrl` already use this value. Once Fix 1 passes the EN URL, Schema.org will show the correct English URL.
 
-The `seoDescription` (lines 807-813) already has full locale branching with English text for `/en/` routes. The `seoTitle` (lines 803-805) uses `t('Entradas')` which will now resolve to "Tickets" immediately thanks to the critical translations fallback. No changes needed here.
+### Fix 3 -- Locale-aware links in SeoFallbackLinks and RelatedEventsSection
 
-### 5. Verify `src/components/EventSeo.tsx` JSON-LD (already locale-aware)
+**File: `src/components/SeoFallbackLinks.tsx`** (lines 44-50, 132-153)
 
-The EventSeo component already accepts a `locale` prop and sets `inLanguage` accordingly (line 327). The `description` field comes from `seoDescription` which is already bilingual in Producto.tsx. No changes needed here.
+- Detect locale from `location.pathname` (check if starts with `/en/`)
+- Use `/en/tickets/` and `/en/festivals/` prefixes when on EN routes
+- Change link text from "Entradas" to "Tickets" for EN routes
+- Update the slug extraction regex to also match `/en/tickets/` and `/en/festivals/` paths
+
+**File: `src/components/RelatedEventsSection.tsx`** (lines 167-235)
+
+- Add locale detection from `useLocation()` (check if pathname starts with `/en/`)
+- Change the section title from "También te puede interesar" to "You might also like" for EN
+- Change "Ver todos" link to "See all" and point to `/en/tickets` instead of `/conciertos`
+- Change event URLs from `/conciertos/[slug]` to `/en/tickets/[slug]` and `/festivales/[slug]` to `/en/festivals/[slug]`
+- Change skeleton placeholder links to use EN paths and text
 
 ---
 
-## Technical details
+## Files to modify
 
-### Files to modify
+| File | What changes |
+|------|-------------|
+| `src/lib/eventUtils.ts` | Add `locale` param to `getCanonicalEventUrl` |
+| `src/pages/Producto.tsx` | Pass `locale` to `getCanonicalEventUrl` |
+| `src/components/SeoFallbackLinks.tsx` | Use EN prefixes and text on `/en/` routes |
+| `src/components/RelatedEventsSection.tsx` | Use EN URLs, title, and link text on `/en/` routes |
 
-| File | Change |
-|------|--------|
-| `index.html` (line 6 script + lines 110-151) | Extend inline script to rewrite fallback/skeleton content for /en/ |
-| `vercel.json` | Add `headers` array for Content-Language |
-| `src/contexts/LanguageContext.tsx` | Add `CRITICAL_TRANSLATIONS` map and update `t()` fallback logic |
-
-### What crawlers will see after fix
-
-For a request to `/en/tickets/the-kooks-barcelona`:
-- `<html lang="en">`
-- `<title>FEELOMOVE+ | Concert Tickets & Music Festivals Spain</title>`
-- `<meta name="description" content="Buy concert and festival tickets in Spain...">` 
-- Nav links: Concerts, Festivals, Destinations, Artists
-- Skeleton text: "FEELOMOVE+ Concerts and Festivals 2026"
-- `Content-Language: en` HTTP header
-- Once React hydrates: English SEO title, English description, English JSON-LD, hreflang tags
+## Verification
+After deploying, `curl -s https://feelomove.com/en/tickets/the-kooks-barcelona | grep canonical` should show `href="https://feelomove.com/en/tickets/the-kooks-barcelona"` (not `/conciertos/`).
 
