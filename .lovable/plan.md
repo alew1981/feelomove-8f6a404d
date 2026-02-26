@@ -1,46 +1,66 @@
 
 
-## Fix: Error XML en sitemap-en.xml
+# Fix /en/ pages serving Spanish content to crawlers
 
-### Problema
-El archivo `sitemap-en.xml` tiene URLs con `&lang=en` que rompen el XML porque `&` es un carácter especial en XML y debe escribirse como `&amp;`. Google Search Console no puede leer el sitemap.
+## Problem
+When Google crawls `/en/` URLs, the raw HTML (before React hydrates) shows Spanish nav links, Spanish skeleton text, Spanish fallback content, and no Content-Language header. Google treats these as duplicates of the Spanish pages.
 
-### Solucion
-Cambiar `sitemap-en.xml` para que apunte a archivos estaticos locales, exactamente igual que el sitemap ES. Esto elimina el problema del `&` y ademas hace que el sitemap EN funcione identicamente al ES.
+## Changes
 
-### Cambios
+### 1. Edit `index.html` -- Make SEO fallback and skeleton bilingual (MOST CRITICAL)
 
-**1. Actualizar `public/sitemap-en.xml`**
-Reemplazar las URLs de la edge function por archivos estaticos:
+Extend the existing inline script on line 6 to also rewrite:
+- The SEO fallback nav links (`#seo-fallback` nav) to English paths and text
+- The skeleton nav links to English paths
+- The skeleton title text to English
+- The breadcrumb text from "Inicio" to "Home"
+- The image aria-label to English
+- Add a meta description tag in English
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>https://feelomove.com/sitemap-en-pages.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://feelomove.com/sitemap-en-tickets.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://feelomove.com/sitemap-en-festivals.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://feelomove.com/sitemap-en-artists.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://feelomove.com/sitemap-en-destinations.xml</loc>
-  </sitemap>
-</sitemapindex>
-```
+The extended script will detect `/en/` prefix and use `document.querySelector` / `innerHTML` to rewrite the static HTML elements before any rendering occurs.
 
-**2. Poblar los archivos EN con datos reales**
-Los archivos `sitemap-en-tickets.xml`, `sitemap-en-festivals.xml`, `sitemap-en-artists.xml` y `sitemap-en-destinations.xml` actualmente estan vacios (solo tienen el `urlset` vacio). Se poblaran con las URLs EN correctas consultando la base de datos, usando el mismo patron que `src/utils/sitemap.ts` ya usa para los archivos ES.
+### 2. Edit `vercel.json` -- Add Content-Language HTTP headers
 
-**3. Actualizar `src/utils/sitemap.ts`**
-Agregar generacion de los 5 archivos EN (pages, tickets, festivals, artists, destinations) al script que ya genera los archivos ES. Asi cuando se ejecute, se generaran ambos idiomas automaticamente.
+Add a `headers` array alongside the existing `rewrites`:
+- `/en/(.*)` routes get `Content-Language: en` and `Vary: Accept-Language`
+- All other routes get `Content-Language: es`
 
-### Resultado
-- `sitemap-en.xml` sera identico en estructura al `sitemap.xml` (ES)
-- Sin errores XML
-- Google Search Console podra indexar todas las paginas EN correctamente
+No `_headers` file will be created (Vercel ignores it).
+
+### 3. Edit `src/contexts/LanguageContext.tsx` -- Inline critical translations fallback
+
+Add a hardcoded `CRITICAL_TRANSLATIONS` map with ~15 key UI strings (Conciertos->Concerts, Festivales->Festivals, Destinos->Destinations, Artistas->Artists, Inspiración->Inspiration, Hoteles->Hotels, Buscar->Search, Favoritos->Favorites, Entradas->Tickets, Comprar Entradas->Buy Tickets, Encuentra Hoteles->Find Hotels, Ver más->See more, Eventos->Events, Géneros Musicales->Music Genres).
+
+Modify the `t()` function to check this map first when `locale === 'en'` and `translationMap` hasn't loaded yet. Once Supabase translations load, they take priority. This ensures the Navbar and above-the-fold content render in English on first paint.
+
+### 4. Verify `src/pages/Producto.tsx` SEO metadata (already done)
+
+The `seoDescription` (lines 807-813) already has full locale branching with English text for `/en/` routes. The `seoTitle` (lines 803-805) uses `t('Entradas')` which will now resolve to "Tickets" immediately thanks to the critical translations fallback. No changes needed here.
+
+### 5. Verify `src/components/EventSeo.tsx` JSON-LD (already locale-aware)
+
+The EventSeo component already accepts a `locale` prop and sets `inLanguage` accordingly (line 327). The `description` field comes from `seoDescription` which is already bilingual in Producto.tsx. No changes needed here.
+
+---
+
+## Technical details
+
+### Files to modify
+
+| File | Change |
+|------|--------|
+| `index.html` (line 6 script + lines 110-151) | Extend inline script to rewrite fallback/skeleton content for /en/ |
+| `vercel.json` | Add `headers` array for Content-Language |
+| `src/contexts/LanguageContext.tsx` | Add `CRITICAL_TRANSLATIONS` map and update `t()` fallback logic |
+
+### What crawlers will see after fix
+
+For a request to `/en/tickets/the-kooks-barcelona`:
+- `<html lang="en">`
+- `<title>FEELOMOVE+ | Concert Tickets & Music Festivals Spain</title>`
+- `<meta name="description" content="Buy concert and festival tickets in Spain...">` 
+- Nav links: Concerts, Festivals, Destinations, Artists
+- Skeleton text: "FEELOMOVE+ Concerts and Festivals 2026"
+- `Content-Language: en` HTTP header
+- Once React hydrates: English SEO title, English description, English JSON-LD, hreflang tags
+
