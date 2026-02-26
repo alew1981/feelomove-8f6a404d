@@ -34,7 +34,32 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-/** Map: spanish_text → english_text (lowercased key for case-insensitive lookup) */
+/** Synchronous fallback for critical UI strings – avoids FOUC on /en/ first render */
+const CRITICAL_TRANSLATIONS = new Map<string, string>([
+  ['Conciertos', 'Concerts'],
+  ['Festivales', 'Festivals'],
+  ['Destinos', 'Destinations'],
+  ['Artistas', 'Artists'],
+  ['Inspiración', 'Inspiration'],
+  ['Hoteles', 'Hotels'],
+  ['Buscar', 'Search'],
+  ['Favoritos', 'Favorites'],
+  ['Entradas', 'Tickets'],
+  ['Comprar Entradas', 'Buy Tickets'],
+  ['Encuentra Hoteles', 'Find Hotels'],
+  ['Ver más', 'See more'],
+  ['Eventos', 'Events'],
+  ['Géneros Musicales', 'Music Genres'],
+  ['Música', 'Music'],
+  ['Inicio', 'Home'],
+  ['Ver todos', 'View all'],
+  ['Próximos eventos', 'Upcoming events'],
+  ['Acerca de', 'About'],
+  ['Política de Privacidad', 'Privacy Policy'],
+  ['Términos de Uso', 'Terms of Use'],
+]);
+
+/** Map: spanish_text → english_text */
 type TranslationMap = Map<string, string>;
 
 function buildTranslationMap(rows: { spanish_text: string; english_text: string }[]): TranslationMap {
@@ -78,8 +103,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (spanishText: string): string => {
-      if (locale === 'es' || !translationMap) return spanishText;
-      return translationMap.get(spanishText) ?? spanishText;
+      if (locale === 'es') return spanishText;
+      // Supabase translations take priority when loaded
+      if (translationMap) {
+        return translationMap.get(spanishText) ?? CRITICAL_TRANSLATIONS.get(spanishText) ?? spanishText;
+      }
+      // Before Supabase loads, use synchronous critical fallback
+      return CRITICAL_TRANSLATIONS.get(spanishText) ?? spanishText;
     },
     [locale, translationMap],
   );

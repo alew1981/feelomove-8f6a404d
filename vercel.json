@@ -1,4 +1,19 @@
 {
+  "headers": [
+    {
+      "source": "/en/(.*)",
+      "headers": [
+        { "key": "Content-Language", "value": "en" },
+        { "key": "Vary", "value": "Accept-Language" }
+      ]
+    },
+    {
+      "source": "/((?!en/).*)",
+      "headers": [
+        { "key": "Content-Language", "value": "es" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index" },
     { "source": "/sitemap_index.xml", "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index" },
