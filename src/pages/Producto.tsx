@@ -939,7 +939,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
   // CRITICAL SEO: Use getCanonicalEventUrl for pure canonical generation
   // This ensures canonical is ALWAYS built from slug, never from window.location
   const canonicalSlug = rpcCanonicalSlug || eventDetails.event_slug || "";
-  const absoluteUrl = getCanonicalEventUrl(canonicalSlug, eventDetails.is_festival || false);
+  const absoluteUrl = getCanonicalEventUrl(canonicalSlug, eventDetails.is_festival || false, locale);
 
   const eventStatus = getEventStatus(
     eventDetails.cancelled,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +59,8 @@ export const RelatedEventsSection = ({
 }: RelatedEventsSectionProps) => {
   const [events, setEvents] = useState<RelatedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const isEn = location.pathname.startsWith('/en/');
 
   useEffect(() => {
     const fetchRelatedEvents = async () => {
@@ -171,15 +173,14 @@ export const RelatedEventsSection = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
             <IconTicket className="h-5 w-5 text-accent" />
-            También te puede interesar
+            {isEn ? 'You might also like' : 'También te puede interesar'}
           </h3>
         </div>
-        {/* SEO: Crawlable placeholder links visible in DOM */}
-        <nav aria-label="Eventos relacionados" className="flex gap-2 flex-wrap">
-          <a href="/conciertos" className="h-10 w-32 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Conciertos</a>
-          <a href="/festivales" className="h-10 w-28 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Festivales</a>
-          <a href="/destinos/madrid" className="h-10 w-36 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Madrid</a>
-          <a href="/destinos/barcelona" className="h-10 w-36 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Barcelona</a>
+        <nav aria-label={isEn ? 'Related events' : 'Eventos relacionados'} className="flex gap-2 flex-wrap">
+          <a href={isEn ? '/en/tickets' : '/conciertos'} className="h-10 w-32 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">{isEn ? 'Concerts' : 'Conciertos'}</a>
+          <a href={isEn ? '/en/festivals' : '/festivales'} className="h-10 w-28 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">{isEn ? 'Festivals' : 'Festivales'}</a>
+          <a href={isEn ? '/en/destinations/madrid' : '/destinos/madrid'} className="h-10 w-36 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Madrid</a>
+          <a href={isEn ? '/en/destinations/barcelona' : '/destinos/barcelona'} className="h-10 w-36 rounded-full bg-muted animate-pulse inline-flex items-center justify-center text-transparent">Barcelona</a>
         </nav>
       </div>
     );
@@ -193,23 +194,23 @@ export const RelatedEventsSection = ({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
           <IconTicket className="h-5 w-5 text-accent" />
-          También te puede interesar
+          {isEn ? 'You might also like' : 'También te puede interesar'}
         </h3>
         <Link 
-          to="/conciertos" 
+          to={isEn ? '/en/tickets' : '/conciertos'} 
           className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
         >
-          Ver todos <IconChevronRight className="h-4 w-4" />
+          {isEn ? 'See all' : 'Ver todos'} <IconChevronRight className="h-4 w-4" />
         </Link>
       </div>
 
       {/* Horizontal Pill Layout with Scroll on Mobile - Same as "Ver en otros destinos" */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
         {events.map((event) => {
-          // CRITICAL SEO: Use plural routes as canonical (/conciertos/, /festivales/)
-          const eventUrl = event.is_festival 
-            ? `/festivales/${event.slug}` 
-            : `/conciertos/${event.slug}`;
+          // CRITICAL SEO: Use locale-aware routes
+          const eventUrl = isEn
+            ? (event.is_festival ? `/en/festivals/${event.slug}` : `/en/tickets/${event.slug}`)
+            : (event.is_festival ? `/festivales/${event.slug}` : `/conciertos/${event.slug}`);
           const displayName = event.artist_name || event.name.split(' - ')[0] || event.name;
           
           return (
