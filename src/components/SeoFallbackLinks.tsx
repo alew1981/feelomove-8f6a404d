@@ -38,27 +38,27 @@ interface SeoEvent {
 
 export const SeoFallbackLinks = () => {
   const location = useLocation();
+  const isEn = location.pathname.startsWith('/en/');
   
   // Determine page context for targeted link injection
   const pageContext = useMemo(() => {
     const path = location.pathname;
     
-    if (path.startsWith('/destinos/')) {
-      const citySlug = path.split('/')[2];
+    if (path.startsWith('/destinos/') || path.startsWith('/en/destinations/')) {
+      const citySlug = path.split('/').filter(Boolean).pop() || '';
       return { type: 'city' as const, slug: citySlug };
     }
-    if (path.startsWith('/conciertos/') && path.split('/').length === 3) {
-      // Could be artist or event page - inject related links
-      return { type: 'event' as const, slug: path.split('/')[2] };
+    if ((path.startsWith('/conciertos/') || path.startsWith('/en/tickets/')) && path.split('/').filter(Boolean).length >= 2) {
+      return { type: 'event' as const, slug: path.split('/').filter(Boolean).pop() || '' };
     }
-    if (path.startsWith('/musica/')) {
-      const genreSlug = path.split('/')[2];
+    if (path.startsWith('/musica/') || path.startsWith('/en/music/')) {
+      const genreSlug = path.split('/').filter(Boolean).pop() || '';
       return { type: 'genre' as const, slug: genreSlug };
     }
-    if (path === '/conciertos' || path === '/conciertos/') {
+    if (path === '/conciertos' || path === '/conciertos/' || path === '/en/tickets' || path === '/en/tickets/') {
       return { type: 'listing' as const, slug: null };
     }
-    if (path === '/festivales' || path === '/festivales/') {
+    if (path === '/festivales' || path === '/festivales/' || path === '/en/festivals' || path === '/en/festivals/') {
       return { type: 'festivals' as const, slug: null };
     }
     
@@ -133,7 +133,7 @@ export const SeoFallbackLinks = () => {
           Array.from(linksContainer.querySelectorAll('a'))
             .map(a => {
               const href = a.getAttribute('href') || '';
-              const match = href.match(/\/conciertos\/([^/]+)$/) || href.match(/\/festivales\/([^/]+)$/);
+              const match = href.match(/\/conciertos\/([^/]+)$/) || href.match(/\/festivales\/([^/]+)$/) || href.match(/\/en\/tickets\/([^/]+)$/) || href.match(/\/en\/festivals\/([^/]+)$/);
               return match ? match[1] : null;
             })
             .filter(Boolean)
@@ -146,11 +146,16 @@ export const SeoFallbackLinks = () => {
           
           const li = document.createElement('li');
           const a = document.createElement('a');
-          a.href = `/${isFestival ? 'festivales' : 'conciertos'}/${event.slug}`;
-          a.textContent = `Entradas ${event.artist_name || event.name}`;
+          if (isEn) {
+            a.href = `/${isFestival ? 'en/festivals' : 'en/tickets'}/${event.slug}`;
+            a.textContent = `Tickets ${event.artist_name || event.name}`;
+          } else {
+            a.href = `/${isFestival ? 'festivales' : 'conciertos'}/${event.slug}`;
+            a.textContent = `Entradas ${event.artist_name || event.name}`;
+          }
           li.appendChild(a);
           linksContainer!.appendChild(li);
-          existingSlugs.add(event.slug); // Track to avoid future duplicates
+          existingSlugs.add(event.slug);
         });
 
       } catch (error) {

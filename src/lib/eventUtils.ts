@@ -72,8 +72,12 @@ export const getEventUrl = (slug: string, isFestival?: boolean | null, locale?: 
  * Genera la URL canónica absoluta para SEO
  * CRITICAL: Esta es la fuente única de verdad para canonical URLs
  */
-export const getCanonicalEventUrl = (slug: string, isFestival?: boolean | null): string => {
+export const getCanonicalEventUrl = (slug: string, isFestival?: boolean | null, locale?: 'es' | 'en'): string => {
   const baseUrl = 'https://feelomove.com';
+  if (locale === 'en') {
+    const path = isFestival ? 'festivals' : 'tickets';
+    return `${baseUrl}/en/${path}/${slug}`;
+  }
   const path = isFestival ? 'festivales' : 'conciertos';
   return `${baseUrl}/${path}/${slug}`;
 };
