@@ -262,15 +262,17 @@ export const EventSeo = ({
       const lowPrice = hasValidPrice ? offers.lowPrice : undefined;
       const highPrice = hasValidPrice && offers.highPrice ? offers.highPrice : undefined;
       
-      // Determine availability — SoldOut takes priority over everything
-      let availability = 'https://schema.org/InStock';
-      if (status === 'past' || status === 'cancelled') {
-        availability = 'https://schema.org/SoldOut';
-      } else if (offers?.availability === 'SoldOut') {
-        availability = 'https://schema.org/SoldOut';
-      } else if (offers?.availability) {
-        availability = getSchemaAvailability(offers.availability);
-      }
+      // SoldOut MUST take priority over everything else
+      const isSoldOut = offers?.availability === 'SoldOut' || status === 'cancelled';
+      const isPastEvent = status === 'past';
+      
+      const availability = isSoldOut
+        ? 'https://schema.org/SoldOut'
+        : isPastEvent
+          ? 'https://schema.org/SoldOut'
+          : offers?.availability
+            ? getSchemaAvailability(offers.availability)
+            : 'https://schema.org/InStock';
       
       const offersObj: Record<string, unknown> = {
         '@type': (lowPrice && highPrice && highPrice > lowPrice) ? 'AggregateOffer' : 'Offer',
@@ -432,14 +434,17 @@ export const createEventSeoProps = (eventData: {
     type: 'MusicGroup' as const,
   }));
   
-  // Determine offer availability — sold_out always wins over PreOrder
+  // SoldOut MUST take priority over everything else
+  // isSoldOut: explicit sold_out flag, past/cancelled status, or no real availability
+  const isSoldOut = eventData.sold_out
+    || options.status === 'past'
+    || options.status === 'cancelled';
+  
   let availability: EventOffer['availability'] = 'InStock';
-  if (options.status === 'past' || options.status === 'cancelled') {
-    availability = 'SoldOut';
-  } else if (eventData.sold_out) {
+  if (isSoldOut) {
     availability = 'SoldOut';
   } else if (!options.isEventAvailable) {
-    // Only use PreOrder when NOT sold out
+    // Only use PreOrder when definitively NOT sold out
     availability = 'PreOrder';
   }
   
