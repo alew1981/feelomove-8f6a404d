@@ -258,34 +258,36 @@ export const EventSeo = ({
     // ROBUST FALLBACK: Always build offers object with sensible defaults
     // Google Rich Results requires valid offers - never leave empty
     const buildOffersSchema = (): Record<string, unknown> => {
-      // Default values for missing data
-      const DEFAULT_PRICE = 0; // "Precio a consultar" represented as 0
       const hasValidPrice = offers && offers.lowPrice > 0;
-      const lowPrice = hasValidPrice ? offers.lowPrice : DEFAULT_PRICE;
-      const highPrice = hasValidPrice && offers.highPrice ? offers.highPrice : lowPrice;
+      const lowPrice = hasValidPrice ? offers.lowPrice : undefined;
+      const highPrice = hasValidPrice && offers.highPrice ? offers.highPrice : undefined;
       
-      // Determine availability based on status and offers
+      // Determine availability — SoldOut takes priority over everything
       let availability = 'https://schema.org/InStock';
       if (status === 'past' || status === 'cancelled') {
+        availability = 'https://schema.org/SoldOut';
+      } else if (offers?.availability === 'SoldOut') {
         availability = 'https://schema.org/SoldOut';
       } else if (offers?.availability) {
         availability = getSchemaAvailability(offers.availability);
       }
       
       const offersObj: Record<string, unknown> = {
-        '@type': highPrice > lowPrice ? 'AggregateOffer' : 'Offer',
+        '@type': (lowPrice && highPrice && highPrice > lowPrice) ? 'AggregateOffer' : 'Offer',
         url: absoluteUrl,
         priceCurrency: offers?.currency || 'EUR',
         availability,
       };
       
-      // Use lowPrice/highPrice for AggregateOffer, price for Offer
-      if (highPrice > lowPrice) {
+      // Only include price fields when we have valid prices
+      // Omitting price is valid per schema.org and avoids Google warnings
+      if (lowPrice && highPrice && highPrice > lowPrice) {
         offersObj.lowPrice = lowPrice;
         offersObj.highPrice = highPrice;
-      } else {
+      } else if (lowPrice) {
         offersObj.price = lowPrice;
       }
+      // When no valid price exists, price is intentionally omitted
       
       if (offers?.validFrom) {
         offersObj.validFrom = offers.validFrom;
@@ -430,13 +432,14 @@ export const createEventSeoProps = (eventData: {
     type: 'MusicGroup' as const,
   }));
   
-  // Determine offer availability
+  // Determine offer availability — sold_out always wins over PreOrder
   let availability: EventOffer['availability'] = 'InStock';
   if (options.status === 'past' || options.status === 'cancelled') {
     availability = 'SoldOut';
   } else if (eventData.sold_out) {
     availability = 'SoldOut';
   } else if (!options.isEventAvailable) {
+    // Only use PreOrder when NOT sold out
     availability = 'PreOrder';
   }
   
