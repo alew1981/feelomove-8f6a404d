@@ -1,45 +1,44 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- i18n: Set lang and title based on URL before first paint -->
+    <!-- i18n: Default is English. Script switches to Spanish for non-/en/ routes -->
     <script>
     (function(){
-      var isEN = location.pathname.startsWith('/en/') || location.pathname==='/en';
-      if(!isEN) return;
-      document.documentElement.lang='en';
-      document.title='FEELOMOVE+ | Concert Tickets & Music Festivals Spain';
-      // Add English meta description
-      var md=document.createElement('meta');md.name='description';
-      md.content='Buy concert and festival tickets in Spain. Find events in Barcelona, Madrid, Seville and more. Compare hotel prices near the venue with FEELOMOVE+';
-      document.head.appendChild(md);
-      // Rewrite SEO fallback after DOM is ready
+      var isES = !location.pathname.startsWith('/en/') && location.pathname!=='/en';
+      if(!isES) return;
+      document.documentElement.lang='es';
+      document.title='FEELOMOVE+ | Entradas Conciertos y Festivales España';
+      var md=document.querySelector('meta[name="description"]');
+      if(md) md.content='Compra entradas para conciertos y festivales en España. Encuentra eventos en Barcelona, Madrid, Sevilla y más con FEELOMOVE+';
       document.addEventListener('DOMContentLoaded',function(){
+        // Rewrite SEO fallback to Spanish
         var fb=document.getElementById('seo-fallback');
         if(fb){
           var nav=fb.querySelector('nav');
           if(nav){
-            nav.setAttribute('aria-label','Main navigation');
-            nav.innerHTML='<a href="/en/tickets">Concerts in Spain</a><a href="/en/festivals">Music Festivals</a><a href="/en/destinations">Destinations</a><a href="/en/artists">Artists</a><a href="/en/music">Music Genres</a>';
+            nav.setAttribute('aria-label','Navegación principal');
+            nav.innerHTML='<a href="/conciertos">Conciertos en España</a><a href="/festivales">Festivales de Música</a><a href="/destinos">Destinos</a><a href="/artistas">Artistas</a><a href="/musica">Géneros Musicales</a>';
           }
           var h2=document.getElementById('seo-fallback-h2');
-          if(h2) h2.textContent='Upcoming Concerts and Festivals';
+          if(h2) h2.textContent='Próximos Conciertos y Festivales';
         }
-        // Rewrite skeleton
+        // Rewrite skeleton to Spanish
         var sk=document.getElementById('critical-skeleton');
         if(sk){
           var navLinks=sk.querySelectorAll('.nav-skeleton a');
           if(navLinks.length>=3){
-            navLinks[0].href='/en/tickets';navLinks[0].textContent='Concerts';
-            navLinks[1].href='/en/festivals';navLinks[1].textContent='Festivals';
-            navLinks[2].href='/en/destinations';navLinks[2].textContent='Destinations';
+            navLinks[0].href='/conciertos';navLinks[0].textContent='Conciertos';
+            navLinks[1].href='/festivales';navLinks[1].textContent='Festivales';
+            navLinks[2].href='/destinos';navLinks[2].textContent='Destinos';
           }
+          sk.querySelector('.nav-skeleton').setAttribute('aria-label','Navegación');
           var bc=sk.querySelector('.breadcrumb');
-          if(bc) bc.textContent='Home';
+          if(bc) bc.textContent='Inicio';
           var img=sk.querySelector('.image-container');
-          if(img) img.setAttribute('aria-label','Event image');
+          if(img) img.setAttribute('aria-label','Imagen del evento');
           var title=sk.querySelector('.content-skeleton .title');
-          if(title) title.textContent='FEELOMOVE+ Concerts and Festivals 2026';
+          if(title) title.textContent='FEELOMOVE+ Conciertos y Festivales 2026';
         }
       });
     })();
@@ -51,7 +50,8 @@
     <link rel="preconnect" href="https://wcyjuytpxxqailtixept.supabase.co" crossorigin="">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FEELOMOVE+ | Entradas Conciertos y Festivales España</title>
+    <title>FEELOMOVE+ | Concert Tickets & Music Festivals Spain</title>
+    <meta name="description" content="Buy concert and festival tickets in Spain. Find events in Barcelona, Madrid, Seville and more. Compare hotel prices near the venue with FEELOMOVE+">
     
     <!-- Security Headers (enforced at server level via vercel.json) -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -145,17 +145,16 @@
   </head>
 
   <body>
-    <!-- SEO FALLBACK: Contenido visible para crawlers antes de que React hidrate -->
-    <!-- Este contenido se oculta cuando React monta, pero es indexable por Google/Ahrefs -->
+    <!-- SEO FALLBACK: Content visible to crawlers before React hydrates -->
     <div id="seo-fallback" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;">
       <span id="seo-fallback-h1">FEELOMOVE+</span>
       <p id="seo-fallback-description"></p>
-      <nav aria-label="Navegación principal">
-        <a href="/conciertos">Conciertos en España</a>
-        <a href="/festivales">Festivales de Música</a>
-        <a href="/destinos">Destinos</a>
-        <a href="/artistas">Artistas</a>
-        <a href="/musica">Géneros Musicales</a>
+      <nav aria-label="Main navigation">
+        <a href="/en/tickets">Concerts in Spain</a>
+        <a href="/en/festivals">Music Festivals</a>
+        <a href="/en/destinations">Destinations</a>
+        <a href="/en/artists">Artists</a>
+        <a href="/en/music">Music Genres</a>
       </nav>
       <section>
         <h2 id="seo-fallback-h2"></h2>
@@ -167,24 +166,24 @@
     <div id="critical-skeleton">
       <!-- Navbar skeleton -->
       <div class="navbar-critical">
-        <a href="/" title="FEELOMOVE+ - Inicio">
+        <a href="/" title="FEELOMOVE+ - Home">
           <svg class="logo" viewBox="0 0 120 32" fill="none" aria-label="FEELOMOVE+ Logo">
             <text x="0" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="18">FEELOMOVE</text>
             <text x="108" y="24" fill="#00FF8F" font-family="Poppins" font-weight="700" font-size="14">+</text>
           </svg>
         </a>
-        <nav class="nav-skeleton" aria-label="Navegación">
-          <a href="/conciertos" class="nav-item" style="color:transparent;">Conciertos</a>
-          <a href="/festivales" class="nav-item" style="color:transparent;">Festivales</a>
-          <a href="/destinos" class="nav-item" style="color:transparent;">Destinos</a>
+        <nav class="nav-skeleton" aria-label="Navigation">
+          <a href="/en/tickets" class="nav-item" style="color:transparent;">Concerts</a>
+          <a href="/en/festivals" class="nav-item" style="color:transparent;">Festivals</a>
+          <a href="/en/destinations" class="nav-item" style="color:transparent;">Destinations</a>
         </nav>
       </div>
       <!-- Hero skeleton with semantic content -->
       <main class="hero-skeleton">
-        <div class="breadcrumb">Inicio</div>
-        <div class="image-container" role="img" aria-label="Imagen del evento"></div>
+        <div class="breadcrumb">Home</div>
+        <div class="image-container" role="img" aria-label="Event image"></div>
         <div class="content-skeleton">
-          <p class="title">FEELOMOVE+ Conciertos y Festivales 2026</p>
+          <p class="title">FEELOMOVE+ Concerts and Festivals 2026</p>
           <div class="subtitle"></div>
           <div class="meta"></div>
         </div>
@@ -211,6 +210,7 @@
       (function() {
         var abortController = new AbortController();
         var timeoutId = setTimeout(function() { abortController.abort(); }, 5000);
+        var isEN = location.pathname.startsWith('/en/') || location.pathname==='/en';
         
         fetch('https://wcyjuytpxxqailtixept.supabase.co/functions/v1/popular-events', {
           signal: abortController.signal
@@ -223,14 +223,15 @@
             
             var ul = document.createElement('ul');
             ul.id = 'seo-fallback-event-links';
-            ul.setAttribute('aria-label', 'Eventos populares');
+            ul.setAttribute('aria-label', isEN ? 'Popular events' : 'Eventos populares');
             
             events.forEach(function(e) {
               if (!e.slug) return;
               var li = document.createElement('li');
               var a = document.createElement('a');
-              a.href = '/conciertos/' + e.slug;
-              a.textContent = 'Entradas ' + (e.artist_name || e.name);
+              var name = e.artist_name || e.name;
+              a.href = isEN ? '/en/tickets/' + e.slug : '/conciertos/' + e.slug;
+              a.textContent = isEN ? 'Tickets ' + name : 'Entradas ' + name;
               li.appendChild(a);
               ul.appendChild(li);
             });

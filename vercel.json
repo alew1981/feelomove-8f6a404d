@@ -14,6 +14,13 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/concierto/:slug", "destination": "/conciertos/:slug", "permanent": true },
+    { "source": "/producto/:slug", "destination": "/conciertos/:slug", "permanent": true },
+    { "source": "/festival/:slug", "destination": "/festivales/:slug", "permanent": true },
+    { "source": "/generos/:slug", "destination": "/musica/:slug", "permanent": true },
+    { "source": "/generos", "destination": "/musica", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index" },
     { "source": "/sitemap_index.xml", "destination": "https://wcyjuytpxxqailtixept.supabase.co/functions/v1/sitemap?type=index" },
