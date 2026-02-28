@@ -14,6 +14,7 @@ import ProductoSkeleton from "@/components/ProductoSkeleton";
 import CollapsibleBadges from "@/components/CollapsibleBadges";
 import { EventStatusBanner, getEventStatus } from "@/components/EventStatusBanner";
 import { EventSeo, createEventSeoProps } from "@/components/EventSeo";
+import { EventFAQSchema } from "@/components/EventFAQSchema";
 import ArtistDestinationsList from "@/components/ArtistDestinationsList";
 import { FestivalServiceAddons } from "@/components/FestivalServiceAddons";
 import RelatedEventsSection from "@/components/RelatedEventsSection";
@@ -1014,6 +1015,27 @@ const Producto = ({ slugProp }: ProductoProps) => {
   return (
     <>
       <EventSeo {...eventSeoProps} />
+
+      <EventFAQSchema
+        eventId={eventDetails.event_id || ""}
+        eventName={eventDetails.event_name || ""}
+        artistName={mainArtist}
+        isFestival={eventDetails.is_festival || false}
+        eventDate={eventDetails.event_date || null}
+        doorOpeningDate={(eventDetails as any).door_opening_date || null}
+        venueName={eventDetails.venue_name || null}
+        venueCity={eventDetails.venue_city || null}
+        venueAddress={eventDetails.venue_address || null}
+        priceMin={minPrice || null}
+        priceMax={maxPrice || null}
+        currency="EUR"
+        soldOut={eventDetails.sold_out || false}
+        cancelled={eventDetails.cancelled || false}
+        hasVipTickets={hasVipTickets}
+        hasHotels={hotels.length > 0}
+        hotelCount={hotels.length}
+        locale={locale}
+      />
 
       <SEOHead
         title={seoTitle}
