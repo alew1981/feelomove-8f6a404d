@@ -976,6 +976,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
       cancelled: eventDetails.cancelled,
       rescheduled: eventDetails.rescheduled,
       is_festival: eventDetails.is_festival,
+      local_event_date: (eventDetails as any).local_event_date,
     },
     {
       description: seoDescription,

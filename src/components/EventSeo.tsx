@@ -43,6 +43,8 @@ export interface EventSeoProps {
   };
   /** ISO 8601 start date */
   startDate: string;
+  /** Local event date string from Supabase (used for timezone-aware startDate) */
+  localEventDate?: string;
   /** ISO 8601 end date (defaults to startDate if not provided) */
   endDate?: string;
   /** Door opening time (ISO 8601) */
@@ -82,6 +84,18 @@ const escapeJsonLdString = (str: string | undefined | null): string => {
     .replace(/>/g, '\\u003e')     // Escape > to prevent script injection
     .replace(/&/g, '\\u0026');    // Escape & for safety
 };
+
+/**
+ * Converts UTC event_date + local_event_date into a proper ISO 8601 string
+ * with the correct timezone offset (CET +01:00 or CEST +02:00).
+ */
+function getStartDateForSchema(eventDate: string, localEventDate: string): string {
+  const utcDate = new Date(eventDate);
+  const localDate = new Date(localEventDate);
+  const offsetHours = Math.round((localDate.getTime() - utcDate.getTime()) / 3600000);
+  const offset = offsetHours >= 2 ? '+02:00' : '+01:00';
+  return localEventDate.replace(' ', 'T').replace('+00', offset).replace('+00:00', offset);
+}
 
 /**
  * Maps internal event status to Schema.org eventStatus URL
@@ -162,6 +176,7 @@ export const EventSeo = ({
   image,
   images,
   startDate,
+  localEventDate,
   endDate,
   doorTime,
   location,
@@ -211,7 +226,10 @@ export const EventSeo = ({
       }
     };
     
-    const formattedStartDate = formatDateToISO(startDate);
+    // Use timezone-aware date when local_event_date is available
+    const formattedStartDate = (localEventDate && startDate)
+      ? getStartDateForSchema(startDate, localEventDate)
+      : formatDateToISO(startDate);
     const formattedEndDate = formatDateToISO(endDate || startDate);
     
     // ROBUST FALLBACK: Ensure we always have a valid image
@@ -368,7 +386,7 @@ export const EventSeo = ({
     
     return schema;
   }, [
-    eventId, name, description, image, images, startDate, endDate, doorTime,
+    eventId, name, description, image, images, startDate, localEventDate, endDate, doorTime,
     location, performers, offers, status, isFestival, url, organizerName, organizerUrl, ticketmasterUrl
   ]);
   
@@ -436,6 +454,7 @@ export const createEventSeoProps = (eventData: {
   rescheduled?: boolean | null;
   is_festival?: boolean | null;
   url?: string | null;
+  local_event_date?: string | null;
 }, options: {
   description: string;
   url: string;
@@ -491,6 +510,7 @@ export const createEventSeoProps = (eventData: {
       standard: eventData.image_standard_url || undefined, // Typically 4:3
     },
     startDate: validEventDate,
+    localEventDate: eventData.local_event_date || undefined,
     endDate: eventData.festival_end_date || validEventDate,
     doorTime: eventData.door_opening_date || undefined,
     location: {
