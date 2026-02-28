@@ -63,6 +63,8 @@ export interface EventSeoProps {
   organizerName?: string;
   /** Organizer URL */
   organizerUrl?: string;
+  /** Ticketmaster event URL (used for seatmap) */
+  ticketmasterUrl?: string;
 }
 
 /**
@@ -170,6 +172,7 @@ export const EventSeo = ({
   url,
   organizerName = 'FEELOMOVE+',
   organizerUrl = 'https://feelomove.com',
+  ticketmasterUrl,
   locale = 'es',
 }: EventSeoProps & { locale?: 'es' | 'en' }) => {
   
@@ -354,10 +357,19 @@ export const EventSeo = ({
     // ALWAYS include offers (with fallbacks) - Google Rich Results requirement
     schema.offers = offersSchema;
     
+    // Add seatmap if Ticketmaster URL is available
+    if (ticketmasterUrl) {
+      schema.seatmap = {
+        '@type': 'Map',
+        mapType: 'https://schema.org/SeatingMap',
+        url: ticketmasterUrl,
+      };
+    }
+    
     return schema;
   }, [
     eventId, name, description, image, images, startDate, endDate, doorTime,
-    location, performers, offers, status, isFestival, url, organizerName, organizerUrl
+    location, performers, offers, status, isFestival, url, organizerName, organizerUrl, ticketmasterUrl
   ]);
   
   // Inject JSON-LD into document head
@@ -423,6 +435,7 @@ export const createEventSeoProps = (eventData: {
   cancelled?: boolean | null;
   rescheduled?: boolean | null;
   is_festival?: boolean | null;
+  url?: string | null;
 }, options: {
   description: string;
   url: string;
@@ -502,6 +515,7 @@ export const createEventSeoProps = (eventData: {
     status: options.status,
     isFestival: eventData.is_festival || false,
     url: options.url,
+    ticketmasterUrl: eventData.url || undefined,
   };
 };
 
