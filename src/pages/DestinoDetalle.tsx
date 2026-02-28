@@ -20,6 +20,7 @@ import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
 import { buildDestinationSeoDescription } from "@/lib/seoDescriptions";
 import { useTranslation } from "@/hooks/useTranslation";
+import { DestinationFAQSchema } from "@/components/DestinationFAQSchema";
 
 // Normalize slug by removing accents for DB matching
 const normalizeSlug = (slug: string): string => {
@@ -357,8 +358,16 @@ const DestinoDetalle = () => {
   // During loading, we index (to prevent Soft 404)
   const shouldNoIndex = !isLoading && events.length === 0;
 
-  return (
+   return (
     <>
+      <DestinationFAQSchema
+        citySlug={citySlug}
+        cityName={cityName}
+        eventCount={events?.length || 0}
+        nextEventName={events?.[0]?.name || undefined}
+        nextEventDate={events?.[0]?.event_date || undefined}
+        locale={locale}
+      />
       <SEOHead
         title={locale === 'en' ? `Concerts in ${cityName} - Tickets & Hotels` : `Conciertos en ${cityName} - Entradas y Hoteles`}
         description={seoDescription}
