@@ -219,10 +219,15 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
   ];
+  const ENGLISH_MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
   
   const formatMonthYear = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return `${SPANISH_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+    const months = locale === 'en' ? ENGLISH_MONTHS : SPANISH_MONTHS;
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
   };
 
   const availableMonths = useMemo(() => {
@@ -237,10 +242,13 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
     });
     
     return Array.from(monthSet).sort((a, b) => {
-      // Parse "enero 2026" format back to comparable dates
+      // Parse "enero 2026" / "January 2026" format back to comparable dates
       const parseMonth = (str: string) => {
         const [month, year] = str.split(' ');
-        return new Date(parseInt(year), SPANISH_MONTHS.indexOf(month));
+        const monthIdx = SPANISH_MONTHS.indexOf(month) !== -1 
+          ? SPANISH_MONTHS.indexOf(month)
+          : ENGLISH_MONTHS.indexOf(month);
+        return new Date(parseInt(year), monthIdx >= 0 ? monthIdx : 0);
       };
       return parseMonth(a).getTime() - parseMonth(b).getTime();
     });
@@ -311,24 +319,31 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
     : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
 
   // Generate JSON-LD structured data for artist and events
+  const artistBasePath = locale === 'en' ? '/en/tickets' : '/conciertos';
+  const artistBaseUrl = `https://feelomove.com${artistBasePath}`;
+  
   const jsonLdData = useMemo(() => {
     const artistSchema = {
       "@context": "https://schema.org",
       "@type": "MusicGroup",
       "name": artistName,
-      "url": `https://feelomove.com/conciertos/${artistSlug}`,
+      "url": `${artistBaseUrl}/${artistSlug}`,
       "image": heroImage || undefined,
       "genre": artistGenre || undefined,
+      "inLanguage": locale === 'en' ? 'en-US' : 'es-ES',
       "event": events?.slice(0, 10).map((event: any) => ({
         "@type": "MusicEvent",
         "name": event.name,
-        "description": `Concierto de ${artistName} en ${event.venue_city}. Entradas disponibles.`,
+        "description": locale === 'en'
+          ? `${artistName} concert in ${event.venue_city}. Tickets available.`
+          : `Concierto de ${artistName} en ${event.venue_city}. Entradas disponibles.`,
         "startDate": event.event_date,
-        "endDate": event.event_date, // Same day event
+        "endDate": event.event_date,
         "eventStatus": event.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "url": `https://feelomove.com/conciertos/${event.slug}`,
+        "url": `${artistBaseUrl}/${event.slug}`,
         "image": event.image_large_url || event.image_standard_url,
+        "inLanguage": locale === 'en' ? 'en-US' : 'es-ES',
         "location": {
           "@type": "Place",
           "name": event.venue_name,
@@ -351,7 +366,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
         } : undefined,
         "offers": event.price_min_incl_fees ? {
           "@type": "Offer",
-          "url": `https://feelomove.com/conciertos/${event.slug}`,
+          "url": `${artistBaseUrl}/${event.slug}`,
           "price": event.price_min_incl_fees,
           "priceCurrency": event.currency || "EUR",
           "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
@@ -365,7 +380,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
     };
 
     return artistSchema;
-  }, [artistName, artistSlug, heroImage, artistGenre, events]);
+  }, [artistName, artistSlug, heroImage, artistGenre, events, artistBaseUrl, locale]);
 
   // CRITICAL SEO: If artist has exactly 1 event, redirect directly to event page
   // Uses useLayoutEffect + window.location.replace for IMMEDIATE redirect before paint
@@ -424,7 +439,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
       <SEOHead
         title={seoTitle}
         description={seoDescription}
-        canonical={`https://feelomove.com/conciertos/${artistSlug}`}
+        canonical={locale === 'en' ? `https://feelomove.com/en/tickets/${artistSlug}` : `https://feelomove.com/conciertos/${artistSlug}`}
         ogImage={heroImage || undefined}
         pageType="ItemPage"
         jsonLd={jsonLdData}

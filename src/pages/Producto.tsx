@@ -196,35 +196,32 @@ const IconChevronRight = ({ className = "" }: { className?: string }) => (
 
 // === NATIVE DATE FORMATTING (replaces date-fns) ===
 const SPANISH_MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const ENGLISH_MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const SPANISH_MONTHS_LONG = [
-  "enero",
-  "febrero",
-  "marzo",
-  "abril",
-  "mayo",
-  "junio",
-  "julio",
-  "agosto",
-  "septiembre",
-  "octubre",
-  "noviembre",
-  "diciembre",
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+const ENGLISH_MONTHS_LONG = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-const formatDatePart = (date: Date, part: "day" | "month" | "monthLong" | "year" | "time" | "monthYear") => {
+const formatDatePart = (date: Date, part: "day" | "month" | "monthLong" | "year" | "time" | "monthYear", locale: 'es' | 'en' = 'es') => {
+  const monthsShort = locale === 'en' ? ENGLISH_MONTHS_SHORT : SPANISH_MONTHS_SHORT;
+  const monthsLong = locale === 'en' ? ENGLISH_MONTHS_LONG : SPANISH_MONTHS_LONG;
   switch (part) {
     case "day":
       return String(date.getDate()).padStart(2, "0");
     case "month":
-      return SPANISH_MONTHS_SHORT[date.getMonth()];
+      return monthsShort[date.getMonth()];
     case "monthLong":
-      return SPANISH_MONTHS_LONG[date.getMonth()];
+      return monthsLong[date.getMonth()];
     case "year":
       return String(date.getFullYear());
     case "time":
       return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
     case "monthYear":
-      return `${SPANISH_MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`;
+      return `${monthsLong[date.getMonth()]} ${date.getFullYear()}`;
   }
 };
 
@@ -773,13 +770,17 @@ const Producto = ({ slugProp }: ProductoProps) => {
     return <ProductoSkeleton />;
   }
 
+  // Locale-aware date formatting helper
+  const fmtDate = (date: Date, part: "day" | "month" | "monthLong" | "year" | "time" | "monthYear") =>
+    formatDatePart(date, part, locale);
+
   const isPlaceholderDate = (d: string | null | undefined) => !d || d.startsWith("9999");
 
   const rawEventDate = eventDetails.event_date;
   const hasValidDate = !isPlaceholderDate(rawEventDate);
   const eventDate = hasValidDate && rawEventDate ? new Date(rawEventDate) : new Date();
-  const formattedTime = hasValidDate ? formatDatePart(eventDate, "time") : null;
-  const monthYear = hasValidDate ? formatDatePart(eventDate, "monthYear") : t("Fecha por confirmar");
+  const formattedTime = hasValidDate ? fmtDate(eventDate, "time") : null;
+  const monthYear = hasValidDate ? fmtDate(eventDate, "monthYear") : t("Fecha por confirmar");
 
   const now = new Date();
   const daysUntil = hasValidDate ? differenceInDays(eventDate, now) : -1;
@@ -796,9 +797,11 @@ const Producto = ({ slugProp }: ProductoProps) => {
   const isArtistEntry = isFestivalDisplay && secondaryAttraction && secondaryAttraction !== primaryAttraction;
 
   const displayTitle = isArtistEntry ? secondaryAttraction : eventDetails.event_name;
-  const displaySubtitle = isArtistEntry ? `en ${primaryAttraction || eventDetails.event_name}` : null;
+  const displaySubtitle = isArtistEntry 
+    ? (locale === 'en' ? `at ${primaryAttraction || eventDetails.event_name}` : `en ${primaryAttraction || eventDetails.event_name}`) 
+    : null;
 
-  const eventYear = hasValidDate ? formatDatePart(eventDate, "year") : "";
+  const eventYear = hasValidDate ? fmtDate(eventDate, "year") : "";
   
   // SEO Gold Format: Entradas [Artista] [Ciudad] [Año] | FEELOMOVE+
   const seoTitle = isFestivalDisplay
@@ -830,7 +833,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
   const onSaleDate = onSaleDateStr ? new Date(onSaleDateStr) : null;
   const isNotYetOnSale = Boolean(onSaleDate && onSaleDate.getTime() > Date.now());
   const onSaleBadgeFormatted = isNotYetOnSale && onSaleDate
-    ? `${onSaleDate.getDate()} ${formatDatePart(onSaleDate, "month")} ${formatDatePart(onSaleDate, "time")}h`
+    ? `${onSaleDate.getDate()} ${fmtDate(onSaleDate, "month")} ${fmtDate(onSaleDate, "time")}h`
     : null;
 
   // ⚡ NOTA: Función normal en lugar de useCallback para evitar error de hooks
@@ -1044,7 +1047,9 @@ const Producto = ({ slugProp }: ProductoProps) => {
         canonical={absoluteUrl}
         ogImage={ogImageUrl}
         ogType="event"
-        keywords={`${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
+        keywords={locale === 'en' 
+          ? `${mainArtist}, ${eventDetails.venue_city}, concert, tickets, hotel, ${eventDetails.event_name}`
+          : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
         forceNoIndex={isServiceEvent}
         isVipEvent={isVipEventFromSlug}
@@ -1113,12 +1118,12 @@ const Producto = ({ slugProp }: ProductoProps) => {
                 <div className="bg-card rounded-lg shadow-sm px-3 py-2 flex-shrink-0">
                   <div className="text-center">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                      {formatDatePart(eventDate, "month")}
+                      {fmtDate(eventDate, "month")}
                     </p>
                     <p className="text-2xl font-black text-foreground leading-none">
-                      {formatDatePart(eventDate, "day")}
+                      {fmtDate(eventDate, "day")}
                     </p>
-                    <p className="text-xs text-muted-foreground">{formatDatePart(eventDate, "year")}</p>
+                    <p className="text-xs text-muted-foreground">{fmtDate(eventDate, "year")}</p>
                   </div>
                 </div>
                 
@@ -1136,7 +1141,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                   <div className="flex flex-wrap gap-1 mt-2">
                     {onSaleBadgeFormatted && (
                       <Badge className="text-[9px] font-bold px-1.5 py-0.5 bg-accent text-accent-foreground">
-                        A la venta: {onSaleBadgeFormatted}
+                        {locale === 'en' ? 'On sale:' : 'A la venta:'} {onSaleBadgeFormatted}
                       </Badge>
                     )}
                     {hasVipTickets && (
@@ -1194,13 +1199,13 @@ const Producto = ({ slugProp }: ProductoProps) => {
                 <div className="bg-card rounded-xl shadow-lg p-5 md:p-6 min-w-[160px] md:min-w-[180px]">
                   <div className="text-center">
                     <p className="text-base font-bold text-muted-foreground uppercase tracking-wider">
-                      {formatDatePart(eventDate, "month")}
+                      {fmtDate(eventDate, "month")}
                     </p>
                     <p className="text-5xl md:text-6xl font-black text-foreground leading-none my-2">
-                      {formatDatePart(eventDate, "day")}
+                      {fmtDate(eventDate, "day")}
                     </p>
                     <p className="text-lg font-medium text-muted-foreground">
-                      {formatDatePart(eventDate, "year")}
+                      {fmtDate(eventDate, "year")}
                     </p>
                     <div className="border-t border-border mt-4 pt-4">
                       <p className="text-2xl md:text-3xl font-bold text-foreground">{formattedTime}h</p>
@@ -1235,7 +1240,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                         image_url: heroImageUrls.src,
                       })
                     }
-                    aria-label={isFavorite(eventDetails.event_id!) ? "Quitar de favoritos" : "Añadir a favoritos"}
+                    aria-label={isFavorite(eventDetails.event_id!) ? t("Quitar de favoritos") : t("Añadir a favoritos")}
                   >
                     <IconHeart
                       filled={isFavorite(eventDetails.event_id!)}
@@ -1340,15 +1345,15 @@ const Producto = ({ slugProp }: ProductoProps) => {
                       {t('Ver otros conciertos de')} {mainArtist}
                     </h2>
                     <Link
-                      to={`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                      to={localePath(`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
                       className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
                     >
                       {t('Ver todos')} <IconChevronRight className="h-4 w-4" />
                     </Link>
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
-                    {artistOtherCities.map((city) => (
-                      <Link key={city.slug} to={city.eventRoute || `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                      {artistOtherCities.map((city) => (
+                      <Link key={city.slug} to={localePath(city.eventRoute || `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
                         className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
                       >
                         <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
@@ -1492,12 +1497,12 @@ const Producto = ({ slugProp }: ProductoProps) => {
                             <div className="space-y-1 text-xs text-muted-foreground mb-2">
                               {cart.hotel.checkin_date && cart.hotel.checkout_date && (
                                 <p>
-                                  {new Date(cart.hotel.checkin_date).toLocaleDateString("es-ES", {
+                                  {new Date(cart.hotel.checkin_date).toLocaleDateString(locale === 'en' ? "en-GB" : "es-ES", {
                                     day: "numeric",
                                     month: "short",
                                   })}{" "}
                                   -{" "}
-                                  {new Date(cart.hotel.checkout_date).toLocaleDateString("es-ES", {
+                                  {new Date(cart.hotel.checkout_date).toLocaleDateString(locale === 'en' ? "en-GB" : "es-ES", {
                                     day: "numeric",
                                     month: "short",
                                   })}
