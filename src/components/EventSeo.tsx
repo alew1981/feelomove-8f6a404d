@@ -94,7 +94,15 @@ function getStartDateForSchema(eventDate: string, localEventDate: string): strin
   const localDate = new Date(localEventDate);
   const offsetHours = Math.round((localDate.getTime() - utcDate.getTime()) / 3600000);
   const offset = offsetHours >= 2 ? '+02:00' : '+01:00';
-  return localEventDate.replace(' ', 'T').replace('+00:00', offset).replace('+00', offset);
+  
+  // Eliminar cualquier offset existente con regex anclado al final
+  const clean = localEventDate
+    .replace(/[+-]\d{2}:\d{2}$/, '')
+    .replace(/[+-]\d{2}$/, '')
+    .trim()
+    .replace(' ', 'T');
+  
+  return clean + offset;
 }
 
 /**
