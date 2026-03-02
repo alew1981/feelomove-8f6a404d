@@ -46,6 +46,7 @@ interface EventCardProps {
     ticket_cheapest_price?: number;
     sold_out?: boolean;
     seats_available?: boolean;
+    tickets_status?: string | null;
     badges?: string[];
     event_badges?: string[];
     is_festival?: boolean | null;
@@ -197,7 +198,30 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
               
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-              {isNotYetOnSale ? (
+              {/* Ticket status badge - top left */}
+              {event.tickets_status === 'off_sale' && (
+                <div className="absolute left-2 top-2 z-20">
+                  <Badge className="text-[10px] font-bold px-2.5 py-1 rounded bg-gray-700 text-white uppercase shadow-lg">
+                    {t("PRÓXIMAMENTE")}
+                  </Badge>
+                </div>
+              )}
+              {event.tickets_status === 'sold_out' && (
+                <div className="absolute left-2 top-2 z-20">
+                  <Badge className="text-[10px] font-bold px-2.5 py-1 rounded bg-red-600 text-white uppercase shadow-lg">
+                    {t("AGOTADO")}
+                  </Badge>
+                </div>
+              )}
+              {event.tickets_status === 'cancelled' && (
+                <div className="absolute left-2 top-2 z-20">
+                  <Badge className="text-[10px] font-bold px-2.5 py-1 rounded bg-gray-900 text-white uppercase shadow-lg">
+                    {t("CANCELADO")}
+                  </Badge>
+                </div>
+              )}
+
+              {isNotYetOnSale && event.tickets_status !== 'off_sale' ? (
                 <div className="absolute right-2 top-2 z-20">
                   <Badge className="text-[10px] font-bold px-2 py-1.5 bg-accent text-accent-foreground flex flex-col items-center leading-tight shadow-lg uppercase">
                     <span className="flex items-center gap-1">
@@ -207,7 +231,7 @@ const EventCard = memo(({ event, priority = false, festivalName, forceConcierto 
                     <span>{onSaleBadgeFormatted}</span>
                   </Badge>
                 </div>
-              ) : badgeText && badgeVariant ? (
+              ) : badgeText && badgeVariant && !event.tickets_status ? (
                 <div className="absolute left-2 top-0.5 z-20">
                   <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
                     {badgeText}

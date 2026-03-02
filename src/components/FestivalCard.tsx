@@ -43,6 +43,7 @@ interface FestivalCardProps {
     primary_attraction_name?: string | null;
     secondary_attraction_name?: string | null;
     on_sale_date?: string | null;
+    tickets_status?: string | null;
   };
   priority?: boolean;
 }
@@ -197,8 +198,31 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
             {/* Minimal Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
+            {/* Ticket status badge - top left */}
+            {festival.tickets_status === 'off_sale' && (
+              <div className="absolute left-2 top-2 z-20">
+                <Badge className="text-[10px] font-bold px-2.5 py-1 rounded bg-gray-700 text-white uppercase shadow-lg">
+                  {t("PRÓXIMAMENTE")}
+                </Badge>
+              </div>
+            )}
+            {festival.tickets_status === 'sold_out' && (
+              <div className="absolute left-2 top-2 z-20">
+                <Badge className="text-[10px] font-bold px-2.5 py-1 rounded bg-red-600 text-white uppercase shadow-lg">
+                  {t("AGOTADO")}
+                </Badge>
+              </div>
+            )}
+            {festival.tickets_status === 'cancelled' && (
+              <div className="absolute left-2 top-2 z-20">
+                <Badge className="text-[10px] font-bold px-2.5 py-1 rounded bg-gray-900 text-white uppercase shadow-lg">
+                  {t("CANCELADO")}
+                </Badge>
+              </div>
+            )}
+
             {/* On Sale Soon Badge - Top Right */}
-            {isNotYetOnSale ? (
+            {isNotYetOnSale && festival.tickets_status !== 'off_sale' ? (
               <div className="absolute right-2 top-2 z-20">
                 <Badge className="text-xs font-bold px-3 py-1.5 bg-amber-500 text-white flex items-center gap-1.5 shadow-lg">
                   <ClockIcon />
@@ -207,8 +231,8 @@ const FestivalCard = memo(({ festival, priority = false }: FestivalCardProps) =>
               </div>
             ) : null}
 
-            {/* Past Event Badge - Top Left */}
-            {isEventPast && (
+            {/* Past Event Badge - Top Left (only if no ticket status badge) */}
+            {isEventPast && !festival.tickets_status && (
               <div className="absolute left-2 top-2 z-20">
                 <Badge variant="destructive" className="text-[10px] font-bold px-2 py-1 bg-red-600 text-white">
                   {t('PASADO')}

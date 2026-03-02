@@ -110,6 +110,22 @@ const CRITICAL_TRANSLATIONS = new Map<string, string>([
   ['Pronto', 'Soon'],
   ['artistas', 'artists'],
   ['Pasado', 'Past'],
+  // Ticket status badges
+  ['PRÓXIMAMENTE', 'COMING SOON'],
+  ['AGOTADO', 'SOLD OUT'],
+  ['CANCELADO', 'CANCELLED'],
+  // Waitlist form
+  ['Entradas agotadas', 'Tickets sold out'],
+  ['Las entradas para este evento se han agotado. Déjanos tu email y te avisaremos si hay nuevas disponibilidades.', 'Tickets for this event are sold out. Leave your email and we will notify you if new availability opens up.'],
+  ['Las entradas aún no están a la venta', 'Tickets are not yet on sale'],
+  ['Venta desde el', 'On sale from'],
+  ['Déjanos tu email y te avisaremos cuando las entradas estén disponibles.', 'Leave your email and we will notify you when tickets become available.'],
+  ['Este evento ha sido cancelado', 'This event has been cancelled'],
+  ['Avísame cuando haya entradas', 'Notify me when tickets are available'],
+  ['Tu email', 'Your email'],
+  ['¡Te avisaremos!', 'We will notify you!'],
+  ['Te hemos registrado correctamente. Recibirás un aviso cuando haya novedades.', 'You have been registered successfully. You will receive a notification when there are updates.'],
+  ['Error al registrarte. Inténtalo de nuevo.', 'Error registering. Please try again.'],
 ]);
 
 /** Map: spanish_text → english_text */
