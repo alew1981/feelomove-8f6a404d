@@ -19,7 +19,7 @@ import { matchesSearch } from "@/lib/searchUtils";
 import { useTranslation } from "@/hooks/useTranslation";
 
 // Generate month-year options dynamically from available events
-const getMonthYearOptions = (events: any[]) => {
+const getMonthYearOptions = (events: any[], locale: string = 'es') => {
   if (!events || events.length === 0) return [];
   
   const monthYearSet = new Set<string>();
@@ -31,7 +31,9 @@ const getMonthYearOptions = (events: any[]) => {
     }
   });
   
-  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const monthNamesEs = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthNames = locale === 'en' ? monthNamesEn : monthNamesEs;
   
   return Array.from(monthYearSet)
     .sort()
@@ -137,7 +139,7 @@ const Conciertos = () => {
   }, [events]);
 
   // Get month-year options from events
-  const monthYearOptions = useMemo(() => getMonthYearOptions(events || []), [events]);
+  const monthYearOptions = useMemo(() => getMonthYearOptions(events || [], locale), [events, locale]);
 
   // Filter and sort events
   const filteredAndSortedEvents = useMemo(() => {

@@ -282,7 +282,7 @@ const Festivales = () => {
     
     validFestivals.forEach(festival => {
       // Create a composite key: festival name + city for proper grouping
-      const key = `${festival.festival_nombre}_${festival.venue_city || 'unknown'}`;
+      const key = `${festival.festival_nombre}___${festival.venue_city || 'unknown'}`;
       const existing = festivalMap.get(key) || [];
       existing.push(festival);
       festivalMap.set(key, existing);
@@ -291,7 +291,9 @@ const Festivales = () => {
     const parentFestivals: ParentFestival[] = [];
     const standalone: NormalizedFestival[] = [];
     
-    festivalMap.forEach((events, festivalName) => {
+    festivalMap.forEach((events, mapKey) => {
+      // Extract actual festival name from composite key (name___city)
+      const festivalName = mapKey.split('___')[0];
       // Separate by tipo_producto
       const abonos = events.filter(e => e.tipo_producto === 'ABONO / GENERAL');
       const entradasDia = events.filter(e => e.tipo_producto === 'ENTRADA DE DÍA');
