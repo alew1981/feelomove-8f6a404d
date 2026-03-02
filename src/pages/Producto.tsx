@@ -19,6 +19,7 @@ import ArtistDestinationsList from "@/components/ArtistDestinationsList";
 import { FestivalServiceAddons } from "@/components/FestivalServiceAddons";
 import RelatedEventsSection from "@/components/RelatedEventsSection";
 import TicketSelector from "@/components/TicketSelector";
+import WaitlistForm from "@/components/WaitlistForm";
 
 // LAZY: Below-the-fold components with fixed-height Suspense fallbacks
 const HotelMapTabs = lazy(() => import("@/components/HotelMapTabs"));
@@ -1288,45 +1289,130 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-2 space-y-8">
-              {/* Sold out badge when no tickets available */}
-              {!isEventAvailable && !isNotYetOnSale && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
-                    <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
-                  </div>
-                  <Card className="border-2 border-muted">
-                    <CardContent className="p-6 text-center space-y-3">
-                      <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
-                      <p className="text-sm text-muted-foreground">
-                        {t('Las entradas para este evento se han agotado')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
 
-              {ticketPrices.length > 0 && (
-                <TicketSelector
-                  tickets={ticketPrices.map((t: any) => ({
-                    id: t.id,
-                    name: t.type,
-                    description: t.description,
-                    price: t.price,
-                    fees: t.fees,
-                    status: t.availability === "none" ? "sold-out" as const
-                           : t.availability === "limited" ? "limited" as const
-                           : "available" as const,
-                    isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
-                  }))}
-                  quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
-                    acc[t.id] = getTicketQuantity(t.id);
-                    return acc;
-                  }, {})}
-                  onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
-                  completed={isEventInCart && totalPersons > 0}
-                />
-              )}
+              {/* === TICKET STATUS BLOCK === */}
+              {(() => {
+                const ticketsStatus = (eventDetails as any).tickets_status as string | null;
+
+                // CANCELLED
+                if (ticketsStatus === 'cancelled') {
+                  return (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-gray-900 text-white">1</div>
+                        <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                      </div>
+                      <Card className="border-2 border-gray-800">
+                        <CardContent className="p-6 text-center space-y-3">
+                          <Badge className="text-sm px-4 py-1.5 bg-gray-900 text-white font-bold uppercase">{t('CANCELADO')}</Badge>
+                          <p className="text-sm text-muted-foreground">{t('Este evento ha sido cancelado')}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                }
+
+                // SOLD OUT
+                if (ticketsStatus === 'sold_out') {
+                  return (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                        <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                      </div>
+                      <Card className="border-2 border-destructive/30">
+                        <CardContent className="p-6 space-y-3">
+                          <div className="text-center">
+                            <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
+                            <p className="text-sm text-muted-foreground mt-3">
+                              {t('Las entradas para este evento se han agotado. Déjanos tu email y te avisaremos si hay nuevas disponibilidades.')}
+                            </p>
+                          </div>
+                          {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                }
+
+                // OFF SALE
+                if (ticketsStatus === 'off_sale') {
+                  const onSaleDateRaw = (eventDetails as any).on_sale_date as string | null;
+                  const onSaleDateObj = onSaleDateRaw ? new Date(onSaleDateRaw) : null;
+                  const onSaleDateText = onSaleDateObj
+                    ? `${t('Venta desde el')} ${onSaleDateObj.toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                    : '';
+
+                  return (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                        <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                      </div>
+                      <Card className="border-2 border-muted">
+                        <CardContent className="p-6 space-y-3">
+                          <div className="text-center">
+                            <Badge className="text-sm px-4 py-1.5 bg-gray-600 text-white font-bold uppercase">{t('PRÓXIMAMENTE')}</Badge>
+                            <p className="text-sm text-muted-foreground mt-3">
+                              {t('Las entradas aún no están a la venta')}
+                              {onSaleDateText && <span>. {onSaleDateText}</span>}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {t('Déjanos tu email y te avisaremos cuando las entradas estén disponibles.')}
+                            </p>
+                          </div>
+                          {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                }
+
+                // AVAILABLE or null — default behavior
+                return (
+                  <>
+                    {/* Sold out badge when no tickets available (legacy logic) */}
+                    {!isEventAvailable && !isNotYetOnSale && (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                          <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                        </div>
+                        <Card className="border-2 border-muted">
+                          <CardContent className="p-6 text-center space-y-3">
+                            <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
+                            <p className="text-sm text-muted-foreground">
+                              {t('Las entradas para este evento se han agotado')}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+
+                    {ticketPrices.length > 0 && (
+                      <TicketSelector
+                        tickets={ticketPrices.map((t: any) => ({
+                          id: t.id,
+                          name: t.type,
+                          description: t.description,
+                          price: t.price,
+                          fees: t.fees,
+                          status: t.availability === "none" ? "sold-out" as const
+                                 : t.availability === "limited" ? "limited" as const
+                                 : "available" as const,
+                          isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
+                        }))}
+                        quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
+                          acc[t.id] = getTicketQuantity(t.id);
+                          return acc;
+                        }, {})}
+                        onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
+                        completed={isEventInCart && totalPersons > 0}
+                      />
+                    )}
+                  </>
+                );
+              })()}
 
               {isFestivalDisplay && eventDetails?.event_id && (
                 <FestivalServiceAddons
@@ -1547,21 +1633,39 @@ const Producto = ({ slugProp }: ProductoProps) => {
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
                         <IconTicket className="h-6 w-6 text-muted-foreground" />
                       </div>
-                      {!isEventAvailable && !isNotYetOnSale ? (
-                        <>
-                          <Badge variant="agotado" className="mb-2">{t('AGOTADO')}</Badge>
-                          <p className="text-xs text-muted-foreground">
-                            {t('Las entradas para este evento se han agotado')}
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-foreground font-medium mb-2">{t('Empieza seleccionando tus entradas')}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t('Elige las entradas y después añade un hotel para completar tu pack')}
-                          </p>
-                        </>
-                      )}
+                      {(() => {
+                        const ts = (eventDetails as any).tickets_status as string | null;
+                        if (ts === 'cancelled') return (
+                          <>
+                            <Badge className="mb-2 bg-gray-900 text-white font-bold uppercase">{t('CANCELADO')}</Badge>
+                            <p className="text-xs text-muted-foreground">{t('Este evento ha sido cancelado')}</p>
+                          </>
+                        );
+                        if (ts === 'sold_out') return (
+                          <>
+                            <Badge variant="agotado" className="mb-2">{t('AGOTADO')}</Badge>
+                            <p className="text-xs text-muted-foreground">{t('Las entradas para este evento se han agotado')}</p>
+                          </>
+                        );
+                        if (ts === 'off_sale') return (
+                          <>
+                            <Badge className="mb-2 bg-gray-600 text-white font-bold uppercase">{t('PRÓXIMAMENTE')}</Badge>
+                            <p className="text-xs text-muted-foreground">{t('Las entradas aún no están a la venta')}</p>
+                          </>
+                        );
+                        if (!isEventAvailable && !isNotYetOnSale) return (
+                          <>
+                            <Badge variant="agotado" className="mb-2">{t('AGOTADO')}</Badge>
+                            <p className="text-xs text-muted-foreground">{t('Las entradas para este evento se han agotado')}</p>
+                          </>
+                        );
+                        return (
+                          <>
+                            <p className="text-foreground font-medium mb-2">{t('Empieza seleccionando tus entradas')}</p>
+                            <p className="text-xs text-muted-foreground">{t('Elige las entradas y después añade un hotel para completar tu pack')}</p>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </CardContent>

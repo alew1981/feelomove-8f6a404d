@@ -482,6 +482,7 @@ export type Database = {
           slug: string | null
           sold_out: boolean | null
           ticket_types: Json | null
+          tickets_status: string | null
           timezone: string | null
           updated_at: string | null
           url: string | null
@@ -552,6 +553,7 @@ export type Database = {
           slug?: string | null
           sold_out?: boolean | null
           ticket_types?: Json | null
+          tickets_status?: string | null
           timezone?: string | null
           updated_at?: string | null
           url?: string | null
@@ -622,6 +624,7 @@ export type Database = {
           slug?: string | null
           sold_out?: boolean | null
           ticket_types?: Json | null
+          tickets_status?: string | null
           timezone?: string | null
           updated_at?: string | null
           url?: string | null
@@ -785,6 +788,101 @@ export type Database = {
           spanish_text?: string
         }
         Relationships: []
+      }
+      waitlist_notifications: {
+        Row: {
+          created_at: string | null
+          email: string
+          event_id: string
+          id: string
+          notified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          event_id: string
+          id?: string
+          notified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          event_id?: string
+          id?: string
+          notified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page_conciertos"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page_conciertos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page_festivales"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_concerts_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_events_meta_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_events_schema_org"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_festivals_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "tm_tbl_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
