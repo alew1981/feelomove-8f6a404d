@@ -253,9 +253,9 @@ const App = () => (
                 
                 {/* Legacy singular routes - redirect to plural for SEO */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
-                <Route path="/concierto/:slug" element={<Producto />} />
+                <Route path="/concierto/:slug" element={<RedirectConcierto />} />
                 <Route path="/festival" element={<Navigate to="/festivales" replace />} />
-                <Route path="/festival/:slug" element={<Producto />} />
+                <Route path="/festival/:slug" element={<RedirectFestival />} />
                 
                 {/* Legacy URL redirects (301) */}
                 <Route path="/producto/:slug" element={<RedirectProducto />} />
