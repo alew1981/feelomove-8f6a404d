@@ -88,14 +88,15 @@ const parseEventSlug = (slug: string, isFestival: boolean): ParsedSlug => {
  * Generate SEO title based on page type and parsed slug
  */
 const generateSEOTitle = (parsed: ParsedSlug): string => {
-  const { artistName, cityName, year, isFestival } = parsed;
-  
+  const { artistName, cityName, year, month, isFestival } = parsed;
+  const dateShort = month ? `${month} ${year}` : year;
+
   if (isFestival) {
-    return `${artistName} ${year} - Entradas y Hotel | FEELOMOVE+`;
+    return `Entradas ${artistName} ${year} — ${cityName} | FEELOMOVE+`;
   }
-  
-  // Concert format: Entradas [Artista] [Ciudad] [Año] | FEELOMOVE+
-  return `Entradas ${artistName} ${cityName} ${year} | FEELOMOVE+`;
+
+  // Concert: "Entradas Artista Ciudad — May 2026 | FEELOMOVE+"
+  return `Entradas ${artistName} ${cityName} — ${dateShort} | FEELOMOVE+`;
 };
 
 /**
