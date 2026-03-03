@@ -463,6 +463,7 @@ export const createEventSeoProps = (eventData: {
   is_festival?: boolean | null;
   url?: string | null;
   local_event_date?: string | null;
+  tickets_status?: string | null;
 }, options: {
   description: string;
   url: string;
