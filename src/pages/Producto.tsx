@@ -991,6 +991,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
           ? `Buy ${mainArtist} tickets in ${eventDetails.venue_city}${seoFullDate ? ` on ${seoFullDate}` : ""}.${seoMinPrice ? ` From ${seoMinPrice} incl. fees.` : ""} Hotels near the venue. Book your complete music pack!`
           : `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${seoFullDate ? ` el ${seoFullDate}` : ""}.${seoMinPrice ? ` Desde ${seoMinPrice} con fees.` : ""} Hoteles cerca del venue. ¡Reserva tu pack completo!`;
 
+  const eventSeoProps = createEventSeoProps(
     {
       event_id: eventDetails.event_id || "",
       event_name: eventDetails.event_name || "",
