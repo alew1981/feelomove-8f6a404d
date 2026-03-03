@@ -164,6 +164,16 @@ const RedirectArtista = () => {
   return <Navigate to={`/conciertos/${slug}`} replace />;
 };
 
+const RedirectConcierto = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/conciertos/${slug}`} replace />;
+};
+
+const RedirectFestival = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/festivales/${slug}`} replace />;
+};
+
 // Redirect legacy WordPress URLs to appropriate pages
 const RedirectToHome = () => <Navigate to="/" replace />;
 const RedirectToAbout = () => <Navigate to="/about" replace />;
@@ -243,9 +253,9 @@ const App = () => (
                 
                 {/* Legacy singular routes - redirect to plural for SEO */}
                 <Route path="/concierto" element={<RedirectToConciertos />} />
-                <Route path="/concierto/:slug" element={<Producto />} />
+                <Route path="/concierto/:slug" element={<RedirectConcierto />} />
                 <Route path="/festival" element={<Navigate to="/festivales" replace />} />
-                <Route path="/festival/:slug" element={<Producto />} />
+                <Route path="/festival/:slug" element={<RedirectFestival />} />
                 
                 {/* Legacy URL redirects (301) */}
                 <Route path="/producto/:slug" element={<RedirectProducto />} />
