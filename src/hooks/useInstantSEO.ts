@@ -152,7 +152,8 @@ export const useInstantSEO = () => {
       if (slug) {
         const parsed = parseEventSlug(slug, false);
         if (isEN) {
-          title = `Tickets ${parsed.artistName} ${parsed.cityName} ${parsed.year} | FEELOMOVE+`;
+          const dateShortEN = parsed.month ? `${parsed.month} ${parsed.year}` : parsed.year;
+          title = `${parsed.artistName} ${parsed.cityName} Tickets — ${dateShortEN} | FEELOMOVE+`;
         } else {
           title = generateSEOTitle(parsed);
         }
