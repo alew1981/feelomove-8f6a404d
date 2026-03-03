@@ -164,6 +164,16 @@ const RedirectArtista = () => {
   return <Navigate to={`/conciertos/${slug}`} replace />;
 };
 
+const RedirectConcierto = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/conciertos/${slug}`} replace />;
+};
+
+const RedirectFestival = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/festivales/${slug}`} replace />;
+};
+
 // Redirect legacy WordPress URLs to appropriate pages
 const RedirectToHome = () => <Navigate to="/" replace />;
 const RedirectToAbout = () => <Navigate to="/about" replace />;
