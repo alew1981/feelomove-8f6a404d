@@ -804,7 +804,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
   const eventYear = hasValidDate ? fmtDate(eventDate, "year") : "";
   
-  // SEO title/description moved below minPrice declaration
+  
 
   const displayedTickets = showAllTickets ? ticketPrices : ticketPrices.slice(0, 4);
   const hasMoreTickets = ticketPrices.length > 4;
