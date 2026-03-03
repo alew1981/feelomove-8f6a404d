@@ -463,6 +463,7 @@ export const createEventSeoProps = (eventData: {
   is_festival?: boolean | null;
   url?: string | null;
   local_event_date?: string | null;
+  tickets_status?: string | null;
 }, options: {
   description: string;
   url: string;
@@ -474,18 +475,19 @@ export const createEventSeoProps = (eventData: {
     type: 'MusicGroup' as const,
   }));
   
-  // SoldOut MUST take priority over everything else
-  // isSoldOut: explicit sold_out flag, past/cancelled status, or no real availability
-  const isSoldOut = eventData.sold_out
-    || options.status === 'past'
-    || options.status === 'cancelled';
-  
+  // tickets_status de DB tiene prioridad sobre flags legacy
   let availability: EventOffer['availability'] = 'InStock';
-  if (isSoldOut) {
+
+  if (eventData.cancelled || options.status === 'cancelled') {
     availability = 'SoldOut';
-  } else if (!options.isEventAvailable) {
-    // Only use PreOrder when definitively NOT sold out
+  } else if (eventData.tickets_status === 'sold_out' || eventData.sold_out) {
+    availability = 'SoldOut';
+  } else if (eventData.tickets_status === 'off_sale') {
     availability = 'PreOrder';
+  } else if (!options.isEventAvailable) {
+    availability = 'SoldOut'; // fallback legacy
+  } else if (eventData.tickets_status === 'available') {
+    availability = 'InStock';
   }
   
   // CRITICAL: Ensure event_date is always present
