@@ -88,28 +88,29 @@ const parseEventSlug = (slug: string, isFestival: boolean): ParsedSlug => {
  * Generate SEO title based on page type and parsed slug
  */
 const generateSEOTitle = (parsed: ParsedSlug): string => {
-  const { artistName, cityName, year, isFestival } = parsed;
-  
+  const { artistName, cityName, year, month, isFestival } = parsed;
+  const dateShort = month ? `${month} ${year}` : year;
+
   if (isFestival) {
-    return `${artistName} ${year} - Entradas y Hotel | FEELOMOVE+`;
+    return `Entradas ${artistName} ${year} — ${cityName} | FEELOMOVE+`;
   }
-  
-  // Concert format: Entradas [Artista] [Ciudad] [Año] | FEELOMOVE+
-  return `Entradas ${artistName} ${cityName} ${year} | FEELOMOVE+`;
+
+  // Concert: "Entradas Artista Ciudad — May 2026 | FEELOMOVE+"
+  return `Entradas ${artistName} ${cityName} — ${dateShort} | FEELOMOVE+`;
 };
 
 /**
  * Generate SEO description based on page type
  */
 const generateSEODescription = (parsed: ParsedSlug): string => {
-  const { artistName, cityName, year, isFestival } = parsed;
-  
+  const { artistName, cityName, year, month, isFestival } = parsed;
+  const dateShort = month ? `${month} de ${year}` : year;
+
   if (isFestival) {
-    return `Compra tus entradas para ${artistName} ${year}. Incluye opciones de alojamiento cerca del festival. ¡Reserva tu experiencia musical completa!`;
+    return `Compra entradas para ${artistName} ${year} en ${cityName}. Hoteles cerca del recinto incluidos. ¡Reserva tu pack festival completo!`;
   }
-  
-  // Concert format
-  return `Compra tus entradas para el concierto de ${artistName} en ${cityName}. Incluye opciones de alojamiento y transporte. ¡Reserva tu experiencia musical completa!`;
+
+  return `Compra entradas para ${artistName} en ${cityName} en ${dateShort}. Hoteles cerca del venue incluidos. ¡Reserva tu pack completo!`;
 };
 
 /**
@@ -151,7 +152,8 @@ export const useInstantSEO = () => {
       if (slug) {
         const parsed = parseEventSlug(slug, false);
         if (isEN) {
-          title = `Tickets ${parsed.artistName} ${parsed.cityName} ${parsed.year} | FEELOMOVE+`;
+          const dateShortEN = parsed.month ? `${parsed.month} ${parsed.year}` : parsed.year;
+          title = `${parsed.artistName} ${parsed.cityName} Tickets — ${dateShortEN} | FEELOMOVE+`;
         } else {
           title = generateSEOTitle(parsed);
         }
