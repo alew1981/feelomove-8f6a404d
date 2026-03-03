@@ -944,7 +944,53 @@ const Producto = ({ slugProp }: ProductoProps) => {
   const minPrice = ticketPrices[0]?.price || (eventDetails as any).price_min_incl_fees || 0;
   const maxPrice = ticketPrices[ticketPrices.length - 1]?.price || minPrice;
 
-  const eventSeoProps = createEventSeoProps(
+  // Fecha formateada para SEO: "10 Jul" (ES) / "Jul 10" (EN)
+  const seoDateShort = hasValidDate
+    ? locale === 'en'
+      ? `${fmtDate(eventDate, "month")} ${fmtDate(eventDate, "day")}`
+      : `${fmtDate(eventDate, "day")} ${fmtDate(eventDate, "month")}`
+    : "";
+
+  // Precio mínimo disponible (con fees si existe, si no el de la DB)
+  const seoMinPrice = minPrice && minPrice > 0 ? `${Math.round(minPrice)}€` : null;
+
+  // Estado de entradas para el title
+  const ticketsStatusForSeo = (eventDetails as any).tickets_status as string | null;
+
+  const seoTitle = isFestivalDisplay
+    ? locale === 'en'
+      ? `${mainArtist} ${eventYear} Tickets — ${eventDetails.venue_city}${seoMinPrice ? ` | From ${seoMinPrice}` : ""}`
+      : `${t('Entradas')} ${mainArtist} ${eventYear} — ${eventDetails.venue_city}${seoMinPrice ? ` | Desde ${seoMinPrice}` : ""}`
+    : ticketsStatusForSeo === 'sold_out'
+      ? locale === 'en'
+        ? `${mainArtist} ${eventDetails.venue_city} — SOLD OUT${seoDateShort ? ` · ${seoDateShort}` : ""}`
+        : `${mainArtist} ${eventDetails.venue_city} — AGOTADO${seoDateShort ? ` · ${seoDateShort}` : ""}`
+      : locale === 'en'
+        ? `${mainArtist} ${eventDetails.venue_city} Tickets${seoDateShort ? ` — ${seoDateShort}` : ""}${seoMinPrice ? ` | From ${seoMinPrice}` : ""}`
+        : `${t('Entradas')} ${mainArtist} ${eventDetails.venue_city}${seoDateShort ? ` — ${seoDateShort}` : ""}${seoMinPrice ? ` | Desde ${seoMinPrice}` : ""}`;
+
+  const seoFullDate = hasValidDate
+    ? locale === 'en'
+      ? `${fmtDate(eventDate, "month")} ${fmtDate(eventDate, "day")}, ${eventYear}`
+      : `${fmtDate(eventDate, "day")} de ${fmtDate(eventDate, "monthLong")} de ${eventYear}`
+    : "";
+
+  const seoDescription = isFestivalDisplay
+    ? locale === 'en'
+      ? `Buy tickets for ${mainArtist} ${eventYear} in ${eventDetails.venue_city}.${seoMinPrice ? ` From ${seoMinPrice} incl. fees.` : ""} Hotels near the venue. Book your complete festival experience!`
+      : `Compra entradas para ${mainArtist} ${eventYear} en ${eventDetails.venue_city}.${seoMinPrice ? ` Desde ${seoMinPrice} con fees.` : ""} Hoteles cerca del recinto. ¡Reserva tu pack festival completo!`
+    : ticketsStatusForSeo === 'sold_out'
+      ? locale === 'en'
+        ? `${mainArtist} in ${eventDetails.venue_city}${seoFullDate ? ` on ${seoFullDate}` : ""} is sold out. Join the waitlist to get notified when tickets become available.`
+        : `${mainArtist} en ${eventDetails.venue_city}${seoFullDate ? ` el ${seoFullDate}` : ""} está agotado. Únete a la lista de espera para recibir notificación cuando haya entradas.`
+      : ticketsStatusForSeo === 'off_sale'
+        ? locale === 'en'
+          ? `${mainArtist} in ${eventDetails.venue_city}${seoFullDate ? ` · ${seoFullDate}` : ""}. Tickets not yet on sale. Sign up for availability alerts + hotels near the venue.`
+          : `${mainArtist} en ${eventDetails.venue_city}${seoFullDate ? ` · ${seoFullDate}` : ""}. Entradas próximamente a la venta. Aviso de disponibilidad + hoteles cerca del venue.`
+        : locale === 'en'
+          ? `Buy ${mainArtist} tickets in ${eventDetails.venue_city}${seoFullDate ? ` on ${seoFullDate}` : ""}.${seoMinPrice ? ` From ${seoMinPrice} incl. fees.` : ""} Hotels near the venue. Book your complete music pack!`
+          : `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${seoFullDate ? ` el ${seoFullDate}` : ""}.${seoMinPrice ? ` Desde ${seoMinPrice} con fees.` : ""} Hoteles cerca del venue. ¡Reserva tu pack completo!`;
+
     {
       event_id: eventDetails.event_id || "",
       event_name: eventDetails.event_name || "",
