@@ -464,6 +464,8 @@ export const createEventSeoProps = (eventData: {
   url?: string | null;
   local_event_date?: string | null;
   tickets_status?: string | null;
+  seats_available?: boolean | null;
+  schedule_status?: string | null;
 }, options: {
   description: string;
   url: string;
@@ -542,7 +544,13 @@ export const createEventSeoProps = (eventData: {
       availability,
       validFrom: eventData.on_sale_date || undefined,
     },
-    status: options.status,
+    status: (() => {
+      // Enhanced status using DB fields for more accurate Schema.org
+      if (eventData.cancelled) return 'cancelled' as EventStatusType;
+      if (eventData.sold_out || eventData.schedule_status === 'soldout') return 'past' as EventStatusType; // maps to SoldOut via offers
+      if (eventData.seats_available === false || eventData.schedule_status === 'offsale') return 'scheduled' as EventStatusType;
+      return options.status;
+    })(),
     isFestival: eventData.is_festival || false,
     url: options.url,
     ticketmasterUrl: eventData.url || undefined,
