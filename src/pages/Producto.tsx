@@ -1047,6 +1047,8 @@ const Producto = ({ slugProp }: ProductoProps) => {
       is_festival: eventDetails.is_festival,
       local_event_date: (eventDetails as any).local_event_date,
       tickets_status: (eventDetails as any).tickets_status as string | null,
+      seats_available: (eventDetails as any).seats_available as boolean | null,
+      schedule_status: (eventDetails as any).schedule_status as string | null,
     },
     {
       description: seoDescription,
