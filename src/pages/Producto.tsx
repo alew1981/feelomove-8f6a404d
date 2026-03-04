@@ -1393,192 +1393,353 @@ const Producto = ({ slugProp }: ProductoProps) => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-2 space-y-8">
 
-              {/* === TICKET STATUS BLOCK === */}
-              {(() => {
-                const ticketsStatus = (eventDetails as any).tickets_status as string | null;
-
-                // CANCELLED
-                if (ticketsStatus === 'cancelled') {
-                  return (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-gray-900 text-white">1</div>
-                        <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
-                      </div>
-                      <Card className="border-2 border-gray-800">
-                        <CardContent className="p-6 text-center space-y-3">
-                          <Badge className="text-sm px-4 py-1.5 bg-gray-900 text-white font-bold uppercase">{t('CANCELADO')}</Badge>
-                          <p className="text-sm text-muted-foreground">{t('Este evento ha sido cancelado')}</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                }
-
-                // SOLD OUT
-                if (ticketsStatus === 'sold_out') {
-                  return (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
-                        <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
-                      </div>
-                      <Card className="border-2 border-destructive/30">
-                        <CardContent className="p-6 space-y-3">
-                          <div className="text-center">
-                            <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
-                            <p className="text-sm text-muted-foreground mt-3">
-                              {t('Las entradas para este evento se han agotado. Déjanos tu email y te avisaremos si hay nuevas disponibilidades.')}
-                            </p>
-                          </div>
-                          {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                }
-
-                // OFF SALE
-                if (ticketsStatus === 'off_sale') {
-                  const onSaleDateRaw = (eventDetails as any).on_sale_date as string | null;
-                  const onSaleDateObj = onSaleDateRaw ? new Date(onSaleDateRaw) : null;
-                  const onSaleDateText = onSaleDateObj
-                    ? `${t('Venta desde el')} ${onSaleDateObj.toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`
-                    : '';
-
-                  return (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
-                        <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
-                      </div>
-                      <Card className="border-2 border-muted">
-                        <CardContent className="p-6 space-y-3">
-                          <div className="text-center">
-                            <Badge className="text-sm px-4 py-1.5 bg-gray-600 text-white font-bold uppercase">{t('PRÓXIMAMENTE')}</Badge>
-                            <p className="text-sm text-muted-foreground mt-3">
-                              {t('Las entradas aún no están a la venta')}
-                              {onSaleDateText && <span>. {onSaleDateText}</span>}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {t('Déjanos tu email y te avisaremos cuando las entradas estén disponibles.')}
-                            </p>
-                          </div>
-                          {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                }
-
-                // AVAILABLE or null — default behavior
-                return (
-                  <>
-                    {/* Sold out badge when no tickets available (legacy logic) */}
-                    {!isEventAvailable && !isNotYetOnSale && (
+              {/* === UNAVAILABLE LAYOUT: Hotels first, then tickets === */}
+              {isUnavailable ? (
+                <>
+                  {/* Hotels block — promoted to first position */}
+                  {(eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
+                    <div id="hotels-section">
                       <div className="mb-6">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
-                          <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-accent text-accent-foreground">1</div>
+                          <h2 className="text-xl sm:text-2xl font-bold">{t('Hoteles')}</h2>
                         </div>
-                        <Card className="border-2 border-muted">
-                          <CardContent className="p-6 text-center space-y-3">
-                            <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {locale === 'en'
+                            ? `Already have your ticket? Find the perfect hotel near ${eventDetails.venue_name || eventDetails.venue_city} for the night of the event.`
+                            : `¿Ya tienes tu entrada? Encuentra el hotel perfecto cerca de ${eventDetails.venue_name || eventDetails.venue_city} para la noche del evento.`}
+                        </p>
+                      </div>
+                      {hotels.length > 0 ? (
+                        <Suspense fallback={<HotelsSkeleton />}>
+                          <HotelMapTabs
+                            hotels={hotels}
+                            mapWidgetHtml={mapWidgetHtml}
+                            onAddHotel={handleAddHotel}
+                            checkinDate={(eventDetails as any).package_checkin || formatDateISO(eventDate)}
+                            checkoutDate={
+                              (eventDetails as any).package_checkout ||
+                              formatDateISO(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000))
+                            }
+                            eventName={eventDetails.event_name || undefined}
+                            ticketsSelected={isEventInCart && totalPersons > 0}
+                            selectedHotelId={cart?.hotel?.hotel_id || null}
+                            venueCity={eventDetails.venue_city || ""}
+                            stay22Accommodations={stay22Accommodations}
+                            stay22Activities={stay22Activities}
+                          />
+                        </Suspense>
+                      ) : (
+                        <Card className="border border-border">
+                          <CardContent className="p-6 text-center">
+                            <IconBuilding2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
                             <p className="text-sm text-muted-foreground">
-                              {t('Las entradas para este evento se han agotado')}
+                              {t('Próximamente dispondremos de hoteles para este evento.')}
                             </p>
                           </CardContent>
                         </Card>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Ticket status block — moved below hotels */}
+                  {(() => {
+                    const ticketsStatus = (eventDetails as any).tickets_status as string | null;
+
+                    if (ticketsStatus === 'cancelled') {
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">2</div>
+                            <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                          </div>
+                          <Card className="border-2 border-foreground/20">
+                            <CardContent className="p-6 text-center space-y-3">
+                              <Badge className="text-sm px-4 py-1.5 bg-foreground text-background font-bold uppercase">{t('CANCELADO')}</Badge>
+                              <p className="text-sm text-muted-foreground">{t('Este evento ha sido cancelado')}</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }
+
+                    if (ticketsStatus === 'sold_out' || eventDetails.sold_out) {
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">2</div>
+                            <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                          </div>
+                          <Card className="border-2 border-destructive/30">
+                            <CardContent className="p-6 space-y-3">
+                              <div className="text-center">
+                                <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
+                                <p className="text-sm text-muted-foreground mt-3">
+                                  {t('Las entradas para este evento se han agotado. Déjanos tu email y te avisaremos si hay nuevas disponibilidades.')}
+                                </p>
+                              </div>
+                              {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }
+
+                    // offsale / seats_available === false
+                    return (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">2</div>
+                          <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                        </div>
+                        <Card className="border-2 border-muted">
+                          <CardContent className="p-6 space-y-3">
+                            <div className="text-center">
+                              <Badge className="text-sm px-4 py-1.5 bg-destructive text-destructive-foreground font-bold uppercase">{t('Venta cerrada')}</Badge>
+                              <p className="text-sm text-muted-foreground mt-3">
+                                {t('Las entradas aún no están a la venta')}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {t('Déjanos tu email y te avisaremos cuando las entradas estén disponibles.')}
+                              </p>
+                            </div>
+                            {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
+                          </CardContent>
+                        </Card>
                       </div>
-                    )}
+                    );
+                  })()}
 
-                    {ticketPrices.length > 0 && (
-                      <TicketSelector
-                        tickets={ticketPrices.map((t: any) => ({
-                          id: t.id,
-                          name: t.type,
-                          description: t.description,
-                          price: t.price,
-                          fees: t.fees,
-                          status: t.availability === "none" ? "sold-out" as const
-                                 : t.availability === "limited" ? "limited" as const
-                                 : "available" as const,
-                          isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
-                        }))}
-                        quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
-                          acc[t.id] = getTicketQuantity(t.id);
-                          return acc;
-                        }, {})}
-                        onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
-                        completed={isEventInCart && totalPersons > 0}
-                      />
-                    )}
-                  </>
-                );
-              })()}
+                  {/* "Ver otros conciertos" section */}
+                  {artistOtherCities && artistOtherCities.length > 0 && (
+                    <section className="mb-10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                          <IconTicket className="h-5 w-5 text-accent" />
+                          {t('Ver otros conciertos de')} {mainArtist}
+                        </h2>
+                        <Link
+                          to={localePath(`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
+                          className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
+                        >
+                          {t('Ver todos')} <IconChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
+                        {artistOtherCities.map((city) => (
+                          <Link key={city.slug} to={localePath(city.eventRoute || `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
+                            className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-accent hover:-translate-y-1"
+                          >
+                            <span className="font-semibold text-sm text-foreground group-hover:text-accent-foreground transition-colors duration-200">
+                              {city.name}
+                            </span>
+                            <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-accent-foreground group-hover:text-accent transition-colors duration-200">
+                              {city.count}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* === NORMAL LAYOUT: Tickets first === */}
+                  {/* === TICKET STATUS BLOCK === */}
+                  {(() => {
+                    const ticketsStatus = (eventDetails as any).tickets_status as string | null;
 
-              {isFestivalDisplay && eventDetails?.event_id && (
+                    // CANCELLED
+                    if (ticketsStatus === 'cancelled') {
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-foreground text-background">1</div>
+                            <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                          </div>
+                          <Card className="border-2 border-foreground/20">
+                            <CardContent className="p-6 text-center space-y-3">
+                              <Badge className="text-sm px-4 py-1.5 bg-foreground text-background font-bold uppercase">{t('CANCELADO')}</Badge>
+                              <p className="text-sm text-muted-foreground">{t('Este evento ha sido cancelado')}</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }
+
+                    // SOLD OUT
+                    if (ticketsStatus === 'sold_out') {
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                            <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                          </div>
+                          <Card className="border-2 border-destructive/30">
+                            <CardContent className="p-6 space-y-3">
+                              <div className="text-center">
+                                <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
+                                <p className="text-sm text-muted-foreground mt-3">
+                                  {t('Las entradas para este evento se han agotado. Déjanos tu email y te avisaremos si hay nuevas disponibilidades.')}
+                                </p>
+                              </div>
+                              {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }
+
+                    // OFF SALE
+                    if (ticketsStatus === 'off_sale') {
+                      const onSaleDateRaw = (eventDetails as any).on_sale_date as string | null;
+                      const onSaleDateObj = onSaleDateRaw ? new Date(onSaleDateRaw) : null;
+                      const onSaleDateText = onSaleDateObj
+                        ? `${t('Venta desde el')} ${onSaleDateObj.toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                        : '';
+
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                            <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                          </div>
+                          <Card className="border-2 border-muted">
+                            <CardContent className="p-6 space-y-3">
+                              <div className="text-center">
+                                <Badge className="text-sm px-4 py-1.5 bg-muted text-muted-foreground font-bold uppercase">{t('PRÓXIMAMENTE')}</Badge>
+                                <p className="text-sm text-muted-foreground mt-3">
+                                  {t('Las entradas aún no están a la venta')}
+                                  {onSaleDateText && <span>. {onSaleDateText}</span>}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  {t('Déjanos tu email y te avisaremos cuando las entradas estén disponibles.')}
+                                </p>
+                              </div>
+                              {eventDetails.event_id && <WaitlistForm eventId={eventDetails.event_id} />}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }
+
+                    // AVAILABLE or null — default behavior
+                    return (
+                      <>
+                        {!isEventAvailable && !isNotYetOnSale && (
+                          <div className="mb-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm bg-muted text-muted-foreground">1</div>
+                              <h2 className="text-xl sm:text-2xl font-bold">{t('Entradas')}</h2>
+                            </div>
+                            <Card className="border-2 border-muted">
+                              <CardContent className="p-6 text-center space-y-3">
+                                <Badge variant="agotado" className="text-sm px-4 py-1.5">{t('AGOTADO')}</Badge>
+                                <p className="text-sm text-muted-foreground">
+                                  {t('Las entradas para este evento se han agotado')}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        )}
+
+                        {ticketPrices.length > 0 && (
+                          <TicketSelector
+                            tickets={ticketPrices.map((t: any) => ({
+                              id: t.id,
+                              name: t.type,
+                              description: t.description,
+                              price: t.price,
+                              fees: t.fees,
+                              status: t.availability === "none" ? "sold-out" as const
+                                     : t.availability === "limited" ? "limited" as const
+                                     : "available" as const,
+                              isVip: /vip/i.test(t.type || "") || /vip/i.test(t.description || "") || /vip/i.test(t.code || ""),
+                            }))}
+                            quantities={ticketPrices.reduce((acc: Record<string, number>, t: any) => {
+                              acc[t.id] = getTicketQuantity(t.id);
+                              return acc;
+                            }, {})}
+                            onQuantityChange={(id, delta) => handleTicketQuantityChange(id, delta)}
+                            completed={isEventInCart && totalPersons > 0}
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  {isFestivalDisplay && eventDetails?.event_id && (
+                    <FestivalServiceAddons
+                      eventId={eventDetails.event_id}
+                      festivalName={eventDetails?.primary_attraction_name || eventDetails?.event_name}
+                      className="mt-6"
+                    />
+                  )}
+
+                  {/* "Ver otros conciertos" section - Only when sold out */}
+                  {!isEventAvailable && !isNotYetOnSale && artistOtherCities && artistOtherCities.length > 0 && (
+                    <section className="mb-10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                          <IconTicket className="h-5 w-5 text-accent" />
+                          {t('Ver otros conciertos de')} {mainArtist}
+                        </h2>
+                        <Link
+                          to={localePath(`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
+                          className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
+                        >
+                          {t('Ver todos')} <IconChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
+                        {artistOtherCities.map((city) => (
+                          <Link key={city.slug} to={localePath(city.eventRoute || `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
+                            className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-accent hover:-translate-y-1"
+                          >
+                            <span className="font-semibold text-sm text-foreground group-hover:text-accent-foreground transition-colors duration-200">
+                              {city.name}
+                            </span>
+                            <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-accent-foreground group-hover:text-accent transition-colors duration-200">
+                              {city.count}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {(eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
+                    <div id="hotels-section">
+                      <Suspense fallback={<HotelsSkeleton />}>
+                        <HotelMapTabs
+                          hotels={hotels}
+                          mapWidgetHtml={mapWidgetHtml}
+                          onAddHotel={handleAddHotel}
+                          checkinDate={(eventDetails as any).package_checkin || formatDateISO(eventDate)}
+                          checkoutDate={
+                            (eventDetails as any).package_checkout ||
+                            formatDateISO(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000))
+                          }
+                          eventName={eventDetails.event_name || undefined}
+                          ticketsSelected={isEventInCart && totalPersons > 0}
+                          selectedHotelId={cart?.hotel?.hotel_id || null}
+                          venueCity={eventDetails.venue_city || ""}
+                          stay22Accommodations={stay22Accommodations}
+                          stay22Activities={stay22Activities}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {isFestivalDisplay && isUnavailable && eventDetails?.event_id && (
                 <FestivalServiceAddons
                   eventId={eventDetails.event_id}
                   festivalName={eventDetails?.primary_attraction_name || eventDetails?.event_name}
                   className="mt-6"
                 />
               )}
-
-              {/* "Ver otros conciertos" section - Only when sold out */}
-              {!isEventAvailable && !isNotYetOnSale && artistOtherCities && artistOtherCities.length > 0 && (
-                <section className="mb-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <IconTicket className="h-5 w-5 text-accent" />
-                      {t('Ver otros conciertos de')} {mainArtist}
-                    </h2>
-                    <Link
-                      to={localePath(`/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
-                      className="flex items-center gap-1 text-accent hover:text-accent/80 font-semibold transition-colors text-sm"
-                    >
-                      {t('Ver todos')} <IconChevronRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-hide">
-                      {artistOtherCities.map((city) => (
-                      <Link key={city.slug} to={localePath(city.eventRoute || `/conciertos/${mainArtist.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
-                        className="group inline-flex items-center gap-2 px-4 py-2.5 bg-card border-2 border-foreground rounded-full whitespace-nowrap flex-shrink-0 transition-all duration-200 ease-out hover:bg-[#00FF8F] hover:-translate-y-1"
-                      >
-                        <span className="font-semibold text-sm text-foreground group-hover:text-black transition-colors duration-200">
-                          {city.name}
-                        </span>
-                        <span className="text-xs font-bold bg-foreground text-background px-2 py-0.5 rounded-full group-hover:bg-black group-hover:text-[#00FF8F] transition-colors duration-200">
-                          {city.count}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {(eventDetails?.venue_city || (eventDetails?.venue_latitude && eventDetails?.venue_longitude)) && (
-                <div id="hotels-section">
-                    <Suspense fallback={<HotelsSkeleton />}>
-                      <HotelMapTabs
-                        hotels={hotels}
-                        mapWidgetHtml={mapWidgetHtml}
-                        onAddHotel={handleAddHotel}
-                        checkinDate={(eventDetails as any).package_checkin || formatDateISO(eventDate)}
-                        checkoutDate={
-                          (eventDetails as any).package_checkout ||
-                          formatDateISO(new Date(eventDate.getTime() + 2 * 24 * 60 * 60 * 1000))
-                        }
-                        eventName={eventDetails.event_name || undefined}
-                        ticketsSelected={isEventInCart && totalPersons > 0}
-                        selectedHotelId={cart?.hotel?.hotel_id || null}
-                        venueCity={eventDetails.venue_city || ""}
-                        stay22Accommodations={stay22Accommodations}
-                        stay22Activities={stay22Activities}
-                      />
-                    </Suspense>
-                  </div>
-                )}
 
               {artistOtherCities && artistOtherCities.length > 0 && (
                 <ArtistDestinationsList
