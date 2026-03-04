@@ -550,13 +550,13 @@ export const createEventSeoProps = (eventData: {
       availability,
       validFrom: eventData.on_sale_date || undefined,
     },
-    status: options.status,
-    _eventStatusExtra: {
-      cancelled: eventData.cancelled,
-      sold_out: eventData.sold_out,
-      seats_available: eventData.seats_available,
-      schedule_status: eventData.schedule_status,
-    },
+    status: (() => {
+      // Enhanced status using DB fields for more accurate Schema.org
+      if (eventData.cancelled) return 'cancelled' as EventStatusType;
+      if (eventData.sold_out || eventData.schedule_status === 'soldout') return 'past' as EventStatusType; // maps to SoldOut via offers
+      if (eventData.seats_available === false || eventData.schedule_status === 'offsale') return 'scheduled' as EventStatusType;
+      return options.status;
+    })(),
     isFestival: eventData.is_festival || false,
     url: options.url,
     ticketmasterUrl: eventData.url || undefined,
