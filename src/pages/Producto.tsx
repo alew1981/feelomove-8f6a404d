@@ -1176,6 +1176,25 @@ const Producto = ({ slugProp }: ProductoProps) => {
             )}
           </div>
 
+          {/* === UNAVAILABLE STATUS BADGE (mobile) === */}
+          {isUnavailable && (
+            <div className="md:hidden mb-3">
+              {unavailableReason === 'cancelled' ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background font-black text-sm shadow-lg">
+                  <span>⚫</span> {t('Evento cancelado')}
+                </div>
+              ) : unavailableReason === 'offsale' ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive text-destructive-foreground font-black text-sm shadow-lg">
+                  <span>🔴</span> {t('Venta cerrada')}
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive text-destructive-foreground font-black text-sm shadow-lg">
+                  <span>🔴</span> {t('Entradas agotadas')}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ⚡ Hero Section - MOBILE: Sin imagen para LCP óptimo */}
           {/* MOBILE HERO: Diseño compacto sin imagen (mejor LCP) */}
           <div className="sm:hidden mb-4">
