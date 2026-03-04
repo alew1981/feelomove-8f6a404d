@@ -818,6 +818,26 @@ const Producto = ({ slugProp }: ProductoProps) => {
   const hasAvailableTickets = ticketPrices.some((ticket) => ticket.availability !== "none");
   const isEventAvailable = hasAvailableTickets && !eventDetails.sold_out;
 
+  // === UNAVAILABLE EVENT DETECTION ===
+  const isUnavailable =
+    eventDetails.sold_out === true ||
+    (eventDetails as any).seats_available === false ||
+    (eventDetails as any).schedule_status === 'offsale' ||
+    (eventDetails as any).schedule_status === 'soldout' ||
+    eventDetails.cancelled === true;
+
+  const unavailableReason: 'sold_out' | 'offsale' | 'cancelled' | null = (() => {
+    if (eventDetails.cancelled === true) return 'cancelled';
+    if (eventDetails.sold_out === true || (eventDetails as any).schedule_status === 'soldout') return 'sold_out';
+    if ((eventDetails as any).seats_available === false || (eventDetails as any).schedule_status === 'offsale') return 'offsale';
+    return null;
+  })();
+
+  const minHotelPrice = hotels.length > 0
+    ? Math.min(...hotels.map((h: any) => h.selling_price || h.min_price || Infinity))
+    : null;
+  const minHotelPriceStr = minHotelPrice && minHotelPrice < Infinity ? `${Math.round(minHotelPrice)}€` : null;
+
   // Badge "A la venta" (on_sale_date futura) - se muestra en el hero
   const onSaleDateStr = (eventDetails as any).on_sale_date as string | null | undefined;
   const onSaleDate = onSaleDateStr ? new Date(onSaleDateStr) : null;
