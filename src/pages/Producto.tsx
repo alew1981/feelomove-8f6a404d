@@ -1895,13 +1895,26 @@ const Producto = ({ slugProp }: ProductoProps) => {
                   ) : (
                     <div className="text-center py-8">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                        <IconTicket className="h-6 w-6 text-muted-foreground" />
+                        {isUnavailable ? (
+                          <IconBuilding2 className="h-6 w-6 text-muted-foreground" />
+                        ) : (
+                          <IconTicket className="h-6 w-6 text-muted-foreground" />
+                        )}
                       </div>
-                      {(() => {
+                      {isUnavailable ? (
+                        <>
+                          <p className="text-foreground font-medium mb-2">{t('Encuentra tu hotel')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {locale === 'en'
+                              ? `Find a hotel near ${eventDetails.venue_name || eventDetails.venue_city}`
+                              : `Encuentra hotel cerca de ${eventDetails.venue_name || eventDetails.venue_city}`}
+                          </p>
+                        </>
+                      ) : (() => {
                         const ts = (eventDetails as any).tickets_status as string | null;
                         if (ts === 'cancelled') return (
                           <>
-                            <Badge className="mb-2 bg-gray-900 text-white font-bold uppercase">{t('CANCELADO')}</Badge>
+                            <Badge className="mb-2 bg-foreground text-background font-bold uppercase">{t('CANCELADO')}</Badge>
                             <p className="text-xs text-muted-foreground">{t('Este evento ha sido cancelado')}</p>
                           </>
                         );
@@ -1913,7 +1926,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
                         );
                         if (ts === 'off_sale') return (
                           <>
-                            <Badge className="mb-2 bg-gray-600 text-white font-bold uppercase">{t('PRÓXIMAMENTE')}</Badge>
+                            <Badge className="mb-2 bg-muted text-muted-foreground font-bold uppercase">{t('PRÓXIMAMENTE')}</Badge>
                             <p className="text-xs text-muted-foreground">{t('Las entradas aún no están a la venta')}</p>
                           </>
                         );

@@ -551,6 +551,12 @@ export const createEventSeoProps = (eventData: {
       validFrom: eventData.on_sale_date || undefined,
     },
     status: options.status,
+    _eventStatusExtra: {
+      cancelled: eventData.cancelled,
+      sold_out: eventData.sold_out,
+      seats_available: eventData.seats_available,
+      schedule_status: eventData.schedule_status,
+    },
     isFestival: eventData.is_festival || false,
     url: options.url,
     ticketmasterUrl: eventData.url || undefined,

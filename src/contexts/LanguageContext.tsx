@@ -126,6 +126,15 @@ const CRITICAL_TRANSLATIONS = new Map<string, string>([
   ['¡Te avisaremos!', 'We will notify you!'],
   ['Te hemos registrado correctamente. Recibirás un aviso cuando haya novedades.', 'You have been registered successfully. You will receive a notification when there are updates.'],
   ['Error al registrarte. Inténtalo de nuevo.', 'Error registering. Please try again.'],
+  // Unavailable event layout
+  ['Entradas agotadas', 'Sold out'],
+  ['Venta cerrada', 'Tickets unavailable'],
+  ['Evento cancelado', 'Event cancelled'],
+  ['Encuentra tu hotel', 'Find your hotel'],
+  ['Próximamente dispondremos de hoteles para este evento.', 'Hotels for this event will be available soon.'],
+  ['Las entradas para este evento se han agotado', 'Tickets for this event are sold out'],
+  ['DISPONIBLE', 'AVAILABLE'],
+  ['Ver otros conciertos de', 'See other concerts by'],
 ]);
 
 /** Map: spanish_text → english_text */
