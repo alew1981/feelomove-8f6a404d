@@ -108,13 +108,7 @@ function getStartDateForSchema(eventDate: string, localEventDate: string): strin
 /**
  * Maps internal event status to Schema.org eventStatus URL
  */
-const getSchemaEventStatus = (
-  status: EventStatusType | undefined,
-  extra?: { cancelled?: boolean | null; sold_out?: boolean | null; seats_available?: boolean | null; schedule_status?: string | null }
-): string => {
-  if (extra?.cancelled) return 'https://schema.org/EventCancelled';
-  if (extra?.sold_out || extra?.schedule_status === 'soldout') return 'https://schema.org/EventSoldOut';
-  if (extra?.seats_available === false || extra?.schedule_status === 'offsale') return 'https://schema.org/EventSoldOut';
+const getSchemaEventStatus = (status: EventStatusType | undefined): string => {
   switch (status) {
     case 'cancelled':
       return 'https://schema.org/EventCancelled';
