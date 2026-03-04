@@ -1360,14 +1360,32 @@ const Producto = ({ slugProp }: ProductoProps) => {
               </div>
 
 
-              {/* Badges - Desktop (hero ya está hidden en mobile) */}
+              {/* Badges or Status Badge - Desktop */}
               <div className="absolute right-4 top-4 bottom-4 flex flex-col items-end justify-start">
-                <CollapsibleBadges
-                  eventDetails={eventDetails}
-                  hasVipTickets={hasVipTickets}
-                  isEventAvailable={isEventAvailable}
-                  daysUntil={daysUntil}
-                />
+                {isUnavailable ? (
+                  <div>
+                    {unavailableReason === 'cancelled' ? (
+                      <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background font-black text-sm shadow-lg">
+                        <span>⚫</span> {t('Evento cancelado')}
+                      </div>
+                    ) : unavailableReason === 'offsale' ? (
+                      <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-destructive text-destructive-foreground font-black text-sm shadow-lg">
+                        <span>🔴</span> {t('Venta cerrada')}
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-destructive text-destructive-foreground font-black text-sm shadow-lg">
+                        <span>🔴</span> {t('Entradas agotadas')}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <CollapsibleBadges
+                    eventDetails={eventDetails}
+                    hasVipTickets={hasVipTickets}
+                    isEventAvailable={isEventAvailable}
+                    daysUntil={daysUntil}
+                  />
+                )}
               </div>
             </div>
           </div>
