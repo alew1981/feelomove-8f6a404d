@@ -470,6 +470,8 @@ export const createEventSeoProps = (eventData: {
   url?: string | null;
   local_event_date?: string | null;
   tickets_status?: string | null;
+  seats_available?: boolean | null;
+  schedule_status?: string | null;
 }, options: {
   description: string;
   url: string;
