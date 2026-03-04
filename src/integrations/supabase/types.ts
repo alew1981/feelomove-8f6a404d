@@ -424,6 +424,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscribers: {
+        Row: {
+          consent_date: string | null
+          consent_marketing: boolean
+          created_at: string | null
+          email: string
+          id: string
+          locale: string
+          name: string | null
+          source: string | null
+          source_event_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          consent_date?: string | null
+          consent_marketing?: boolean
+          created_at?: string | null
+          email: string
+          id?: string
+          locale?: string
+          name?: string | null
+          source?: string | null
+          source_event_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          consent_date?: string | null
+          consent_marketing?: boolean
+          created_at?: string | null
+          email?: string
+          id?: string
+          locale?: string
+          name?: string | null
+          source?: string | null
+          source_event_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tm_tbl_events: {
         Row: {
           attraction_ids: string[] | null
@@ -1299,7 +1338,7 @@ export type Database = {
           currency: string | null
           day_of_week: string | null
           event_date: string | null
-          festival_duration_days: unknown
+          festival_duration_days: string | null
           genre: string | null
           genre_slug: string | null
           has_packages: boolean | null
