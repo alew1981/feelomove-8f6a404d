@@ -135,6 +135,11 @@ const CRITICAL_TRANSLATIONS = new Map<string, string>([
   ['Las entradas para este evento se han agotado', 'Tickets for this event are sold out'],
   ['DISPONIBLE', 'AVAILABLE'],
   ['Ver otros conciertos de', 'See other concerts by'],
+  // WaitlistForm v2
+  ['Tu nombre', 'Your name'],
+  ['Acepto recibir comunicaciones de Feelomove sobre este evento y otros similares. Puedes darte de baja cuando quieras.', 'I agree to receive communications from Feelomove about this event and similar ones. You can unsubscribe at any time.'],
+  ['¡Apuntado! Te avisaremos cuando las entradas estén disponibles.', "Done! We'll let you know when tickets are available."],
+  ['Algo ha fallado. Inténtalo de nuevo.', 'Something went wrong. Please try again.'],
 ]);
 
 /** Map: spanish_text → english_text */
