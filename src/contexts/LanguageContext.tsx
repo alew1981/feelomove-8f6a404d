@@ -140,6 +140,13 @@ const CRITICAL_TRANSLATIONS = new Map<string, string>([
   ['Acepto recibir comunicaciones de Feelomove sobre este evento y otros similares. Puedes darte de baja cuando quieras.', 'I agree to receive communications from Feelomove about this event and similar ones. You can unsubscribe at any time.'],
   ['¡Apuntado! Te avisaremos cuando las entradas estén disponibles.', "Done! We'll let you know when tickets are available."],
   ['Algo ha fallado. Inténtalo de nuevo.', 'Something went wrong. Please try again.'],
+  // Footer newsletter
+  ['No te pierdas nada', "Don't miss a thing"],
+  ['Conciertos, festivales y hoteles. Te avisamos de los mejores eventos cerca de ti.', "Concerts, festivals and hotels. We'll keep you posted on the best events near you."],
+  ['Suscribirme', 'Subscribe'],
+  ['Sin spam. Solo música. Puedes darte de baja cuando quieras.', 'No spam. Just music. Unsubscribe anytime.'],
+  ['¡Estás dentro!', "You're in!"],
+  ['Te avisaremos de los mejores eventos. ¡Nos vemos en el próximo concierto!', "We'll keep you posted on the best events. See you at the next concert!"],
 ]);
 
 /** Map: spanish_text → english_text */
