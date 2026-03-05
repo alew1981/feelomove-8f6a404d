@@ -1,5 +1,6 @@
 import { NavLink } from "./NavLink";
 import { useTranslation } from "@/hooks/useTranslation";
+import FooterNewsletter from "./FooterNewsletter";
 
 // === INLINE SVG ICONS (replaces lucide-react for bundle optimization) ===
 const IconInstagram = ({ className = "" }: { className?: string }) => (
