@@ -35,6 +35,8 @@ const Inspiration = lazy(() => import("./pages/Inspiration"));
 const PoliticaPrivacidad = lazy(() => import("./pages/PoliticaPrivacidad"));
 const TerminosUso = lazy(() => import("./pages/TerminosUso"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AuthPage = lazy(() => import("./pages/Auth"));
+const MiCuenta = lazy(() => import("./pages/MiCuenta"));
 
 // Lazy load redirect components (legacy URL support only)
 const RedirectProducto = lazy(() => import("./components/RedirectProducto"));
