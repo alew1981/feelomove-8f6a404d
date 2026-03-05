@@ -286,7 +286,6 @@ const App = () => (
               </Routes>
             </PageWrapper>
            </Suspense>
-        </AuthProvider>
         </LanguageProvider>
         </BrowserRouter>
     </QueryClientProvider>
