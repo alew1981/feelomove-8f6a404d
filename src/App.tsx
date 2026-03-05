@@ -5,6 +5,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { useInstantSEO } from "@/hooks/useInstantSEO";
 import SeoFallbackLinks from "@/components/SeoFallbackLinks";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Lazy load Radix-heavy UI components to reduce initial JS execution time
 // These are not critical for first paint
