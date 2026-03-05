@@ -147,6 +147,26 @@ const CRITICAL_TRANSLATIONS = new Map<string, string>([
   ['Sin spam. Solo música. Puedes darte de baja cuando quieras.', 'No spam. Just music. Unsubscribe anytime.'],
   ['¡Estás dentro!', "You're in!"],
   ['Te avisaremos de los mejores eventos. ¡Nos vemos en el próximo concierto!', "We'll keep you posted on the best events. See you at the next concert!"],
+  // Auth & Account
+  ['Mi cuenta', 'My account'],
+  ['Iniciar sesión', 'Sign in'],
+  ['Registrarse', 'Sign up'],
+  ['Contraseña', 'Password'],
+  ['Nombre', 'Name'],
+  ['Email', 'Email'],
+  ['Cerrar sesión', 'Sign out'],
+  ['Guardar cambios', 'Save changes'],
+  ['Guardado', 'Saved'],
+  ['Mis datos', 'My data'],
+  ['Mis favoritos', 'My favorites'],
+  ['Preferencias', 'Preferences'],
+  ['Recibir newsletter', 'Receive newsletter'],
+  ['Aún no tienes favoritos. Explora eventos y guarda los que más te interesen.', "You don't have favorites yet. Explore events and save the ones you like."],
+  ['¡Registro completado!', 'Registration complete!'],
+  ['Revisa tu email para confirmar tu cuenta.', 'Check your email to confirm your account.'],
+  ['La contraseña debe tener al menos 6 caracteres', 'Password must be at least 6 characters'],
+  ['Acepto recibir comunicaciones de Feelomove sobre eventos y novedades. Puedes darte de baja cuando quieras.', 'I agree to receive communications from Feelomove about events and news. You can unsubscribe at any time.'],
+  ['Inicia sesión para guardar favoritos', 'Sign in to save favorites'],
 ]);
 
 /** Map: spanish_text → english_text */
