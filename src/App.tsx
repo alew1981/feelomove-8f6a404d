@@ -213,6 +213,7 @@ const App = () => (
       {/* Deferred load Radix providers - reduces TBT by ~900ms */}
         <BrowserRouter>
         <LanguageProvider>
+        <AuthProvider>
         <DeferredProviders />
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
