@@ -295,7 +295,8 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </PageWrapper>
-          </Suspense>
+           </Suspense>
+        </AuthProvider>
         </LanguageProvider>
         </BrowserRouter>
     </QueryClientProvider>
