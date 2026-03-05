@@ -426,10 +426,14 @@ export type Database = {
       }
       subscribers: {
         Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
           consent_date: string | null
           consent_marketing: boolean
           created_at: string | null
           email: string
+          favorite_artist_ids: string[] | null
+          favorite_event_ids: string[] | null
           id: string
           locale: string
           name: string | null
@@ -438,10 +442,14 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
           consent_date?: string | null
           consent_marketing?: boolean
           created_at?: string | null
           email: string
+          favorite_artist_ids?: string[] | null
+          favorite_event_ids?: string[] | null
           id?: string
           locale?: string
           name?: string | null
@@ -450,10 +458,14 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
           consent_date?: string | null
           consent_marketing?: boolean
           created_at?: string | null
           email?: string
+          favorite_artist_ids?: string[] | null
+          favorite_event_ids?: string[] | null
           id?: string
           locale?: string
           name?: string | null
