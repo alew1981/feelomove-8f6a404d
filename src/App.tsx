@@ -5,6 +5,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { useInstantSEO } from "@/hooks/useInstantSEO";
 import SeoFallbackLinks from "@/components/SeoFallbackLinks";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Lazy load Radix-heavy UI components to reduce initial JS execution time
 // These are not critical for first paint
@@ -34,6 +35,8 @@ const Inspiration = lazy(() => import("./pages/Inspiration"));
 const PoliticaPrivacidad = lazy(() => import("./pages/PoliticaPrivacidad"));
 const TerminosUso = lazy(() => import("./pages/TerminosUso"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AuthPage = lazy(() => import("./pages/Auth"));
+const MiCuenta = lazy(() => import("./pages/MiCuenta"));
 
 // Lazy load redirect components (legacy URL support only)
 const RedirectProducto = lazy(() => import("./components/RedirectProducto"));
@@ -210,6 +213,7 @@ const App = () => (
       {/* Deferred load Radix providers - reduces TBT by ~900ms */}
         <BrowserRouter>
         <LanguageProvider>
+        <AuthProvider>
         <DeferredProviders />
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
@@ -232,6 +236,8 @@ const App = () => (
                 {/* Single festival event pages - uses Producto for event_slug format */}
                 <Route path="/festivales/:slug" element={<Producto />} />
                 <Route path="/favoritos" element={<Favoritos />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/mi-cuenta" element={<MiCuenta />} />
                 <Route path="/inspiration" element={<Inspiration />} />
                 <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
                 <Route path="/terminos-uso" element={<TerminosUso />} />
@@ -246,6 +252,8 @@ const App = () => (
                 <Route path="/en/destinations/:destino" element={<DestinoDetalle />} />
                 <Route path="/en/artists" element={<Artistas />} />
                 <Route path="/en/favorites" element={<Favoritos />} />
+                <Route path="/en/login" element={<AuthPage />} />
+                <Route path="/en/my-account" element={<MiCuenta />} />
                 <Route path="/en/inspiration" element={<Inspiration />} />
                 <Route path="/en/about" element={<About />} />
                 <Route path="/en/privacy-policy" element={<PoliticaPrivacidad />} />
@@ -269,8 +277,8 @@ const App = () => (
                 <Route path="/cookies" element={<Navigate to="/politica-privacidad" replace />} />
                 <Route path="/cart" element={<RedirectToConciertos />} />
                 <Route path="/cart/" element={<RedirectToConciertos />} />
-                <Route path="/my-account" element={<RedirectToHome />} />
-                <Route path="/my-account/" element={<RedirectToHome />} />
+                <Route path="/my-account" element={<Navigate to="/mi-cuenta" replace />} />
+                <Route path="/my-account/" element={<Navigate to="/mi-cuenta" replace />} />
                 <Route path="/wp-login.php" element={<RedirectToHome />} />
                 <Route path="/events/:id" element={<RedirectLegacyEvents />} />
                 <Route path="/product/:slug" element={<RedirectProducto />} />
@@ -287,7 +295,8 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </PageWrapper>
-          </Suspense>
+           </Suspense>
+        </AuthProvider>
         </LanguageProvider>
         </BrowserRouter>
     </QueryClientProvider>

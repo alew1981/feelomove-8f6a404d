@@ -7,6 +7,7 @@ import { Badge } from "./ui/badge";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { useAuth } from "@/contexts/AuthContext";
 
 // === INLINE SVG ICONS (replaces lucide-react for TBT optimization) ===
 const IconMenu = ({ className = "" }: { className?: string }) => (
@@ -29,6 +30,11 @@ const IconHeart = ({ className = "" }: { className?: string }) => (
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
   </svg>
 );
+const IconUser = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </svg>
+);
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,6 +42,7 @@ const Navbar = () => {
   const { favorites } = useFavorites();
   const { prefetch } = usePrefetch();
   const { t, localePath } = useTranslation();
+  const { user } = useAuth();
 
   // Prefetch on hover
   const handleMouseEnter = useCallback((route: string) => {
@@ -136,6 +143,15 @@ const Navbar = () => {
                     {favorites.length}
                   </Badge>
                 )}
+              </NavLink>
+              {/* User/Login icon */}
+              <NavLink
+                to={localePath(user ? '/mi-cuenta' : '/login')}
+                className="relative ripple-effect inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                aria-label={user ? t('Mi cuenta') : t('Iniciar sesión')}
+                title={user ? t('Mi cuenta') : t('Iniciar sesión')}
+              >
+                <IconUser className="h-5 w-5" />
               </NavLink>
               <LanguageSwitcher />
             </div>
