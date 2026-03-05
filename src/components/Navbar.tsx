@@ -7,6 +7,7 @@ import { Badge } from "./ui/badge";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { useAuth } from "@/contexts/AuthContext";
 
 // === INLINE SVG ICONS (replaces lucide-react for TBT optimization) ===
 const IconMenu = ({ className = "" }: { className?: string }) => (
