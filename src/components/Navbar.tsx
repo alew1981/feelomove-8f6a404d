@@ -144,6 +144,15 @@ const Navbar = () => {
                   </Badge>
                 )}
               </NavLink>
+              {/* User/Login icon */}
+              <NavLink
+                to={localePath(user ? '/mi-cuenta' : '/login')}
+                className="relative ripple-effect inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                aria-label={user ? t('Mi cuenta') : t('Iniciar sesión')}
+                title={user ? t('Mi cuenta') : t('Iniciar sesión')}
+              >
+                <IconUser className="h-5 w-5" />
+              </NavLink>
               <LanguageSwitcher />
             </div>
           </div>
