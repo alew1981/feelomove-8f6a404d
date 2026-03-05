@@ -236,6 +236,8 @@ const App = () => (
                 {/* Single festival event pages - uses Producto for event_slug format */}
                 <Route path="/festivales/:slug" element={<Producto />} />
                 <Route path="/favoritos" element={<Favoritos />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/mi-cuenta" element={<MiCuenta />} />
                 <Route path="/inspiration" element={<Inspiration />} />
                 <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
                 <Route path="/terminos-uso" element={<TerminosUso />} />
