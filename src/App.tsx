@@ -269,8 +269,6 @@ const App = () => (
                 <Route path="/cookies" element={<Navigate to="/politica-privacidad" replace />} />
                 <Route path="/cart" element={<RedirectToConciertos />} />
                 <Route path="/cart/" element={<RedirectToConciertos />} />
-                <Route path="/my-account" element={<Navigate to="/mi-cuenta" replace />} />
-                <Route path="/my-account/" element={<Navigate to="/mi-cuenta" replace />} />
                 <Route path="/wp-login.php" element={<RedirectToHome />} />
                 <Route path="/events/:id" element={<RedirectLegacyEvents />} />
                 <Route path="/product/:slug" element={<RedirectProducto />} />
