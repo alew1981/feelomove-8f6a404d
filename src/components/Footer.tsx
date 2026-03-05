@@ -142,6 +142,11 @@ const Footer = () => {
             </div>
           </div>
         </nav>
+
+        {/* Newsletter subscription */}
+        <div className="mb-12 pb-8 border-b border-border">
+          <FooterNewsletter />
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
