@@ -252,6 +252,8 @@ const App = () => (
                 <Route path="/en/destinations/:destino" element={<DestinoDetalle />} />
                 <Route path="/en/artists" element={<Artistas />} />
                 <Route path="/en/favorites" element={<Favoritos />} />
+                <Route path="/en/login" element={<AuthPage />} />
+                <Route path="/en/my-account" element={<MiCuenta />} />
                 <Route path="/en/inspiration" element={<Inspiration />} />
                 <Route path="/en/about" element={<About />} />
                 <Route path="/en/privacy-policy" element={<PoliticaPrivacidad />} />
