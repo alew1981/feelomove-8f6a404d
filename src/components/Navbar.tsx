@@ -42,6 +42,7 @@ const Navbar = () => {
   const { favorites } = useFavorites();
   const { prefetch } = usePrefetch();
   const { t, localePath } = useTranslation();
+  const { user } = useAuth();
 
   // Prefetch on hover
   const handleMouseEnter = useCallback((route: string) => {
