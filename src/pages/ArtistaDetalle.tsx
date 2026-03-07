@@ -484,20 +484,20 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
             <div className="container mx-auto">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight">
-                {locale === 'en' 
-                  ? (artistName)
-                  : (seoContent?.h1Content || artistName)
-                }
-              {seoContent?.introText ? (
+                {locale === 'en' ? artistName : (seoContent?.h1Content || artistName)}
+              </h1>
+              {locale === 'en' || !seoContent?.introText ? (
+                events && events.length > 0 && (
+                  <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
+                    {locale === 'en'
+                      ? `Discover all concerts by ${artistName} in Spain. We have ${events.length} confirmed events in ${cities.length} different cities.${events[0]?.event_date ? ` The next concert will be on ${new Date(events[0].event_date).toLocaleDateString('en-GB')}.` : ''} Don't miss the chance to see ${artistName} live!`
+                      : `Descubre todos los conciertos de ${artistName} en España. Tenemos ${events.length} eventos confirmados en ${cities.length} ciudades diferentes.${events[0]?.event_date ? ` El próximo concierto será el ${new Date(events[0].event_date).toLocaleDateString('es-ES')}.` : ''} ¡No te pierdas la oportunidad de ver a ${artistName} en directo!`
+                    }
+                  </p>
+                )
+              ) : (
                 <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
                   {seoContent.introText}
-                </p>
-              ) : events && events.length > 0 && (
-                <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
-                  {locale === 'en'
-                    ? `Discover all concerts by ${artistName} in Spain. We have ${events.length} confirmed events in ${cities.length} different cities.${events[0]?.event_date ? ` The next concert will be on ${new Date(events[0].event_date).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}.` : ''} Don't miss the chance to see ${artistName} live!`
-                    : `Descubre todos los conciertos de ${artistName} en España. Tenemos ${events.length} eventos confirmados en ${cities.length} ciudades diferentes.${events[0]?.event_date ? ` El próximo concierto será el ${new Date(events[0].event_date).toLocaleDateString('es-ES')}.` : ''} ¡No te pierdas la oportunidad de ver a ${artistName} en directo!`
-                  }
                 </p>
               )}
               <div className="flex items-center gap-3 mt-3 flex-wrap">
