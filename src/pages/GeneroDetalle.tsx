@@ -428,7 +428,7 @@ const GeneroDetalle = () => {
         <PageHero title={locale === 'en' ? cleanGenreName : (seoContent?.h1Content || cleanGenreName)} imageUrl={heroImage} />
         
         {/* H2 for SEO hierarchy (sr-only) */}
-        <h2 className="sr-only">Listado de conciertos y eventos de música {cleanGenreName}</h2>
+        <h2 className="sr-only">{locale === 'en' ? `${cleanGenreName} concerts and music events` : `Listado de conciertos y eventos de música ${cleanGenreName}`}</h2>
         
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8">
