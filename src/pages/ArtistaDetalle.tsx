@@ -465,7 +465,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           {heroImage ? (
             <img
               src={heroImage}
-              alt={`${artistName} - ${t("Conciertos y gira en España")}`}
+              alt={`${artistName} - ${locale === 'en' ? 'Concerts and tour in Spain' : 'Conciertos y gira en España'}`}
               className="w-full h-full object-cover"
               loading="eager"
               decoding="sync"
