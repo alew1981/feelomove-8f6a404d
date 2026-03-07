@@ -278,25 +278,36 @@ const GeneroDetalle = () => {
   // Build proper genre SEO description (NOT destination)
   const seoDescription = useMemo(() => {
     const parts: string[] = [];
-    parts.push(`Descubre los mejores conciertos de ${genreName} en España.`);
-    
-    const eventCount = events?.length || 0;
-    if (eventCount > 0) {
-      parts.push(`${eventCount} eventos confirmados${uniqueCitiesCount > 0 ? ` en ${uniqueCitiesCount} ciudades` : ''}.`);
+    if (locale === 'en') {
+      parts.push(`Discover the best ${genreName} concerts in Spain.`);
+      const eventCount = events?.length || 0;
+      if (eventCount > 0) {
+        parts.push(`${eventCount} confirmed events${uniqueCitiesCount > 0 ? ` in ${uniqueCitiesCount} cities` : ''}.`);
+      }
+      if (topArtistsForSeo.length > 0) {
+        parts.push(`Artists: ${topArtistsForSeo.join(', ')}.`);
+      }
+      if (minPriceEur && minPriceEur > 0) {
+        parts.push(`Tickets from ${Math.round(minPriceEur)}€.`);
+      }
+      parts.push('Buy tickets and book a hotel.');
+    } else {
+      parts.push(`Descubre los mejores conciertos de ${genreName} en España.`);
+      const eventCount = events?.length || 0;
+      if (eventCount > 0) {
+        parts.push(`${eventCount} eventos confirmados${uniqueCitiesCount > 0 ? ` en ${uniqueCitiesCount} ciudades` : ''}.`);
+      }
+      if (topArtistsForSeo.length > 0) {
+        parts.push(`Artistas: ${topArtistsForSeo.join(', ')}.`);
+      }
+      if (minPriceEur && minPriceEur > 0) {
+        parts.push(`Entradas desde ${Math.round(minPriceEur)}€.`);
+      }
+      parts.push('Compra entradas y reserva hotel.');
     }
-    
-    if (topArtistsForSeo.length > 0) {
-      parts.push(`Artistas: ${topArtistsForSeo.join(', ')}.`);
-    }
-    
-    if (minPriceEur && minPriceEur > 0) {
-      parts.push(`Entradas desde ${Math.round(minPriceEur)}€.`);
-    }
-    
-    parts.push('Compra entradas y reserva hotel.');
     
     return parts.join(' ');
-  }, [genreName, events, uniqueCitiesCount, topArtistsForSeo, minPriceEur]);
+  }, [genreName, events, uniqueCitiesCount, topArtistsForSeo, minPriceEur, locale]);
 
   // Clean genre slug for URLs (no %20)
   const cleanGenreSlug = genreParam.toLowerCase().replace(/\s+/g, '-').replace(/%20/g, '-');
