@@ -339,7 +339,7 @@ const GeneroDetalle = () => {
       "item": {
         "@type": "MusicEvent",
         "name": event.name,
-        "description": `Concierto de ${cleanGenreName} en ${event.venue_city}. Compra entradas y reserva hotel.`,
+        "description": locale === 'en' ? `${cleanGenreName} concert in ${event.venue_city}. Buy tickets and book a hotel.` : `Concierto de ${cleanGenreName} en ${event.venue_city}. Compra entradas y reserva hotel.`,
         "startDate": event.event_date,
         "endDate": event.event_date,
         "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
