@@ -386,7 +386,7 @@ const GeneroDetalle = () => {
       {
         "@type": "ListItem",
         "position": 1,
-        "name": "Inicio",
+        "name": locale === 'en' ? "Home" : "Inicio",
         "item": "https://feelomove.com"
       },
       {
