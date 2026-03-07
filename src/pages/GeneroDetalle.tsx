@@ -323,7 +323,7 @@ const GeneroDetalle = () => {
 
   // Clean title (no %20)
   const cleanGenreName = genreName.replace(/%20/g, ' ');
-  const pageTitle = `Conciertos de ${cleanGenreName} en España 2025`;
+  const pageTitle = locale === 'en' ? `${cleanGenreName} Concerts in Spain 2025` : `Conciertos de ${cleanGenreName} en España 2025`;
 
   // Generate JSON-LD structured data for genre (ItemList with complete Event objects for Google)
   const jsonLdData = useMemo(() => ({
