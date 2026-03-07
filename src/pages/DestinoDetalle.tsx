@@ -320,7 +320,7 @@ const DestinoDetalle = () => {
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      "name": `Conciertos y Festivales en ${cityName}`,
+      "name": locale === 'en' ? `Concerts and Festivals in ${cityName}` : `Conciertos y Festivales en ${cityName}`,
       "description": seoDescription,
       "url": `https://feelomove.com/destinos/${citySlug}`,
       "numberOfItems": events?.length || 0,

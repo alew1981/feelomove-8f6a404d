@@ -432,7 +432,10 @@ const GeneroDetalle = () => {
         
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8">
-          {seoContent?.introText || `Descubre los mejores eventos de ${cleanGenreName}`}
+          {locale === 'en' 
+            ? (seoContent?.introText ? seoContent.introText : `Discover the best ${cleanGenreName} events`)
+            : (seoContent?.introText || `Descubre los mejores eventos de ${cleanGenreName}`)
+          }
         </p>
 
         {/* Filters and Search */}
