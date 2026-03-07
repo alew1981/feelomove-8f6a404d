@@ -23,7 +23,8 @@ interface RawSEOData {
 
 export const useAggregationSEO = (
   slug: string | undefined,
-  type: SEOContentType
+  type: SEOContentType,
+  locale: 'es' | 'en' = 'es'
 ) => {
   const [seoContent, setSeoContent] = useState<SEOContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,42 +67,43 @@ export const useAggregationSEO = (
         }
 
         if (data) {
-          // Update document title
-          if (data.seo_title) {
-            document.title = data.seo_title;
-          }
-
-          // Update meta tags
-          const setMetaTag = (name: string, content: string) => {
-            if (!content) return;
-            let tag = document.querySelector(`meta[name="${name}"]`);
-            if (!tag) {
-              tag = document.createElement('meta');
-              tag.setAttribute('name', name);
-              document.head.appendChild(tag);
+          // CRITICAL: Only set document.title and meta tags for Spanish locale
+          // The DB content is always in Spanish; EN pages use their own translated titles
+          if (locale !== 'en') {
+            if (data.seo_title) {
+              document.title = data.seo_title;
             }
-            tag.setAttribute('content', content);
-          };
 
-          if (data.seo_description) {
-            setMetaTag('description', data.seo_description);
-          }
-          if (data.meta_keywords && data.meta_keywords.length > 0) {
-            setMetaTag('keywords', data.meta_keywords.join(', '));
-          }
-
-          // Update Open Graph tags
-          if (data.og_tags && typeof data.og_tags === 'object') {
-            Object.entries(data.og_tags).forEach(([property, content]) => {
+            const setMetaTag = (name: string, content: string) => {
               if (!content) return;
-              let tag = document.querySelector(`meta[property="${property}"]`);
+              let tag = document.querySelector(`meta[name="${name}"]`);
               if (!tag) {
                 tag = document.createElement('meta');
-                tag.setAttribute('property', property);
+                tag.setAttribute('name', name);
                 document.head.appendChild(tag);
               }
               tag.setAttribute('content', content);
-            });
+            };
+
+            if (data.seo_description) {
+              setMetaTag('description', data.seo_description);
+            }
+            if (data.meta_keywords && data.meta_keywords.length > 0) {
+              setMetaTag('keywords', data.meta_keywords.join(', '));
+            }
+
+            if (data.og_tags && typeof data.og_tags === 'object') {
+              Object.entries(data.og_tags).forEach(([property, content]) => {
+                if (!content) return;
+                let tag = document.querySelector(`meta[property="${property}"]`);
+                if (!tag) {
+                  tag = document.createElement('meta');
+                  tag.setAttribute('property', property);
+                  document.head.appendChild(tag);
+                }
+                tag.setAttribute('content', content);
+              });
+            }
           }
 
           setSeoContent({
@@ -121,7 +123,7 @@ export const useAggregationSEO = (
     };
 
     fetchSEOContent();
-  }, [slug, type]);
+  }, [slug, type, locale]);
 
   return { seoContent, isLoading };
 };

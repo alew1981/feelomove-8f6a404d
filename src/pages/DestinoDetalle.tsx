@@ -70,7 +70,7 @@ const DestinoDetalle = () => {
   const cityNameFromSlug = generateCityNameFromSlug(citySlug);
   
   // Fetch SEO content from materialized view
-  const { seoContent } = useAggregationSEO(citySlug, 'city');
+  const { seoContent } = useAggregationSEO(citySlug, 'city', locale);
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterGenre, setFilterGenre] = useState<string>("all");
@@ -278,7 +278,7 @@ const DestinoDetalle = () => {
         "item": {
           "@type": isConcert ? "MusicEvent" : "Festival",
           "name": event.name,
-          "description": `${isConcert ? 'Concierto' : 'Festival'} en ${cityName}. Compra entradas y reserva hotel.`,
+          "description": locale === 'en' ? `${isConcert ? 'Concert' : 'Festival'} in ${cityName}. Buy tickets and book a hotel.` : `${isConcert ? 'Concierto' : 'Festival'} en ${cityName}. Compra entradas y reserva hotel.`,
           "startDate": event.event_date,
           "endDate": event.event_date,
           "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
@@ -320,7 +320,7 @@ const DestinoDetalle = () => {
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      "name": `Conciertos y Festivales en ${cityName}`,
+      "name": locale === 'en' ? `Concerts and Festivals in ${cityName}` : `Conciertos y Festivales en ${cityName}`,
       "description": seoDescription,
       "url": `https://feelomove.com/destinos/${citySlug}`,
       "numberOfItems": events?.length || 0,
@@ -336,13 +336,13 @@ const DestinoDetalle = () => {
       {
         "@type": "ListItem",
         "position": 1,
-        "name": "Inicio",
+        "name": locale === 'en' ? "Home" : "Inicio",
         "item": "https://feelomove.com"
       },
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Destinos",
+        "name": locale === 'en' ? "Destinations" : "Destinos",
         "item": "https://feelomove.com/destinos"
       },
       {
@@ -389,10 +389,10 @@ const DestinoDetalle = () => {
           
           {/* CRITICAL: H1 renders IMMEDIATELY with city name from slug */}
           {/* This prevents Google from seeing empty content (Soft 404) */}
-          <PageHero title={seoContent?.h1Content || cityName} imageUrl={heroImage} />
+          <PageHero title={locale === 'en' ? cityName : (seoContent?.h1Content || cityName)} imageUrl={heroImage} />
           
           {/* H2 universal (sr-only) para evitar salto de niveles: H1 > H2 > H3 */}
-          <h2 className="sr-only">Eventos y experiencias destacadas en {cityName}</h2>
+          <h2 className="sr-only">{locale === 'en' ? `Featured events and experiences in ${cityName}` : `Eventos y experiencias destacadas en ${cityName}`}</h2>
           
           {/* CRITICAL SEO: Static semantic text ALWAYS visible */}
           {/* Google sees this content immediately, even during loading */}
@@ -425,9 +425,11 @@ const DestinoDetalle = () => {
           
           {/* SEO Text */}
           <SEOText 
-            title={seoContent?.h1Content || `Eventos en ${cityName}`}
-            description={seoContent?.introText || seoDescription}
-            keywords={seoContent?.metaKeywords || [`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]}
+            title={locale === 'en' ? `Events in ${cityName}` : (seoContent?.h1Content || `Eventos en ${cityName}`)}
+            description={locale === 'en' ? seoDescription : (seoContent?.introText || seoDescription)}
+            keywords={locale === 'en' 
+              ? [`concerts ${cityName}`, `festivals ${cityName}`, `events ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]
+              : (seoContent?.metaKeywords || [`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)])}
           />
 
         {/* Filters and Search */}

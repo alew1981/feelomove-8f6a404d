@@ -36,7 +36,7 @@ const GeneroDetalle = () => {
   }
   
   // Fetch SEO content from materialized view
-  const { seoContent } = useAggregationSEO(genreParam, 'genre');
+  const { seoContent } = useAggregationSEO(genreParam, 'genre', locale);
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
@@ -278,25 +278,36 @@ const GeneroDetalle = () => {
   // Build proper genre SEO description (NOT destination)
   const seoDescription = useMemo(() => {
     const parts: string[] = [];
-    parts.push(`Descubre los mejores conciertos de ${genreName} en España.`);
-    
-    const eventCount = events?.length || 0;
-    if (eventCount > 0) {
-      parts.push(`${eventCount} eventos confirmados${uniqueCitiesCount > 0 ? ` en ${uniqueCitiesCount} ciudades` : ''}.`);
+    if (locale === 'en') {
+      parts.push(`Discover the best ${genreName} concerts in Spain.`);
+      const eventCount = events?.length || 0;
+      if (eventCount > 0) {
+        parts.push(`${eventCount} confirmed events${uniqueCitiesCount > 0 ? ` in ${uniqueCitiesCount} cities` : ''}.`);
+      }
+      if (topArtistsForSeo.length > 0) {
+        parts.push(`Artists: ${topArtistsForSeo.join(', ')}.`);
+      }
+      if (minPriceEur && minPriceEur > 0) {
+        parts.push(`Tickets from ${Math.round(minPriceEur)}€.`);
+      }
+      parts.push('Buy tickets and book a hotel.');
+    } else {
+      parts.push(`Descubre los mejores conciertos de ${genreName} en España.`);
+      const eventCount = events?.length || 0;
+      if (eventCount > 0) {
+        parts.push(`${eventCount} eventos confirmados${uniqueCitiesCount > 0 ? ` en ${uniqueCitiesCount} ciudades` : ''}.`);
+      }
+      if (topArtistsForSeo.length > 0) {
+        parts.push(`Artistas: ${topArtistsForSeo.join(', ')}.`);
+      }
+      if (minPriceEur && minPriceEur > 0) {
+        parts.push(`Entradas desde ${Math.round(minPriceEur)}€.`);
+      }
+      parts.push('Compra entradas y reserva hotel.');
     }
-    
-    if (topArtistsForSeo.length > 0) {
-      parts.push(`Artistas: ${topArtistsForSeo.join(', ')}.`);
-    }
-    
-    if (minPriceEur && minPriceEur > 0) {
-      parts.push(`Entradas desde ${Math.round(minPriceEur)}€.`);
-    }
-    
-    parts.push('Compra entradas y reserva hotel.');
     
     return parts.join(' ');
-  }, [genreName, events, uniqueCitiesCount, topArtistsForSeo, minPriceEur]);
+  }, [genreName, events, uniqueCitiesCount, topArtistsForSeo, minPriceEur, locale]);
 
   // Clean genre slug for URLs (no %20)
   const cleanGenreSlug = genreParam.toLowerCase().replace(/\s+/g, '-').replace(/%20/g, '-');
@@ -312,13 +323,13 @@ const GeneroDetalle = () => {
 
   // Clean title (no %20)
   const cleanGenreName = genreName.replace(/%20/g, ' ');
-  const pageTitle = `Conciertos de ${cleanGenreName} en España 2025`;
+  const pageTitle = locale === 'en' ? `${cleanGenreName} Concerts in Spain 2025` : `Conciertos de ${cleanGenreName} en España 2025`;
 
   // Generate JSON-LD structured data for genre (ItemList with complete Event objects for Google)
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `Conciertos de ${cleanGenreName} en España`,
+    "name": locale === 'en' ? `${cleanGenreName} Concerts in Spain` : `Conciertos de ${cleanGenreName} en España`,
     "description": seoDescription,
     "url": canonicalUrl,
     "numberOfItems": events?.length || 0,
@@ -328,7 +339,7 @@ const GeneroDetalle = () => {
       "item": {
         "@type": "MusicEvent",
         "name": event.name,
-        "description": `Concierto de ${cleanGenreName} en ${event.venue_city}. Compra entradas y reserva hotel.`,
+        "description": locale === 'en' ? `${cleanGenreName} concert in ${event.venue_city}. Buy tickets and book a hotel.` : `Concierto de ${cleanGenreName} en ${event.venue_city}. Compra entradas y reserva hotel.`,
         "startDate": event.event_date,
         "endDate": event.event_date,
         "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
@@ -375,13 +386,13 @@ const GeneroDetalle = () => {
       {
         "@type": "ListItem",
         "position": 1,
-        "name": "Inicio",
+        "name": locale === 'en' ? "Home" : "Inicio",
         "item": "https://feelomove.com"
       },
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Géneros",
+        "name": locale === 'en' ? "Genres" : "Géneros",
         "item": "https://feelomove.com/generos"
       },
       {
@@ -414,14 +425,17 @@ const GeneroDetalle = () => {
         </div>
         
         {/* Hero Image */}
-        <PageHero title={seoContent?.h1Content || cleanGenreName} imageUrl={heroImage} />
+        <PageHero title={locale === 'en' ? cleanGenreName : (seoContent?.h1Content || cleanGenreName)} imageUrl={heroImage} />
         
         {/* H2 for SEO hierarchy (sr-only) */}
-        <h2 className="sr-only">Listado de conciertos y eventos de música {cleanGenreName}</h2>
+        <h2 className="sr-only">{locale === 'en' ? `${cleanGenreName} concerts and music events` : `Listado de conciertos y eventos de música ${cleanGenreName}`}</h2>
         
         {/* Description */}
         <p className="text-muted-foreground text-lg mb-8">
-          {seoContent?.introText || `Descubre los mejores eventos de ${cleanGenreName}`}
+          {locale === 'en' 
+            ? (seoContent?.introText ? seoContent.introText : `Discover the best ${cleanGenreName} events`)
+            : (seoContent?.introText || `Descubre los mejores eventos de ${cleanGenreName}`)
+          }
         </p>
 
         {/* Filters and Search */}
