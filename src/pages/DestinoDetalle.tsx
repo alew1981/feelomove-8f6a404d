@@ -392,7 +392,7 @@ const DestinoDetalle = () => {
           <PageHero title={locale === 'en' ? cityName : (seoContent?.h1Content || cityName)} imageUrl={heroImage} />
           
           {/* H2 universal (sr-only) para evitar salto de niveles: H1 > H2 > H3 */}
-          <h2 className="sr-only">Eventos y experiencias destacadas en {cityName}</h2>
+          <h2 className="sr-only">{locale === 'en' ? `Featured events and experiences in ${cityName}` : `Eventos y experiencias destacadas en ${cityName}`}</h2>
           
           {/* CRITICAL SEO: Static semantic text ALWAYS visible */}
           {/* Google sees this content immediately, even during loading */}
