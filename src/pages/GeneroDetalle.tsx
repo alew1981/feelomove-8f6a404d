@@ -36,7 +36,7 @@ const GeneroDetalle = () => {
   }
   
   // Fetch SEO content from materialized view
-  const { seoContent } = useAggregationSEO(genreParam, 'genre');
+  const { seoContent } = useAggregationSEO(genreParam, 'genre', locale);
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
