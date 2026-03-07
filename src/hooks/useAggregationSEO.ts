@@ -67,10 +67,13 @@ export const useAggregationSEO = (
         }
 
         if (data) {
-          // Update document title
-          if (data.seo_title) {
-            document.title = data.seo_title;
-          }
+          // CRITICAL: Only set document.title and meta tags for Spanish locale
+          // The DB content is always in Spanish; EN pages use their own translated titles
+          if (locale !== 'en') {
+            // Update document title
+            if (data.seo_title) {
+              document.title = data.seo_title;
+            }
 
           // Update meta tags
           const setMetaTag = (name: string, content: string) => {
