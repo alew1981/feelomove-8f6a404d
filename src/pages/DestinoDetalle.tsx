@@ -342,7 +342,7 @@ const DestinoDetalle = () => {
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Destinos",
+        "name": locale === 'en' ? "Destinations" : "Destinos",
         "item": "https://feelomove.com/destinos"
       },
       {
