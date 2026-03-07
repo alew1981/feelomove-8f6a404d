@@ -23,7 +23,8 @@ interface RawSEOData {
 
 export const useAggregationSEO = (
   slug: string | undefined,
-  type: SEOContentType
+  type: SEOContentType,
+  locale: 'es' | 'en' = 'es'
 ) => {
   const [seoContent, setSeoContent] = useState<SEOContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
