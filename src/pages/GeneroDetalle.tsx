@@ -329,7 +329,7 @@ const GeneroDetalle = () => {
   const jsonLdData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `Conciertos de ${cleanGenreName} en España`,
+    "name": locale === 'en' ? `${cleanGenreName} Concerts in Spain` : `Conciertos de ${cleanGenreName} en España`,
     "description": seoDescription,
     "url": canonicalUrl,
     "numberOfItems": events?.length || 0,
