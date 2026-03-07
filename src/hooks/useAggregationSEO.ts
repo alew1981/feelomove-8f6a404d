@@ -123,7 +123,7 @@ export const useAggregationSEO = (
     };
 
     fetchSEOContent();
-  }, [slug, type]);
+  }, [slug, type, locale]);
 
   return { seoContent, isLoading };
 };

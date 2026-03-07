@@ -484,8 +484,10 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
             <div className="container mx-auto">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight">
-                {seoContent?.h1Content || artistName}
-              </h1>
+                {locale === 'en' 
+                  ? (artistName)
+                  : (seoContent?.h1Content || artistName)
+                }
               {seoContent?.introText ? (
                 <p className="text-muted-foreground mt-3 text-lg max-w-2xl line-clamp-2">
                   {seoContent.introText}
