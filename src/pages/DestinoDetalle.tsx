@@ -278,7 +278,7 @@ const DestinoDetalle = () => {
         "item": {
           "@type": isConcert ? "MusicEvent" : "Festival",
           "name": event.name,
-          "description": `${isConcert ? 'Concierto' : 'Festival'} en ${cityName}. Compra entradas y reserva hotel.`,
+          "description": locale === 'en' ? `${isConcert ? 'Concert' : 'Festival'} in ${cityName}. Buy tickets and book a hotel.` : `${isConcert ? 'Concierto' : 'Festival'} en ${cityName}. Compra entradas y reserva hotel.`,
           "startDate": event.event_date,
           "endDate": event.event_date,
           "eventStatus": event.sold_out ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
