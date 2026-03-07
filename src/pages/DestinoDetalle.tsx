@@ -389,7 +389,7 @@ const DestinoDetalle = () => {
           
           {/* CRITICAL: H1 renders IMMEDIATELY with city name from slug */}
           {/* This prevents Google from seeing empty content (Soft 404) */}
-          <PageHero title={seoContent?.h1Content || cityName} imageUrl={heroImage} />
+          <PageHero title={locale === 'en' ? cityName : (seoContent?.h1Content || cityName)} imageUrl={heroImage} />
           
           {/* H2 universal (sr-only) para evitar salto de niveles: H1 > H2 > H3 */}
           <h2 className="sr-only">Eventos y experiencias destacadas en {cityName}</h2>
