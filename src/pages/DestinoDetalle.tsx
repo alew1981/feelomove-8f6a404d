@@ -425,9 +425,11 @@ const DestinoDetalle = () => {
           
           {/* SEO Text */}
           <SEOText 
-            title={seoContent?.h1Content || `Eventos en ${cityName}`}
-            description={seoContent?.introText || seoDescription}
-            keywords={seoContent?.metaKeywords || [`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]}
+            title={locale === 'en' ? `Events in ${cityName}` : (seoContent?.h1Content || `Eventos en ${cityName}`)}
+            description={locale === 'en' ? seoDescription : (seoContent?.introText || seoDescription)}
+            keywords={locale === 'en' 
+              ? [`concerts ${cityName}`, `festivals ${cityName}`, `events ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)]
+              : (seoContent?.metaKeywords || [`conciertos ${cityName}`, `festivales ${cityName}`, `eventos ${cityName}`, ...artists.slice(0, 3).map(a => `${a} ${cityName}`)])}
           />
 
         {/* Filters and Search */}
