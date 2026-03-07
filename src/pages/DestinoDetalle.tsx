@@ -70,7 +70,7 @@ const DestinoDetalle = () => {
   const cityNameFromSlug = generateCityNameFromSlug(citySlug);
   
   // Fetch SEO content from materialized view
-  const { seoContent } = useAggregationSEO(citySlug, 'city');
+  const { seoContent } = useAggregationSEO(citySlug, 'city', locale);
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterGenre, setFilterGenre] = useState<string>("all");
