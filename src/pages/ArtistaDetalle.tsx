@@ -61,7 +61,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   }, [rawSlug, artistSlug, navigate, localePath]);
 
   // Fetch SEO content from materialized view
-  const { seoContent } = useAggregationSEO(artistSlug, 'artist');
+  const { seoContent } = useAggregationSEO(artistSlug, 'artist', locale);
   
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
