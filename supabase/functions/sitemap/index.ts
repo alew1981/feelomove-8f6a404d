@@ -13,8 +13,8 @@ const XMLNS_XHTML = 'xmlns:xhtml="http://www.w3.org/1999/xhtml"';
 
 /** Route segments per language */
 const SEGMENTS = {
-  es: { concerts: "conciertos", festivals: "festivales", artists: "conciertos", destinations: "destinos", pages: "" },
-  en: { concerts: "en/tickets", festivals: "en/festivals", artists: "en/tickets", destinations: "en/destinations", pages: "" },
+  es: { concerts: "conciertos", festivals: "festivales", artists: "artista", destinations: "destinos", pages: "" },
+  en: { concerts: "en/tickets", festivals: "en/festivals", artists: "en/artists", destinations: "en/destinations", pages: "" },
 };
 
 /** Sitemap file names per language */
