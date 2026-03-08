@@ -63,7 +63,8 @@ const ParentFestivalCard = memo(({ festival, priority = false }: ParentFestivalC
     return () => observer.unobserve(element);
   }, [priority]);
 
-  const festivalSlug = encodeURIComponent(
+  // SEO: Use real event slug instead of synthetic slug to avoid broken pages
+  const festivalSlug = festival.canonical_slug || encodeURIComponent(
     `${festival.festival_nombre.toLowerCase().replace(/\s+/g, '-')}_${(festival.venue_city || 'unknown').toLowerCase().replace(/\s+/g, '-')}`
   );
   
