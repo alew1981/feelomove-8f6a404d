@@ -356,6 +356,9 @@ const Festivales = () => {
           .sort();
         const earliestOnSaleDate = onSaleDates.length > 0 ? onSaleDates[0] : null;
         
+        // SEO: Use abono slug as canonical (represents whole festival), fallback to first event
+        const canonicalSlug = (abonos[0] || events[0]).event_slug;
+        
         parentFestivals.push({
           primary_attraction_id: firstEvent.primary_attraction_id,
           festival_nombre: festivalName,
@@ -368,7 +371,8 @@ const Festivales = () => {
           min_start_date: minDate,
           max_end_date: maxDate,
           total_artists: uniqueArtists.length,
-          earliest_on_sale_date: earliestOnSaleDate
+          earliest_on_sale_date: earliestOnSaleDate,
+          canonical_slug: canonicalSlug,
         });
       } else {
         // Single event standalone festival
