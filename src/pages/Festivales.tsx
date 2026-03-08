@@ -70,6 +70,8 @@ interface ParentFestival {
   total_artists: number;
   // On sale date for "coming soon" badge
   earliest_on_sale_date?: string | null;
+  // SEO: Real event slug for linking (abono slug preferred, fallback to first event)
+  canonical_slug: string;
 }
 
 // Interface for consolidated artist entries (same artist + date = same concert with different prices)
