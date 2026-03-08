@@ -116,9 +116,9 @@ const FestivalListCard = memo(({ festival, priority = false }: FestivalListCardP
     return () => observer.unobserve(element);
   }, [priority]);
 
-  // Normalize field names
+  // Normalize field names - support ParentFestival.canonical_slug
   const festivalName = festival.festival_nombre || festival.event_name || festival.name || '';
-  const festivalSlug = festival.event_slug || festival.slug;
+  const festivalSlug = (festival as any).canonical_slug || festival.event_slug || festival.slug;
   const rawImageUrl = festival.image_standard_url || festival.image_large_url || "/placeholder.svg";
   // Use optimized thumbnail for list cards
   const imageUrl = getOptimizedThumbnail(rawImageUrl);
