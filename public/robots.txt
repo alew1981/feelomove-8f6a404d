@@ -32,7 +32,6 @@ Disallow: /checkout/
 Disallow: /404
 
 # Bloquear rutas legacy
-Disallow: /artista/
 Disallow: /producto/
 Disallow: /evento/
 Disallow: /events/
