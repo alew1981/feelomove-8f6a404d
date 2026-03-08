@@ -32,6 +32,7 @@ interface ParentFestival {
   total_artists?: number;
   genres?: string[];
   earliest_on_sale_date?: string | null;
+  canonical_slug?: string;
 }
 
 interface ParentFestivalCardProps {
