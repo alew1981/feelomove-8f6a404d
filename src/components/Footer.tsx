@@ -23,11 +23,11 @@ const PinterestIcon = ({ className }: { className?: string }) => (
 
 // SEO: Top destinations and genres for crawler discovery (hub pages)
 const TOP_CITIES = [
-  { name: 'Madrid', slug: 'madrid' },
-  { name: 'Barcelona', slug: 'barcelona' },
-  { name: 'Valencia', slug: 'valencia' },
-  { name: 'Sevilla', slug: 'sevilla' },
-  { name: 'Bilbao', slug: 'bilbao' },
+  { name: 'Madrid', slug: 'madrid', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJgTwKgJcpQg0RaSKMYcHeNsQ&placeTypes=&name=Madrid' },
+  { name: 'Barcelona', slug: 'barcelona', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJ5TCOcRaYpBIRCmZHTz37sEQ&placeTypes=&name=Barcelona' },
+  { name: 'Valencia', slug: 'valencia', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJb7Dv8ExPYA0ROR1_HwFRo7Q&name=Val%C3%A8ncia' },
+  { name: 'Sevilla', slug: 'sevilla', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJkWK-FBFsEg0RSFb-HGIY8DQ&name=Sevilla' },
+  { name: 'Bilbao', slug: 'bilbao', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJuYlLZidOTg0RRaaVHsSsNGU&name=Bilbao' },
 ];
 
 const TOP_GENRES = [
@@ -46,7 +46,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         {/* SEO Directory: Hub links for crawler discovery */}
         <nav className="mb-12 pb-8 border-b border-border" aria-label={t('Directorio de eventos')}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {/* Conciertos por Ciudad */}
             <div>
               <span className="font-semibold text-sm text-foreground mb-3 block">
@@ -107,6 +107,28 @@ const Footer = () => {
               </ul>
             </div>
             
+            {/* Hoteles por Ciudad */}
+            <div>
+              <span className="font-semibold text-sm text-foreground mb-3 block">
+                {t('Hoteles por Ciudad')}
+              </span>
+              <ul className="space-y-1.5 text-sm">
+                {TOP_CITIES.map(city => (
+                  <li key={city.slug}>
+                    <a 
+                      href={city.nuiteeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title={locale === 'en' ? `Hotels in ${city.name}` : `Hoteles en ${city.name}`}
+                    >
+                      {locale === 'en' ? `Hotels in ${city.name}` : `Hoteles en ${city.name}`}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             {/* Categorías */}
             <div>
               <span className="font-semibold text-sm text-foreground mb-3 block">
@@ -188,6 +210,11 @@ const Footer = () => {
                 <NavLink to="/musica" className="hover:text-foreground transition-colors" title={t('Explorar géneros musicales')}>
                   {t('Géneros Musicales')}
                 </NavLink>
+              </li>
+              <li>
+                <a href="https://feelomove.nuitee.link/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" title={t('Buscar hoteles para eventos')}>
+                  {t('Hoteles')}
+                </a>
               </li>
             </ul>
           </nav>
