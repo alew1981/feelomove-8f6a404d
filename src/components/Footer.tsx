@@ -46,7 +46,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         {/* SEO Directory: Hub links for crawler discovery */}
         <nav className="mb-12 pb-8 border-b border-border" aria-label={t('Directorio de eventos')}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {/* Conciertos por Ciudad */}
             <div>
               <span className="font-semibold text-sm text-foreground mb-3 block">
