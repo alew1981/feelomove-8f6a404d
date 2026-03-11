@@ -439,13 +439,7 @@ export const SEOHead = ({
       <meta name="twitter:image:alt" content={finalTitle} />
       
       {/* CRITICAL: Force index,follow for main content pages */}
-      <meta 
-        name="robots" 
-        content={isNoIndex 
-          ? "noindex, follow" 
-          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-        } 
-      />
+      <meta name="robots" content={robotsContent} />
       <meta name="revisit-after" content="7 days" />
       <meta name="geo.region" content="ES" />
       <meta name="geo.placename" content="España" />
