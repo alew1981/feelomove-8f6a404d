@@ -1099,6 +1099,13 @@ const Producto = ({ slugProp }: ProductoProps) => {
     return servicePatterns.some((pattern) => pattern.test(eventName));
   })();
 
+  // SEO: Past events should be noindexed to save crawl budget
+  const isPastEvent = (() => {
+    const eventDate = eventDetails.event_date;
+    if (!eventDate) return false;
+    return new Date(eventDate) < new Date();
+  })();
+
   return (
     <>
       <EventSeo {...eventSeoProps} />
@@ -1134,7 +1141,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
           ? `${mainArtist}, ${eventDetails.venue_city}, concert, tickets, hotel, ${eventDetails.event_name}`
           : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        forceNoIndex={isServiceEvent}
+        forceNoIndex={isServiceEvent || isPastEvent}
         isVipEvent={isVipEventFromSlug}
         artistName={mainArtist}
         breadcrumbs={[
