@@ -107,6 +107,28 @@ const Footer = () => {
               </ul>
             </div>
             
+            {/* Hoteles por Ciudad */}
+            <div>
+              <span className="font-semibold text-sm text-foreground mb-3 block">
+                {t('Hoteles por Ciudad')}
+              </span>
+              <ul className="space-y-1.5 text-sm">
+                {TOP_CITIES.map(city => (
+                  <li key={city.slug}>
+                    <a 
+                      href={city.nuiteeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title={locale === 'en' ? `Hotels in ${city.name}` : `Hoteles en ${city.name}`}
+                    >
+                      {locale === 'en' ? `Hotels in ${city.name}` : `Hoteles en ${city.name}`}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             {/* Categorías */}
             <div>
               <span className="font-semibold text-sm text-foreground mb-3 block">
