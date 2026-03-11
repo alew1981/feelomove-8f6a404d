@@ -21,6 +21,10 @@ interface SEOHeadProps {
   breadcrumbs?: BreadcrumbItem[];
   preloadImage?: string;
   forceNoIndex?: boolean;
+  /** Service events (VIP, parking, transport): noindex + nofollow */
+  noindexNoFollow?: boolean;
+  /** Past events: noindex + follow (keep internal links crawlable) */
+  noindexFollow?: boolean;
   /** Set true for VIP/Premium events to differentiate title */
   isVipEvent?: boolean;
   /** Artist name for VIP title formatting */
