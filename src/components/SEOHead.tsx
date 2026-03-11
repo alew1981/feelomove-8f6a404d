@@ -287,6 +287,8 @@ export const SEOHead = ({
   breadcrumbs,
   preloadImage,
   forceNoIndex = false,
+  noindexNoFollow = false,
+  noindexFollow = false,
   isVipEvent = false,
   artistName
 }: SEOHeadProps) => {
@@ -294,8 +296,13 @@ export const SEOHead = ({
   const { locale } = useLanguage();
   const searchParams = new URLSearchParams(location.search);
   
-  // Determine if page should be noindexed
-  const isNoIndex = forceNoIndex || shouldNoIndex(searchParams, location.pathname);
+  // Determine robots directive: noindexNoFollow takes priority over noindexFollow
+  const isNoIndex = forceNoIndex || noindexNoFollow || noindexFollow || shouldNoIndex(searchParams, location.pathname);
+  const robotsContent = noindexNoFollow
+    ? "noindex, nofollow"
+    : isNoIndex
+      ? "noindex, follow"
+      : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
   
   // CRITICAL: Differentiate VIP titles to avoid duplicate content
   const finalTitle = isVipEvent 
