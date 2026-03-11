@@ -1141,7 +1141,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
           ? `${mainArtist}, ${eventDetails.venue_city}, concert, tickets, hotel, ${eventDetails.event_name}`
           : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
         pageType="ItemPage"
-        forceNoIndex={isServiceEvent}
+        forceNoIndex={isServiceEvent || isPastEvent}
         isVipEvent={isVipEventFromSlug}
         artistName={mainArtist}
         breadcrumbs={[
