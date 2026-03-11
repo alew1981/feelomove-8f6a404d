@@ -212,7 +212,7 @@ const Conciertos = () => {
   const jsonLd = events && events.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": locale === 'en' ? "Concerts in Spain 2025" : "Conciertos en España 2025",
+    "name": locale === 'en' ? "Concerts in Spain 2026" : "Conciertos en España 2026",
     "description": locale === 'en' ? "List of concerts and music events in Spain. Buy tickets and book hotels." : "Listado de conciertos y eventos musicales en España. Compra entradas y reserva hotel.",
     "url": "https://feelomove.com/conciertos",
     "numberOfItems": events.length,
@@ -266,10 +266,10 @@ const Conciertos = () => {
   return (
     <>
       <SEOHead
-        title={locale === 'en' ? "Concerts in Spain 2025 - Tickets and Hotels" : "Conciertos en España 2025 - Entradas y Hoteles"}
-        description={locale === 'en' ? "Buy tickets for concerts in Madrid, Barcelona and all Spain. Book a hotel near the venue. Rock, pop, indie and more." : "Compra entradas para conciertos en Madrid, Barcelona y toda España. Reserva hotel cerca del venue. Rock, pop, indie y más."}
+        title={locale === 'en' ? "Concerts in Spain 2026 — Official Tickets" : "Conciertos en España 2026 — Entradas Oficiales"}
+        description={locale === 'en' ? "All concerts in Spain 2026. Tickets for Madrid, Barcelona, Seville, Valencia and more. Book tickets + hotel at FEELOMOVE+." : "Todos los conciertos en España 2026. Entradas para Madrid, Barcelona, Sevilla, Valencia y más. Reserva entrada + hotel en FEELOMOVE+."}
         canonical={locale === 'en' ? "/en/tickets" : "/conciertos"}
-        keywords="conciertos españa 2025, entradas conciertos madrid, conciertos barcelona, rock pop indie"
+        keywords={locale === 'en' ? "concerts spain 2026, concert tickets madrid, concerts barcelona, rock pop indie" : "conciertos españa 2026, entradas conciertos madrid, conciertos barcelona, rock pop indie"}
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[

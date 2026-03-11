@@ -228,10 +228,10 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="Entradas Conciertos y Festivales España 2025"
-        description="Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento y ahorra. ¡Descubre los mejores eventos ahora!"
+        title={locale === 'en' ? "Concert Tickets & Music Festivals Spain 2026" : "Entradas Conciertos y Festivales España 2026"}
+        description={locale === 'en' ? "Buy concert and festival tickets in Spain 2026. Madrid, Barcelona, Seville and more. Book your hotel near the venue with FEELOMOVE+." : "Compra entradas para conciertos y festivales en España 2026. Madrid, Barcelona, Sevilla y más. Reserva también tu hotel cerca del recinto en FEELOMOVE+."}
         canonical="https://feelomove.com/"
-        keywords="entradas conciertos españa, festivales españa 2025, hoteles para festivales, transporte conciertos, logística eventos musicales"
+        keywords={locale === 'en' ? "concert tickets spain, festivals spain 2026, hotels for festivals, music events spain" : "entradas conciertos españa, festivales españa 2026, hoteles para festivales, transporte conciertos, logística eventos musicales"}
         jsonLd={jsonLd}
         ogImage="https://feelomove.com/og-image.jpg"
       />
@@ -327,7 +327,7 @@ const Index = () => {
         <section aria-labelledby="concerts-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">{t('Conciertos en España 2025')}</h2>
+              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">{t('Conciertos en España 2026')}</h2>
               <p className="text-muted-foreground">{t('Compra entradas para los conciertos más esperados')}</p>
             </div>
             <Link to={localePath("/conciertos")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver todos los conciertos en España')}>
