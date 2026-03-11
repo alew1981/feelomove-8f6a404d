@@ -537,10 +537,10 @@ const Festivales = () => {
   return (
     <>
       <SEOHead
-        title={locale === 'en' ? "Music Festivals in Spain 2025 - Tickets and Hotels | Feelomove" : "Festivales de Música en España 2025 - Entradas y Hoteles | Feelomove"}
-        description={locale === 'en' ? "Discover the best music festivals in Spain 2025. Buy tickets for rock, electronic, indie festivals and book hotels near the venue." : "Descubre los mejores festivales de música en España 2025. Compra tus entradas para festivales de rock, electrónica, indie y reserva hotel cerca del recinto."}
+        title={locale === 'en' ? "Music Festivals Spain 2026 — Tickets & Hotels" : "Festivales de Música España 2026 — Entradas y Hoteles"}
+        description={locale === 'en' ? "The best music festivals in Spain 2026. Buy tickets and book a hotel near the venue at FEELOMOVE+." : "Los mejores festivales de música en España 2026. Compra entradas y reserva hotel cerca del recinto en FEELOMOVE+."}
         canonical={locale === 'en' ? "/en/festivals" : "/festivales"}
-        keywords="festivales españa 2025, festivales música, festivales verano, festivales madrid, festivales barcelona"
+        keywords={locale === 'en' ? "festivals spain 2026, music festivals, summer festivals, festivals madrid, festivals barcelona" : "festivales españa 2026, festivales música, festivales verano, festivales madrid, festivales barcelona"}
         pageType="CollectionPage"
         jsonLd={jsonLd || undefined}
         breadcrumbs={[

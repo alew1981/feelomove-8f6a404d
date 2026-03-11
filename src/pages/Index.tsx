@@ -327,7 +327,7 @@ const Index = () => {
         <section aria-labelledby="concerts-heading">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">{t('Conciertos en España 2025')}</h2>
+              <h2 id="concerts-heading" className="text-3xl font-bold mb-2">{t('Conciertos en España 2026')}</h2>
               <p className="text-muted-foreground">{t('Compra entradas para los conciertos más esperados')}</p>
             </div>
             <Link to={localePath("/conciertos")} className="text-foreground hover:text-accent hover:underline font-medium transition-colors" aria-label={t('Ver todos los conciertos en España')}>
