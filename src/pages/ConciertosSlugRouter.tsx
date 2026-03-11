@@ -39,7 +39,9 @@ export default function ConciertosSlugRouter() {
           .eq("id", redirectData.event_id)
           .maybeSingle();
 
-        if (eventData?.slug) {
+        // Only redirect if the canonical slug is DIFFERENT from the current one
+        // This prevents redirect loops when slug_redirects has circular entries
+        if (eventData?.slug && eventData.slug.toLowerCase() !== slug.toLowerCase()) {
           return {
             type: "redirect",
             redirectSlug: eventData.slug,
