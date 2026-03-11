@@ -126,31 +126,32 @@ export function useEventData(
       }
 
       // Event not found in either view - check if it's a redirect case
-      // OPTIMIZATION: Run redirect check only if event not found directly
-      // CRITICAL: Use event_id to get current slug, NOT new_slug (which may be outdated)
+      // IMPORTANT: Use slug_redirects.new_slug as canonical destination to avoid -1/-2 loops
       const { data: redirectResult } = await supabase
         .from("slug_redirects")
-        .select("event_id")
-        .eq("old_slug", slug)
+        .select("new_slug, event_id")
+        .eq("old_slug", slug.toLowerCase())
         .maybeSingle();
 
-      if (redirectResult?.event_id) {
-        // Get current event data by ID (single-hop redirect)
-        const { data: targetEvent } = await supabase
-          .from("tm_tbl_events")
-          .select("event_type, slug")
-          .eq("id", redirectResult.event_id)
-          .maybeSingle();
-        
-        if (targetEvent?.slug && targetEvent.slug !== slug) {
+      if (redirectResult?.new_slug) {
+        const canonicalSlug = redirectResult.new_slug.toLowerCase();
+
+        if (canonicalSlug !== slug.toLowerCase()) {
+          // Resolve target route type (concert/festival)
+          const { data: eventMeta } = await supabase
+            .from("tm_tbl_events")
+            .select("event_type")
+            .eq("id", redirectResult.event_id)
+            .maybeSingle();
+
           // CRITICAL SEO: Use plural routes (/conciertos/, /festivales/)
-          const targetPath = targetEvent.event_type === "festival"
-            ? `/festivales/${targetEvent.slug}`
-            : `/conciertos/${targetEvent.slug}`;
+          const targetPath = eventMeta?.event_type === "festival"
+            ? `/festivales/${canonicalSlug}`
+            : `/conciertos/${canonicalSlug}`;
           
           return {
             data: null,
-            canonicalSlug: targetEvent.slug,
+            canonicalSlug,
             needsRedirect: true,
             redirectPath: targetPath,
             needsRouteCorrection: false,
