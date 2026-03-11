@@ -327,13 +327,25 @@ const Producto = ({ slugProp }: ProductoProps) => {
     if (hasNavigatedRef.current) return;
     if (isLoading) return;
 
+    // Helper: convert ES redirect path to locale-aware path
+    const localizePath = (esPath: string): string => {
+      if (locale !== 'en') return esPath;
+      // /festivales/slug → /en/festivals/slug
+      // /conciertos/slug → /en/tickets/slug
+      return esPath
+        .replace(/^\/festivales\//, '/en/festivals/')
+        .replace(/^\/conciertos\//, '/en/tickets/')
+        .replace(/^\/festivales$/, '/en/festivals')
+        .replace(/^\/conciertos$/, '/en/tickets');
+    };
+
     // CRITICAL SEO: Handle notFound - redirect to listing instead of 404
     // This prevents Google from seeing 404 errors for non-existent events
     if (eventResult?.notFound) {
       console.log("[Producto] Event not found, redirecting to listing");
       hasNavigatedRef.current = true;
       const listingPath = isFestivalRoute ? '/festivales' : '/conciertos';
-      window.location.replace(listingPath);
+      window.location.replace(localizePath(listingPath));
       return;
     }
 
@@ -342,14 +354,14 @@ const Producto = ({ slugProp }: ProductoProps) => {
       console.log("[Producto] SEO redirect to:", eventResult.redirectPath);
       hasNavigatedRef.current = true;
       // Use window.location.replace for SEO-friendly redirect that Googlebot respects
-      window.location.replace(eventResult.redirectPath);
+      window.location.replace(localizePath(eventResult.redirectPath));
       return;
     }
     if (eventResult?.needsRouteCorrection && eventResult.correctRoutePath) {
       console.log("[Producto] Route correction to:", eventResult.correctRoutePath);
       hasNavigatedRef.current = true;
       // Use window.location.replace for SEO-friendly redirect
-      window.location.replace(eventResult.correctRoutePath);
+      window.location.replace(localizePath(eventResult.correctRoutePath));
       return;
     }
   }, [eventResult, isLoading, isFestivalRoute]);
