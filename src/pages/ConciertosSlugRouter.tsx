@@ -28,24 +28,26 @@ export default function ConciertosSlugRouter() {
       // Step 1: Check slug_redirects FIRST — if old_slug matches, redirect immediately
       const { data: redirectData } = await supabase
         .from("slug_redirects")
-        .select("event_id")
+        .select("new_slug, event_id")
         .eq("old_slug", slug.toLowerCase())
         .maybeSingle();
 
-      if (redirectData?.event_id) {
-        const { data: eventData } = await supabase
-          .from("tm_tbl_events")
-          .select("slug, event_type")
-          .eq("id", redirectData.event_id)
-          .maybeSingle();
+      if (redirectData?.new_slug) {
+        const canonicalSlug = redirectData.new_slug.toLowerCase();
 
-        // Only redirect if the canonical slug is DIFFERENT from the current one
-        // This prevents redirect loops when slug_redirects has circular entries
-        if (eventData?.slug && eventData.slug.toLowerCase() !== slug.toLowerCase()) {
+        // Avoid self-redirect loops
+        if (canonicalSlug !== slug.toLowerCase()) {
+          // Keep route type correction (concert/festival) based on event metadata
+          const { data: eventMeta } = await supabase
+            .from("tm_tbl_events")
+            .select("event_type")
+            .eq("id", redirectData.event_id)
+            .maybeSingle();
+
           return {
             type: "redirect",
-            redirectSlug: eventData.slug,
-            isFestival: eventData.event_type === "festival",
+            redirectSlug: canonicalSlug,
+            isFestival: eventMeta?.event_type === "festival",
           };
         }
       }

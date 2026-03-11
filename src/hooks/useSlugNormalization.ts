@@ -152,23 +152,25 @@ export function useSlugNormalization(
         // Step 2: Slug doesn't exist directly - check slug_redirects table
         const { data: redirectData } = await supabase
           .from("slug_redirects")
-          .select("event_id")
+          .select("new_slug, event_id")
           .eq("old_slug", slug.toLowerCase())
           .maybeSingle();
         
-        if (redirectData?.event_id) {
-          // Get current slug from event table (single-hop redirect)
-          const { data: eventData } = await supabase
-            .from("tm_tbl_events")
-            .select("slug, event_type")
-            .eq("id", redirectData.event_id)
-            .maybeSingle();
-          
-          if (eventData?.slug && eventData.slug.toLowerCase() !== slug.toLowerCase()) {
-            const correctPrefix = eventData.event_type === 'festival' ? '/festivales' : '/conciertos';
-            console.log(`[SEO] Redirect from DB: ${slug} → ${eventData.slug}`);
+        if (redirectData?.new_slug) {
+          const canonicalSlug = redirectData.new_slug.toLowerCase();
+
+          if (canonicalSlug !== slug.toLowerCase()) {
+            // Keep route correction (concert/festival) using event metadata when available
+            const { data: eventMeta } = await supabase
+              .from("tm_tbl_events")
+              .select("event_type")
+              .eq("id", redirectData.event_id)
+              .maybeSingle();
+
+            const correctPrefix = eventMeta?.event_type === 'festival' ? '/festivales' : '/conciertos';
+            console.log(`[SEO] Redirect from DB: ${slug} → ${canonicalSlug}`);
             hasRedirectedRef.current = true;
-            window.location.replace(`${correctPrefix}/${eventData.slug}`);
+            window.location.replace(`${correctPrefix}/${canonicalSlug}`);
             return;
           }
         }
