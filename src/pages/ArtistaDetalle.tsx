@@ -389,10 +389,11 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   useLayoutEffect(() => {
     if (isLoading || events === undefined || isRedirecting) return;
     
-    // No events → 404
+    // No events → redirect to listing (not 404) for better SEO
     if (events.length === 0) {
       setIsRedirecting(true);
-      window.location.replace("/404");
+      const listingPath = locale === 'en' ? '/en/tickets' : '/conciertos';
+      window.location.replace(listingPath);
       return;
     }
     
