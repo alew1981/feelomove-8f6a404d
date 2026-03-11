@@ -1099,6 +1099,13 @@ const Producto = ({ slugProp }: ProductoProps) => {
     return servicePatterns.some((pattern) => pattern.test(eventName));
   })();
 
+  // SEO: Past events should be noindexed to save crawl budget
+  const isPastEvent = (() => {
+    const eventDate = eventDetails.event_date;
+    if (!eventDate) return false;
+    return new Date(eventDate) < new Date();
+  })();
+
   return (
     <>
       <EventSeo {...eventSeoProps} />
