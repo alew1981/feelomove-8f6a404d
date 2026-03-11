@@ -212,7 +212,7 @@ const Conciertos = () => {
   const jsonLd = events && events.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": locale === 'en' ? "Concerts in Spain 2025" : "Conciertos en España 2025",
+    "name": locale === 'en' ? "Concerts in Spain 2026" : "Conciertos en España 2026",
     "description": locale === 'en' ? "List of concerts and music events in Spain. Buy tickets and book hotels." : "Listado de conciertos y eventos musicales en España. Compra entradas y reserva hotel.",
     "url": "https://feelomove.com/conciertos",
     "numberOfItems": events.length,
