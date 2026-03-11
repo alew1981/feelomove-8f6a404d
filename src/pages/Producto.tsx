@@ -1072,6 +1072,8 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
   // SEO: Detect service events (transport, parking, camping, VIP, upgrades) for noindex
   const isServiceEvent = (() => {
+    // Database flag: exclude_from_sitemap from MV
+    if ((eventDetails as any).exclude_from_sitemap === true) return true;
     // Database flags
     if ((eventDetails as any).is_transport === true) return true;
     if ((eventDetails as any).is_package === true) return true;
