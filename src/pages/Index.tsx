@@ -228,10 +228,10 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="Entradas Conciertos y Festivales España 2025"
-        description="Compra entradas para conciertos y festivales en España 2025. Reserva hotel cerca del evento y ahorra. ¡Descubre los mejores eventos ahora!"
+        title={locale === 'en' ? "Concert Tickets & Music Festivals Spain 2026" : "Entradas Conciertos y Festivales España 2026"}
+        description={locale === 'en' ? "Buy concert and festival tickets in Spain 2026. Madrid, Barcelona, Seville and more. Book your hotel near the venue with FEELOMOVE+." : "Compra entradas para conciertos y festivales en España 2026. Madrid, Barcelona, Sevilla y más. Reserva también tu hotel cerca del recinto en FEELOMOVE+."}
         canonical="https://feelomove.com/"
-        keywords="entradas conciertos españa, festivales españa 2025, hoteles para festivales, transporte conciertos, logística eventos musicales"
+        keywords={locale === 'en' ? "concert tickets spain, festivals spain 2026, hotels for festivals, music events spain" : "entradas conciertos españa, festivales españa 2026, hoteles para festivales, transporte conciertos, logística eventos musicales"}
         jsonLd={jsonLd}
         ogImage="https://feelomove.com/og-image.jpg"
       />
