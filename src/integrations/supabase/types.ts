@@ -1414,6 +1414,7 @@ export type Database = {
       mv_internal_links: {
         Row: {
           related_links: Json | null
+          row_id: number | null
           source_id: string | null
           source_slug: string | null
           source_type: string | null
