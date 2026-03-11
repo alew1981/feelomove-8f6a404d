@@ -25,18 +25,7 @@ export default function ConciertosSlugRouter() {
     queryFn: async (): Promise<{ type: "event" | "redirect" | "artist"; redirectSlug?: string; isFestival?: boolean }> => {
       if (!slug) return { type: "artist" };
 
-      // Step 1: Check if slug exists as a concert event
-      const { data, error } = await (supabase
-        .from("lovable_mv_event_product_page_conciertos" as any)
-        .select("event_slug") as any)
-        .eq("event_slug", slug.toLowerCase())
-        .limit(1);
-
-      if (!error && Array.isArray(data) && data.length > 0) {
-        return { type: "event" };
-      }
-
-      // Step 2: Check slug_redirects for old_slug → new event
+      // Step 1: Check slug_redirects FIRST — if old_slug matches, redirect immediately
       const { data: redirectData } = await supabase
         .from("slug_redirects")
         .select("event_id")
@@ -44,7 +33,6 @@ export default function ConciertosSlugRouter() {
         .maybeSingle();
 
       if (redirectData?.event_id) {
-        // Get current slug from event table (single-hop redirect)
         const { data: eventData } = await supabase
           .from("tm_tbl_events")
           .select("slug, event_type")
@@ -60,7 +48,18 @@ export default function ConciertosSlugRouter() {
         }
       }
 
-      // Step 3: Not an event, not a redirect → treat as artist
+      // Step 2: No redirect — check if slug exists as a concert event
+      const { data, error } = await (supabase
+        .from("lovable_mv_event_product_page_conciertos" as any)
+        .select("event_slug") as any)
+        .eq("event_slug", slug.toLowerCase())
+        .limit(1);
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return { type: "event" };
+      }
+
+      // Step 3: Not a redirect, not an event → treat as artist
       return { type: "artist" };
     },
     staleTime: 5 * 60 * 1000,
