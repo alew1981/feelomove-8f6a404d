@@ -23,11 +23,11 @@ const PinterestIcon = ({ className }: { className?: string }) => (
 
 // SEO: Top destinations and genres for crawler discovery (hub pages)
 const TOP_CITIES = [
-  { name: 'Madrid', slug: 'madrid' },
-  { name: 'Barcelona', slug: 'barcelona' },
-  { name: 'Valencia', slug: 'valencia' },
-  { name: 'Sevilla', slug: 'sevilla' },
-  { name: 'Bilbao', slug: 'bilbao' },
+  { name: 'Madrid', slug: 'madrid', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJgTwKgJcpQg0RaSKMYcHeNsQ&placeTypes=&name=Madrid' },
+  { name: 'Barcelona', slug: 'barcelona', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJ5TCOcRaYpBIRCmZHTz37sEQ&placeTypes=&name=Barcelona' },
+  { name: 'Valencia', slug: 'valencia', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJb7Dv8ExPYA0ROR1_HwFRo7Q&name=Val%C3%A8ncia' },
+  { name: 'Sevilla', slug: 'sevilla', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJkWK-FBFsEg0RSFb-HGIY8DQ&name=Sevilla' },
+  { name: 'Bilbao', slug: 'bilbao', nuiteeUrl: 'https://feelomove.nuitee.link/hotels?placeId=ChIJuYlLZidOTg0RRaaVHsSsNGU&name=Bilbao' },
 ];
 
 const TOP_GENRES = [
