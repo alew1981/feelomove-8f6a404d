@@ -211,6 +211,11 @@ const Footer = () => {
                   {t('Géneros Musicales')}
                 </NavLink>
               </li>
+              <li>
+                <a href="https://feelomove.nuitee.link/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" title={t('Buscar hoteles para eventos')}>
+                  {t('Hoteles')}
+                </a>
+              </li>
             </ul>
           </nav>
 
