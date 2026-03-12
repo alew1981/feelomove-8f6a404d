@@ -311,7 +311,9 @@ const FestivalDetalle = () => {
     ? `Compra entradas para ${festivalData?.name || festivalName}${dateText} en ${festivalData?.city || 'España'}. ${festivalData.artistCount} artistas${headlinersText ? ` incluyendo ${headlinersText}` : ''}. Entradas${priceText}. Reserva hotel cerca del festival. ¡Vive la experiencia!`
     : `Compra entradas para ${festivalData?.name || festivalName}${dateText} en ${festivalData?.city || 'España'}. Entradas${priceText}. Reserva hotel cerca del recinto. ¡Vive la experiencia del mejor festival!`;
   
-  const absoluteUrl = `https://feelomove.com/festivales/${festivalSlug}`;
+  const absoluteUrl = locale === 'en'
+    ? `https://feelomove.com/en/festivals/${festivalSlug}`
+    : `https://feelomove.com/festivales/${festivalSlug}`;
 
   // Build performers list from concert events
   const performers = concertEvents.slice(0, 20).map(event => ({
