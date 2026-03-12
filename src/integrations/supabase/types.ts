@@ -365,21 +365,21 @@ export type Database = {
       slug_redirects: {
         Row: {
           created_at: string | null
-          event_id: string
+          event_id: string | null
           id: string
           new_slug: string
           old_slug: string
         }
         Insert: {
           created_at?: string | null
-          event_id: string
+          event_id?: string | null
           id?: string
           new_slug: string
           old_slug: string
         }
         Update: {
           created_at?: string | null
-          event_id?: string
+          event_id?: string | null
           id?: string
           new_slug?: string
           old_slug?: string

@@ -311,7 +311,9 @@ const FestivalDetalle = () => {
     ? `Compra entradas para ${festivalData?.name || festivalName}${dateText} en ${festivalData?.city || 'España'}. ${festivalData.artistCount} artistas${headlinersText ? ` incluyendo ${headlinersText}` : ''}. Entradas${priceText}. Reserva hotel cerca del festival. ¡Vive la experiencia!`
     : `Compra entradas para ${festivalData?.name || festivalName}${dateText} en ${festivalData?.city || 'España'}. Entradas${priceText}. Reserva hotel cerca del recinto. ¡Vive la experiencia del mejor festival!`;
   
-  const absoluteUrl = `https://feelomove.com/festivales/${festivalSlug}`;
+  const absoluteUrl = locale === 'en'
+    ? `https://feelomove.com/en/festivals/${festivalSlug}`
+    : `https://feelomove.com/festivales/${festivalSlug}`;
 
   // Build performers list from concert events
   const performers = concertEvents.slice(0, 20).map(event => ({
@@ -383,24 +385,31 @@ const FestivalDetalle = () => {
           isFestival={true}
           url={absoluteUrl}
           eventSlug={festivalSlug}
+          locale={locale}
         />
       )}
       
       <SEOHead
-        title={`${festivalData?.name || festivalName} ${new Date().getFullYear()} - Entradas y Hotel`}
+        title={locale === 'en'
+          ? `${festivalData?.name || festivalName} ${new Date().getFullYear()} — Tickets & Hotel`
+          : `${festivalData?.name || festivalName} ${new Date().getFullYear()} - Entradas y Hotel`}
         description={seoDescription}
         canonical={absoluteUrl}
-        keywords={`${festivalName}, festival música, entradas festival, ${festivalData?.city || 'España'}, hotel festival, ${festivalData?.lineupArtists?.slice(0, 5).join(', ') || ''}`}
+        ogType="event"
+        keywords={locale === 'en'
+          ? `${festivalName}, music festival, festival tickets, ${festivalData?.city || 'Spain'}, hotel festival, ${festivalData?.lineupArtists?.slice(0, 5).join(', ') || ''}`
+          : `${festivalName}, festival música, entradas festival, ${festivalData?.city || 'España'}, hotel festival, ${festivalData?.lineupArtists?.slice(0, 5).join(', ') || ''}`}
         pageType="ItemPage"
         preloadImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
         ogImage={heroImage !== "/placeholder.svg" ? heroImage : undefined}
         breadcrumbs={[
-          { name: "Inicio", url: "/" },
-          { name: "Festivales", url: "/festivales" },
-          // Include city with navigable link for proper hierarchy
+          { name: locale === 'en' ? "Home" : "Inicio", url: locale === 'en' ? "/en/" : "/" },
+          { name: locale === 'en' ? "Festivals" : "Festivales", url: locale === 'en' ? "/en/festivals" : "/festivales" },
           ...(festivalData?.city ? [{
             name: festivalData.city,
-            url: `/destinos/${festivalData.city.toLowerCase().replace(/\s+/g, '-')}`
+            url: locale === 'en'
+              ? `/en/destinations/${festivalData.city.toLowerCase().replace(/\s+/g, '-')}`
+              : `/destinos/${festivalData.city.toLowerCase().replace(/\s+/g, '-')}`
           }] : []),
           { name: festivalData?.name || festivalName }
         ]}
