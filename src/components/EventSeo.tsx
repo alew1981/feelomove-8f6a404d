@@ -1,4 +1,5 @@
 import { useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { EventStatusType } from "./EventStatusBanner";
 
 interface EventLocation {
