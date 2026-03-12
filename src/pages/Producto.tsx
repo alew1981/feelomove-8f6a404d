@@ -654,16 +654,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
     prevEventIdRef.current = currentEventId;
   }, [eventDetails?.event_id, cart, clearCart]);
 
-  useEffect(() => {
-    if (hasNavigatedRef.current) return;
-    if (isLoading) return;
-
-    if (isError && error instanceof Error && error.message === "Evento no encontrado") {
-      console.log("[Producto] Event not found, redirecting to 404");
-      hasNavigatedRef.current = true;
-      navigate("/404", { replace: true });
-    }
-  }, [isError, error, navigate, isLoading]);
+  // Note: "Evento no encontrado" errors are handled via isNotFound inline UI, no redirect needed
 
   const ticketPrices = useMemo(() => {
     if (!eventDetails) return [];
