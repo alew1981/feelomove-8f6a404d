@@ -402,9 +402,29 @@ export const EventSeo = ({
     location, performers, offers, status, isFestival, url, organizerName, organizerUrl, ticketmasterUrl
   ]);
   
-  // Inject JSON-LD into document head
+  // Inject JSON-LD into document head — ONLY if event matches current URL
   useEffect(() => {
     const scriptId = `event-seo-${eventId}`;
+    
+    // CRITICAL GUARD: Verify event slug matches current URL to prevent injecting
+    // wrong event's schema (e.g., when SPA navigates between pages)
+    if (eventSlug) {
+      const currentPath = routerLocation.pathname.toLowerCase();
+      const slugLower = eventSlug.toLowerCase();
+      // Check that the current URL actually contains this event's slug
+      if (!currentPath.includes(slugLower)) {
+        console.warn(`[EventSeo] Slug mismatch — expected "${slugLower}" in "${currentPath}", skipping JSON-LD injection`);
+        // Clean up any stale script from a previous render
+        const staleScript = document.getElementById(scriptId);
+        if (staleScript) staleScript.remove();
+        return;
+      }
+    }
+    
+    // GUARD: Don't inject if eventId is missing/invalid
+    if (!eventId || eventId === 'unknown') {
+      return;
+    }
     
     // Remove existing script if present
     const existingScript = document.getElementById(scriptId);
@@ -429,7 +449,7 @@ export const EventSeo = ({
         scriptToRemove.remove();
       }
     };
-  }, [eventId, jsonLd]);
+  }, [eventId, jsonLd, eventSlug, routerLocation.pathname]);
   
   // This component doesn't render anything visible
   return null;
