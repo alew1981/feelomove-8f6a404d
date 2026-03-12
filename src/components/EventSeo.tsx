@@ -198,7 +198,10 @@ export const EventSeo = ({
   organizerUrl = 'https://feelomove.com',
   ticketmasterUrl,
   locale = 'es',
-}: EventSeoProps & { locale?: 'es' | 'en' }) => {
+  /** Event slug for URL guard — if provided, JSON-LD only injects when slug matches current URL */
+  eventSlug,
+}: EventSeoProps & { locale?: 'es' | 'en'; eventSlug?: string }) => {
+  const routerLocation = useLocation();
   
   // Build the JSON-LD object with proper escaping
   const jsonLd = useMemo(() => {
