@@ -339,13 +339,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
         .replace(/^\/conciertos$/, '/en/tickets');
     };
 
-    // CRITICAL SEO: Handle notFound - redirect to listing instead of 404
-    // This prevents Google from seeing 404 errors for non-existent events
+    // SEO: notFound — do NOT redirect, stay on URL with noindex
+    // Google must see the original URL respond with noindex, not a redirect
     if (eventResult?.notFound) {
-      console.log("[Producto] Event not found, redirecting to listing");
-      hasNavigatedRef.current = true;
-      const listingPath = isFestivalRoute ? '/festivales' : '/conciertos';
-      window.location.replace(localizePath(listingPath));
+      console.log("[Producto] Event not found — staying on URL with noindex");
       return;
     }
 
