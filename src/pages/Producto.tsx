@@ -1108,7 +1108,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
 
   return (
     <>
-      <EventSeo {...eventSeoProps} />
+      <EventSeo {...eventSeoProps} eventSlug={eventDetails.event_slug || slug} locale={locale} />
 
       <EventFAQSchema
         eventId={eventDetails.event_id || ""}
