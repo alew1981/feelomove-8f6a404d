@@ -339,13 +339,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
         .replace(/^\/conciertos$/, '/en/tickets');
     };
 
-    // CRITICAL SEO: Handle notFound - redirect to listing instead of 404
-    // This prevents Google from seeing 404 errors for non-existent events
+    // SEO: notFound — do NOT redirect, stay on URL with noindex
+    // Google must see the original URL respond with noindex, not a redirect
     if (eventResult?.notFound) {
-      console.log("[Producto] Event not found, redirecting to listing");
-      hasNavigatedRef.current = true;
-      const listingPath = isFestivalRoute ? '/festivales' : '/conciertos';
-      window.location.replace(localizePath(listingPath));
+      console.log("[Producto] Event not found — staying on URL with noindex");
       return;
     }
 
@@ -657,16 +654,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
     prevEventIdRef.current = currentEventId;
   }, [eventDetails?.event_id, cart, clearCart]);
 
-  useEffect(() => {
-    if (hasNavigatedRef.current) return;
-    if (isLoading) return;
-
-    if (isError && error instanceof Error && error.message === "Evento no encontrado") {
-      console.log("[Producto] Event not found, redirecting to 404");
-      hasNavigatedRef.current = true;
-      navigate("/404", { replace: true });
-    }
-  }, [isError, error, navigate, isLoading]);
+  // Note: "Evento no encontrado" errors are handled via isNotFound inline UI, no redirect needed
 
   const ticketPrices = useMemo(() => {
     if (!eventDetails) return [];
@@ -789,19 +777,42 @@ const Producto = ({ slugProp }: ProductoProps) => {
     );
   }
 
-  // Not-found: inject noindex while redirect is in progress
-  if (isNotFound || eventResult?.needsRedirect || eventResult?.needsRouteCorrection) {
+  // Redirects in progress — show skeleton while browser navigates
+  if (eventResult?.needsRedirect || eventResult?.needsRouteCorrection) {
+    return <ProductoSkeleton />;
+  }
+
+  // Not-found: stay on URL, show inline message + noindex
+  if (isNotFound) {
+    const listingPath = locale === 'en' ? '/en/tickets' : '/conciertos';
+    const listingLabel = locale === 'en' ? 'View all concerts' : 'Ver todos los conciertos';
+    const notFoundMsg = locale === 'en'
+      ? "This event doesn't exist or has already ended"
+      : 'Este evento no existe o ya ha finalizado';
+
     return (
       <>
-        {isNotFound && (
-          <SEOHead
-            title="Evento no encontrado | FEELOMOVE+"
-            description="Este evento no está disponible."
-            noindexFollow={true}
-            ogType="website"
-          />
-        )}
-        <ProductoSkeleton />
+        <SEOHead
+          title={locale === 'en' ? 'Event not found' : 'Evento no encontrado'}
+          description={notFoundMsg}
+          noindexFollow={true}
+          ogType="website"
+        />
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main className="container mx-auto px-4 py-24 mt-16 text-center">
+            <h1 className="text-2xl font-semibold text-foreground mb-4">{notFoundMsg}</h1>
+            <Link
+              to={listingPath}
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
+              {listingLabel}
+            </Link>
+          </main>
+          <Suspense fallback={null}>
+            <Footer />
+          </Suspense>
+        </div>
       </>
     );
   }

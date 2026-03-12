@@ -389,11 +389,8 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   useLayoutEffect(() => {
     if (isLoading || events === undefined || isRedirecting) return;
     
-    // No events → redirect to listing (not 404) for better SEO
+    // No events → stay on URL, show not-found inline (no redirect)
     if (events.length === 0) {
-      setIsRedirecting(true);
-      const listingPath = locale === 'en' ? '/en/tickets' : '/conciertos';
-      window.location.replace(listingPath);
       return;
     }
     
@@ -432,6 +429,39 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   // IMPORTANT: This conditional return is AFTER all hooks
   if (isRedirecting) {
     return null;
+  }
+
+  // Not-found: no events for this artist slug — stay on URL with noindex
+  if (!isLoading && events && events.length === 0 && isOnPluralRoute) {
+    const listingPath = locale === 'en' ? '/en/tickets' : '/conciertos';
+    const listingLabel = locale === 'en' ? 'View all concerts' : 'Ver todos los conciertos';
+    const notFoundMsg = locale === 'en'
+      ? "This event doesn't exist or has already ended"
+      : 'Este evento no existe o ya ha finalizado';
+
+    return (
+      <>
+        <SEOHead
+          title={locale === 'en' ? 'Event not found' : 'Evento no encontrado'}
+          description={notFoundMsg}
+          noindexFollow={true}
+          ogType="website"
+        />
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main className="container mx-auto px-4 py-24 mt-16 text-center">
+            <h1 className="text-2xl font-semibold text-foreground mb-4">{notFoundMsg}</h1>
+            <Link
+              to={listingPath}
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
+              {listingLabel}
+            </Link>
+          </main>
+          <Footer />
+        </div>
+      </>
+    );
   }
 
 
