@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useSchemaOrg } from "@/hooks/useSchemaOrg";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -349,6 +349,7 @@ const FestivalDetalle = () => {
           status={festivalStatus}
           isFestival={true}
           url={absoluteUrl}
+          eventSlug={festivalSlug}
         />
       )}
       

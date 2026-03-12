@@ -353,9 +353,12 @@ export const SEOHead = ({
   const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs || [], fullCanonical);
 
   // Combine all JSON-LD schemas
+  // CRITICAL: For event pages (ogType='event'), skip breadcrumb from Helmet
+  // because the Breadcrumbs component injects it via DOM (avoids duplicate BreadcrumbList).
+  // Also skip Organization/Navigation schemas — event pages only need EventSeo's MusicEvent.
   const allSchemas = isEventPage
     ? [
-        ...(breadcrumbSchema ? [breadcrumbSchema] : []),
+        // Event pages: Only include explicitly passed jsonLd (no breadcrumbs, no org, no nav)
         ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
       ]
     : [
