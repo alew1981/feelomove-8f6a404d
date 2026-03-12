@@ -727,13 +727,27 @@ const Producto = ({ slugProp }: ProductoProps) => {
     }
   }, [eventDetails]);
 
+  // SEO: Inject noindex for not-found events (before redirect completes)
+  // This ensures Google never indexes a page for a non-existent event slug
+  const isNotFound = eventResult?.notFound === true;
+
   if (isLoading) {
     return <ProductoSkeleton />;
   }
 
   if (isError) {
     if (error instanceof Error && error.message === "Evento no encontrado") {
-      return <ProductoSkeleton />;
+      return (
+        <>
+          <SEOHead
+            title="Evento no encontrado | FEELOMOVE+"
+            description="Este evento no está disponible."
+            noindexFollow={true}
+            ogType="website"
+          />
+          <ProductoSkeleton />
+        </>
+      );
     }
 
     return (
@@ -775,8 +789,21 @@ const Producto = ({ slugProp }: ProductoProps) => {
     );
   }
 
-  if (eventResult?.needsRedirect || eventResult?.needsRouteCorrection) {
-    return <ProductoSkeleton />;
+  // Not-found: inject noindex while redirect is in progress
+  if (isNotFound || eventResult?.needsRedirect || eventResult?.needsRouteCorrection) {
+    return (
+      <>
+        {isNotFound && (
+          <SEOHead
+            title="Evento no encontrado | FEELOMOVE+"
+            description="Este evento no está disponible."
+            noindexFollow={true}
+            ogType="website"
+          />
+        )}
+        <ProductoSkeleton />
+      </>
+    );
   }
 
   if (!eventDetails) {
