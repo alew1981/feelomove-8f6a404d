@@ -385,6 +385,7 @@ const FestivalDetalle = () => {
           isFestival={true}
           url={absoluteUrl}
           eventSlug={festivalSlug}
+          locale={locale}
         />
       )}
       
