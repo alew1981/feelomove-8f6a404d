@@ -319,6 +319,39 @@ const FestivalDetalle = () => {
     type: 'MusicGroup' as const,
   }));
 
+  // Not-found: no festival events for this slug — stay on URL with noindex
+  if (!isLoading && (!events || events.length === 0)) {
+    const listingPath = locale === 'en' ? '/en/festivals' : '/festivales';
+    const listingLabel = locale === 'en' ? 'View all festivals' : 'Ver todos los festivales';
+    const notFoundMsg = locale === 'en'
+      ? "This festival doesn't exist or has already ended"
+      : 'Este festival no existe o ya ha finalizado';
+
+    return (
+      <>
+        <SEOHead
+          title={locale === 'en' ? 'Festival not found' : 'Festival no encontrado'}
+          description={notFoundMsg}
+          noindexFollow={true}
+          ogType="website"
+        />
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main className="container mx-auto px-4 py-24 mt-16 text-center">
+            <h1 className="text-2xl font-semibold text-foreground mb-4">{notFoundMsg}</h1>
+            <Link
+              to={listingPath}
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
+              {listingLabel}
+            </Link>
+          </main>
+          <Footer />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {/* EventSeo component injects JSON-LD structured data */}
