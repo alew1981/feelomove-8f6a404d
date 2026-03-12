@@ -402,6 +402,18 @@ export const EventSeo = ({
     location, performers, offers, status, isFestival, url, organizerName, organizerUrl, ticketmasterUrl
   ]);
   
+  // CRITICAL: On mount, remove ALL stale event-seo scripts from previous SPA navigations
+  // This prevents accumulation of JSON-LD from multiple events
+  useEffect(() => {
+    const allEventScripts = document.querySelectorAll('script[id^="event-seo-"]');
+    const currentScriptId = `event-seo-${eventId}`;
+    allEventScripts.forEach(script => {
+      if (script.id !== currentScriptId) {
+        script.remove();
+      }
+    });
+  }, [eventId]);
+
   // Inject JSON-LD into document head — ONLY if event matches current URL
   useEffect(() => {
     const scriptId = `event-seo-${eventId}`;
