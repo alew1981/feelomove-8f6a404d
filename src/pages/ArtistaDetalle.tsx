@@ -432,17 +432,17 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   }
 
   // Not-found: no events for this artist slug — stay on URL with noindex
-  if (!isLoading && events && events.length === 0 && isOnPluralRoute) {
+  if (!isLoading && events && events.length === 0) {
     const listingPath = locale === 'en' ? '/en/tickets' : '/conciertos';
     const listingLabel = locale === 'en' ? 'View all concerts' : 'Ver todos los conciertos';
     const notFoundMsg = locale === 'en'
-      ? "This event doesn't exist or has already ended"
-      : 'Este evento no existe o ya ha finalizado';
+      ? "This artist doesn't have any concerts available at this time."
+      : 'Este artista no tiene conciertos disponibles actualmente.';
 
     return (
       <>
         <SEOHead
-          title={locale === 'en' ? 'Event not found' : 'Evento no encontrado'}
+          title={locale === 'en' ? 'Artist not found' : 'Artista no encontrado'}
           description={notFoundMsg}
           noindexFollow={true}
           ogType="website"
