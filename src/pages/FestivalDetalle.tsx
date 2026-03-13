@@ -326,8 +326,8 @@ const FestivalDetalle = () => {
     const listingPath = locale === 'en' ? '/en/festivals' : '/festivales';
     const listingLabel = locale === 'en' ? 'View all festivals' : 'Ver todos los festivales';
     const notFoundMsg = locale === 'en'
-      ? "This festival doesn't exist or has already ended"
-      : 'Este festival no existe o ya ha finalizado';
+      ? "This page doesn't exist or the event is no longer available."
+      : 'Esta página no existe o el evento ya no está disponible.';
 
     return (
       <>

@@ -787,8 +787,8 @@ const Producto = ({ slugProp }: ProductoProps) => {
     const listingPath = locale === 'en' ? '/en/tickets' : '/conciertos';
     const listingLabel = locale === 'en' ? 'View all concerts' : 'Ver todos los conciertos';
     const notFoundMsg = locale === 'en'
-      ? "This event doesn't exist or has already ended"
-      : 'Este evento no existe o ya ha finalizado';
+      ? "This page doesn't exist or the event is no longer available."
+      : 'Esta página no existe o el evento ya no está disponible.';
 
     return (
       <>
