@@ -89,22 +89,6 @@ export default function ArtistRichContent({ artistContent: c, language: lang }: 
     return c.discography.slice(0, 6);
   }, [c.discography]);
 
-  // FAQ JSON-LD
-  const faqJsonLd = useMemo(() => {
-    if (!faq || faq.length === 0) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: faq.map((item) => ({
-        "@type": "Question",
-        name: item.q,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: item.a,
-        },
-      })),
-    };
-  }, [faq]);
 
   const hasIdentityBar = c.origin_city || c.origin_country || c.birthday || (c.genre_tags && c.genre_tags.length > 0);
 
