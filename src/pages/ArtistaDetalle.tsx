@@ -19,6 +19,8 @@ import { normalizeSearch } from "@/lib/searchUtils";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useArtistContent } from "@/hooks/useArtistContent";
+import ArtistRichContent from "@/components/ArtistRichContent";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
@@ -62,7 +64,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
 
   // Fetch SEO content from materialized view
   const { seoContent } = useAggregationSEO(artistSlug, 'artist', locale);
-  
+
   const [sortBy, setSortBy] = useState<string>("date-asc");
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
@@ -136,6 +138,9 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   const artistName = events && events.length > 0 
     ? (events[0] as any).artist_name || (events[0] as any).main_attraction || artistSlug.replace(/-/g, ' ')
     : artistSlug.replace(/-/g, ' ');
+
+  // Fetch rich editorial content (available for ~14 artists)
+  const { data: artistContent } = useArtistContent(artistName);
 
   // Get hero image from first event
   const heroImage = (events?.[0] as any)?.image_large_url || (events?.[0] as any)?.image_standard_url;
@@ -311,12 +316,21 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   const nextYear = currentYear + 1;
   const seoYear = events?.some((e: any) => new Date(e.event_date).getFullYear() > currentYear) ? nextYear : currentYear;
   
-  const seoTitle = locale === 'en'
-    ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
-    : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
-  const seoDescription = locale === 'en'
-    ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
-    : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
+  // SEO: prefer artist content SEO fields when available
+  const seoTitle = artistContent
+    ? (locale === 'en' ? artistContent.seo_title_en : artistContent.seo_title_es) || (locale === 'en'
+      ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
+      : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`)
+    : locale === 'en'
+      ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
+      : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
+  const seoDescription = artistContent
+    ? (locale === 'en' ? artistContent.meta_description_en : artistContent.meta_description_es) || (locale === 'en'
+      ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
+      : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`)
+    : locale === 'en'
+      ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
+      : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
 
   // Generate JSON-LD structured data for artist and events
   const artistBasePath = locale === 'en' ? '/en/tickets' : '/conciertos';
@@ -783,6 +797,14 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
             </div>
           )}
           
+          {/* Rich Editorial Content (when available) */}
+          {artistContent && (
+            <ArtistRichContent
+              artistContent={artistContent}
+              language={locale === 'en' ? 'en' : 'es'}
+            />
+          )}
+
           {/* Related Links for SEO */}
           <RelatedLinks slug={artistSlug} type="artist" />
         </div>
