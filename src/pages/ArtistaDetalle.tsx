@@ -139,6 +139,9 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
     ? (events[0] as any).artist_name || (events[0] as any).main_attraction || artistSlug.replace(/-/g, ' ')
     : artistSlug.replace(/-/g, ' ');
 
+  // Fetch rich editorial content (available for ~14 artists)
+  const { data: artistContent } = useArtistContent(artistName);
+
   // Get hero image from first event
   const heroImage = (events?.[0] as any)?.image_large_url || (events?.[0] as any)?.image_standard_url;
 
