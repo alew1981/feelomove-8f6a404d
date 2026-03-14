@@ -1183,6 +1183,18 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_artists_schema_org: {
+        Row: {
+          artist_name: string | null
+          artist_slug: string | null
+          faq_schema_en: Json | null
+          faq_schema_es: Json | null
+          music_group_schema: Json | null
+          next_event_date: string | null
+          total_upcoming_events: number | null
+        }
+        Relationships: []
+      }
       mv_artists_seo_content: {
         Row: {
           artist_id: string | null
@@ -1340,6 +1352,7 @@ export type Database = {
         Row: {
           event_type: string | null
           id: string | null
+          page_type: string | null
           schema_org_json: Json | null
           slug: string | null
         }
