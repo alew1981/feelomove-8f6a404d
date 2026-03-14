@@ -323,13 +323,15 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   const seoYear = events?.some((e: any) => new Date(e.event_date).getFullYear() > currentYear) ? nextYear : currentYear;
   
   // SEO: prefer artist content SEO fields when available
-  const seoTitle = artistContent
-    ? (locale === 'en' ? artistContent.seo_title_en : artistContent.seo_title_es) || (locale === 'en'
-      ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
-      : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`)
-    : locale === 'en'
-      ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
-      : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
+  // Strip trailing " | FEELOMOVE+" from DB titles to avoid duplication (SEOHead appends it)
+  const stripBrand = (t: string) => t.replace(/\s*\|\s*FEELOMOVE\+\s*$/i, '');
+  const fallbackTitle = locale === 'en'
+    ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
+    : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
+  const rawTitle = artistContent
+    ? (locale === 'en' ? artistContent.seo_title_en : artistContent.seo_title_es) || fallbackTitle
+    : fallbackTitle;
+  const seoTitle = stripBrand(rawTitle);
   const seoDescription = artistContent
     ? (locale === 'en' ? artistContent.meta_description_en : artistContent.meta_description_es) || (locale === 'en'
       ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
