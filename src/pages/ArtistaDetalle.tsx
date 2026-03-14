@@ -144,6 +144,10 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   // Fetch rich editorial content (available for ~14 artists)
   const { data: artistContent } = useArtistContent(artistName);
 
+  // Fetch pre-built Schema.org JSON-LD from materialized view
+  const { data: artistSchema } = useArtistSchema(artistName);
+  const isEnglish = locale === 'en';
+
   // Get hero image from first event
   const heroImage = (events?.[0] as any)?.image_large_url || (events?.[0] as any)?.image_standard_url;
 
