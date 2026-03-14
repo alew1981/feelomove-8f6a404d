@@ -432,7 +432,7 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
         canonical={locale === 'en' ? `https://feelomove.com/en/tickets/${artistSlug}` : `https://feelomove.com/conciertos/${artistSlug}`}
         ogImage={heroImage || undefined}
         pageType="ItemPage"
-        jsonLd={jsonLdData}
+        
         preloadImage={heroImage}
         breadcrumbs={[
           { name: t("Inicio"), url: "/" },
