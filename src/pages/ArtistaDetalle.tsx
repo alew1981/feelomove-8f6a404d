@@ -65,7 +65,6 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   // Fetch SEO content from materialized view
   const { seoContent } = useAggregationSEO(artistSlug, 'artist', locale);
   
-
   // Fetch rich editorial content (available for ~14 artists)
   const { data: artistContent } = useArtistContent(artistName);
 
