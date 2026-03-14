@@ -338,69 +338,8 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
       ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
       : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
 
-  // Generate JSON-LD structured data for artist and events
-  const artistBasePath = locale === 'en' ? '/en/tickets' : '/conciertos';
-  const artistBaseUrl = `https://feelomove.com${artistBasePath}`;
-  
-  const jsonLdData = useMemo(() => {
-    const artistSchema = {
-      "@context": "https://schema.org",
-      "@type": "MusicGroup",
-      "name": artistName,
-      "url": `${artistBaseUrl}/${artistSlug}`,
-      "image": heroImage || undefined,
-      "genre": artistGenre || undefined,
-      "inLanguage": locale === 'en' ? 'en-US' : 'es-ES',
-      "event": events?.slice(0, 10).map((event: any) => ({
-        "@type": "MusicEvent",
-        "name": event.name,
-        "description": locale === 'en'
-          ? `${artistName} concert in ${event.venue_city}. Tickets available.`
-          : `Concierto de ${artistName} en ${event.venue_city}. Entradas disponibles.`,
-        "startDate": event.event_date,
-        "endDate": event.event_date,
-        "eventStatus": event.sold_out ? "https://schema.org/EventPostponed" : "https://schema.org/EventScheduled",
-        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "url": `${artistBaseUrl}/${event.slug}`,
-        "image": event.image_large_url || event.image_standard_url,
-        "inLanguage": locale === 'en' ? 'en-US' : 'es-ES',
-        "location": {
-          "@type": "Place",
-          "name": event.venue_name,
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": event.venue_city,
-            "addressCountry": "ES"
-          },
-          ...(event.venue_latitude && event.venue_longitude && {
-            "geo": {
-              "@type": "GeoCoordinates",
-              "latitude": event.venue_latitude,
-              "longitude": event.venue_longitude
-            }
-          })
-        },
-        "organizer": event.promoter_name ? {
-          "@type": "Organization",
-          "name": event.promoter_name
-        } : undefined,
-        "offers": event.price_min_incl_fees ? {
-          "@type": "Offer",
-          "url": `${artistBaseUrl}/${event.slug}`,
-          "price": event.price_min_incl_fees,
-          "priceCurrency": event.currency || "EUR",
-          "availability": event.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
-          "validFrom": new Date().toISOString()
-        } : undefined,
-        "performer": {
-          "@type": "MusicGroup",
-          "name": artistName
-        }
-      }))
-    };
-
-    return artistSchema;
-  }, [artistName, artistSlug, heroImage, artistGenre, events, artistBaseUrl, locale]);
+  // JSON-LD for MusicGroup + FAQPage is now injected exclusively via useArtistSchema
+  // (from mv_artists_schema_org). No inline jsonLd passed to SEOHead.
 
   // CRITICAL SEO: If artist has exactly 1 event, redirect directly to event page
   // Uses useLayoutEffect + window.location.replace for IMMEDIATE redirect before paint
