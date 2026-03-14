@@ -501,6 +501,20 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           { name: artistName }
         ]}
       />
+      {artistSchema && (
+        <Helmet>
+          {artistSchema.music_group_schema && (
+            <script type="application/ld+json">
+              {JSON.stringify(artistSchema.music_group_schema)}
+            </script>
+          )}
+          {(isEnglish ? artistSchema.faq_schema_en : artistSchema.faq_schema_es) && (
+            <script type="application/ld+json">
+              {JSON.stringify(isEnglish ? artistSchema.faq_schema_en : artistSchema.faq_schema_es)}
+            </script>
+          )}
+        </Helmet>
+      )}
       <div className="min-h-screen bg-background">
         <Navbar />
         
