@@ -461,6 +461,99 @@ export type Database = {
         }
         Relationships: []
       }
+      tm_tbl_artist_content: {
+        Row: {
+          artist_name: string
+          artist_slug: string | null
+          bio_short_en: string | null
+          bio_short_es: string | null
+          birthday: string | null
+          discography: Json | null
+          faq_en: Json | null
+          faq_es: Json | null
+          fun_fact_en: string | null
+          fun_fact_es: string | null
+          generated_at: string | null
+          generated_by: string | null
+          genre_tags: string[] | null
+          intro_text_en: string | null
+          intro_text_es: string | null
+          meta_description_en: string | null
+          meta_description_es: string | null
+          needs_refresh: boolean | null
+          origin_city: string | null
+          origin_country: string | null
+          seo_title_en: string | null
+          seo_title_es: string | null
+          signature_songs_en: string | null
+          signature_songs_es: string | null
+          spain_history_en: string | null
+          spain_history_es: string | null
+          why_live_en: string | null
+          why_live_es: string | null
+        }
+        Insert: {
+          artist_name: string
+          artist_slug?: string | null
+          bio_short_en?: string | null
+          bio_short_es?: string | null
+          birthday?: string | null
+          discography?: Json | null
+          faq_en?: Json | null
+          faq_es?: Json | null
+          fun_fact_en?: string | null
+          fun_fact_es?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          genre_tags?: string[] | null
+          intro_text_en?: string | null
+          intro_text_es?: string | null
+          meta_description_en?: string | null
+          meta_description_es?: string | null
+          needs_refresh?: boolean | null
+          origin_city?: string | null
+          origin_country?: string | null
+          seo_title_en?: string | null
+          seo_title_es?: string | null
+          signature_songs_en?: string | null
+          signature_songs_es?: string | null
+          spain_history_en?: string | null
+          spain_history_es?: string | null
+          why_live_en?: string | null
+          why_live_es?: string | null
+        }
+        Update: {
+          artist_name?: string
+          artist_slug?: string | null
+          bio_short_en?: string | null
+          bio_short_es?: string | null
+          birthday?: string | null
+          discography?: Json | null
+          faq_en?: Json | null
+          faq_es?: Json | null
+          fun_fact_en?: string | null
+          fun_fact_es?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          genre_tags?: string[] | null
+          intro_text_en?: string | null
+          intro_text_es?: string | null
+          meta_description_en?: string | null
+          meta_description_es?: string | null
+          needs_refresh?: boolean | null
+          origin_city?: string | null
+          origin_country?: string | null
+          seo_title_en?: string | null
+          seo_title_es?: string | null
+          signature_songs_en?: string | null
+          signature_songs_es?: string | null
+          spain_history_en?: string | null
+          spain_history_es?: string | null
+          why_live_en?: string | null
+          why_live_es?: string | null
+        }
+        Relationships: []
+      }
       tm_tbl_events: {
         Row: {
           attraction_ids: string[] | null
@@ -793,6 +886,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tm_tbl_seo_overrides: {
+        Row: {
+          meta_description: string | null
+          notes: string | null
+          og_description: string | null
+          og_title: string | null
+          slug: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          meta_description?: string | null
+          notes?: string | null
+          og_description?: string | null
+          og_title?: string | null
+          slug: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          meta_description?: string | null
+          notes?: string | null
+          og_description?: string | null
+          og_title?: string | null
+          slug?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       tm_translations: {
         Row: {
@@ -1192,10 +1315,12 @@ export type Database = {
           canonical_url: string | null
           event_date: string | null
           event_type: string | null
+          has_override: boolean | null
           id: string | null
           meta_description: string | null
           meta_keywords: string[] | null
           name: string | null
+          noindex: boolean | null
           og_description: string | null
           og_image: string | null
           og_locale: string | null
