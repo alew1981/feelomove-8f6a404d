@@ -316,12 +316,21 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
   const nextYear = currentYear + 1;
   const seoYear = events?.some((e: any) => new Date(e.event_date).getFullYear() > currentYear) ? nextYear : currentYear;
   
-  const seoTitle = locale === 'en'
-    ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
-    : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
-  const seoDescription = locale === 'en'
-    ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
-    : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
+  // SEO: prefer artist content SEO fields when available
+  const seoTitle = artistContent
+    ? (locale === 'en' ? artistContent.seo_title_en : artistContent.seo_title_es) || (locale === 'en'
+      ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
+      : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`)
+    : locale === 'en'
+      ? `${artistName}: Concerts, Tour & Tickets ${seoYear}`
+      : `${artistName}: Conciertos, Gira y Entradas ${seoYear}`;
+  const seoDescription = artistContent
+    ? (locale === 'en' ? artistContent.meta_description_en : artistContent.meta_description_es) || (locale === 'en'
+      ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
+      : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`)
+    : locale === 'en'
+      ? `Check all confirmed tour dates for ${artistName}. Updated concert info and official ticket sales. ${events?.length || 0} dates available.`
+      : `Consulta todas las fechas confirmadas de la gira de ${artistName}. Información actualizada de conciertos y venta de entradas oficial. ${events?.length || 0} fechas disponibles.`;
 
   // Generate JSON-LD structured data for artist and events
   const artistBasePath = locale === 'en' ? '/en/tickets' : '/conciertos';
