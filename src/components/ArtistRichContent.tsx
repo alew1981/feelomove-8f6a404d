@@ -241,13 +241,6 @@ export default function ArtistRichContent({ artistContent: c, language: lang }: 
             ))}
           </Accordion>
 
-          {/* FAQ JSON-LD */}
-          {faqJsonLd && (
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-            />
-          )}
         </div>
       )}
     </div>
