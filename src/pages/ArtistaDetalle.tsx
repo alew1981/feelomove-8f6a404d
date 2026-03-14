@@ -797,6 +797,14 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
             </div>
           )}
           
+          {/* Rich Editorial Content (when available) */}
+          {artistContent && (
+            <ArtistRichContent
+              artistContent={artistContent}
+              language={locale === 'en' ? 'en' : 'es'}
+            />
+          )}
+
           {/* Related Links for SEO */}
           <RelatedLinks slug={artistSlug} type="artist" />
         </div>
