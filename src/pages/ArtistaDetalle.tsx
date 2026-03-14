@@ -19,6 +19,8 @@ import { normalizeSearch } from "@/lib/searchUtils";
 import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useArtistContent } from "@/hooks/useArtistContent";
+import ArtistRichContent from "@/components/ArtistRichContent";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
