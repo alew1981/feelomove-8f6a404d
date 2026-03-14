@@ -20,7 +20,9 @@ import { useAggregationSEO } from "@/hooks/useAggregationSEO";
 import { RelatedLinks } from "@/components/RelatedLinks";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useArtistContent } from "@/hooks/useArtistContent";
+import { useArtistSchema } from "@/hooks/useArtistSchema";
 import ArtistRichContent from "@/components/ArtistRichContent";
+import { Helmet } from "react-helmet-async";
 
 // Helper to generate slug from name (accent-insensitive)
 const generateSlug = (name: string): string => {
@@ -141,6 +143,10 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
 
   // Fetch rich editorial content (available for ~14 artists)
   const { data: artistContent } = useArtistContent(artistName);
+
+  // Fetch pre-built Schema.org JSON-LD from materialized view
+  const { data: artistSchema } = useArtistSchema(artistName);
+  const isEnglish = locale === 'en';
 
   // Get hero image from first event
   const heroImage = (events?.[0] as any)?.image_large_url || (events?.[0] as any)?.image_standard_url;
@@ -495,6 +501,20 @@ const ArtistaDetalle = ({ slugProp }: ArtistaDetalleProps) => {
           { name: artistName }
         ]}
       />
+      {artistSchema && (
+        <Helmet>
+          {artistSchema.music_group_schema && (
+            <script type="application/ld+json">
+              {JSON.stringify(artistSchema.music_group_schema)}
+            </script>
+          )}
+          {(isEnglish ? artistSchema.faq_schema_en : artistSchema.faq_schema_es) && (
+            <script type="application/ld+json">
+              {JSON.stringify(isEnglish ? artistSchema.faq_schema_en : artistSchema.faq_schema_es)}
+            </script>
+          )}
+        </Helmet>
+      )}
       <div className="min-h-screen bg-background">
         <Navbar />
         
