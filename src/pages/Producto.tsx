@@ -1038,7 +1038,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
     : "";
 
   // === SEO TITLE & DESCRIPTION (with unavailable override) ===
-  const seoTitle = isUnavailable
+  // Strip " | FEELOMOVE+" suffix from MV titles since SEOHead appends it automatically
+  const stripBrand = (t: string) => t.replace(/\s*\|\s*FEELOMOVE\+?\s*$/i, '');
+
+  const seoTitleFallback = isUnavailable
     ? locale === 'en'
       ? `${mainArtist} in ${eventDetails.venue_city} ${eventYear} – Sold Out | FEELOMOVE`
       : `${mainArtist} en ${eventDetails.venue_city} ${eventYear} – Entradas Agotadas | FEELOMOVE`
@@ -1053,6 +1056,9 @@ const Producto = ({ slugProp }: ProductoProps) => {
         : locale === 'en'
           ? `${mainArtist} ${eventDetails.venue_city} Tickets${seoDateShort ? ` — ${seoDateShort}` : ""}${seoMinPrice ? ` | From ${seoMinPrice}` : ""}`
           : `${t('Entradas')} ${mainArtist} ${eventDetails.venue_city}${seoDateShort ? ` — ${seoDateShort}` : ""}${seoMinPrice ? ` | Desde ${seoMinPrice}` : ""}`;
+
+  // MV meta tags override: use personalized data from mv_events_meta_tags when available
+  const seoTitle = mvMetaTags?.og_title ? stripBrand(mvMetaTags.og_title) : seoTitleFallback;
 
   const seoDescription = isUnavailable
     ? locale === 'en'
