@@ -322,6 +322,9 @@ const Producto = ({ slugProp }: ProductoProps) => {
   const isVipEventFromSlug = slug ? isVipSlug(slug) : false;
   const isServiceEventFromSlug = slug ? isServiceSlug(slug) : false;
 
+  // Fetch personalized meta tags from mv_events_meta_tags
+  const { data: mvMetaTags } = useMetaTags(slug);
+
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
