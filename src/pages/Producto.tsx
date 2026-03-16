@@ -1185,15 +1185,15 @@ const Producto = ({ slugProp }: ProductoProps) => {
       <SEOHead
         title={seoTitle}
         description={seoDescription}
-        canonical={absoluteUrl}
-        ogImage={ogImageUrl}
+        canonical={mvMetaTags?.canonical_url || absoluteUrl}
+        ogImage={mvMetaTags?.og_image || ogImageUrl}
         ogType="event"
-        keywords={locale === 'en' 
+        keywords={mvMetaTags?.meta_keywords?.join(', ') || (locale === 'en' 
           ? `${mainArtist}, ${eventDetails.venue_city}, concert, tickets, hotel, ${eventDetails.event_name}`
-          : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
+          : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`)}
         pageType="ItemPage"
         noindexNoFollow={isServiceEvent}
-        noindexFollow={isPastEvent}
+        noindexFollow={isPastEvent || (mvMetaTags?.noindex === true)}
         isVipEvent={isVipEventFromSlug}
         artistName={mainArtist}
         breadcrumbs={[
