@@ -15,6 +15,8 @@ interface SEOHeadProps {
   canonical?: string;
   ogImage?: string;
   ogType?: string;
+  /** Override og:description separately from meta description */
+  ogDescription?: string;
   keywords?: string;
   jsonLd?: object | object[];
   pageType?: "WebPage" | "ItemPage" | "CollectionPage" | "SearchResultsPage" | "AboutPage" | "ContactPage";
