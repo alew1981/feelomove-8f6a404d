@@ -325,6 +325,16 @@ const Producto = ({ slugProp }: ProductoProps) => {
   // Fetch personalized meta tags from mv_events_meta_tags
   const { data: mvMetaTags } = useMetaTags(slug);
 
+  // Safety net: force DOM update for meta description when MV data arrives
+  useEffect(() => {
+    if (mvMetaTags?.meta_description) {
+      const metaDesc = document.querySelector('meta[name="description"]');
+      const metaOgDesc = document.querySelector('meta[property="og:description"]');
+      if (metaDesc) metaDesc.setAttribute('content', mvMetaTags.meta_description);
+      if (metaOgDesc) metaOgDesc.setAttribute('content', mvMetaTags.og_description || mvMetaTags.meta_description);
+    }
+  }, [mvMetaTags]);
+
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
