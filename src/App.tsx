@@ -200,7 +200,7 @@ const RedirectConcierto = () => {
   });
   if (isLoading) return null;
   if (exists) return <Navigate to={`/conciertos/${slug}`} replace />;
-  return <NotFoundInline />;
+  return <Navigate to="/404" replace />;
 };
 
 const RedirectFestival = () => {
