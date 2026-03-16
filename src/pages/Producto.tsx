@@ -1060,7 +1060,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
   // MV meta tags override: use personalized data from mv_events_meta_tags when available
   const seoTitle = mvMetaTags?.og_title ? stripBrand(mvMetaTags.og_title) : seoTitleFallback;
 
-  const seoDescription = isUnavailable
+  const seoDescriptionFallback = isUnavailable
     ? locale === 'en'
       ? `${mainArtist} at ${eventDetails.venue_name || eventDetails.venue_city}, ${eventDetails.venue_city}. Tickets are sold out. Already have yours? Book a hotel near the venue${minHotelPriceStr ? ` from ${minHotelPriceStr}` : ''}.`
       : `${mainArtist} en ${eventDetails.venue_name || eventDetails.venue_city}, ${eventDetails.venue_city}. Las entradas están agotadas. ¿Ya tienes la tuya? Reserva hotel cerca del recinto${minHotelPriceStr ? ` desde ${minHotelPriceStr}` : ''}.`
@@ -1079,6 +1079,9 @@ const Producto = ({ slugProp }: ProductoProps) => {
           : locale === 'en'
             ? `Buy ${mainArtist} tickets in ${eventDetails.venue_city}${seoFullDate ? ` on ${seoFullDate}` : ""}.${seoMinPrice ? ` From ${seoMinPrice} incl. fees.` : ""} Hotels near the venue. Book your complete music pack!`
             : `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${seoFullDate ? ` el ${seoFullDate}` : ""}.${seoMinPrice ? ` Desde ${seoMinPrice} con fees.` : ""} Hoteles cerca del venue. ¡Reserva tu pack completo!`;
+
+  // MV meta tags override: use personalized data when available
+  const seoDescription = mvMetaTags?.meta_description || seoDescriptionFallback;
 
   const eventSeoProps = createEventSeoProps(
     {
