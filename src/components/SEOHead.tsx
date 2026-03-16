@@ -15,6 +15,8 @@ interface SEOHeadProps {
   canonical?: string;
   ogImage?: string;
   ogType?: string;
+  /** Override og:description separately from meta description */
+  ogDescription?: string;
   keywords?: string;
   jsonLd?: object | object[];
   pageType?: "WebPage" | "ItemPage" | "CollectionPage" | "SearchResultsPage" | "AboutPage" | "ContactPage";
@@ -281,6 +283,7 @@ export const SEOHead = ({
   canonical, 
   ogImage = "https://feelomove.com/og-image.jpg",
   ogType = "website",
+  ogDescription,
   keywords,
   jsonLd,
   pageType = "WebPage",
@@ -422,7 +425,7 @@ export const SEOHead = ({
       {/* Open Graph / Facebook - Optimized 1200x630 */}
       <meta property="og:type" content={ogType} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={ogDescription || description} />
       {fullCanonical && <meta property="og:url" content={fullCanonical} />}
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:width" content="1200" />
@@ -437,7 +440,7 @@ export const SEOHead = ({
       <meta name="twitter:site" content="@feelomove" />
       <meta name="twitter:creator" content="@feelomove" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={ogDescription || description} />
       <meta name="twitter:image" content={ogImage} />
       <meta name="twitter:image:alt" content={finalTitle} />
       
