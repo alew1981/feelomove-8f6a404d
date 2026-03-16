@@ -1,10 +1,11 @@
 import { useEffect, lazy, Suspense, useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useInstantSEO } from "@/hooks/useInstantSEO";
 import SeoFallbackLinks from "@/components/SeoFallbackLinks";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load Radix-heavy UI components to reduce initial JS execution time
 // These are not critical for first paint
@@ -166,7 +167,40 @@ const RedirectArtista = () => {
 
 const RedirectConcierto = () => {
   const { slug } = useParams();
-  return <Navigate to={`/conciertos/${slug}`} replace />;
+  const { data: exists, isLoading } = useQuery({
+    queryKey: ["legacy-concierto-check", slug],
+    enabled: !!slug,
+    queryFn: async () => {
+      if (!slug) return false;
+      const s = slug.toLowerCase();
+      // Check MV first
+      const { data } = await (supabase
+        .from("lovable_mv_event_product_page_conciertos" as any)
+        .select("event_slug") as any)
+        .eq("event_slug", s)
+        .limit(1);
+      if (Array.isArray(data) && data.length > 0) return true;
+      // Check slug_redirects
+      const { data: redir } = await supabase
+        .from("slug_redirects")
+        .select("new_slug")
+        .eq("old_slug", s)
+        .maybeSingle();
+      if (redir?.new_slug) return true;
+      // Check as artist
+      const { data: artist } = await supabase
+        .from("tm_tbl_artist_content")
+        .select("artist_slug")
+        .eq("artist_slug", s)
+        .maybeSingle();
+      return !!artist;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+  if (isLoading) return null;
+  if (exists) return <Navigate to={`/conciertos/${slug}`} replace />;
+  return <Navigate to="/404" replace />;
 };
 
 const RedirectFestival = () => {
