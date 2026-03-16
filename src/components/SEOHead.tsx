@@ -440,7 +440,7 @@ export const SEOHead = ({
       <meta name="twitter:site" content="@feelomove" />
       <meta name="twitter:creator" content="@feelomove" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={ogDescription || description} />
       <meta name="twitter:image" content={ogImage} />
       <meta name="twitter:image:alt" content={finalTitle} />
       
