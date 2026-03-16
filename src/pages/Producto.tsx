@@ -37,6 +37,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl, getCanonicalEventUrl } from "@/lib/eventUtils";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
