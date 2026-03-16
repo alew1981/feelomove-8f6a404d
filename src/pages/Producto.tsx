@@ -1185,6 +1185,7 @@ const Producto = ({ slugProp }: ProductoProps) => {
       <SEOHead
         title={seoTitle}
         description={seoDescription}
+        ogDescription={mvMetaTags?.og_description || seoDescription}
         canonical={mvMetaTags?.canonical_url || absoluteUrl}
         ogImage={mvMetaTags?.og_image || ogImageUrl}
         ogType="event"
