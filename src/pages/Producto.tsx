@@ -37,6 +37,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { EventProductPage } from "@/types/events.types";
 import { getEventUrl, getCanonicalEventUrl } from "@/lib/eventUtils";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 // === INLINE SVG ICONS (replaces lucide-react for LCP optimization) ===
 const IconHeart = ({ filled, className = "" }: { filled?: boolean; className?: string }) => (
@@ -320,6 +321,9 @@ const Producto = ({ slugProp }: ProductoProps) => {
   // Check if this is a VIP/Premium event for SEO differentiation
   const isVipEventFromSlug = slug ? isVipSlug(slug) : false;
   const isServiceEventFromSlug = slug ? isServiceSlug(slug) : false;
+
+  // Fetch personalized meta tags from mv_events_meta_tags
+  const { data: mvMetaTags } = useMetaTags(slug);
 
   const hasNavigatedRef = useRef(false);
 
@@ -1034,7 +1038,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
     : "";
 
   // === SEO TITLE & DESCRIPTION (with unavailable override) ===
-  const seoTitle = isUnavailable
+  // Strip " | FEELOMOVE+" suffix from MV titles since SEOHead appends it automatically
+  const stripBrand = (t: string) => t.replace(/\s*\|\s*FEELOMOVE\+?\s*$/i, '');
+
+  const seoTitleFallback = isUnavailable
     ? locale === 'en'
       ? `${mainArtist} in ${eventDetails.venue_city} ${eventYear} – Sold Out | FEELOMOVE`
       : `${mainArtist} en ${eventDetails.venue_city} ${eventYear} – Entradas Agotadas | FEELOMOVE`
@@ -1050,7 +1057,10 @@ const Producto = ({ slugProp }: ProductoProps) => {
           ? `${mainArtist} ${eventDetails.venue_city} Tickets${seoDateShort ? ` — ${seoDateShort}` : ""}${seoMinPrice ? ` | From ${seoMinPrice}` : ""}`
           : `${t('Entradas')} ${mainArtist} ${eventDetails.venue_city}${seoDateShort ? ` — ${seoDateShort}` : ""}${seoMinPrice ? ` | Desde ${seoMinPrice}` : ""}`;
 
-  const seoDescription = isUnavailable
+  // MV meta tags override: use personalized data from mv_events_meta_tags when available
+  const seoTitle = mvMetaTags?.og_title ? stripBrand(mvMetaTags.og_title) : seoTitleFallback;
+
+  const seoDescriptionFallback = isUnavailable
     ? locale === 'en'
       ? `${mainArtist} at ${eventDetails.venue_name || eventDetails.venue_city}, ${eventDetails.venue_city}. Tickets are sold out. Already have yours? Book a hotel near the venue${minHotelPriceStr ? ` from ${minHotelPriceStr}` : ''}.`
       : `${mainArtist} en ${eventDetails.venue_name || eventDetails.venue_city}, ${eventDetails.venue_city}. Las entradas están agotadas. ¿Ya tienes la tuya? Reserva hotel cerca del recinto${minHotelPriceStr ? ` desde ${minHotelPriceStr}` : ''}.`
@@ -1069,6 +1079,9 @@ const Producto = ({ slugProp }: ProductoProps) => {
           : locale === 'en'
             ? `Buy ${mainArtist} tickets in ${eventDetails.venue_city}${seoFullDate ? ` on ${seoFullDate}` : ""}.${seoMinPrice ? ` From ${seoMinPrice} incl. fees.` : ""} Hotels near the venue. Book your complete music pack!`
             : `Compra entradas para ${mainArtist} en ${eventDetails.venue_city}${seoFullDate ? ` el ${seoFullDate}` : ""}.${seoMinPrice ? ` Desde ${seoMinPrice} con fees.` : ""} Hoteles cerca del venue. ¡Reserva tu pack completo!`;
+
+  // MV meta tags override: use personalized data when available
+  const seoDescription = mvMetaTags?.meta_description || seoDescriptionFallback;
 
   const eventSeoProps = createEventSeoProps(
     {
@@ -1172,15 +1185,15 @@ const Producto = ({ slugProp }: ProductoProps) => {
       <SEOHead
         title={seoTitle}
         description={seoDescription}
-        canonical={absoluteUrl}
-        ogImage={ogImageUrl}
+        canonical={mvMetaTags?.canonical_url || absoluteUrl}
+        ogImage={mvMetaTags?.og_image || ogImageUrl}
         ogType="event"
-        keywords={locale === 'en' 
+        keywords={mvMetaTags?.meta_keywords?.join(', ') || (locale === 'en' 
           ? `${mainArtist}, ${eventDetails.venue_city}, concert, tickets, hotel, ${eventDetails.event_name}`
-          : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`}
+          : `${mainArtist}, ${eventDetails.venue_city}, concierto, entradas, hotel, ${eventDetails.event_name}`)}
         pageType="ItemPage"
         noindexNoFollow={isServiceEvent}
-        noindexFollow={isPastEvent}
+        noindexFollow={isPastEvent || (mvMetaTags?.noindex === true)}
         isVipEvent={isVipEventFromSlug}
         artistName={mainArtist}
         breadcrumbs={[

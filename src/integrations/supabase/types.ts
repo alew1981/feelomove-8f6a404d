@@ -554,6 +554,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tm_tbl_artist_content_queue: {
+        Row: {
+          artist_name: string
+          created_at: string | null
+          error_msg: string | null
+          id: number
+          priority: number | null
+          processed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          artist_name: string
+          created_at?: string | null
+          error_msg?: string | null
+          id?: number
+          priority?: number | null
+          processed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          artist_name?: string
+          created_at?: string | null
+          error_msg?: string | null
+          id?: number
+          priority?: number | null
+          processed_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       tm_tbl_events: {
         Row: {
           attraction_ids: string[] | null
