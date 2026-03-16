@@ -425,7 +425,7 @@ export const SEOHead = ({
       {/* Open Graph / Facebook - Optimized 1200x630 */}
       <meta property="og:type" content={ogType} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={ogDescription || description} />
       {fullCanonical && <meta property="og:url" content={fullCanonical} />}
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:width" content="1200" />
