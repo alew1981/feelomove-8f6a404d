@@ -283,6 +283,7 @@ export const SEOHead = ({
   canonical, 
   ogImage = "https://feelomove.com/og-image.jpg",
   ogType = "website",
+  ogDescription,
   keywords,
   jsonLd,
   pageType = "WebPage",
